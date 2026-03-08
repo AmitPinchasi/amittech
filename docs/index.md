@@ -4,113 +4,94 @@ hide:
   - toc
 ---
 
-# קורסי סייבר ומחשבים - עמית טק
+<div class="homepage-gradient-top"></div>
 
-ברוכים הבאים! אני עמית פנחסי, באתר זה תוכלו למצוא חומרי לימוד חינמים שכתבתי במשך 5 שנים בנושאי תכנות, IT, סייבר, מחקר, ו- low level.
-
----
-
-## תכנות
-
-<div class="grid cards" markdown>
-
--   **תכנות בסיסי**
-
-    ---
-
-    פייתון מהבסיס ועד נושאים מתקדמים, תכנות מונחה עצמים, מודולים, אלגוריתמיקה וקוד נקי
-
-    [כניסה לקורס](תכנות-בסיסי/)
-
--   **פיתוח צד שרת - backend**
-
-    ---
-
-    פיתוח API עם FastAPI, מסדי נתונים, DevOps, AWS, ופיתוח JavaScript עם Node.js
-
-    [כניסה לקורס](צד-שרת/)
-
+<div class="homepage-hero">
+<h1>עמית טק - קורסי סייבר ומחשבים בחינם.</h1>
+<p class="hero-subtitle">חומרי לימוד חינמים בנושאי תכנות, IT, סייבר, מחקר ו-low level - בעברית, עם המון תרגול.</p>
 </div>
 
-## רשתות ותשתיות
-
-<div class="grid cards" markdown>
--   **ווינדוס בסיסי**
-
-    ---
-
-    באצ', פאוורשל, ניהול מערכת, כלי Sysinternals
-
-    [כניסה לקורס](ווינדוס בסיסי/)
-
--   **לינוקס בסיסי**
-
-    ---
-
-    טרמינל, באש, הרשאות, סקריפטים, שירותים וניהול מערכת לינוקס
-
-    [כניסה לקורס](לינוקס בסיסי/)
-
--   **רשתות**
-
-    ---
-
-    מודל OSI, פרוטוקולים, שכבת האפליקציה, האינטרנט, רשתות מנוהלות ואבטחת רשת
-
-    [כניסה לקורס](רשתות/)
-
-
+<div class="about-card">
+<div class="about-toggle" onclick="this.parentElement.classList.toggle('open')">
+<span>קצת עליי</span>
+<svg class="about-toggle-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</div>
+<div class="about-content">
+<p>אני עמית פנחסי, בוגר 8200 (מסלול גאמ"א), עובד בהייטק מהתיכון. <br />
+שותף מייסד בסטארטאפ horizon-trade.com, ושותף בהקמת כנסי הסייבר nobstlv.com. <br />
+בשנים האחרונות הקדשתי חלק גדול מחיי בלימוד והכנה להייטק עשרות תלמידים בהתנדבות.</p>
+<p>החזון שלי הוא לאפשר לכל אדם באשר הוא ללמוד מחשבים מ-0 עד לרמה מקצועית שלא מביישת את הטובים שבטובים בתחום העניין שלו. <br />
+כדי לממש את החזון כתבתי קורסים שמצליחים בצורה מצויינת לקחת אנשים בלי ידע או ניסיון עם המון תרגול לרמה שמאפשרת להם להיכנס לתפקיד ראשון בהייטק, וכמובן להעמיק את הידע שלהם בקורסים מתקדמים שיקחו אותם לרמה הבאה.</p>
+<p>קשה מאוד להיכנס לעולם המחשבים בלי הכוונה טובה, באתר "עמית טק" אני מפרסם את כל הידע שרכשתי בעולם המחשבים ואת הכוונה שכל אחד צריך בחינם.</p>
+<div class="about-links">
+<a href="https://horizon-trade.com" class="link-primary">Horizon Trade</a>
+<a href="https://nobstlv.com" class="link-secondary">NoBs TLV</a>
+</div>
+</div>
 </div>
 
-## אבטחת מידע וסייבר
-
-<div class="grid cards" markdown>
--   **פריצת אתרים**
-
-    ---
-
-    פיתוח אתרים, חולשות צד לקוח וצד שרת, הגנות והתמודדות
-
-    [כניסה לקורס](פריצת-אתרים/)
-
-
--   **בודק חדירות - Penetration testing**
-
-    ---
-
-    תקיפה חיצונית, הסלמת הרשאות, תקיפת דומיין בסיסית, נפוצה ומתקדמת
-
-    [כניסה לקורס](בודק-חדירות/)
-
+<div class="section-header">
+<h2>תכנות</h2>
 </div>
 
-## מחקר ו- low level
-
-<div class="grid cards" markdown>
--   **ליבת המחשב - low level**
-
-    ---
-
-    ארגון המחשב, אסמבלי 16 ו-32 ביט, שפת C, ספריית libc, מערכות הפעלה
-
-    [כניסה לקורס](ליבת-המחשב/)
-
-
--   **מחקר אנדרואיד**
-
-    ---
-
-    מחקר סטטי ודינמי, פרידה, פאצ'ינג, חולשות נפוצות ונושאים מתקדמים
-
-    [כניסה לקורס](מחקר-אנדרואיד/)
-
+<div class="course-chips">
+<a class="course-chip" href="תכנות-בסיסי/">
+<span class="chip-icon">&#x2726;</span>
+<span><strong>תכנות בסיסי</strong> - פייתון מהבסיס ועד נושאים מתקדמים, תכנות מונחה עצמים, מודולים, אלגוריתמיקה וקוד נקי</span>
+</a>
+<a class="course-chip" href="צד-שרת/">
+<span class="chip-icon">&#x2726;</span>
+<span><strong>פיתוח צד שרת - Backend</strong> - פיתוח API עם FastAPI, מסדי נתונים, DevOps, AWS, ופיתוח JavaScript עם Node.js</span>
+</a>
 </div>
 
-# קצת עליי
-אני עמית פנחסי, בוגר 8200 (מסלול גאמ״א),  עובד בהייטק מהתיכון.
-שותף מייסד בסטארטאפ horizon-trade.com, ושותף בהקמת כנסי הסייבר nobstlv.com
-בשנים האחרונות הקדשתי חלק גדול מחיי בלימוד והכנה להייטק עשרות תלמידים בהתנדבות.
-החזון שלי הוא לאפשר לכל אדם באשר הוא ללמוד מחשבים מ0 עד לרמה מקצועית שלא מביישת את הטובים שבטובים בתחום העניין שלו.
-כדי לממש את החזון כתבתי קורסים שמצליחים בצורה מצויינת לקחת אנשים בלי ידע או ניסיון עם המון תרגול לרמה שמאפשרת להם להיכנס לתפקיד ראשון בהייטק, וכמובן להעמיק את הידע שלהם בקורסים מתקדמים שיקחו אותם לרמה הבאה.
-קשה מאוד להיכנס לעולם המחשבים בלי הכוונה טובה, באתר ״עמית טק״ אני מפרסם את כל הידע שרכשתי בעולם המחשבים ואת הכוונה שכל אחד צריך בחינם.
+<div class="section-header">
+<h2>רשתות ותשתיות</h2>
+</div>
 
+<div class="course-chips">
+<a class="course-chip" href="ווינדוס בסיסי/">
+<span class="chip-icon">&#x2726;</span>
+<span><strong>ווינדוס בסיסי</strong> - באצ', פאוורשל, ניהול מערכת, כלי Sysinternals</span>
+</a>
+<a class="course-chip" href="לינוקס בסיסי/">
+<span class="chip-icon">&#x2726;</span>
+<span><strong>לינוקס בסיסי</strong> - טרמינל, באש, הרשאות, סקריפטים, שירותים וניהול מערכת לינוקס</span>
+</a>
+<a class="course-chip" href="רשתות/">
+<span class="chip-icon">&#x2726;</span>
+<span><strong>רשתות</strong> - מודל OSI, פרוטוקולים, שכבת האפליקציה, האינטרנט, רשתות מנוהלות ואבטחת רשת</span>
+</a>
+</div>
+
+<div class="section-header">
+<h2>אבטחת מידע וסייבר</h2>
+</div>
+
+<div class="course-chips">
+<a class="course-chip" href="פריצת-אתרים/">
+<span class="chip-icon">&#x2726;</span>
+<span><strong>פריצת אתרים</strong> - פיתוח אתרים, חולשות צד לקוח וצד שרת, הגנות והתמודדות</span>
+</a>
+<a class="course-chip" href="בודק-חדירות/">
+<span class="chip-icon">&#x2726;</span>
+<span><strong>בודק חדירות - Penetration Testing</strong> - תקיפה חיצונית, הסלמת הרשאות, תקיפת דומיין בסיסית, נפוצה ומתקדמת</span>
+</a>
+</div>
+
+<div class="section-header">
+<h2>מחקר ו-Low Level</h2>
+</div>
+
+<div class="course-chips">
+<a class="course-chip" href="ליבת-המחשב/">
+<span class="chip-icon">&#x2726;</span>
+<span><strong>ליבת המחשב - Low Level</strong> - ארגון המחשב, אסמבלי 16 ו-32 ביט, שפת C, ספריית libc, מערכות הפעלה</span>
+</a>
+<a class="course-chip" href="מחקר-אנדרואיד/">
+<span class="chip-icon">&#x2726;</span>
+<span><strong>מחקר אנדרואיד</strong> - מחקר סטטי ודינמי, פרידה, פאצ'ינג, חולשות נפוצות ונושאים מתקדמים</span>
+</a>
+</div>
+
+<div class="homepage-gradient"></div>
