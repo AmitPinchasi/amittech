@@ -26,6 +26,7 @@ hide:
 <div class="about-links">
 <a href="https://horizon-trade.com" class="link-primary">Horizon Trade</a>
 <a href="https://nobstlv.com" class="link-secondary">NoBs TLV</a>
+<a href="https://www.linkedin.com/in/amit-pinchasi-2450a622a" class="link-primary">LinkedIn</a>
 </div>
 </div>
 </div>
@@ -42,6 +43,10 @@ hide:
 <a class="course-chip" href="צד-שרת/">
 <span class="chip-icon">&#x2726;</span>
 <span><strong>פיתוח צד שרת - Backend</strong> - פיתוח API עם FastAPI, מסדי נתונים, DevOps, AWS, ופיתוח JavaScript עם Node.js</span>
+</a>
+<a class="course-chip" href="פיתוח-פרונטאנד/">
+<span class="chip-icon">&#x2726;</span>
+<span><strong>פיתוח צד לקוח - Frontend</strong> - פיתוח frontend עם react ו- next.js</span>
 </a>
 </div>
 
@@ -76,6 +81,10 @@ hide:
 <a class="course-chip" href="בודק-חדירות/">
 <span class="chip-icon">&#x2726;</span>
 <span><strong>בודק חדירות - Penetration Testing</strong> - תקיפה חיצונית, הסלמת הרשאות, תקיפת דומיין בסיסית, נפוצה ומתקדמת</span>
+</a>
+<a class="course-chip" href="פריצת-אתרים-מתקדם/">
+<span class="chip-icon">&#x2726;</span>
+<span><strong>פריצת אתרים מתקדם</strong> - חולשות מתקדמות, התמודדות מול הגנות</span>
 </a>
 </div>
 
