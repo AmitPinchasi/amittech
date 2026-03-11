@@ -1,4 +1,6 @@
 ---
+title: מי אני - עמית פנחסי
+description: עמית פנחסי, בוגר 8200, יזם ומחנך טכנולוגי. מייסד עמית טק - קורסי סייבר, תכנות ומחשבים בחינם בעברית.
 hide:
   - navigation
   - toc
@@ -13,8 +15,8 @@ hide:
       <p class="about-page-tagline">בוגר 8200, יזם, ומחנך טכנולוגי</p>
       <div class="about-page-links">
         <a href="https://www.linkedin.com/in/amit-pinchasi-2450a622a" class="link-btn link-btn-primary">LinkedIn</a>
-        <a href="https:/www.youtube.com/@amitpinchasi" class="link-btn link-btn-primary">Youtube</a>
-        <a href="https://www.instagram.com/amit_pinchasi" class="link-btn link-btn-primary">Instagram</a>
+        <a href="https://www.youtube.com/@amitpinchasi" class="link-btn link-btn-primary">Youtube</a>
+        <a href="https://www.instagram.com/amit.pinchasi" class="link-btn link-btn-primary">Instagram</a>
       </div>
     </div>
   </div>
