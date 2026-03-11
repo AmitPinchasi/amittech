@@ -17,6 +17,10 @@ hide:
 </a>
 </div>
 
+<div class="section-header main-title">
+<h2>מה נלמד היום?</h2>
+</div>
+
 <div class="section-header">
 <h2>תכנות</h2>
 </div>
