@@ -11,42 +11,37 @@ hide:
 <p class="hero-subtitle">חומרי לימוד חינמים בנושאי תכנות, IT, סייבר, מחקר ו-low level - בעברית, עם המון תרגול.</p>
 </div>
 
-<div class="about-card">
-<div class="about-toggle" onclick="this.parentElement.classList.toggle('open')">
-<span>קצת עליי</span>
-<svg class="about-toggle-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-</div>
-<div class="about-content">
-<p>אני עמית פנחסי, בוגר 8200 (מסלול גאמ"א), עובד בהייטק מהתיכון. <br />
-שותף מייסד בסטארטאפ horizon-trade.com, ושותף בהקמת כנסי הסייבר nobstlv.com. <br />
-בשנים האחרונות הקדשתי חלק גדול מחיי בלימוד והכנה להייטק עשרות תלמידים בהתנדבות.</p>
-<p>החזון שלי הוא לאפשר לכל אדם באשר הוא ללמוד מחשבים מ-0 עד לרמה מקצועית שלא מביישת את הטובים שבטובים בתחום העניין שלו. <br />
-כדי לממש את החזון כתבתי קורסים שמצליחים בצורה מצויינת לקחת אנשים בלי ידע או ניסיון עם המון תרגול לרמה שמאפשרת להם להיכנס לתפקיד ראשון בהייטק, וכמובן להעמיק את הידע שלהם בקורסים מתקדמים שיקחו אותם לרמה הבאה.</p>
-<p>קשה מאוד להיכנס לעולם המחשבים בלי הכוונה טובה, באתר "עמית טק" אני מפרסם את כל הידע שרכשתי בעולם המחשבים ואת הכוונה שכל אחד צריך בחינם.</p>
-<div class="about-links">
-<a href="https://horizon-trade.com" class="link-primary">Horizon Trade</a>
-<a href="https://nobstlv.com" class="link-secondary">NoBs TLV</a>
-<a href="https://www.linkedin.com/in/amit-pinchasi-2450a622a" class="link-primary">LinkedIn</a>
-</div>
-</div>
-</div>
-
 <div class="section-header">
 <h2>תכנות</h2>
 </div>
 
-<div class="course-chips">
-<a class="course-chip" href="תכנות-בסיסי/">
-<span class="chip-icon">&#x2726;</span>
-<span><strong>תכנות בסיסי</strong> - פייתון מהבסיס ועד נושאים מתקדמים, תכנות מונחה עצמים, מודולים, אלגוריתמיקה וקוד נקי</span>
+<div class="course-cards">
+<a class="course-card" href="תכנות-בסיסי/">
+<div class="course-card-img" style="background: linear-gradient(135deg, #45CAFF, #6366F1)">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+</div>
+<div class="course-card-body">
+<strong>תכנות בסיסי</strong>
+<p>פייתון מהבסיס ועד נושאים מתקדמים, תכנות מונחה עצמים, מודולים, אלגוריתמיקה וקוד נקי</p>
+</div>
 </a>
-<a class="course-chip" href="צד-שרת/">
-<span class="chip-icon">&#x2726;</span>
-<span><strong>פיתוח צד שרת - Backend</strong> - פיתוח API עם FastAPI, מסדי נתונים, DevOps, AWS, ופיתוח JavaScript עם Node.js</span>
+<a class="course-card" href="צד-שרת/">
+<div class="course-card-img" style="background: linear-gradient(135deg, #6366F1, #8B5CF6)">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><rect x="2" y="2" width="20" height="8" rx="2"></rect><rect x="2" y="14" width="20" height="8" rx="2"></rect><circle cx="6" cy="6" r="1" fill="white"></circle><circle cx="6" cy="18" r="1" fill="white"></circle></svg>
+</div>
+<div class="course-card-body">
+<strong>פיתוח צד שרת - Backend</strong>
+<p>פיתוח API עם FastAPI, מסדי נתונים, DevOps, AWS, ופיתוח JavaScript עם Node.js</p>
+</div>
 </a>
-<a class="course-chip" href="צד-לקוח/">
-<span class="chip-icon">&#x2726;</span>
-<span><strong>פיתוח צד לקוח - Frontend</strong> - פיתוח frontend עם react ו- next.js</span>
+<a class="course-card" href="צד-לקוח/">
+<div class="course-card-img" style="background: linear-gradient(135deg, #45CAFF, #06B6D4)">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><rect x="2" y="3" width="20" height="18" rx="2"></rect><line x1="2" y1="9" x2="22" y2="9"></line><circle cx="6" cy="6" r="1" fill="white"></circle><circle cx="10" cy="6" r="1" fill="white"></circle></svg>
+</div>
+<div class="course-card-body">
+<strong>פיתוח צד לקוח - Frontend</strong>
+<p>פיתוח frontend עם React ו-Next.js</p>
+</div>
 </a>
 </div>
 
@@ -54,18 +49,33 @@ hide:
 <h2>רשתות ומערכות הפעלה</h2>
 </div>
 
-<div class="course-chips">
-<a class="course-chip" href="ווינדוס-בסיסי/">
-<span class="chip-icon">&#x2726;</span>
-<span><strong>ווינדוס בסיסי</strong> - באצ', פאוורשל, ניהול מערכת, כלי Sysinternals</span>
+<div class="course-cards">
+<a class="course-card" href="ווינדוס-בסיסי/">
+<div class="course-card-img" style="background: linear-gradient(135deg, #06B6D4, #45CAFF)">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+</div>
+<div class="course-card-body">
+<strong>ווינדוס בסיסי</strong>
+<p>באצ', פאוורשל, ניהול מערכת, כלי Sysinternals</p>
+</div>
 </a>
-<a class="course-chip" href="לינוקס-בסיסי/">
-<span class="chip-icon">&#x2726;</span>
-<span><strong>לינוקס בסיסי</strong> - טרמינל, באש, הרשאות, סקריפטים, שירותים וניהול מערכת לינוקס</span>
+<a class="course-card" href="לינוקס-בסיסי/">
+<div class="course-card-img" style="background: linear-gradient(135deg, #8B5CF6, #A855F7)">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+</div>
+<div class="course-card-body">
+<strong>לינוקס בסיסי</strong>
+<p>טרמינל, באש, הרשאות, סקריפטים, שירותים וניהול מערכת לינוקס</p>
+</div>
 </a>
-<a class="course-chip" href="רשתות/">
-<span class="chip-icon">&#x2726;</span>
-<span><strong>רשתות</strong> - מודל OSI, פרוטוקולים, שכבת האפליקציה, האינטרנט, רשתות מנוהלות ואבטחת רשת</span>
+<a class="course-card" href="רשתות/">
+<div class="course-card-img" style="background: linear-gradient(135deg, #45CAFF, #A855F7)">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+</div>
+<div class="course-card-body">
+<strong>רשתות</strong>
+<p>מודל OSI, פרוטוקולים, שכבת האפליקציה, האינטרנט, רשתות מנוהלות ואבטחת רשת</p>
+</div>
 </a>
 </div>
 
@@ -73,18 +83,33 @@ hide:
 <h2>אבטחת מידע וסייבר</h2>
 </div>
 
-<div class="course-chips">
-<a class="course-chip" href="פריצת-אתרים/">
-<span class="chip-icon">&#x2726;</span>
-<span><strong>פריצת אתרים</strong> - פיתוח אתרים, חולשות צד לקוח וצד שרת, הגנות והתמודדות</span>
+<div class="course-cards">
+<a class="course-card" href="פריצת-אתרים/">
+<div class="course-card-img" style="background: linear-gradient(135deg, #FF1B6B, #FF6B6B)">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+</div>
+<div class="course-card-body">
+<strong>פריצת אתרים</strong>
+<p>פיתוח אתרים, חולשות צד לקוח וצד שרת, הגנות והתמודדות</p>
+</div>
 </a>
-<a class="course-chip" href="בודק-חדירות/">
-<span class="chip-icon">&#x2726;</span>
-<span><strong>בדיקת חדירות (תקיפות סייבר) - Penetration Testing</strong> - תקיפה חיצונית, הסלמת הרשאות, תקיפת דומיין מתקדמת</span>
+<a class="course-card" href="בודק-חדירות/">
+<div class="course-card-img" style="background: linear-gradient(135deg, #FF1B6B, #E11D48)">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+</div>
+<div class="course-card-body">
+<strong>בדיקת חדירות - Penetration Testing</strong>
+<p>תקיפה חיצונית, הסלמת הרשאות, תקיפת דומיין מתקדמת</p>
+</div>
 </a>
-<a class="course-chip" href="פריצת-אתרים-מתקדם/">
-<span class="chip-icon">&#x2726;</span>
-<span><strong>פריצת אתרים מתקדם</strong> - חולשות מתקדמות, התמודדות מול הגנות</span>
+<a class="course-card" href="פריצת-אתרים-מתקדם/">
+<div class="course-card-img" style="background: linear-gradient(135deg, #E11D48, #FF1B6B)">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="13 8 10 13 14 13 11 18"></polyline></svg>
+</div>
+<div class="course-card-body">
+<strong>פריצת אתרים מתקדם</strong>
+<p>חולשות מתקדמות, התמודדות מול הגנות</p>
+</div>
 </a>
 </div>
 
@@ -92,14 +117,24 @@ hide:
 <h2>מחקר ו-Low Level</h2>
 </div>
 
-<div class="course-chips">
-<a class="course-chip" href="ליבת-המחשב/">
-<span class="chip-icon">&#x2726;</span>
-<span><strong>ליבת המחשב - Low Level</strong> - ארגון המחשב, אסמבלי 16 ו-32 ביט, שפת C, ספריית libc, הקרנל של לינוקס, ארכיטקטורת מעבדים, ופיתוח מערכת הפעלה</span>
+<div class="course-cards">
+<a class="course-card" href="ליבת-המחשב/">
+<div class="course-card-img" style="background: linear-gradient(135deg, #FF1B6B, #8B5CF6)">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
+</div>
+<div class="course-card-body">
+<strong>ליבת המחשב - Low Level</strong>
+<p>ארגון המחשב, אסמבלי 16 ו-32 ביט, שפת C, ספריית libc, הקרנל של לינוקס, ארכיטקטורת מעבדים, ופיתוח מערכת הפעלה</p>
+</div>
 </a>
-<a class="course-chip" href="מחקר-אנדרואיד/">
-<span class="chip-icon">&#x2726;</span>
-<span><strong>מחקר אנדרואיד</strong> - מחקר סטטי ודינמי, פרידה, פאצ'ינג, חולשות נפוצות וצלילה עמוקה לinternals</span>
+<a class="course-card" href="מחקר-אנדרואיד/">
+<div class="course-card-img" style="background: linear-gradient(135deg, #8B5CF6, #FF1B6B)">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><rect x="5" y="2" width="14" height="20" rx="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+</div>
+<div class="course-card-body">
+<strong>מחקר אנדרואיד</strong>
+<p>מחקר סטטי ודינמי, פרידה, פאצ'ינג, חולשות נפוצות וצלילה עמוקה ל-internals</p>
+</div>
 </a>
 </div>
 
