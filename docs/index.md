@@ -17,6 +17,8 @@ hide:
 </a>
 </div>
 
+<div class="homepage-gradient-hero-bottom"></div>
+
 <div class="section-header main-title">
 <h2>מה נלמד היום?</h2>
 </div>
@@ -36,7 +38,7 @@ hide:
 </div>
 </a>
 <a class="course-card" href="צד-שרת/">
-<div class="course-card-img" style="background: linear-gradient(135deg, #6366F1, #8B5CF6)">
+<div class="course-card-img" style="background: linear-gradient(135deg, #6366F1, #A855F7)">
 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><rect x="2" y="2" width="20" height="8" rx="2"></rect><rect x="2" y="14" width="20" height="8" rx="2"></rect><circle cx="6" cy="6" r="1" fill="white"></circle><circle cx="6" cy="18" r="1" fill="white"></circle></svg>
 </div>
 <div class="course-card-body">
@@ -45,7 +47,7 @@ hide:
 </div>
 </a>
 <a class="course-card" href="צד-לקוח/">
-<div class="course-card-img" style="background: linear-gradient(135deg, #45CAFF, #06B6D4)">
+<div class="course-card-img" style="background: linear-gradient(135deg, #45CAFF, #8B5CF6)">
 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><rect x="2" y="3" width="20" height="18" rx="2"></rect><line x1="2" y1="9" x2="22" y2="9"></line><circle cx="6" cy="6" r="1" fill="white"></circle><circle cx="10" cy="6" r="1" fill="white"></circle></svg>
 </div>
 <div class="course-card-body">
@@ -61,7 +63,7 @@ hide:
 
 <div class="course-cards">
 <a class="course-card" href="ווינדוס-בסיסי/">
-<div class="course-card-img" style="background: linear-gradient(135deg, #06B6D4, #45CAFF)">
+<div class="course-card-img" style="background: linear-gradient(135deg, #06B6D4, #6366F1)">
 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
 </div>
 <div class="course-card-body">
@@ -70,7 +72,7 @@ hide:
 </div>
 </a>
 <a class="course-card" href="לינוקס-בסיסי/">
-<div class="course-card-img" style="background: linear-gradient(135deg, #8B5CF6, #A855F7)">
+<div class="course-card-img" style="background: linear-gradient(135deg, #8B5CF6, #45CAFF)">
 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
 </div>
 <div class="course-card-body">
@@ -95,7 +97,7 @@ hide:
 
 <div class="course-cards">
 <a class="course-card" href="פריצת-אתרים/">
-<div class="course-card-img" style="background: linear-gradient(135deg, #FF1B6B, #FF6B6B)">
+<div class="course-card-img" style="background: linear-gradient(135deg, #FF1B6B, #8B5CF6)">
 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
 </div>
 <div class="course-card-body">
@@ -104,7 +106,7 @@ hide:
 </div>
 </a>
 <a class="course-card" href="בודק-חדירות/">
-<div class="course-card-img" style="background: linear-gradient(135deg, #FF1B6B, #E11D48)">
+<div class="course-card-img" style="background: linear-gradient(135deg, #FF1B6B, #6366F1)">
 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
 </div>
 <div class="course-card-body">
@@ -113,7 +115,7 @@ hide:
 </div>
 </a>
 <a class="course-card" href="פריצת-אתרים-מתקדם/">
-<div class="course-card-img" style="background: linear-gradient(135deg, #E11D48, #FF1B6B)">
+<div class="course-card-img" style="background: linear-gradient(135deg, #E11D48, #A855F7)">
 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="13 8 10 13 14 13 11 18"></polyline></svg>
 </div>
 <div class="course-card-body">
