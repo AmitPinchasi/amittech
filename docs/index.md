@@ -144,7 +144,7 @@ hide:
 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><rect x="5" y="2" width="14" height="20" rx="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
 </div>
 <div class="course-card-body">
-<strong>מחקר אנדרואיד</strong>
+<strong>מחקר ווינדוס</strong>
 <p>מחקר סטטי ודינמי, פרידה, פאצ'ינג, חולשות נפוצות וצלילה עמוקה ל-internals</p>
 </div>
 </a>
@@ -243,7 +243,7 @@ hide:
 </div>
 
 <div class="roadmap-card">
-  <div class="roadmap-title">חוקר חולשות אנדרואיד - Android Vulnerability Researcher</div>
+  <div class="roadmap-title">חוקר חולשות ווינדוס - Windows Vulnerability Researcher</div>
   <div class="roadmap-steps">
     <a class="roadmap-step" href="תכנות-בסיסי/">תכנות בסיסי</a>
    <span class="roadmap-arrow">&#8592;</span>
@@ -253,7 +253,7 @@ hide:
       <a class="roadmap-step" href="רשתות/">רשתות</a>
     </div>
     <span class="roadmap-arrow">&#8592;</span>
-    <a class="roadmap-step" href="מחקר-אנדרואיד/">מחקר אנדרואיד</a>
+    <a class="roadmap-step" href="מחקר-אנדרואיד/">מחקר ווינדוס</a>
   </div>
 </div>
 
