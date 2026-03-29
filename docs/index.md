@@ -111,7 +111,7 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>בדיקת חדירות - Penetration Testing</strong>
-<p>תקיפה חיצונית, הסלמת הרשאות, תקיפת דומיין מתקדמת</p>
+<p>תקיפה חיצונית ופנימית, הסלמת הרשאות, תקיפת דומיין מתקדמת</p>
 </div>
 </a>
 <a class="course-card" href="פריצת-אתרים-מתקדם/">
