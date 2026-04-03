@@ -50,9 +50,20 @@
 
     var path = curPath();
     var done = !!getCompleted()[path];
+    var pages = navPages();
+    var idx = pages.indexOf(path);
+    var prevPage = idx > 0 ? pages[idx - 1] : null;
+    var nextPage = idx >= 0 && idx < pages.length - 1 ? pages[idx + 1] : null;
 
     var wrap = document.createElement('div');
     wrap.className = 'complete-btn-container';
+
+    // Previous button (appears on the right in RTL)
+    var prevBtn = document.createElement('a');
+    prevBtn.className = 'nav-btn' + (prevPage ? '' : ' nav-btn-disabled');
+    prevBtn.dir = 'rtl';
+    prevBtn.innerHTML = '\u05d4\u05e7\u05d5\u05d3\u05dd \u203a';
+    if (prevPage) prevBtn.href = prevPage;
 
     var btn = document.createElement('button');
     btn.className = 'complete-btn' + (done ? ' completed' : '');
@@ -70,7 +81,16 @@
       if (d) checkCelebrate(c);
     };
 
+    // Next button (appears on the left in RTL)
+    var nextBtn = document.createElement('a');
+    nextBtn.className = 'nav-btn' + (nextPage ? '' : ' nav-btn-disabled');
+    nextBtn.dir = 'rtl';
+    nextBtn.innerHTML = '\u2039 \u05d4\u05d1\u05d0';
+    if (nextPage) nextBtn.href = nextPage;
+
+    wrap.appendChild(prevBtn);
     wrap.appendChild(btn);
+    wrap.appendChild(nextBtn);
     var el = document.querySelector('.md-content__inner');
     if (el) el.appendChild(wrap);
   }
