@@ -34,7 +34,18 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>תכנות בסיסי</strong>
+<span class="course-badge">קורס</span>
 <p>פייתון מהבסיס ועד נושאים מתקדמים, תכנות מונחה עצמים, מודולים, אלגוריתמיקה וקוד נקי</p>
+</div>
+</a>
+<a class="course-card game-card" href="pyquest/">
+<div class="course-card-img" style="background: linear-gradient(135deg, #F59E0B, #EF4444)">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+</div>
+<div class="course-card-body">
+<strong>PyQuest - משחק תכנות</strong>
+<span class="game-badge">משחק</span>
+<p>למדו פייתון תוך כדי משחק - אתגרים אינטראקטיביים שמחזקים את מה שלמדתם בקורס התכנות הבסיסי</p>
 </div>
 </a>
 <a class="course-card" href="צד-שרת/">
@@ -43,6 +54,7 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>פיתוח צד שרת - Backend</strong>
+<span class="course-badge">קורס</span>
 <p>פיתוח API עם FastAPI, מסדי נתונים, DevOps, AWS, ופיתוח JavaScript עם Node.js</p>
 </div>
 </a>
@@ -52,7 +64,18 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>פיתוח צד לקוח - Frontend</strong>
+<span class="course-badge">קורס</span>
 <p>פיתוח frontend עם React ו-Next.js</p>
+</div>
+</a>
+<a class="course-card" href="ארכיטקטורת-תוכנה/">
+<div class="course-card-img" style="background: linear-gradient(135deg, #6366F1, #EC4899)">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>
+</div>
+<div class="course-card-body">
+<strong>ארכיטקטורת תוכנה</strong>
+<span class="course-badge">קורס</span>
+<p>SOLID, תבניות עיצוב, Clean Architecture, מיקרוסרביסים, ועיצוב מערכות גדולות בקנה-מידה</p>
 </div>
 </a>
 </div>
@@ -68,6 +91,7 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>ווינדוס בסיסי</strong>
+<span class="course-badge">קורס</span>
 <p>באצ', פאוורשל, ניהול מערכת, כלי Sysinternals</p>
 </div>
 </a>
@@ -77,7 +101,18 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>לינוקס בסיסי</strong>
+<span class="course-badge">קורס</span>
 <p>טרמינל, באש, הרשאות, סקריפטים, שירותים וניהול מערכת לינוקס</p>
+</div>
+</a>
+<a class="course-card game-card" href="linuxquest/">
+<div class="course-card-img" style="background: linear-gradient(135deg, #00ff41, #0d7a3c)">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+</div>
+<div class="course-card-body">
+<strong>LinuxQuest - משחק טרמינל</strong>
+<span class="game-badge">משחק</span>
+<p>למדו לינוקס תוך כדי משחק - אתגרי טרמינל אינטראקטיביים, פקודות, סקריפטים ואבטחה</p>
 </div>
 </a>
 <a class="course-card" href="רשתות/">
@@ -86,6 +121,7 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>רשתות</strong>
+<span class="course-badge">קורס</span>
 <p>מודל OSI, פרוטוקולים, שכבת האפליקציה, האינטרנט, רשתות מנוהלות ואבטחת רשת</p>
 </div>
 </a>
@@ -102,6 +138,7 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>פריצת אתרים</strong>
+<span class="course-badge">קורס</span>
 <p>פיתוח אתרים, חולשות צד לקוח וצד שרת, הגנות והתמודדות</p>
 </div>
 </a>
@@ -111,6 +148,7 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>בדיקת חדירות - Penetration Testing</strong>
+<span class="course-badge">קורס</span>
 <p>תקיפה חיצונית ופנימית, הסלמת הרשאות, תקיפת דומיין מתקדמת</p>
 </div>
 </a>
@@ -120,6 +158,7 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>פריצת אתרים מתקדם</strong>
+<span class="course-badge">קורס</span>
 <p>חולשות מתקדמות, התמודדות מול הגנות</p>
 </div>
 </a>
@@ -136,6 +175,7 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>ליבת המחשב - Low Level</strong>
+<span class="course-badge">קורס</span>
 <p>ארגון המחשב, אסמבלי 16 ו-32 ביט, שפת C, ספריית libc, הקרנל של לינוקס, ארכיטקטורת מעבדים, ופיתוח מערכת הפעלה</p>
 </div>
 </a>
@@ -145,6 +185,7 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>מחקר ווינדוס</strong>
+<span class="course-badge">קורס</span>
 <p>מחקר סטטי ודינמי, פרידה, פאצ'ינג, חולשות נפוצות וצלילה עמוקה ל-internals</p>
 </div>
 </a>
@@ -187,6 +228,21 @@ hide:
       <a class="roadmap-step" href="צד-לקוח/">צד לקוח</a>
       <a class="roadmap-step" href="צד-שרת/">צד שרת</a>
     </div>
+  </div>
+</div>
+
+<div class="roadmap-card">
+  <div class="roadmap-title">ארכיטקט תוכנה - Software Architect</div>
+  <div class="roadmap-steps">
+    <a class="roadmap-step" href="תכנות-בסיסי/">תכנות בסיסי</a>
+    <span class="roadmap-arrow">&#8592;</span>
+    <a class="roadmap-step" href="לינוקס-בסיסי/">לינוקס בסיסי</a>
+    <span class="roadmap-arrow">&#8592;</span>
+    <div class="roadmap-parallel">
+      <a class="roadmap-step" href="צד-לקוח/">צד לקוח</a>
+      <a class="roadmap-step" href="צד-שרת/">צד שרת</a>
+    </div>
+    <a class="roadmap-step" href="ארכיטקטורת-תוכנה/">ארכיטקטורת תוכנה</a>
   </div>
 </div>
 

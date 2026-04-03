@@ -1,0 +1,145 @@
+/* ============================================================
+   ZONE 6 - Class Citadel
+   OOP: class, __init__, self, methods, static methods,
+   magic methods, encapsulation, inheritance, super(), polymorphism
+   ============================================================ */
+
+window.ZONE_6 = {
+  id: 6,
+  name: "מצודת המחלקות",
+  subtitle: "תכנות מונחה עצמים",
+  color: "#eab308",
+  boss: "הפנטום הפולימורפי",
+  encounters: [
+    {
+      id: 0,
+      name: "מבצר הבנאי",
+      isBoss: false,
+      challenges: [
+        {
+          type: "corruption_scan",
+          narrative: "למתודת מחלקה חסר self. מצא את השחיתות.",
+          code: 'class Circle:\n    def __init__(self, radius):\n        self.radius = radius\n    \n    def area():\n        return 3.14 * self.radius**2',
+          options: [
+            "area() is missing 'self' as its first parameter",
+            "__init__ should not have self",
+            "area() should be named __area__",
+            "Nothing is wrong",
+          ],
+          correct: 0,
+          explanation: "כל מתודות המופע חייבות לקבל 'self' כפרמטר ראשון. ללא זה, פייתון לא יכול להעביר את המופע למתודה. תיקון: def area(self):",
+          hint: "כל מתודת מופע בפייתון צריכה 'self' כפרמטר ראשון שלה כדי לגשת לנתוני המופע.",
+        },
+        {
+          type: "output_oracle",
+          narrative: "מחלקה נוצרת ומרובת שאילתות. מה מגלים המאפיינים שלה?",
+          code: 'class Hero:\n    def __init__(self, name, level):\n        self.name = name\n        self.level = level\n    \n    def describe(self):\n        return f"{self.name} is level {self.level}"\n\nh = Hero("Lyra", 5)\nprint(h.describe())\nprint(h.name)',
+          options: ["Lyra is level 5\nLyra", "Lyra is level 5\nHero", "Hero is level 5\nLyra", "Error"],
+          correct: 0,
+          explanation: "h = Hero('Lyra', 5) יוצר מופע עם name='Lyra' ו-level=5. h.describe() מחזיר את ה-f-string 'Lyra is level 5'. h.name ניגש למאפיין ישירות: 'Lyra'.",
+          hint: "self.name מאחסן את הערך שהועבר ל-__init__. ניתן לגשת אליו מבחוץ עם instance.name.",
+        },
+        {
+          type: "name_binding",
+          narrative: "התאם כל מתודת קסם למה שפייתון קורא לה עבורו.",
+          pairs: [
+            { term: "__str__", definition: "Called by str() and print() for human-readable output" },
+            { term: "__repr__", definition: "Called by repr() for developer-readable representation" },
+            { term: "__len__", definition: "Called by len() to get the object's length" },
+            { term: "__add__", definition: "Called by the + operator between two objects" },
+          ],
+          explanation: "__str__ היא עבור משתמשים (print), __repr__ עבור מפתחים (דיבאג), __len__ מאפשרת len(), __add__ מאפשרת את אופרטור +. אלו נקראות מתודות 'dunder' (קו תחתון כפול).",
+          hint: "חשוב מתי כל אחת מופעלת: הדפסה, חיבור, מדידת אורך, או בדיקה מפורטת.",
+        },
+        {
+          type: "spell_completion",
+          narrative: "הגדר את לחש __str__ כדי שגיבורים יוכלו להיות מודפסים בצורה קריאה.",
+          codeTemplate: 'class Hero:\n    def __init__(self, name):\n        self.name = name\n    \n    def _____(self):\n        return f"Hero: {self.name}"\n\nh = Hero("Rylan")\nprint(h)',
+          answers: ["__str__"],
+          explanation: "__str__ נקראת כאשר משתמשים ב-print() או str() על אובייקט. היא צריכה להחזיר ייצוג מחרוזת ידידותי למשתמש. ללא זה, print(h) יציג <__main__.Hero object at 0x...>.",
+          hint: "איזו מתודת קסם גורמת לאובייקט להיות מודפס בצורה נאה? היא מתחילה ומסתיימת בקו תחתון כפול.",
+        },
+      ],
+    },
+    {
+      id: 1,
+      name: "אולם הירושה",
+      isBoss: false,
+      challenges: [
+        {
+          type: "spell_completion",
+          narrative: "השלם את לחש הירושה לקישור Cat ל-Animal.",
+          codeTemplate: 'class Animal:\n    def speak(self):\n        return "..."\n\nclass Cat(___):  \n    def speak(self):\n        return "Meow"\n\nc = Cat()\nprint(c.speak())',
+          answers: ["Animal"],
+          explanation: "class Cat(Animal) גורמת ל-Cat לרשת מ-Animal. שם המחלקה ההורה נמצא בסוגריים. Cat עוקפת את speak() עם המימוש שלה.",
+          hint: "תחביר ירושה בפייתון: class ChildClass(ParentClass). שם ההורה נכנס לסוגריים.",
+        },
+        {
+          type: "output_oracle",
+          narrative: "אורקל super() מזמן את כוח ההורה. מה הוא אומר?",
+          code: 'class Animal:\n    def __init__(self, name):\n        self.name = name\n\nclass Dog(Animal):\n    def __init__(self, name, breed):\n        super().__init__(name)\n        self.breed = breed\n\nd = Dog("Rex", "Husky")\nprint(d.name, d.breed)',
+          options: ["Rex Husky", "Rex", "Husky", "Error"],
+          correct: 0,
+          explanation: "super().__init__(name) קורא ל-__init__ של Animal, קובע self.name='Rex'. לאחר מכן self.breed='Husky' מוגדר ב-__init__ של Dog. שני המאפיינים נגישים.",
+          hint: "super() קורא למתודה של המחלקה ההורה. כאן היא מאתחלת את מאפיין ה-'name' הירוש.",
+        },
+        {
+          type: "output_oracle",
+          narrative: "פולימורפיזם מאפשר למחלקות שונות לענות לאותה קריאה בצורה שונה.",
+          code: 'class Shape:\n    def area(self):\n        return 0\n\nclass Square(Shape):\n    def __init__(self, side):\n        self.side = side\n    def area(self):\n        return self.side ** 2\n\nshapes = [Shape(), Square(4)]\nfor s in shapes:\n    print(s.area())',
+          options: ["0\n16", "0\n4", "16\n0", "0\n0"],
+          correct: 0,
+          explanation: "Shape().area() מחזירה 0 (מימוש בסיסי). Square(4).area() מחזירה 4**2 = 16. פולימורפיזם: אותו שם מתודה, התנהגות שונה לפי מחלקה.",
+          hint: "כל מחלקה מספקת את המימוש שלה של area(). הטיפוס הממשי של האובייקט קובע איזה רץ.",
+        },
+        {
+          type: "corruption_scan",
+          narrative: "לפרופרטי חסר הדקורטור שלו. מצא את השחיתות.",
+          code: 'class Temperature:\n    def __init__(self, celsius):\n        self._celsius = celsius\n    \n    def fahrenheit(self):\n        return self._celsius * 9/5 + 32\n\nt = Temperature(100)\nprint(t.fahrenheit)',
+          options: [
+            "fahrenheit is missing @property decorator; t.fahrenheit calls the method without (), not the result",
+            "fahrenheit formula is wrong",
+            "_celsius should be celsius without underscore",
+            "Nothing is wrong",
+          ],
+          correct: 0,
+          explanation: "ללא @property, t.fahrenheit הוא אובייקט מתודה, לא הערך. יש לקרוא ל-t.fahrenheit() או להוסיף @property לפני def fahrenheit(self). עם @property, t.fahrenheit (ללא סוגריים) קורא למתודה.",
+          hint: "@property מאפשר לגשת למתודה כמו מאפיין, ללא סוגריים.",
+        },
+      ],
+    },
+    {
+      id: 2,
+      name: "בוס - הפנטום הפולימורפי",
+      isBoss: true,
+      challenges: [
+        {
+          type: "output_oracle",
+          narrative: "הפנטום מניף את לחש __add__. מה הוא מזמן?",
+          code: 'class Vector:\n    def __init__(self, x, y):\n        self.x = x\n        self.y = y\n    \n    def __add__(self, other):\n        return Vector(self.x + other.x, self.y + other.y)\n    \n    def __str__(self):\n        return f"({self.x}, {self.y})"\n\nv1 = Vector(1, 2)\nv2 = Vector(3, 4)\nv3 = v1 + v2\nprint(v3)',
+          options: ["(4, 6)", "(1, 2)", "(3, 4)", "Error"],
+          correct: 0,
+          explanation: "v1 + v2 קורא ל-v1.__add__(v2). הוא יוצר Vector(1+3, 2+4) = Vector(4, 6). print(v3) קורא ל-__str__, ומחזיר '(4, 6)'.",
+          hint: "v1 + v2 מפעיל __add__. התוצאה היא Vector חדש. print() מפעיל __str__.",
+        },
+        {
+          type: "spell_completion",
+          narrative: "השלם את לחש המתודה הסטטית - היא שייכת למחלקה, לא למופעים.",
+          codeTemplate: 'class MathHelper:\n    @___\n    def add(a, b):\n        return a + b\n\nprint(MathHelper.add(3, 5))',
+          answers: ["staticmethod"],
+          explanation: "@staticmethod מצהיר על מתודה שאינה מקבלת self או cls. היא שייכת למחלקה אך אינה ניגשת לנתוני מופע או מחלקה. נקראת דרך ClassName.method().",
+          hint: "הדקורטור למתודות שאינן צריכות self או cls - הן פונקציות שירות על המחלקה.",
+        },
+        {
+          type: "output_oracle",
+          narrative: "הפנטום מפעיל isinstance(). איזו אמת הוא מגלה?",
+          code: 'class Animal:\n    pass\n\nclass Dog(Animal):\n    pass\n\nclass Cat(Animal):\n    pass\n\nd = Dog()\nprint(isinstance(d, Dog))\nprint(isinstance(d, Animal))\nprint(isinstance(d, Cat))',
+          options: ["True\nTrue\nFalse", "True\nFalse\nFalse", "True\nTrue\nTrue", "False\nTrue\nFalse"],
+          correct: 0,
+          explanation: "d הוא מופע של Dog: True. d הוא גם מופע של Animal (כי Dog יורש מ-Animal): True. d אינו מופע של Cat: False. isinstance() בודק את שרשרת הירושה.",
+          hint: "isinstance() מחזיר True עבור המחלקה של האובייקט וכל מחלקות ההורה שלה (שרשרת הירושה).",
+        },
+      ],
+    },
+  ],
+};

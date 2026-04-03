@@ -1,0 +1,145 @@
+/* ============================================================
+   ZONE 4 - Recursion Spire
+   Functions: def, parameters, return, default args, *args,
+   **kwargs, scope, lambda, docstrings, type hints
+   ============================================================ */
+
+window.ZONE_4 = {
+  id: 4,
+  name: "מגדל הרקורסיה",
+  subtitle: "פונקציות",
+  color: "#3b82f6",
+  boss: "רוח הסקופ",
+  encounters: [
+    {
+      id: 0,
+      name: "מפעל הפונקציות",
+      isBoss: false,
+      challenges: [
+        {
+          type: "output_oracle",
+          narrative: "פונקציה עם ארגומנט ברירת מחדל מסתירה את סודה. חשוף אותו.",
+          code: 'def greet(name, greeting="Hello"):\n    return f"{greeting}, {name}!"\n\nprint(greet("Alice"))\nprint(greet("Bob", "Hi"))',
+          options: ["Hello, Alice!\nHi, Bob!", "Hello, Alice!\nHello, Bob!", "Alice\nBob", "Error"],
+          correct: 0,
+          explanation: "greet('Alice') משתמשת בברכת ברירת המחדל 'Hello', ומייצרת 'Hello, Alice!'. greet('Bob', 'Hi') עוקפת את ברירת המחדל עם 'Hi', ומייצרת 'Hi, Bob!'.",
+          hint: "ארגומנטי ברירת מחדל משמשים כשאין ערך שסופק. ניתן לעקוף אותם על ידי העברת ערך.",
+        },
+        {
+          type: "output_oracle",
+          narrative: "אורקל הסקופ מדבר. מה רואה העולם החיצוני?",
+          code: 'x = 10\n\ndef change():\n    x = 99\n    print("inside:", x)\n\nchange()\nprint("outside:", x)',
+          options: ["inside: 99\noutside: 10", "inside: 99\noutside: 99", "inside: 10\noutside: 10", "Error"],
+          correct: 0,
+          explanation: "בתוך change(), x = 99 יוצר משתנה לוקאלי. הוא לא משפיע על x הגלובלי = 10. ה-x החיצוני נשאר 10. כדי לשנות את x הגלובלי, נצטרך 'global x' בתוך הפונקציה.",
+          hint: "השמת משתנה בתוך פונקציה יוצרת עותק לוקאלי. המשתנה הגלובלי אינו מושפע.",
+        },
+        {
+          type: "spell_completion",
+          narrative: "השלם את לחש *args לאיסוף כל שמות הלוחמים.",
+          codeTemplate: 'def add_all(*___):\n    return sum(args)\n\nprint(add_all(1, 2, 3, 4))',
+          answers: ["args"],
+          explanation: "*args אוסף את כל הארגומנטים הפוזיציוניים לתוך טאפל. השם 'args' הוא קונבנציה אבל כל שם חוקי יעבוד. sum(args) מחבר את כל הערכים.",
+          hint: "*args הוא הקונבנציה של פייתון לרשימת ארגומנטים פוזיציוניים בעלת אורך משתנה. השם אחרי * הוא כיצד אתה מפנה אליו בפונקציה.",
+        },
+        {
+          type: "output_oracle",
+          narrative: "פונקציה מחזירה מספר ערכים. מה מגלים הרוחות שהוחזרו?",
+          code: 'def min_max(lst):\n    return min(lst), max(lst)\n\nlo, hi = min_max([3, 1, 4, 1, 5, 9])\nprint(lo, hi)',
+          options: ["1 9", "3 9", "1 5", "(1, 9)"],
+          correct: 0,
+          explanation: "פונקציות יכולות להחזיר מספר ערכים כטאפל. min([3,1,4,1,5,9])=1, max=9. ה-return הוא הטאפל (1,9) שמפורק ל-lo=1, hi=9.",
+          hint: "פונקציות פייתון יכולות להחזיר מספר ערכים, שנארזים כטאפל וניתן לפרוק אותם עם השמה מרובה.",
+        },
+      ],
+    },
+    {
+      id: 1,
+      name: "צומת הלמבדות",
+      isBoss: false,
+      challenges: [
+        {
+          type: "output_oracle",
+          narrative: "פונקציות למבדה נולדות ומשמשות בנשימה אחת. מה הן מייצרות?",
+          code: 'square = lambda x: x**2\nprint(list(map(square, [1, 2, 3, 4])))',
+          options: ["[1, 4, 9, 16]", "[2, 4, 6, 8]", "[1, 2, 3, 4]", "[1, 8, 27, 64]"],
+          correct: 0,
+          explanation: "lambda x: x**2 יוצרת פונקציה אנונימית שמרבעת את הקלט שלה. map(square, [1,2,3,4]) מחיל אותה על כל אלמנט. list() ממיר את אובייקט ה-map לרשימה: [1,4,9,16].",
+          hint: "lambda יוצרת פונקציה אנונימית קטנה. map() מחיל פונקציה על כל אלמנט של iterable.",
+        },
+        {
+          type: "corruption_scan",
+          narrative: "דקורטור שבור. מצא היכן נמצאת השחיתות.",
+          code: 'def my_decorator(func):\n    def wrapper():\n        print("Before")\n        func\n        print("After")\n    return wrapper',
+          options: [
+            "func must be called with parentheses: func()",
+            "wrapper should be called wrapper()",
+            "return wrapper should be return wrapper()",
+            "print needs f-string prefix",
+          ],
+          correct: 0,
+          explanation: "func הוא רק הפניה לפונקציה. כדי לקרוא לה בפועל, אתה צריך func(). ללא הסוגריים, אתה רק מפנה לאובייקט הפונקציה מבלי להריץ אותה.",
+          hint: "בפייתון, שם פונקציה ללא () הוא רק הפניה. כדי לקרוא/להריץ אותה, אתה צריך ().",
+        },
+        {
+          type: "name_binding",
+          narrative: "התאם כל סוג פרמטר פונקציה לתיאורו.",
+          pairs: [
+            { term: "*args", definition: "Collects extra positional arguments into a tuple" },
+            { term: "**kwargs", definition: "Collects extra keyword arguments into a dictionary" },
+            { term: "positional", definition: "Must be passed in order, by position" },
+            { term: "keyword", definition: "Passed by name, can be in any order" },
+          ],
+          explanation: "*args מאפשר לפונקציות לקבל כל מספר של ארגומנטים פוזיציוניים. **kwargs מקבל כל מספר של ארגומנטים בשם. ארגומנטים פוזיציוניים מסתמכים על סדר; ארגומנטי מילת מפתח משתמשים בשם הפרמטר.",
+          hint: "חשוב האם יש חשיבות לסדר (פוזיציוני) או לשם (מילת מפתח), והאם הכמות קבועה או משתנה.",
+        },
+        {
+          type: "spell_completion",
+          narrative: "צור למבדה שמכפילה כל מספר בשניים.",
+          codeTemplate: 'double = lambda x: x ___ 2\nprint(double(7))',
+          answers: ["*"],
+          explanation: "lambda x: x * 2 יוצרת פונקציה שמקבלת x ומחזירה x כפול 2. double(7) מחזירה 14.",
+          hint: "הכפלת מספר פירושה כפול אותו ב-2. איזה אופרטור אריתמטי עושה כפל?",
+        },
+      ],
+    },
+    {
+      id: 2,
+      name: "בוס - רוח הסקופ",
+      isBoss: true,
+      challenges: [
+        {
+          type: "output_oracle",
+          narrative: "רוח הסקופ בוחנת את הבנתך של סגירות וסקופ.",
+          code: 'def make_counter():\n    count = 0\n    def increment():\n        nonlocal count\n        count += 1\n        return count\n    return increment\n\nc = make_counter()\nprint(c())\nprint(c())\nprint(c())',
+          options: ["1\n2\n3", "0\n1\n2", "1\n1\n1", "Error"],
+          correct: 0,
+          explanation: "make_counter() מחזירה את increment, סגירה שזוכרת את 'count'. nonlocal מאפשר שינוי של משתנה מהסקופ המקיף. כל קריאה ל-c() מגדילה ומחזירה: 1, 2, 3.",
+          hint: "nonlocal מאפשר לפונקציה מקוננת לשנות משתנה מהסקופ המקיף שלה (לא גלובלי).",
+        },
+        {
+          type: "output_oracle",
+          narrative: "הרוח מניפה **kwargs. פענח את ארגומנטי מילות המפתח.",
+          code: 'def describe(**info):\n    for k, v in info.items():\n        print(f"{k}: {v}")\n\ndescribe(name="Lich", level=99, hp=9999)',
+          options: [
+            "name: Lich\nlevel: 99\nhp: 9999",
+            "{'name': 'Lich', 'level': 99, 'hp': 9999}",
+            "Lich\n99\n9999",
+            "Error",
+          ],
+          correct: 0,
+          explanation: "**info אוסף ארגומנטי מילות מפתח למילון: {'name':'Lich','level':99,'hp':9999}. items() מניב זוגות (מפתח,ערך). f-string מדפיס כל זוג.",
+          hint: "**kwargs אוסף ארגומנטי מילות מפתח למילון. items() מחזיר על זוגות מפתח-ערך.",
+        },
+        {
+          type: "spell_completion",
+          narrative: "שלח את לחש רמז הטיפוס להצהרת חתימת הפונקציה הזו.",
+          codeTemplate: 'def power(base: int, exp: ___) -> int:\n    return base ** exp\n\nprint(power(2, 8))',
+          answers: ["int"],
+          explanation: "רמזי טיפוסים משתמשים בתחביר parameter: type. exp: int מצהיר ש-exp צריך להיות מספר שלם. -> int מצהיר על סוג ה-return. רמזי טיפוסים הם אופציונליים אך משפרים את בהירות הקוד.",
+          hint: "רמזי טיפוסים משתמשים בנקודתיים אחרי שם הפרמטר. עבור מספרים שלמים, רמז הטיפוס הוא אותו דבר כמו הפרמטר לפניו.",
+        },
+      ],
+    },
+  ],
+};

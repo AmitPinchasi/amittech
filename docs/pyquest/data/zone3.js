@@ -1,0 +1,145 @@
+/* ============================================================
+   ZONE 3 - Branching Labyrinth
+   Control Flow & Loops: if/elif/else, while, for, range(),
+   break, continue, enumerate(), list comprehension
+   ============================================================ */
+
+window.ZONE_3 = {
+  id: 3,
+  name: "המבוך המסתעף",
+  subtitle: "בקרת זרימה ולולאות",
+  color: "#f97316",
+  boss: "הלולאה האינסופית",
+  encounters: [
+    {
+      id: 0,
+      name: "הצומת המסתעפת - פרשת הדרכים של התנאים",
+      isBoss: false,
+      challenges: [
+        {
+          type: "output_oracle",
+          narrative: "שלושה נתיבים מתפצלים. באיזה נתיב יבחר המטייל?",
+          code: 'x = 15\nif x > 20:\n    print("large")\nelif x > 10:\n    print("medium")\nelse:\n    print("small")',
+          options: ["medium", "large", "small", "large\nmedium"],
+          correct: 0,
+          explanation: "x=15. x>20 הוא False. x>10 הוא True, אז 'medium' מודפס. ברגע שתנאי הוא True, שאר שרשרת elif/else מדולגת.",
+          hint: "פייתון בודק תנאי if/elif בסדר, מלמעלה למטה. הוא עוצר בתנאי הראשון שהוא True.",
+        },
+        {
+          type: "spell_completion",
+          narrative: "השלם את לחש בדיקת הציון.",
+          codeTemplate: 'score = 75\nif score >= 90:\n    grade = "A"\n___ score >= 70:\n    grade = "B"\nelse:\n    grade = "C"\nprint(grade)',
+          answers: ["elif"],
+          explanation: "elif (קיצור של 'else if') בודק תנאי נוסף רק אם ה-if הקודם היה False. הוא חייב לבוא בין if ו-else.",
+          hint: "המילת המפתח שמשמעותה 'else if' בפייתון היא קיצור של שתי מילים.",
+        },
+        {
+          type: "output_oracle",
+          narrative: "תנאים מקוננים מהדהדים בכל רחבי המבוך. עקוב אחר הנתיב.",
+          code: 'x = 5\ny = 10\nif x < 10:\n    if y > 5:\n        print("both true")\n    else:\n        print("only x")\nelse:\n    print("neither")',
+          options: ["both true", "only x", "neither", "Error"],
+          correct: 0,
+          explanation: "x<10 הוא True (5<10). בפנים, y>5 הוא True (10>5). שני התנאים מתקיימים, אז 'both true' מודפס.",
+          hint: "הערך את התנאי החיצוני קודם. אם True, הערך את התנאי הפנימי.",
+        },
+        {
+          type: "name_binding",
+          narrative: "התאם כל אופרטור השוואה למשמעותו.",
+          pairs: [
+            { term: "==", definition: "Equal to - checks if two values are the same" },
+            { term: "!=", definition: "Not equal to - checks if two values differ" },
+            { term: ">=", definition: "Greater than or equal to" },
+            { term: "<=", definition: "Less than or equal to" },
+          ],
+          explanation: "אופרטורי השוואה מחזירים True או False. == בודק שוויון (לא השמה), != בודק אי-שוויון, >= ו-<= כוללים את מקרה השוויון.",
+          hint: "זכור ש-= הוא השמה, בעוד == הוא השוואה. האחרים מוסיפים בדיקות אי-שוויון.",
+        },
+      ],
+    },
+    {
+      id: 1,
+      name: "קטקומבות הלולאות",
+      isBoss: false,
+      challenges: [
+        {
+          type: "output_oracle",
+          narrative: "לולאת for עם לחש break. אילו מספרים בורחים לפני שהשער נסגר?",
+          code: 'for i in range(5):\n    if i == 3:\n        break\n    print(i)',
+          options: ["0\n1\n2", "0\n1\n2\n3", "1\n2\n3", "0\n1\n2\n3\n4"],
+          correct: 0,
+          explanation: "range(5) מייצר 0,1,2,3,4. כאשר i==3, break יוצא מהלולאה מיד. אז 0, 1, 2 מודפסים (3 ו-4 לעולם לא מגיעים).",
+          hint: "break יוצא מהלולאה מיד כאשר מבוצע. תנאי ה-break נבדק לפני print.",
+        },
+        {
+          type: "output_oracle",
+          narrative: "לולאת while עם לחש דילוג. אילו מספרים צצים מהערפל?",
+          code: 'x = 0\nwhile x < 4:\n    x += 1\n    if x == 2:\n        continue\n    print(x)',
+          options: ["1\n3\n4", "1\n2\n3\n4", "1\n3", "0\n1\n3"],
+          correct: 0,
+          explanation: "x גדל לפני הבדיקה. כאשר x==2, continue מדלג על שארית האיטרציה הזו (מדלג על print). אז אנו רואים 1, 3, 4 (2 מדולג).",
+          hint: "continue מדלג על שארית האיטרציה הנוכחית של הלולאה ועובר לאחרת.",
+        },
+        {
+          type: "output_oracle",
+          narrative: "enumerate חושף אינדקס וערך יחד. מה מופיע?",
+          code: 'heroes = ["Mira", "Zorn", "Lyra"]\nfor i, name in enumerate(heroes):\n    print(i, name)',
+          options: ["0 Mira\n1 Zorn\n2 Lyra", "1 Mira\n2 Zorn\n3 Lyra", "Mira\nZorn\nLyra", "0\n1\n2"],
+          correct: 0,
+          explanation: "enumerate() מניב זוגות (אינדקס, ערך). כברירת מחדל, האינדקסים מתחילים ב-0. אז נקבל (0,'Mira'), (1,'Zorn'), (2,'Lyra').",
+          hint: "enumerate() מספק גם את האינדקס וגם את הערך. אינדקס התחלה ברירת המחדל הוא 0.",
+        },
+        {
+          type: "spell_completion",
+          narrative: "סכם את כל המספרים מ-1 עד 4 באמצעות לולאת for.",
+          codeTemplate: 'total = 0\nfor i in range(1, 5):\n    total ___ i\nprint(total)',
+          answers: ["+="],
+          explanation: "range(1, 5) מייצר 1, 2, 3, 4. total += i מוסיף כל ערך. 0+1+2+3+4 = 10.",
+          hint: "אתה צריך אופרטור השמה מוגבר שמוסיף את הערך הנוכחי ל-total.",
+        },
+      ],
+    },
+    {
+      id: 2,
+      name: "בוס - הלולאה האינסופית",
+      isBoss: true,
+      challenges: [
+        {
+          type: "output_oracle",
+          narrative: "הבוס אורג הבנת רשימה. פענח את כוחו.",
+          code: 'squares = [x**2 for x in range(1, 6)]\nprint(squares)',
+          options: [
+            "[1, 4, 9, 16, 25]",
+            "[1, 2, 3, 4, 5]",
+            "[2, 4, 6, 8, 10]",
+            "[0, 1, 4, 9, 16]",
+          ],
+          correct: 0,
+          explanation: "הבנת רשימה [x**2 for x in range(1,6)] יוצרת רשימה של x בריבוע עבור x=1,2,3,4,5. זה נותן [1,4,9,16,25].",
+          hint: "range(1,6) מייצר 1,2,3,4,5. החל **2 על כל ערך.",
+        },
+        {
+          type: "spell_completion",
+          narrative: "הבוס דורש הבנת רשימה עם סינון - רק ריבועים זוגיים.",
+          codeTemplate: 'evens = [x for x in range(10) if ___]\nprint(evens)',
+          answers: ["x % 2 == 0"],
+          explanation: "x % 2 == 0 הוא התנאי למספרים זוגיים. הבנת הרשימה מסננת ערכי x מ-range(10) שבהם תנאי זה הוא True: [0,2,4,6,8].",
+          hint: "מספר הוא זוגי אם השארית בחילוק ב-2 שווה 0. השתמש באופרטור המודולו.",
+        },
+        {
+          type: "corruption_scan",
+          narrative: "לולאת ה-while של הבוס היא אינסופית. מצא את הרכיב החסר.",
+          code: 'count = 0\nwhile count < 5:\n    print(count)',
+          options: [
+            "count is never incremented, causing an infinite loop",
+            "while should be replaced with for",
+            "The condition should be count > 5",
+            "Nothing is wrong, it stops at 5",
+          ],
+          correct: 0,
+          explanation: "count מתחיל ב-0 ולעולם לא משתנה כי count += 1 חסר בתוך הלולאה. התנאי count < 5 נשאר True לנצח, ויוצר לולאה אינסופית.",
+          hint: "כדי שלולאת while תיעצר בסופו של דבר, התנאי חייב להפוך בסופו של דבר ל-False. מה מעדכן את המשתנה?",
+        },
+      ],
+    },
+  ],
+};

@@ -1,0 +1,151 @@
+/* ============================================================
+   ZONE 5 - Error Swamps
+   Exception Handling: try/except/else/finally, raise,
+   ValueError/TypeError/ZeroDivisionError/KeyError/IndexError
+   ============================================================ */
+
+window.ZONE_5 = {
+  id: 5,
+  name: "ביצות השגיאות",
+  subtitle: "טיפול בחריגות",
+  color: "#ef4444",
+  boss: "החריגה הבלתי מטופלת",
+  encounters: [
+    {
+      id: 0,
+      name: "ביצות ה-Try-Except",
+      isBoss: false,
+      challenges: [
+        {
+          type: "output_oracle",
+          narrative: "חלוקה באפס אורבת בביצה. מה צץ מה-try-except?",
+          code: 'try:\n    result = 10 / 0\nexcept ZeroDivisionError:\n    print("zero")\nfinally:\n    print("done")',
+          options: ["zero\ndone", "zero", "done", "Error"],
+          correct: 0,
+          explanation: "10/0 מעלה ZeroDivisionError, שנתפס על ידי except. 'zero' מודפס. finally תמיד רץ ללא קשר לחריגה, ומדפיס 'done'.",
+          hint: "finally תמיד מבוצע, בין אם הייתה חריגה ובין אם לא.",
+        },
+        {
+          type: "output_oracle",
+          narrative: "נתיב ה-try-else דרך הביצה. איזה ענף נלקח?",
+          code: 'try:\n    x = int("42")\nexcept ValueError:\n    print("invalid")\nelse:\n    print("success:", x)',
+          options: ["success: 42", "invalid", "42", "success: 42\ninvalid"],
+          correct: 0,
+          explanation: "int('42') מצליח ללא חריגה. בלוק ה-else רץ כאשר אין חריגה. אז 'success: 42' מודפס, לא 'invalid'.",
+          hint: "בלוק ה-else ב-try/except רץ רק כאשר לא הועלתה חריגה בבלוק ה-try.",
+        },
+        {
+          type: "spell_completion",
+          narrative: "תפוס את החריגה הנכונה להמרת מספר שלם לא חוקי.",
+          codeTemplate: 'try:\n    age = int(input("Age: "))\nexcept ___:\n    print("Please enter a valid number")',
+          answers: ["ValueError"],
+          explanation: "int() מעלה ValueError כאשר מקבל מחרוזת שלא ניתן להמיר למספר שלם (כמו 'abc' או 'hello'). TypeError יתרחש עבור טיפוסים שגויים (כמו None), לא מחרוזות לא חוקיות.",
+          hint: "כאשר int() מנסה להמיר מחרוזת לא מספרית, איזה סוג שגיאה ספציפי הוא מעלה?",
+        },
+        {
+          type: "name_binding",
+          narrative: "התאם כל סוג חריגה למה שגורם לה.",
+          pairs: [
+            { term: "TypeError", definition: "Operation applied to wrong type, like len(42)" },
+            { term: "ValueError", definition: "Correct type but invalid value, like int('abc')" },
+            { term: "IndexError", definition: "Accessing list/sequence index out of range" },
+            { term: "KeyError", definition: "Accessing a dictionary key that does not exist" },
+          ],
+          explanation: "TypeError עוסק בטיפוסים שגויים, ValueError בערכים לא חוקיים עבור הטיפוס, IndexError בגישה לאינדקס מחוץ לטווח, ו-KeyError במפתחות מילון חסרים.",
+          hint: "חשוב מה לא בסדר: הטיפוס עצמו, תקינות הערך, המיקום, או מפתח החיפוש.",
+        },
+      ],
+    },
+    {
+      id: 1,
+      name: "חורבות ה-Raise וההתאוששות",
+      isBoss: false,
+      challenges: [
+        {
+          type: "output_oracle",
+          narrative: "שגיאה מותאמת עולה מן הבוץ. עקוב אחר מסלולה.",
+          code: 'def check_age(age):\n    if age < 0:\n        raise ValueError("Age cannot be negative")\n    return age\n\ntry:\n    print(check_age(-5))\nexcept ValueError as e:\n    print("Caught:", str(e))',
+          options: [
+            "Caught: Age cannot be negative",
+            "Age cannot be negative",
+            "-5",
+            "Error",
+          ],
+          correct: 0,
+          explanation: "check_age(-5) מעלה ValueError. בלוק ה-except תופס אותה. 'as e' קושר את אובייקט החריגה ל-e. str(e) נותן את הודעת השגיאה: 'Age cannot be negative'.",
+          hint: "'raise' מפעיל חריגה ידנית. 'as e' לוכד את אובייקט החריגה כך שניתן לגשת להודעתו.",
+        },
+        {
+          type: "corruption_scan",
+          narrative: "מטפל החריגות הזה תופס את השגיאה הלא נכונה. מצא את השחיתות.",
+          code: 'try:\n    result = int("abc")\nexcept TypeError:\n    print("Type error caught")',
+          options: [
+            "int('abc') raises ValueError, not TypeError",
+            "int() cannot be used in a try block",
+            "except needs no argument for this error",
+            "Nothing is wrong",
+          ],
+          correct: 0,
+          explanation: "int('abc') מעלה ValueError (ספרה לא חוקית ל-int). בלוק except TypeError לא יתפוס אותה. החריגה תתפשט ללא טיפול. תיקון: except ValueError.",
+          hint: "int() עם מחרוזת לא מספרית מעלה ValueError, לא TypeError. TypeError הוא עבור טיפוס שגוי של ארגומנט.",
+        },
+        {
+          type: "output_oracle",
+          narrative: "חריגות מרובות ניתן לתפוס בבלוק אחד. מה צץ?",
+          code: 'errors = [ZeroDivisionError, ValueError, KeyError]\nfor ErrorType in errors:\n    try:\n        raise ErrorType("test")\n    except (ZeroDivisionError, ValueError):\n        print("handled")\n    except KeyError:\n        print("key error")',
+          options: ["handled\nhandled\nkey error", "handled\nhandled\nhandled", "Error", "test\ntest\ntest"],
+          correct: 0,
+          explanation: "ZeroDivisionError ו-ValueError שניהם נתפסים על ידי ה-except הראשון (טאפל של חריגות). KeyError נתפס על ידי ה-except השני. פלט: 'handled', 'handled', 'key error'.",
+          hint: "טאפל של סוגי חריגות בסוגריים תופס כל אחד מהטיפוסים האלה בענף except אחד.",
+        },
+        {
+          type: "spell_completion",
+          narrative: "השלם את פונקציית האימות שמעלה את השגיאה הנכונה.",
+          codeTemplate: 'def validate_score(score):\n    if not isinstance(score, int):\n        raise ___(\"Score must be an integer\")\n    if score < 0 or score > 100:\n        raise ValueError("Score out of range")\n    return score',
+          answers: ["TypeError"],
+          explanation: "כאשר הטיפוס הלא נכון מועבר (למשל מחרוזת במקום int), אנו מעלים TypeError. כאשר הערך הוא הטיפוס הנכון אך לא חוקי (מחוץ לטווח 0-100), ValueError מתאים.",
+          hint: "איזו חריגה מציינת שהטיפוס של הארגומנט שגוי ולא הערך עצמו?",
+        },
+      ],
+    },
+    {
+      id: 2,
+      name: "בוס - החריגה הבלתי מטופלת",
+      isBoss: true,
+      challenges: [
+        {
+          type: "output_oracle",
+          narrative: "הבוס מערים בלוקי try. עקוב אחר החריגה דרך השכבות.",
+          code: 'def outer():\n    try:\n        inner()\n    except ValueError:\n        print("outer caught")\n\ndef inner():\n    raise ValueError("from inner")\n\nouter()',
+          options: ["outer caught", "from inner", "Error uncaught", "inner caught"],
+          correct: 0,
+          explanation: "inner() מעלה ValueError. מכיוון ש-inner() אין try/except, היא מתפשטת ל-outer(). ל-outer() יש except ValueError, שתופס אותה. 'outer caught' מודפס.",
+          hint: "אם פונקציה לא תופסת חריגה, היא מתפשטת למעלה בשרשרת הקריאות לפונקציה הקוראת.",
+        },
+        {
+          type: "output_oracle",
+          narrative: "הבוס בוחן את ערבות ה-finally. מה הפלט כאשר מתרחשת חריגה?",
+          code: 'def risky():\n    try:\n        x = 1 / 0\n        return "success"\n    except ZeroDivisionError:\n        return "caught"\n    finally:\n        print("cleanup")\n\nprint(risky())',
+          options: ["cleanup\ncaught", "caught\ncleanup", "cleanup", "caught"],
+          correct: 0,
+          explanation: "ZeroDivisionError נתפס, קובע את ערך ה-return ל-'caught'. אבל finally רץ לפני שהפונקציה חוזרת בפועל. אז 'cleanup' מודפס ראשון, ואז 'caught'.",
+          hint: "finally תמיד רץ לפני שהפונקציה חוזרת, אפילו אם יש משפט return ב-except.",
+        },
+        {
+          type: "corruption_scan",
+          narrative: "אימות הקלט של הבוס שותק בצורה מסוכנת. מצא את השחיתות.",
+          code: 'def safe_divide(a, b):\n    try:\n        return a / b\n    except:\n        pass',
+          options: [
+            "Bare except catches ALL exceptions silently, hiding real bugs",
+            "pass should be return None",
+            "The function needs a finally block",
+            "Nothing is wrong",
+          ],
+          correct: 0,
+          explanation: "except: רחב תופס את כל החריגות כולל SystemExit ו-KeyboardInterrupt. שימוש ב-pass מתעלם בשקט מהשגיאות. זה מסוכן. תמיד תפוס חריגות ספציפיות.",
+          hint: "מה הבעיה בתפיסת כל החריגות בשקט? אילו חריגות עלולות להסתתר?",
+        },
+      ],
+    },
+  ],
+};
