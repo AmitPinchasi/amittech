@@ -1,0 +1,156 @@
+/* ============================================================
+   ZONE 8 - Recursive Abyss
+   Algorithmics: recursion, linked lists, stacks, queues,
+   binary search, sorting algorithms, O-notation
+   ============================================================ */
+
+window.ZONE_8 = {
+  id: 8,
+  name: "תהום הרקורסיה",
+  subtitle: "אלגוריתמיקה",
+  color: "#7c3aed",
+  boss: "רוח ה-Stack Overflow",
+  encounters: [
+    {
+      id: 0,
+      name: "קרע הרקורסיה",
+      isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/10 - אלגוריתמיקה/10.2 - רשימה מקושרת ורקורסיה/10.2 - רשימה מקושרת ורקורסיה - הרצאה/",
+      challenges: [
+        {
+          type: "output_oracle",
+          narrative: "פקטוריאל יורד אל תוך עצמו. איזה מספר עולה מהתהום?",
+          code: 'def factorial(n):\n    if n == 0:\n        return 1\n    return n * factorial(n - 1)\n\nprint(factorial(4))',
+          options: ["24", "4", "10", "12"],
+          correct: 0,
+          explanation: "factorial(4) = 4 * factorial(3) = 4 * 3 * factorial(2) = 4 * 3 * 2 * factorial(1) = 4*3*2*1*factorial(0) = 4*3*2*1*1 = 24.",
+          hint: "עקוב אחר הרקורסיה: factorial(4) = 4 * factorial(3). המשך עד ש-n==0.",
+        },
+        {
+          type: "output_oracle",
+          narrative: "פיבונאצ'י מסתחרר דרך הזמן. מה המספר ה-6 בסדרה?",
+          code: 'def fib(n):\n    if n <= 1:\n        return n\n    return fib(n-1) + fib(n-2)\n\nprint(fib(6))',
+          options: ["8", "13", "5", "6"],
+          correct: 0,
+          explanation: "פיבונאצ'י: 0,1,1,2,3,5,8,13... fib(0)=0, fib(1)=1, fib(2)=1, fib(3)=2, fib(4)=3, fib(5)=5, fib(6)=8.",
+          hint: "fib(6) = fib(5) + fib(4). סדרת פיבונאצ'י: 0,1,1,2,3,5,8...",
+        },
+        {
+          type: "corruption_scan",
+          narrative: "לפונקציה הרקורסיבית הזו יש פגם קטלני. מה היא תעשה?",
+          code: 'def countdown(n):\n    print(n)\n    countdown(n - 1)',
+          options: [
+            "No base case - will recurse infinitely until RecursionError",
+            "countdown should use a while loop instead",
+            "print should come after the recursive call",
+            "Nothing is wrong",
+          ],
+          correct: 0,
+          explanation: "כל פונקציה רקורסיבית חייבת להכיל מקרה בסיס שעוצר את הרקורסיה. ללא 'if n <= 0: return', היא תקרא לעצמה לנצח עד שפייתון יעלה RecursionError (עומק רקורסיה מקסימלי חרג).",
+          hint: "מה מונע מפונקציה רקורסיבית לקרוא לעצמה לנצח?",
+        },
+        {
+          type: "name_binding",
+          narrative: "התאם כל מושג רקורסיה להגדרתו.",
+          pairs: [
+            { term: "base case", definition: "The condition that stops the recursion" },
+            { term: "recursive case", definition: "The case where the function calls itself" },
+            { term: "call stack", definition: "Memory structure tracking active function calls" },
+            { term: "stack overflow", definition: "Error when recursion depth exceeds the limit" },
+          ],
+          explanation: "מקרה בסיס עוצר את הרקורסיה. מקרה רקורסיבי מצמצם את הבעיה. מחסנית הקריאות עוקבת אחר קריאות ממתינות. Stack overflow (RecursionError בפייתון) קורה ללא מקרי בסיס נכונים.",
+          hint: "חשוב מה מתחיל, ממשיך ועוצר את הרקורסיה, ומה מחזיק את כל הקריאות הממתינות.",
+        },
+      ],
+    },
+    {
+      id: 1,
+      name: "מבצר המחסנית והתור",
+      isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/10 - אלגוריתמיקה/10.3 - מחסנית ותור/10.3 - מחסנית ותור - הרצאה/",
+      challenges: [
+        {
+          type: "spell_completion",
+          narrative: "השלם את מתודת ה-push של ה-Stack - LIFO: Last In, First Out.",
+          codeTemplate: 'class Stack:\n    def __init__(self):\n        self.items = []\n    \n    def push(self, x):\n        self.items.___(x)\n\ns = Stack()\ns.push(1)\ns.push(2)\nprint(s.items)',
+          answers: ["append"],
+          explanation: "פעולת ה-push של מחסנית מוסיפה לראש (סוף הרשימה): self.items.append(x). זה LIFO: הפריט האחרון שנדחף יהיה הראשון שיישלף.",
+          hint: "מחסנית מוסיפה לסוף הרשימה. איזו מתודת רשימה מוסיפה אלמנט לסוף?",
+        },
+        {
+          type: "output_oracle",
+          narrative: "תור הוא FIFO - First In, First Out. מה צץ מה-dequeue?",
+          code: 'from collections import deque\nqueue = deque()\nqueue.append("first")\nqueue.append("second")\nqueue.append("third")\nprint(queue.popleft())\nprint(queue.popleft())',
+          options: ["first\nsecond", "third\nsecond", "first\nthird", "third\nfirst"],
+          correct: 0,
+          explanation: "deque הוא התור היעיל של פייתון. append() מוסיף לימין (סוף). popleft() מסיר משמאל (קדמה). FIFO: ראשון נכנס, ראשון יוצא. 'first' נוסף ראשון, כך הוא יוצא ראשון.",
+          hint: "FIFO = First In, First Out. הפריט הראשון שנוסף הוא הראשון שמוסר.",
+        },
+        {
+          type: "output_oracle",
+          narrative: "חיפוש בינארי ציד דרך רשימה ממוינת. איזה אינדקס הוא מוצא?",
+          code: 'def binary_search(lst, target):\n    lo, hi = 0, len(lst) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if lst[mid] == target:\n            return mid\n        elif lst[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1\n\nprint(binary_search([1, 3, 5, 7, 9, 11], 7))',
+          options: ["3", "4", "7", "2"],
+          correct: 0,
+          explanation: "רשימה: [1,3,5,7,9,11]. יעד: 7. mid=(0+5)//2=2, lst[2]=5<7, lo=3. mid=(3+5)//2=4, lst[4]=9>7, hi=3. mid=(3+3)//2=3, lst[3]=7==7, מחזיר 3.",
+          hint: "חיפוש בינארי מוצא את האלמנט האמצעי וזורק חצי מהרשימה בכל צעד. 7 נמצא באינדקס 3.",
+        },
+        {
+          type: "name_binding",
+          narrative: "התאם כל מבנה נתונים לתבנית הגישה שלו.",
+          pairs: [
+            { term: "stack", definition: "LIFO - Last In, First Out" },
+            { term: "queue", definition: "FIFO - First In, First Out" },
+            { term: "linked list", definition: "Nodes where each points to the next node" },
+            { term: "array", definition: "Fixed-size, contiguous memory, O(1) random access" },
+          ],
+          explanation: "מחסניות (LIFO) הן כמו ערימת צלחות. תורים (FIFO) הם כמו תור. רשימות מקושרות מחברות צמתים עם מצביעים. מערכים מאחסנים אלמנטים ברצף לגישה מהירה.",
+          hint: "חשוב מאיזה קצה פריטים נוספים/מוסרים, וכיצד אלמנטים מאוחסנים פיזית.",
+        },
+      ],
+    },
+    {
+      id: 2,
+      name: "בוס - רוח ה-Stack Overflow",
+      isBoss: true,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/10 - אלגוריתמיקה/10.4 - עצים ומיון/10.4 - עצים ומיון - הרצאה/",
+      challenges: [
+        {
+          type: "output_oracle",
+          narrative: "הבוס מזמן מיזוג מיון. מה הוא מייצר מהכאוס?",
+          code: 'def merge_sort(lst):\n    if len(lst) <= 1:\n        return lst\n    mid = len(lst) // 2\n    left = merge_sort(lst[:mid])\n    right = merge_sort(lst[mid:])\n    result = []\n    i = j = 0\n    while i < len(left) and j < len(right):\n        if left[i] <= right[j]:\n            result.append(left[i]); i += 1\n        else:\n            result.append(right[j]); j += 1\n    result += left[i:]\n    result += right[j:]\n    return result\n\nprint(merge_sort([5, 2, 8, 1, 9]))',
+          options: ["[1, 2, 5, 8, 9]", "[9, 8, 5, 2, 1]", "[5, 2, 8, 1, 9]", "[1, 5, 2, 8, 9]"],
+          correct: 0,
+          explanation: "מיון מיזוג מפצל רקורסיבית את הרשימה לחצאים, ממיין כל חצי, וממזג אותם בסדר. [5,2,8,1,9] הופך ל-[1,2,5,8,9].",
+          hint: "מיון מיזוג תמיד מייצר רשימה ממוינת. הוא מפצל לחצאים וממזג בסדר.",
+        },
+        {
+          type: "name_binding",
+          narrative: "התאם כל אלגוריתם למורכבות הזמן שלו.",
+          pairs: [
+            { term: "Binary Search", definition: "O(log n) - halves the search space each step" },
+            { term: "Bubble Sort", definition: "O(n^2) - compares adjacent pairs repeatedly" },
+            { term: "Merge Sort", definition: "O(n log n) - divide and conquer sorting" },
+            { term: "Linear Search", definition: "O(n) - checks each element once" },
+          ],
+          explanation: "חיפוש בינארי הוא O(log n). חיפוש לינארי הוא O(n). מיון בועות הוא O(n^2) - איטי מאד. מיון מיזוג הוא O(n log n) - מיון יעיל מבוסס השוואה.",
+          hint: "חשוב כמה פעולות גדלות עם n. חצוי = log n. מעבר אחד = n. לולאות מקוננות = n^2.",
+        },
+        {
+          type: "corruption_scan",
+          narrative: "לחציית רשימה מקושרת יש פגם. מה יעשה הקוד הזה?",
+          code: 'class Node:\n    def __init__(self, val):\n        self.val = val\n        self.next = None\n\ndef traverse(head):\n    while head:\n        print(head.val)\n        head = head',
+          options: [
+            "head = head never advances to head.next, causing infinite loop",
+            "head should be named node",
+            "print should use repr(head.val)",
+            "Nothing is wrong",
+          ],
+          correct: 0,
+          explanation: "head = head שומר על אותו צומת לנצח. הוא צריך להיות head = head.next כדי לעבור לצומת הבא. ללא זה, הלולאה לעולם לא מסתיימת.",
+          hint: "כדי לחצות רשימה מקושרת, יש להתקדם את המצביע לצומת הבא בכל איטרציה.",
+        },
+      ],
+    },
+  ],
+};
