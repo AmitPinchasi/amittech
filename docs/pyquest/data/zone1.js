@@ -15,6 +15,7 @@ window.ZONE_1 = {
       id: 0,
       name: "עומקי האריתמטיקה",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/1 - פייתון בסיסי/1.2 - בסיס הבסיס/1.2 - בסיס הבסיס - הרצאה/",
       challenges: [
         {
           type: "output_oracle",
@@ -57,6 +58,7 @@ window.ZONE_1 = {
       id: 1,
       name: "פונדק הטיפוסים",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/1 - פייתון בסיסי/1.3 - מבני נתונים/1.3 - מבני נתונים - הרצאה/",
       challenges: [
         {
           type: "output_oracle",
@@ -112,6 +114,7 @@ window.ZONE_1 = {
       id: 2,
       name: "בוס - אימת הטיפוסים",
       isBoss: true,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/1 - פייתון בסיסי/1.2 - בסיס הבסיס/1.2 - בסיס הבסיס - הרצאה/",
       challenges: [
         {
           type: "output_oracle",

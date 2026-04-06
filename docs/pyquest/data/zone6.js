@@ -15,6 +15,7 @@ window.ZONE_6 = {
       id: 0,
       name: "מבצר הבנאי",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/5 - תכנות מונחה עצמים/5.3 - מתודות קסם/5.3 - מתודות קסם - הרצאה/",
       challenges: [
         {
           type: "corruption_scan",
@@ -65,6 +66,7 @@ window.ZONE_6 = {
       id: 1,
       name: "אולם הירושה",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/5 - תכנות מונחה עצמים/5.5 - הורשה/5.5 - הורשה - הרצאה/",
       challenges: [
         {
           type: "spell_completion",
@@ -112,6 +114,7 @@ window.ZONE_6 = {
       id: 2,
       name: "בוס - הפנטום הפולימורפי",
       isBoss: true,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/5 - תכנות מונחה עצמים/5.3 - מתודות קסם/5.3 - מתודות קסם - הרצאה/",
       challenges: [
         {
           type: "output_oracle",

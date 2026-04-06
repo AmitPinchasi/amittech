@@ -9,6 +9,7 @@ window.ZONE_5 = {
       id: 0,
       name: "עין התהליכים",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.6 - ג'ובים/1.6 - ג'ובים - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",
@@ -77,6 +78,7 @@ window.ZONE_5 = {
       id: 1,
       name: "שפת האותות",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.6 - ג'ובים/1.6 - ג'ובים - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",
@@ -145,6 +147,7 @@ window.ZONE_5 = {
       id: 2,
       name: "בוס - צבא הזומבים",
       isBoss: true,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.6 - ג'ובים/1.6 - ג'ובים - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",

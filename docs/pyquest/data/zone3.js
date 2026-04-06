@@ -15,6 +15,7 @@ window.ZONE_3 = {
       id: 0,
       name: "הצומת המסתעפת - פרשת הדרכים של התנאים",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/2 - בקרת זרימה ולולאות/2.1 - בקרת זרימה/2.1 - בקרת זרימה - הרצאה/",
       challenges: [
         {
           type: "output_oracle",
@@ -60,6 +61,7 @@ window.ZONE_3 = {
       id: 1,
       name: "קטקומבות הלולאות",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/2 - בקרת זרימה ולולאות/2.2 - לולאות/2.2 - לולאות - הרצאה/",
       challenges: [
         {
           type: "output_oracle",
@@ -102,6 +104,7 @@ window.ZONE_3 = {
       id: 2,
       name: "בוס - הלולאה האינסופית",
       isBoss: true,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/2 - בקרת זרימה ולולאות/2.2 - לולאות/2.2 - לולאות - הרצאה/",
       challenges: [
         {
           type: "output_oracle",

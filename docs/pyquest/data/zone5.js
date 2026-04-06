@@ -15,6 +15,7 @@ window.ZONE_5 = {
       id: 0,
       name: "ביצות ה-Try-Except",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/3 - ארגון קוד/3.4 - טיפול בשגיאות/3.4 - טיפול בשגיאות - הרצאה/",
       challenges: [
         {
           type: "output_oracle",
@@ -60,6 +61,7 @@ window.ZONE_5 = {
       id: 1,
       name: "חורבות ה-Raise וההתאוששות",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/3 - ארגון קוד/3.4 - טיפול בשגיאות/3.4 - טיפול בשגיאות - הרצאה/",
       challenges: [
         {
           type: "output_oracle",
@@ -112,6 +114,7 @@ window.ZONE_5 = {
       id: 2,
       name: "בוס - החריגה הבלתי מטופלת",
       isBoss: true,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/3 - ארגון קוד/3.4 - טיפול בשגיאות/3.4 - טיפול בשגיאות - הרצאה/",
       challenges: [
         {
           type: "output_oracle",

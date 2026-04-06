@@ -36,6 +36,16 @@ function renderChallenge(challenge, zoneId, hintState) {
 
   updateHintButton(hintState);
 
+  const lecLink = document.getElementById('lecture-link');
+  if (lecLink) {
+    if (hintState.lectureUrl) {
+      lecLink.href = hintState.lectureUrl;
+      lecLink.classList.remove('hidden');
+    } else {
+      lecLink.classList.add('hidden');
+    }
+  }
+
   const hintBox = document.getElementById('hint-box');
   hintBox.classList.add('hidden');
   document.getElementById('hint-text').textContent = '';

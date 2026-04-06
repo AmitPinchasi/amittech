@@ -109,6 +109,7 @@ function showNextChallenge() {
   renderChallenge(challenge, state.zoneId, {
     hintsLeft: state.hintsLeft,
     hintUsed: false,
+    lectureUrl: encounter.lectureUrl || null,
   });
 
   navigateTo('screen-challenge');

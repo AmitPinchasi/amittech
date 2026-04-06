@@ -15,6 +15,7 @@ window.ZONE_8 = {
       id: 0,
       name: "קרע הרקורסיה",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/10 - אלגוריתמיקה/10.2 - רשימה מקושרת ורקורסיה/10.2 - רשימה מקושרת ורקורסיה - הרצאה/",
       challenges: [
         {
           type: "output_oracle",
@@ -66,6 +67,7 @@ window.ZONE_8 = {
       id: 1,
       name: "מבצר המחסנית והתור",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/10 - אלגוריתמיקה/10.3 - מחסנית ותור/10.3 - מחסנית ותור - הרצאה/",
       challenges: [
         {
           type: "spell_completion",
@@ -111,6 +113,7 @@ window.ZONE_8 = {
       id: 2,
       name: "בוס - רוח ה-Stack Overflow",
       isBoss: true,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/10 - אלגוריתמיקה/10.4 - עצים ומיון/10.4 - עצים ומיון - הרצאה/",
       challenges: [
         {
           type: "output_oracle",

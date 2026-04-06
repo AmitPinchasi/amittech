@@ -9,6 +9,7 @@ window.ZONE_0 = {
       id: 0,
       name: "מי אני?",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.1 - באש בסיסי/1.1 - באש בסיסי - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",
@@ -59,6 +60,7 @@ window.ZONE_0 = {
       id: 1,
       name: "מדריך ההישרדות",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.1 - באש בסיסי/1.1 - באש בסיסי - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",
@@ -111,6 +113,7 @@ window.ZONE_0 = {
       id: 2,
       name: "בוס - המערכת הרפאים",
       isBoss: true,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.1 - באש בסיסי/1.1 - באש בסיסי - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",

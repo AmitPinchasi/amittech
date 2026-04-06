@@ -15,6 +15,7 @@ window.ZONE_7 = {
       id: 0,
       name: "כספות os ו-sys",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/6 - מודולים/6.3 - מודולים מובנים שימושיים/6.3 - מודולים מובנים שימושיים - הרצאה/",
       challenges: [
         {
           type: "corruption_scan",
@@ -65,6 +66,7 @@ window.ZONE_7 = {
       id: 1,
       name: "מקדש json ו-datetime",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/6 - מודולים/6.7 - ג'סון, ובקשות/6.7 - ג'סון, ובקשות - הרצאה/",
       challenges: [
         {
           type: "spell_completion",
@@ -112,6 +114,7 @@ window.ZONE_7 = {
       id: 2,
       name: "בוס - שד התלויות",
       isBoss: true,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/3 - ארגון קוד/3.5 - מודולים/3.5 - מודולים - הרצאה/",
       challenges: [
         {
           type: "output_oracle",

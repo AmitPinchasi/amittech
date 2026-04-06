@@ -9,6 +9,7 @@ window.ZONE_1 = {
       id: 0,
       name: "מפת הקבצים",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.2 - ניווט בקבצים/1.2 - ניווט בקבצים - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",
@@ -60,6 +61,7 @@ window.ZONE_1 = {
       id: 1,
       name: "בית הקבצים",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.2 - ניווט בקבצים/1.2 - ניווט בקבצים - הרצאה/",
       challenges: [
         {
           type: "command_forge",
@@ -108,6 +110,7 @@ window.ZONE_1 = {
       id: 2,
       name: "בוס - שד הכאוס",
       isBoss: true,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.2 - ניווט בקבצים/1.2 - ניווט בקבצים - הרצאה/",
       challenges: [
         {
           type: "command_forge",

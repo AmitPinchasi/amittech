@@ -9,6 +9,7 @@ window.ZONE_8 = {
       id: 0,
       name: "שליטה בשירותים",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/2 - ניהול המערכת/2.1 - שירותים ולוגים/2.1 - שירותים ולוגים - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",
@@ -80,6 +81,7 @@ window.ZONE_8 = {
       id: 1,
       name: "קריאת הלוגים",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/2 - ניהול המערכת/2.2 - מנהל חבילות/2.2 - מנהל חבילות - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",
@@ -151,6 +153,7 @@ window.ZONE_8 = {
       id: 2,
       name: "בוס - השירות הנכשל",
       isBoss: true,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/2 - ניהול המערכת/2.1 - שירותים ולוגים/2.1 - שירותים ולוגים - הרצאה/",
       challenges: [
         {
           type: "pipe_builder",

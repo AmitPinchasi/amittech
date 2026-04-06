@@ -9,6 +9,7 @@ window.ZONE_6 = {
       id: 0,
       name: "הסקריפט הראשון",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.7 - סקריפטים/1.7 - סקריפטים - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",
@@ -77,6 +78,7 @@ window.ZONE_6 = {
       id: 1,
       name: "זרימת שליטה",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.7 - סקריפטים/1.7 - סקריפטים - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",
@@ -145,6 +147,7 @@ window.ZONE_6 = {
       id: 2,
       name: "בוס - שגיאת הלוגיקה",
       isBoss: true,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.7 - סקריפטים/1.7 - סקריפטים - הרצאה/",
       challenges: [
         {
           type: "script_debug",

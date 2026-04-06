@@ -9,6 +9,7 @@ window.ZONE_9 = {
       id: 0,
       name: "אנטומיית לינוקס",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/2 - ניהול המערכת/2.3 - מערכת הקבצים/2.3 - מערכת הקבצים - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",
@@ -78,6 +79,7 @@ window.ZONE_9 = {
       id: 1,
       name: "דיסקים וצירופים",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/2 - ניהול המערכת/2.3 - מערכת הקבצים/2.3 - מערכת הקבצים - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",
@@ -146,6 +148,7 @@ window.ZONE_9 = {
       id: 2,
       name: "בוס - תולעת השורש",
       isBoss: true,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/2 - ניהול המערכת/2.3 - מערכת הקבצים/2.3 - מערכת הקבצים - הרצאה/",
       challenges: [
         {
           type: "pipe_builder",

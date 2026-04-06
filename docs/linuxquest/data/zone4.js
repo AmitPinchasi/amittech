@@ -9,6 +9,7 @@ window.ZONE_4 = {
       id: 0,
       name: "ציד הדפוסים",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.5 - פקודות מתקדמות/1.5 - פקודות מתקדמות - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",
@@ -71,6 +72,7 @@ window.ZONE_4 = {
       id: 1,
       name: "אלכימיית הטקסט",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.5 - פקודות מתקדמות/1.5 - פקודות מתקדמות - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",
@@ -129,6 +131,7 @@ window.ZONE_4 = {
       id: 2,
       name: "בוס - שד הלוגים",
       isBoss: true,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.5 - פקודות מתקדמות/1.5 - פקודות מתקדמות - הרצאה/",
       challenges: [
         {
           type: "pipe_builder",

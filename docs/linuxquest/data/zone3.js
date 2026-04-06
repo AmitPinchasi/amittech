@@ -9,6 +9,7 @@ window.ZONE_3 = {
       id: 0,
       name: "ממלכת הזהות",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.4 - הרשאות בלינוקס/1.4 - הרשאות בלינוקס - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",
@@ -69,6 +70,7 @@ window.ZONE_3 = {
       id: 1,
       name: "שפת ההרשאות",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.4 - הרשאות בלינוקס/1.4 - הרשאות בלינוקס - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",
@@ -130,6 +132,7 @@ window.ZONE_3 = {
       id: 2,
       name: "בוס - רוח ההרשאות",
       isBoss: true,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.4 - הרשאות בלינוקס/1.4 - הרשאות בלינוקס - הרצאה/",
       challenges: [
         {
           type: "pipe_builder",

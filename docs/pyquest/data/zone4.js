@@ -15,6 +15,7 @@ window.ZONE_4 = {
       id: 0,
       name: "מפעל הפונקציות",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/3 - ארגון קוד/3.2 - פרמטרים לפונקציות/3.2 - פרמטרים לפונקציות - הרצאה/",
       challenges: [
         {
           type: "output_oracle",
@@ -57,6 +58,7 @@ window.ZONE_4 = {
       id: 1,
       name: "צומת הלמבדות",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/3 - ארגון קוד/3.3 - למבדה, דקורטור, וגנרטור/3.3 - למבדה, דקורטור, וגנרטור - הרצאה/",
       challenges: [
         {
           type: "output_oracle",
@@ -107,6 +109,7 @@ window.ZONE_4 = {
       id: 2,
       name: "בוס - רוח הסקופ",
       isBoss: true,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/4 - עליית רמה/4.3 - סקופ/4.3 - סקופ - הרצאה/",
       challenges: [
         {
           type: "output_oracle",

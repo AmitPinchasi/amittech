@@ -9,6 +9,7 @@ window.ZONE_7 = {
       id: 0,
       name: "דקדוק הזמן",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.8 - משימות מתוזמנות/1.8 - משימות מתוזמנות - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",
@@ -73,6 +74,7 @@ window.ZONE_7 = {
       id: 1,
       name: "תבניות לוח הזמנים",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.8 - משימות מתוזמנות/1.8 - משימות מתוזמנות - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",
@@ -135,6 +137,7 @@ window.ZONE_7 = {
       id: 2,
       name: "בוס - כאוס חצות",
       isBoss: true,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.8 - משימות מתוזמנות/1.8 - משימות מתוזמנות - הרצאה/",
       challenges: [
         {
           type: "script_debug",

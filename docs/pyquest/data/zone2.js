@@ -15,6 +15,7 @@ window.ZONE_2 = {
       id: 0,
       name: "אבני הטקסט - מחרוזות הנטיפים",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/1 - פייתון בסיסי/1.3 - מבני נתונים/1.3 - מבני נתונים - הרצאה/",
       challenges: [
         {
           type: "output_oracle",
@@ -57,6 +58,7 @@ window.ZONE_2 = {
       id: 1,
       name: "מבוך הרשימות",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/1 - פייתון בסיסי/1.3 - מבני נתונים/1.3 - מבני נתונים - הרצאה/",
       challenges: [
         {
           type: "output_oracle",
@@ -112,6 +114,7 @@ window.ZONE_2 = {
       id: 2,
       name: "בוס - אשליית השינוי",
       isBoss: true,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/1 - פייתון בסיסי/1.3 - מבני נתונים/1.3 - מבני נתונים - הרצאה/",
       challenges: [
         {
           type: "output_oracle",

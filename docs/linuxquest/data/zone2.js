@@ -9,6 +9,7 @@ window.ZONE_2 = {
       id: 0,
       name: "חנות המשתנים",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.3 - אז מה זה באש/1.3 - אז מה זה באש - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",
@@ -59,6 +60,7 @@ window.ZONE_2 = {
       id: 1,
       name: "זרמי הנתונים",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.3 - אז מה זה באש/1.3 - אז מה זה באש - הרצאה/",
       challenges: [
         {
           type: "terminal_oracle",
@@ -112,6 +114,7 @@ window.ZONE_2 = {
       id: 2,
       name: "בוס - הצינור השבור",
       isBoss: true,
+      lectureUrl: "https://amittech.dev/לינוקס-בסיסי/1 - טרמינל/1.3 - אז מה זה באש/1.3 - אז מה זה באש - הרצאה/",
       challenges: [
         {
           type: "script_debug",

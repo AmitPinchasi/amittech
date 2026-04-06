@@ -15,6 +15,7 @@ window.ZONE_0 = {
       id: 0,
       name: "אור ראשון - התעוררות הטרמינל",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/1 - פייתון בסיסי/1.2 - בסיס הבסיס/1.2 - בסיס הבסיס - הרצאה/",
       challenges: [
         {
           type: "output_oracle",
@@ -62,6 +63,7 @@ window.ZONE_0 = {
       id: 1,
       name: "מקדש המשתנים - קישור שמות לערכים",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/1 - פייתון בסיסי/1.3 - מבני נתונים/1.3 - מבני נתונים - הרצאה/",
       challenges: [
         {
           type: "output_oracle",
@@ -107,6 +109,7 @@ window.ZONE_0 = {
       id: 2,
       name: "בוס - רוח ההגדרה",
       isBoss: true,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/1 - פייתון בסיסי/1.4 - פונקציות מובנות/1.4 - פונקציות מובנות - הרצאה/",
       challenges: [
         {
           type: "output_oracle",

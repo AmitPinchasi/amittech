@@ -16,6 +16,7 @@ window.ZONE_9 = {
       id: 0,
       name: "אולמות השמות",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/9 - קוד נקי/9.1 - שמות וקונבנציות/9.1 - שמות וקונבנציות - הרצאה/",
       challenges: [
         {
           type: "name_binding",
@@ -71,6 +72,7 @@ window.ZONE_9 = {
       id: 1,
       name: "מקדש טוהר הפונקציות",
       isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/9 - קוד נקי/9.2 - פונקציות ומחלקות/9.2 - פונקציות ומחלקות - הרצאה/",
       challenges: [
         {
           type: "output_oracle",
@@ -126,6 +128,7 @@ window.ZONE_9 = {
       id: 2,
       name: "בוס - מקודד הכאוס",
       isBoss: true,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/9 - קוד נקי/9.2 - פונקציות ומחלקות/9.2 - פונקציות ומחלקות - הרצאה/",
       challenges: [
         {
           type: "corruption_scan",
