@@ -358,34 +358,6 @@ function renderZoneSelect(save, zone) {
 }
 
 // ============================================================
-// HALL OF LEGENDS
-// ============================================================
-
-function renderHall(scores) {
-  const container = document.getElementById('hall-scores');
-  if (!scores || scores.length === 0) {
-    container.innerHTML = `<p class="hall-empty">${t('hall_empty')}</p>`;
-    return;
-  }
-
-  container.innerHTML = '';
-  scores.forEach((entry, i) => {
-    const row = document.createElement('div');
-    row.className = 'hall-score-row';
-    const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-    row.innerHTML = `
-      <span class="hall-rank ${rankClass}">#${i + 1}</span>
-      <span class="hall-name">${escapeHtml(entry.name || 'Unknown')}</span>
-      <div class="hall-score-info">
-        <strong>${entry.xp} XP</strong>
-        <span>רמה ${entry.level} &bull; ${entry.date || ''}</span>
-      </div>
-    `;
-    container.appendChild(row);
-  });
-}
-
-// ============================================================
 // STAR ANIMATION
 // ============================================================
 

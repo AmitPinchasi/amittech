@@ -36,7 +36,7 @@ window.ZONE_2 = {
         },
         {
           type: "spell_completion",
-          narrative: "שלח את לחש ההחלפה כדי לטהר את המחרוזת הפגומה.",
+          narrative: "השלם את קוד ההחלפה כדי לטהר את המחרוזת הפגומה.",
           codeTemplate: 'message = "Hello World"\nclean = message.___(\"World\", \"Realm\")\nprint(clean)',
           answers: ["replace"],
           explanation: "המתודה replace(old, new) מחזירה מחרוזת חדשה שבה כל מופעי 'old' הוחלפו ב-'new'. היא אינה משנה את המחרוזת המקורית.",

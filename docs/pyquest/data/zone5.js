@@ -77,7 +77,7 @@ window.ZONE_5 = {
         },
         {
           type: "corruption_scan",
-          narrative: "מטפל החריגות הזה תופס את השגיאה הלא נכונה. מצא את השחיתות.",
+          narrative: "מטפל השגיאות הזה תופס את השגיאה הלא נכונה. מצא את הבאג.",
           code: 'try:\n    result = int("abc")\nexcept TypeError:\n    print("Type error caught")',
           options: [
             "int('abc') raises ValueError, not TypeError",
@@ -133,7 +133,7 @@ window.ZONE_5 = {
         },
         {
           type: "corruption_scan",
-          narrative: "אימות הקלט של הבוס שותק בצורה מסוכנת. מצא את השחיתות.",
+          narrative: "אימות הקלט של הבוס שותק בצורה מסוכנת. מצא את הבאג.",
           code: 'def safe_divide(a, b):\n    try:\n        return a / b\n    except:\n        pass',
           options: [
             "Bare except catches ALL exceptions silently, hiding real bugs",

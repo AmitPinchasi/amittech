@@ -18,7 +18,7 @@ window.ZONE_7 = {
       challenges: [
         {
           type: "corruption_scan",
-          narrative: "מטייל מנסה לקבל את הספריה הנוכחית. מצא את השגיאה בלחש שלו.",
+          narrative: "מטייל מנסה לקבל את הספריה הנוכחית. מצא את השגיאה בקוד שלו.",
           code: 'import os\ncurrent = os.get_cwd()\nprint(current)',
           options: [
             "os.get_cwd() does not exist; the correct function is os.getcwd()",
@@ -68,8 +68,8 @@ window.ZONE_7 = {
       challenges: [
         {
           type: "spell_completion",
-          narrative: "שלח את לחש הסריאליזציה להמרת נתוני פייתון למחרוזת JSON.",
-          codeTemplate: 'import json\ndata = {"name": "Alice", "level": 5}\njson_str = json.___(data)\nprint(type(json_str))',
+          narrative: "השלם את קוד הסריאליזציה להמרת נתוני פייתון למחרוזת JSON.",
+          codeTemplate: 'import json\ndata = {"name": "Shir", "level": 5}\njson_str = json.___(data)\nprint(type(json_str))',
           answers: ["dumps"],
           explanation: "json.dumps() (dump to string) ממיר dict/list של פייתון למחרוזת בפורמט JSON. json.loads() עושה את ההיפך (load from string). json.dump()/load() עובדים עם קבצים.",
           hint: "הפונקציה להמרת אובייקטי פייתון למחרוזת JSON (לא קובץ). 'dumps' = dump to string.",
@@ -124,7 +124,7 @@ window.ZONE_7 = {
         },
         {
           type: "spell_completion",
-          narrative: "השלם את לחש כינוי המודול לקונבנציה נפוצה של פייתון.",
+          narrative: "השלם את כינוי המודול לקונבנציה נפוצה של פייתון.",
           codeTemplate: 'import numpy ___ np\n# Now use np.array instead of numpy.array',
           answers: ["as"],
           explanation: "'import module as alias' יוצר שם קצר יותר. 'import numpy as np' היא הקונבנציה האוניברסלית. 'as' היא מילת המפתח לכינוי ייבוא.",

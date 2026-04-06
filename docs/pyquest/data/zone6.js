@@ -18,7 +18,7 @@ window.ZONE_6 = {
       challenges: [
         {
           type: "corruption_scan",
-          narrative: "למתודת מחלקה חסר self. מצא את השחיתות.",
+          narrative: "למתודת מחלקה חסר self. מצא את הבאג.",
           code: 'class Circle:\n    def __init__(self, radius):\n        self.radius = radius\n    \n    def area():\n        return 3.14 * self.radius**2',
           options: [
             "area() is missing 'self' as its first parameter",
@@ -53,7 +53,7 @@ window.ZONE_6 = {
         },
         {
           type: "spell_completion",
-          narrative: "הגדר את לחש __str__ כדי שגיבורים יוכלו להיות מודפסים בצורה קריאה.",
+          narrative: "הגדר את __str__ כדי שגיבורים יוכלו להיות מודפסים בצורה קריאה.",
           codeTemplate: 'class Hero:\n    def __init__(self, name):\n        self.name = name\n    \n    def _____(self):\n        return f"Hero: {self.name}"\n\nh = Hero("Rylan")\nprint(h)',
           answers: ["__str__"],
           explanation: "__str__ נקראת כאשר משתמשים ב-print() או str() על אובייקט. היא צריכה להחזיר ייצוג מחרוזת ידידותי למשתמש. ללא זה, print(h) יציג <__main__.Hero object at 0x...>.",
@@ -68,7 +68,7 @@ window.ZONE_6 = {
       challenges: [
         {
           type: "spell_completion",
-          narrative: "השלם את לחש הירושה לקישור Cat ל-Animal.",
+          narrative: "השלם את קוד הירושה לקישור Cat ל-Animal.",
           codeTemplate: 'class Animal:\n    def speak(self):\n        return "..."\n\nclass Cat(___):  \n    def speak(self):\n        return "Meow"\n\nc = Cat()\nprint(c.speak())',
           answers: ["Animal"],
           explanation: "class Cat(Animal) גורמת ל-Cat לרשת מ-Animal. שם המחלקה ההורה נמצא בסוגריים. Cat עוקפת את speak() עם המימוש שלה.",
@@ -94,7 +94,7 @@ window.ZONE_6 = {
         },
         {
           type: "corruption_scan",
-          narrative: "לפרופרטי חסר הדקורטור שלו. מצא את השחיתות.",
+          narrative: "לפרופרטי חסר הדקורטור שלו. מצא את הבאג.",
           code: 'class Temperature:\n    def __init__(self, celsius):\n        self._celsius = celsius\n    \n    def fahrenheit(self):\n        return self._celsius * 9/5 + 32\n\nt = Temperature(100)\nprint(t.fahrenheit)',
           options: [
             "fahrenheit is missing @property decorator; t.fahrenheit calls the method without (), not the result",
@@ -115,7 +115,7 @@ window.ZONE_6 = {
       challenges: [
         {
           type: "output_oracle",
-          narrative: "הפנטום מניף את לחש __add__. מה הוא מזמן?",
+          narrative: "הפנטום מניף את __add__. מה הוא מחזיר?",
           code: 'class Vector:\n    def __init__(self, x, y):\n        self.x = x\n        self.y = y\n    \n    def __add__(self, other):\n        return Vector(self.x + other.x, self.y + other.y)\n    \n    def __str__(self):\n        return f"({self.x}, {self.y})"\n\nv1 = Vector(1, 2)\nv2 = Vector(3, 4)\nv3 = v1 + v2\nprint(v3)',
           options: ["(4, 6)", "(1, 2)", "(3, 4)", "Error"],
           correct: 0,
@@ -124,7 +124,7 @@ window.ZONE_6 = {
         },
         {
           type: "spell_completion",
-          narrative: "השלם את לחש המתודה הסטטית - היא שייכת למחלקה, לא למופעים.",
+          narrative: "השלם את המתודה הסטטית - היא שייכת למחלקה, לא למופעים.",
           codeTemplate: 'class MathHelper:\n    @___\n    def add(a, b):\n        return a + b\n\nprint(MathHelper.add(3, 5))',
           answers: ["staticmethod"],
           explanation: "@staticmethod מצהיר על מתודה שאינה מקבלת self או cls. היא שייכת למחלקה אך אינה ניגשת לנתוני מופע או מחלקה. נקראת דרך ClassName.method().",

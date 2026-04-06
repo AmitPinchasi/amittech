@@ -13,19 +13,19 @@ const STRINGS = {
 
   // Challenge type labels
   type_output_oracle: 'נביא הפלט',
-  type_spell_completion: 'השלמת לחש',
-  type_corruption_scan: 'סריקת שחיתות',
+  type_spell_completion: 'השלמת קוד',
+  type_corruption_scan: 'סריקת באגים',
   type_name_binding: 'כריכת שמות',
 
   // Challenge instructions
   instr_output_oracle: 'מה יוציא הקוד?',
-  instr_spell_completion: 'השלם את הרווחים להשלמת הלחש.',
-  instr_corruption_scan: 'מצא את השחיתות. מה לא בסדר בקוד?',
+  instr_spell_completion: 'השלם את הרווחים בקוד.',
+  instr_corruption_scan: 'מצא את הבאגים. מה לא בסדר בקוד?',
   instr_name_binding: 'קשר כל מונח להגדרתו. לחץ על מונח, ואחר כך על ההתאמה שלו.',
 
   // Result messages
-  correct_title: 'לחש מוצלח!',
-  wrong_title: 'זוהתה שחיתות!',
+  correct_title: 'נכון!',
+  wrong_title: 'זוהו באגים!',
   wrong_flavor: 'הבנתי... המשך',
   correct_label: 'תשובה נכונה:',
 
@@ -114,7 +114,7 @@ const STRINGS = {
   enc_locked_msg: 'השלם עימותים קודמים תחילה.',
   boss_label: 'בוס:',
   zone_label: 'אזור',
-  tagline: 'שלוט בפייתון. הביס את השחיתות. הצל את הממלכה.',
+  tagline: 'שלוט בפייתון. הביס את הבאגים. הצל את הממלכה.',
   level_label: 'רמה',
   replay_xp_suffix: ' (50% חזרה)',
 };

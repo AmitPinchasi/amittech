@@ -45,7 +45,7 @@ window.ZONE_1 = {
         },
         {
           type: "spell_completion",
-          narrative: "שלח את לחש ההשמה המוגברת כדי להפחית את נקודות החיים של הלוחם.",
+          narrative: "השלם את קוד ההשמה המוגברת כדי להפחית את נקודות החיים של הלוחם.",
           codeTemplate: 'hp = 100\nhp ___ 25\nprint(hp)',
           answers: ["-="],
           explanation: "-= הוא אופרטור חיסור עם השמה. hp -= 25 הוא קיצור של hp = hp - 25, ומביא לתוצאה 75.",
@@ -74,7 +74,7 @@ window.ZONE_1 = {
         },
         {
           type: "corruption_scan",
-          narrative: "מ冒険חאי צעיר ניסה להוסיף לקלט משתמש. השחיתות עדינה.",
+          narrative: "מ冒険חאי צעיר ניסה להוסיף לקלט משתמש. הבאגים עדינים.",
           code: 'age = input("Enter your age: ")\nresult = age + 10\nprint(result)',
           options: [
             "input() returns a string, age must be converted with int() before adding 10",
@@ -88,8 +88,8 @@ window.ZONE_1 = {
         },
         {
           type: "spell_completion",
-          narrative: "יצור את ה-f-string כדי לייצר: 'Player: Alice, Score: 42'",
-          codeTemplate: 'player = "Alice"\nscore = 42\nprint(f"Player: ___, Score: {score}")',
+          narrative: "יצור את ה-f-string כדי לייצר: 'Player: Shir, Score: 42'",
+          codeTemplate: 'player = "Shir"\nscore = 42\nprint(f"Player: ___, Score: {score}")',
           answers: ["{player}"],
           explanation: "ב-f-strings, משתנים מוטמעים תוך שימוש בתחביר {variable_name}. הקידומת f לפני המרכאות מאפשרת את תכונת האינטרפולציה הזו.",
           hint: "F-strings משתמשות ב-{variable_name} להכנסת ערכי משתנים. אל תשכח את הסוגריים המסולסלים.",

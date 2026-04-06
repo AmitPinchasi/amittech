@@ -25,7 +25,6 @@ const DEFAULT_SAVE = {
     '8': { status: 'locked', encounters: {} },
     '9': { status: 'locked', encounters: {} },
   },
-  highScores: [],
 };
 
 function deepClone(obj) {
@@ -44,7 +43,6 @@ function loadSave() {
         save.zones[k] = v;
       }
     }
-    if (parsed.highScores) save.highScores = parsed.highScores;
     return save;
   } catch (e) {
     console.warn('[progress] Failed to load save:', e);
@@ -120,13 +118,6 @@ function getZoneStars(save, zoneId) {
     const enc = zone.encounters[String(i)];
     return enc ? enc.stars : 0;
   });
-}
-
-function addHighScore(save, name, xp, level) {
-  const entry = { name, xp, level, date: new Date().toLocaleDateString() };
-  save.highScores.push(entry);
-  save.highScores.sort((a, b) => b.xp - a.xp);
-  save.highScores = save.highScores.slice(0, 5);
 }
 
 function getZoneStatus(save, zoneId) {

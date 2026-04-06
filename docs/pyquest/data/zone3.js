@@ -27,7 +27,7 @@ window.ZONE_3 = {
         },
         {
           type: "spell_completion",
-          narrative: "השלם את לחש בדיקת הציון.",
+          narrative: "השלם את קוד בדיקת הציון.",
           codeTemplate: 'score = 75\nif score >= 90:\n    grade = "A"\n___ score >= 70:\n    grade = "B"\nelse:\n    grade = "C"\nprint(grade)',
           answers: ["elif"],
           explanation: "elif (קיצור של 'else if') בודק תנאי נוסף רק אם ה-if הקודם היה False. הוא חייב לבוא בין if ו-else.",
@@ -63,7 +63,7 @@ window.ZONE_3 = {
       challenges: [
         {
           type: "output_oracle",
-          narrative: "לולאת for עם לחש break. אילו מספרים בורחים לפני שהשער נסגר?",
+          narrative: "לולאת for עם break. אילו מספרים בורחים לפני שהשער נסגר?",
           code: 'for i in range(5):\n    if i == 3:\n        break\n    print(i)',
           options: ["0\n1\n2", "0\n1\n2\n3", "1\n2\n3", "0\n1\n2\n3\n4"],
           correct: 0,
@@ -72,7 +72,7 @@ window.ZONE_3 = {
         },
         {
           type: "output_oracle",
-          narrative: "לולאת while עם לחש דילוג. אילו מספרים צצים מהערפל?",
+          narrative: "לולאת while עם continue. אילו מספרים צצים מהערפל?",
           code: 'x = 0\nwhile x < 4:\n    x += 1\n    if x == 2:\n        continue\n    print(x)',
           options: ["1\n3\n4", "1\n2\n3\n4", "1\n3", "0\n1\n3"],
           correct: 0,

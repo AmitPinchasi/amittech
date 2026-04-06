@@ -9,15 +9,15 @@
 
 const TYPE_LABELS = {
   output_oracle:    'נביא הפלט',
-  spell_completion: 'השלמת לחש',
-  corruption_scan:  'סריקת שחיתות',
+  spell_completion: 'השלמת קוד',
+  corruption_scan:  'סריקת באגים',
   name_binding:     'כריכת שמות',
 };
 
 const TYPE_INSTRUCTIONS = {
   output_oracle:    'מה יוציא הקוד הזה?',
-  spell_completion: 'השלם את הרווחים להשלמת הלחש.',
-  corruption_scan:  'מצא את השחיתות - מה לא בסדר בקוד?',
+  spell_completion: 'השלם את הרווחים בקוד.',
+  corruption_scan:  'מצא את הבאג - מה לא בסדר בקוד?',
   name_binding:     'קשר כל מונח להגדרתו. לחץ על מונח, ואחר כך על ההתאמה שלו.',
 };
 
@@ -113,7 +113,7 @@ function renderOutputOracle(challenge, zoneId) {
     return `
       <button class="option-btn" data-orig-index="${item.origIdx}" id="opt-${i}">
         <span class="option-label">${letter}</span>
-        <span class="option-text">${escapeHtml(item.text)}</span>
+        <span class="option-text">${escapeHtml(item.text).replace(/\n/g, '<br>')}</span>
       </button>
     `;
   }).join('');
@@ -253,14 +253,14 @@ function renderCorruptionScan(challenge, zoneId) {
     return `
       <button class="option-btn" data-orig-index="${item.origIdx}" id="opt-${i}">
         <span class="option-label">${letter}</span>
-        <span class="option-text">${escapeHtml(item.text)}</span>
+        <span class="option-text">${escapeHtml(item.text).replace(/\n/g, '<br>')}</span>
       </button>
     `;
   }).join('');
 
   return `
     ${codeHtml}
-    <p class="challenge-type-title">בחר את השחיתות:</p>
+    <p class="challenge-type-title">בחר את הבאג:</p>
     <div class="options-grid">
       ${optionsHtml}
     </div>
@@ -295,6 +295,7 @@ function renderNameBinding(challenge, zoneId) {
     pairs,
     shuffledDefs,
     selectedTerm: null,
+    selectedDef: null,
     matched: {},   // termIdx -> defIdx
     submitted: false,
   };
@@ -331,6 +332,28 @@ function renderNameBinding(challenge, zoneId) {
 function attachNameBindingListeners(challenge) {
   const state = nameBindingState;
 
+  function doMatch(termIdx, defEl) {
+    const origIdx = parseInt(defEl.dataset.origIdx);
+    state.matched[termIdx] = origIdx;
+
+    const termEl = document.getElementById('term-' + termIdx);
+    termEl.classList.add('paired');
+    termEl.classList.remove('selected');
+    defEl.classList.add('paired');
+    defEl.classList.remove('selected');
+
+    state.selectedTerm = null;
+    state.selectedDef = null;
+
+    if (Object.keys(state.matched).length === state.pairs.length) {
+      const submitBtn = document.getElementById('btn-binding-submit');
+      if (submitBtn) {
+        submitBtn.classList.remove('hidden');
+        fadeIn(submitBtn);
+      }
+    }
+  }
+
   // Term click handlers
   document.querySelectorAll('[id^="term-"]').forEach(el => {
     el.addEventListener('click', () => {
@@ -340,7 +363,14 @@ function attachNameBindingListeners(challenge) {
       // Deselect if same term clicked again
       if (state.selectedTerm === termIdx) {
         state.selectedTerm = null;
-        document.querySelectorAll('[id^="term-"]').forEach(t => t.classList.remove('selected'));
+        el.classList.remove('selected');
+        return;
+      }
+
+      // If a def is already selected, create a match
+      if (state.selectedDef !== null) {
+        const defEl = document.getElementById('def-' + state.selectedDef);
+        if (defEl) doMatch(termIdx, defEl);
         return;
       }
 
@@ -356,33 +386,26 @@ function attachNameBindingListeners(challenge) {
   document.querySelectorAll('[id^="def-"]').forEach(el => {
     el.addEventListener('click', () => {
       if (el.classList.contains('paired') || el.classList.contains('disabled')) return;
-      if (state.selectedTerm === null) return;
-
       const defPos = parseInt(el.dataset.defPos);
-      const origIdx = parseInt(el.dataset.origIdx);
-      const termIdx = state.selectedTerm;
 
-      // Record the match (term index -> original def index)
-      state.matched[termIdx] = origIdx;
-
-      // Mark as paired
-      const termEl = document.getElementById('term-' + termIdx);
-      termEl.classList.add('paired');
-      termEl.classList.remove('selected');
-      el.classList.add('paired');
-      el.innerHTML = '<span class="binding-pair-indicator">✓</span>' + el.innerHTML;
-
-      state.selectedTerm = null;
-      document.querySelectorAll('[id^="term-"]').forEach(t => t.classList.remove('selected'));
-
-      // Check if all matched
-      if (Object.keys(state.matched).length === state.pairs.length) {
-        const submitBtn = document.getElementById('btn-binding-submit');
-        if (submitBtn) {
-          submitBtn.classList.remove('hidden');
-          fadeIn(submitBtn);
-        }
+      // Deselect if same def clicked again
+      if (state.selectedDef === defPos) {
+        state.selectedDef = null;
+        el.classList.remove('selected');
+        return;
       }
+
+      // If a term is already selected, create a match
+      if (state.selectedTerm !== null) {
+        doMatch(state.selectedTerm, el);
+        return;
+      }
+
+      // Select this def
+      state.selectedDef = defPos;
+      document.querySelectorAll('[id^="def-"]').forEach(d => {
+        d.classList.toggle('selected', parseInt(d.dataset.defPos) === defPos);
+      });
     });
   });
 
@@ -394,30 +417,25 @@ function attachNameBindingListeners(challenge) {
       state.submitted = true;
       submitBtn.disabled = true;
 
-      // Evaluate: each term index must match its own index (term[i] pairs with def[i])
       let allCorrect = true;
       for (let i = 0; i < state.pairs.length; i++) {
-        const matchedDefIdx = state.matched[i];
-        if (matchedDefIdx !== i) {
+        if (state.matched[i] !== i) {
           allCorrect = false;
           break;
         }
       }
 
-      // Show visual feedback
       for (let i = 0; i < state.pairs.length; i++) {
         const termEl = document.getElementById('term-' + i);
-        const matchedDefIdx = state.matched[i];
-        const isCorrect = matchedDefIdx === i;
+        const isCorrect = state.matched[i] === i;
         if (termEl) {
           termEl.classList.remove('paired');
           termEl.classList.add(isCorrect ? 'correct-reveal' : 'wrong-pair');
         }
-        // Find the def element
         document.querySelectorAll('[id^="def-"]').forEach(el => {
           if (parseInt(el.dataset.origIdx) === i) {
             el.classList.remove('paired');
-            el.classList.add(isCorrect ? 'correct-reveal' : 'correct-reveal'); // always show correct
+            el.classList.add('correct-reveal');
           }
         });
       }
@@ -517,7 +535,7 @@ function renderReveal(params) {
   } = params;
 
   const titleEl = document.getElementById('reveal-title');
-  titleEl.textContent = correct ? 'לחש מוצלח!' : 'זוהתה שחיתות!';
+  titleEl.textContent = correct ? 'נכון!' : 'זוהו באגים!';
   titleEl.className = `reveal-title ${correct ? 'correct' : 'wrong'}`;
 
   // Correct answer display
@@ -573,7 +591,7 @@ function formatCorrectAnswer(challenge) {
   switch (challenge.type) {
     case 'output_oracle':
     case 'corruption_scan':
-      return escapeHtml(challenge.options[challenge.correct]);
+      return escapeHtml(challenge.options[challenge.correct]).replace(/\n/g, '<br>');
     case 'spell_completion':
       return challenge.answers.join(', ');
     case 'name_binding':

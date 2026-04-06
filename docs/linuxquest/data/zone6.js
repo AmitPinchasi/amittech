@@ -40,23 +40,23 @@ window.ZONE_6 = {
         },
         {
           type: "terminal_oracle",
-          narrative: "הסקריפט greet.sh מקבל שם כארגומנט ומדפיס ברכה. אתה מריץ אותו עם הארגומנט Alice.",
+          narrative: "הסקריפט greet.sh מקבל שם כארגומנט ומדפיס ברכה. אתה מריץ אותו עם הארגומנט Shit.",
           prompt: "מה תהיה הפלט של הפקודה?",
           context: [
             "$ cat greet.sh",
             "#!/bin/bash",
             "echo \"Hello, $1\"",
             "",
-            "$ ./greet.sh Alice"
+            "$ ./greet.sh Shir"
           ],
           options: [
             "Hello, $1",
-            "Hello, Alice",
+            "Hello, Shir",
             "Hello,",
             "שגיאה: משתנה לא מוגדר"
           ],
           correct: 1,
-          explanation: "המשתנה $1 מכיל את הארגומנט הראשון שהועבר לסקריפט. כאשר מריצים ./greet.sh Alice, הערך של $1 הוא Alice, ולכן הפלט יהיה Hello, Alice.",
+          explanation: "המשתנה $1 מכיל את הארגomנט הראשון שהועבר לסקריפט. כאשר מריצים ./greet.sh Shir, הערך של $1 הוא Shir, ולכן הפלט יהיה Hello, Shir."
           hint: "ב-bash, $1 מתחלף בארגומנט הראשון שהועבר בשורת הפקודה."
         },
         {

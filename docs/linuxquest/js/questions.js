@@ -101,7 +101,7 @@ function renderTerminalOracle(challenge, zoneId) {
     return `
       <button class="option-btn" data-orig-index="${item.origIdx}" id="opt-${i}">
         <span class="option-label">${letter}</span>
-        <span class="option-text">${escapeHtml(item.text)}</span>
+        <span class="option-text">${escapeHtml(item.text).replace(/\n/g, '<br>')}</span>
       </button>
     `;
   }).join('');
@@ -251,7 +251,7 @@ function renderScriptDebug(challenge, zoneId) {
     return `
       <button class="option-btn" data-orig-index="${item.origIdx}" id="opt-${i}">
         <span class="option-label">${letter}</span>
-        <span class="option-text">${escapeHtml(item.text)}</span>
+        <span class="option-text">${escapeHtml(item.text).replace(/\n/g, '<br>')}</span>
       </button>
     `;
   }).join('');
@@ -303,6 +303,7 @@ function renderFlagMap(challenge, zoneId) {
     pairs,
     shuffledDefs,
     selectedTerm: null,
+    selectedDef: null,
     matched: {},
     submitted: false,
   };
@@ -339,17 +340,48 @@ function renderFlagMap(challenge, zoneId) {
 function attachFlagMapListeners(challenge) {
   const state = flagMapState;
 
+  function doMatch(termIdx, defEl) {
+    const origIdx = parseInt(defEl.dataset.origIdx);
+    state.matched[termIdx] = origIdx;
+
+    const termEl = document.getElementById('term-' + termIdx);
+    termEl.classList.add('paired');
+    termEl.classList.remove('selected');
+    defEl.classList.add('paired');
+    defEl.classList.remove('selected');
+
+    state.selectedTerm = null;
+    state.selectedDef = null;
+
+    if (Object.keys(state.matched).length === state.pairs.length) {
+      const submitBtn = document.getElementById('btn-binding-submit');
+      if (submitBtn) {
+        submitBtn.classList.remove('hidden');
+        fadeIn(submitBtn);
+      }
+    }
+  }
+
   document.querySelectorAll('[id^="term-"]').forEach(el => {
     el.addEventListener('click', () => {
       if (el.classList.contains('paired') || el.classList.contains('disabled')) return;
       const termIdx = parseInt(el.dataset.termIdx);
 
+      // Deselect if already selected
       if (state.selectedTerm === termIdx) {
         state.selectedTerm = null;
-        document.querySelectorAll('[id^="term-"]').forEach(t => t.classList.remove('selected'));
+        el.classList.remove('selected');
         return;
       }
 
+      // If a def is already selected, create a match
+      if (state.selectedDef !== null) {
+        const defEl = document.getElementById('def-' + state.selectedDef);
+        if (defEl) doMatch(termIdx, defEl);
+        return;
+      }
+
+      // Select this term
       state.selectedTerm = termIdx;
       document.querySelectorAll('[id^="term-"]').forEach(t => {
         t.classList.toggle('selected', parseInt(t.dataset.termIdx) === termIdx);
@@ -360,29 +392,26 @@ function attachFlagMapListeners(challenge) {
   document.querySelectorAll('[id^="def-"]').forEach(el => {
     el.addEventListener('click', () => {
       if (el.classList.contains('paired') || el.classList.contains('disabled')) return;
-      if (state.selectedTerm === null) return;
+      const defPos = parseInt(el.dataset.defPos);
 
-      const origIdx = parseInt(el.dataset.origIdx);
-      const termIdx = state.selectedTerm;
-
-      state.matched[termIdx] = origIdx;
-
-      const termEl = document.getElementById('term-' + termIdx);
-      termEl.classList.add('paired');
-      termEl.classList.remove('selected');
-      el.classList.add('paired');
-      el.innerHTML = '<span class="binding-pair-indicator">OK</span>' + el.innerHTML;
-
-      state.selectedTerm = null;
-      document.querySelectorAll('[id^="term-"]').forEach(t => t.classList.remove('selected'));
-
-      if (Object.keys(state.matched).length === state.pairs.length) {
-        const submitBtn = document.getElementById('btn-binding-submit');
-        if (submitBtn) {
-          submitBtn.classList.remove('hidden');
-          fadeIn(submitBtn);
-        }
+      // Deselect if already selected
+      if (state.selectedDef === defPos) {
+        state.selectedDef = null;
+        el.classList.remove('selected');
+        return;
       }
+
+      // If a term is already selected, create a match
+      if (state.selectedTerm !== null) {
+        doMatch(state.selectedTerm, el);
+        return;
+      }
+
+      // Select this def
+      state.selectedDef = defPos;
+      document.querySelectorAll('[id^="def-"]').forEach(d => {
+        d.classList.toggle('selected', parseInt(d.dataset.defPos) === defPos);
+      });
     });
   });
 

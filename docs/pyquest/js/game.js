@@ -459,12 +459,6 @@ function wireEvents() {
     goToWorldMap();
   });
 
-  document.getElementById('btn-hall').addEventListener('click', () => {
-    playClick();
-    renderHall(save.highScores);
-    navigateTo('screen-hall');
-  });
-
   // --- World Map ---
   // (Zone node clicks are handled inside renderWorldMap)
 
@@ -513,12 +507,6 @@ function wireEvents() {
     goToWorldMap();
   });
 
-  // --- Hall ---
-  document.getElementById('btn-hall-back').addEventListener('click', () => {
-    playClick();
-    navigateTo('screen-menu');
-    startCodeRain();
-  });
 }
 
 // ============================================================

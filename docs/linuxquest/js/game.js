@@ -342,12 +342,6 @@ function wireEvents() {
     goToWorldMap();
   });
 
-  document.getElementById('btn-hall').addEventListener('click', () => {
-    playClick();
-    renderHall(save.highScores);
-    navigateTo('screen-hall');
-  });
-
   document.getElementById('btn-back-to-map').addEventListener('click', () => {
     playClick();
     goToWorldMap();
@@ -387,11 +381,6 @@ function wireEvents() {
     goToWorldMap();
   });
 
-  document.getElementById('btn-hall-back').addEventListener('click', () => {
-    playClick();
-    navigateTo('screen-menu');
-    startCodeRain();
-  });
 }
 
 function init() {

@@ -181,7 +181,7 @@ hide:
 </a>
 <a class="course-card" href="מחקר-אנדרואיד/">
 <div class="course-card-img" style="background: linear-gradient(135deg, #8B5CF6, #FF1B6B)">
-<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><rect x="5" y="2" width="14" height="20" rx="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+<svg viewBox="0 0 24 24" fill="white" width="40" height="40"><path d="M3 5.5L10.5 4.5V11.5H3V5.5Z"/><path d="M11.5 4.35L21 3V11.5H11.5V4.35Z"/><path d="M3 12.5H10.5V19.5L3 18.5V12.5Z"/><path d="M11.5 12.5H21V21L11.5 19.65V12.5Z"/></svg>
 </div>
 <div class="course-card-body">
 <strong>מחקר ווינדוס</strong>

@@ -25,7 +25,6 @@ const DEFAULT_SAVE = {
     '8': { status: 'locked', encounters: {} },
     '9': { status: 'locked', encounters: {} },
   },
-  highScores: [],
 };
 
 /**
@@ -52,7 +51,6 @@ function loadSave() {
         save.zones[k] = v;
       }
     }
-    if (parsed.highScores) save.highScores = parsed.highScores;
     return save;
   } catch (e) {
     console.warn('[progress] Failed to load save:', e);
@@ -181,20 +179,6 @@ function getZoneStars(save, zoneId) {
     const enc = zone.encounters[String(i)];
     return enc ? enc.stars : 0;
   });
-}
-
-/**
- * Add a high score entry, keeping only top 5.
- * @param {Object} save
- * @param {string} name
- * @param {number} xp
- * @param {number} level
- */
-function addHighScore(save, name, xp, level) {
-  const entry = { name, xp, level, date: new Date().toLocaleDateString() };
-  save.highScores.push(entry);
-  save.highScores.sort((a, b) => b.xp - a.xp);
-  save.highScores = save.highScores.slice(0, 5);
 }
 
 /**

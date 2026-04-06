@@ -19,10 +19,10 @@ window.ZONE_4 = {
         {
           type: "output_oracle",
           narrative: "פונקציה עם ארגומנט ברירת מחדל מסתירה את סודה. חשוף אותו.",
-          code: 'def greet(name, greeting="Hello"):\n    return f"{greeting}, {name}!"\n\nprint(greet("Alice"))\nprint(greet("Bob", "Hi"))',
-          options: ["Hello, Alice!\nHi, Bob!", "Hello, Alice!\nHello, Bob!", "Alice\nBob", "Error"],
+          code: 'def greet(name, greeting="Hello"):\n    return f"{greeting}, {name}!"\n\nprint(greet("Shir"))\nprint(greet("Bob", "Hi"))',
+          options: ["Hello, Shir!\nHi, Bob!", "Hello, Shir!\nHello, Bob!", "Shir\nBob", "Error"],
           correct: 0,
-          explanation: "greet('Alice') משתמשת בברכת ברירת המחדל 'Hello', ומייצרת 'Hello, Alice!'. greet('Bob', 'Hi') עוקפת את ברירת המחדל עם 'Hi', ומייצרת 'Hi, Bob!'.",
+          explanation: "greet('Shir') משתמשת בברכת ברירת המחדל 'Hello', ומייצרת 'Hello, Shir!'. greet('Bob', 'Hi') עוקפת את ברירת המחדל עם 'Hi', ומייצרת 'Hi, Bob!'.",
           hint: "ארגומנטי ברירת מחדל משמשים כשאין ערך שסופק. ניתן לעקוף אותם על ידי העברת ערך.",
         },
         {
@@ -36,7 +36,7 @@ window.ZONE_4 = {
         },
         {
           type: "spell_completion",
-          narrative: "השלם את לחש *args לאיסוף כל שמות הלוחמים.",
+          narrative: "השלם את קוד *args לאיסוף כל שמות הלוחמים.",
           codeTemplate: 'def add_all(*___):\n    return sum(args)\n\nprint(add_all(1, 2, 3, 4))',
           answers: ["args"],
           explanation: "*args אוסף את כל הארגומנטים הפוזיציוניים לתוך טאפל. השם 'args' הוא קונבנציה אבל כל שם חוקי יעבוד. sum(args) מחבר את כל הערכים.",
@@ -69,7 +69,7 @@ window.ZONE_4 = {
         },
         {
           type: "corruption_scan",
-          narrative: "דקורטור שבור. מצא היכן נמצאת השחיתות.",
+          narrative: "דקורטור שבור. מצא היכן נמצא הבאג.",
           code: 'def my_decorator(func):\n    def wrapper():\n        print("Before")\n        func\n        print("After")\n    return wrapper',
           options: [
             "func must be called with parentheses: func()",
@@ -133,7 +133,7 @@ window.ZONE_4 = {
         },
         {
           type: "spell_completion",
-          narrative: "שלח את לחש רמז הטיפוס להצהרת חתימת הפונקציה הזו.",
+          narrative: "השלם את קוד רמז הטיפוס להצהרת חתימת הפונקציה הזו.",
           codeTemplate: 'def power(base: int, exp: ___) -> int:\n    return base ** exp\n\nprint(power(2, 8))',
           answers: ["int"],
           explanation: "רמזי טיפוסים משתמשים בתחביר parameter: type. exp: int מצהיר ש-exp צריך להיות מספר שלם. -> int מצהיר על סוג ה-return. רמזי טיפוסים הם אופציונליים אך משפרים את בהירות הקוד.",

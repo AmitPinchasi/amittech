@@ -27,7 +27,7 @@ window.ZONE_0 = {
         },
         {
           type: "output_oracle",
-          narrative: "מספרים מדברים אל מי שמקשיב. מה מגלה לחש זה?",
+          narrative: "מספרים מדברים אל מי שמקשיב. מה מגלה הקוד הזה?",
           code: 'print(5 + 3)\nprint(10 - 4)\nprint(3 * 7)',
           options: ["8\n6\n21", "8 6 21", "5+3\n10-4\n3*7", "53\n104\n37"],
           correct: 0,
@@ -44,7 +44,7 @@ window.ZONE_0 = {
         },
         {
           type: "corruption_scan",
-          narrative: "משהו לא בסדר בלחש הזה. מצא את השחיתות.",
+          narrative: "משהו לא בסדר בקוד הזה. מצא את הבאג.",
           code: 'Print("Welcome to Python")',
           options: [
             "Print should be lowercase: print",
@@ -74,8 +74,8 @@ window.ZONE_0 = {
         },
         {
           type: "spell_completion",
-          narrative: "יצור את לחש ה-f-string כדי לברך את המטייל.",
-          codeTemplate: 'name = "Alice"\nprint(f"Hello, {___}!")',
+          narrative: "יצור את ה-f-string כדי לברך את המטייל.",
+          codeTemplate: 'name = "Shir"\nprint(f"Hello, {___}!")',
           answers: ["name"],
           explanation: "ב-f-string (מוקדם עם f), סוגריים מסולסלים {} משמשים להטמעת ערכי משתנים. {name} מכניס את הערך של המשתנה 'name'.",
           hint: "בתוך הסוגריים המסולסלים של f-string, כותבים את שם המשתנה, לא את ערכו.",
@@ -119,7 +119,7 @@ window.ZONE_0 = {
         },
         {
           type: "spell_completion",
-          narrative: "הרוח דורשת שתשליך את לחש המרת הטיפוסים.",
+          narrative: "השלם את קוד המרת הטיפוסים.",
           codeTemplate: 'user_input = input("Enter a number: ")\nnumber = ___(user_input)\nprint(number * 2)',
           answers: ["int"],
           explanation: "הפונקציה input() תמיד מחזירה מחרוזת. כדי להשתמש בה כמספר, יש להמיר אותה עם int() (או float() לעשרוניות). ללא המרה, * 2 יחזור על המחרוזת פעמיים.",
