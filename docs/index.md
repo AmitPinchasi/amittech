@@ -179,7 +179,7 @@ hide:
 <p>ארגון המחשב, אסמבלי 16 ו-32 ביט, שפת C, ספריית libc, הקרנל של לינוקס, ארכיטקטורת מעבדים, ופיתוח מערכת הפעלה</p>
 </div>
 </a>
-<a class="course-card" href="מחקר-אנדרואיד/">
+<a class="course-card" href="מחקר-ווינדוס/">
 <div class="course-card-img" style="background: linear-gradient(135deg, #8B5CF6, #FF1B6B)">
 <svg viewBox="0 0 24 24" fill="white" width="40" height="40"><path d="M3 5.5L10.5 4.5V11.5H3V5.5Z"/><path d="M11.5 4.35L21 3V11.5H11.5V4.35Z"/><path d="M3 12.5H10.5V19.5L3 18.5V12.5Z"/><path d="M11.5 12.5H21V21L11.5 19.65V12.5Z"/></svg>
 </div>
@@ -309,7 +309,7 @@ hide:
       <a class="roadmap-step" href="רשתות/">רשתות</a>
     </div>
     <span class="roadmap-arrow">&#8592;</span>
-    <a class="roadmap-step" href="מחקר-אנדרואיד/">מחקר ווינדוס</a>
+    <a class="roadmap-step" href="מחקר-ווינדוס/">מחקר ווינדוס</a>
   </div>
 </div>
 
