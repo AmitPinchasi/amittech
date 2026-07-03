@@ -179,6 +179,7 @@ hide:
 <p>ארגון המחשב, אסמבלי 16 ו-32 ביט, שפת C, ספריית libc, הקרנל של לינוקס, ארכיטקטורת מעבדים, ופיתוח מערכת הפעלה</p>
 </div>
 </a>
+<!-- Windows research course - hidden for now
 <a class="course-card" href="מחקר-ווינדוס/">
 <div class="course-card-img" style="background: linear-gradient(135deg, #8B5CF6, #FF1B6B)">
 <svg viewBox="0 0 24 24" fill="white" width="40" height="40"><path d="M3 5.5L10.5 4.5V11.5H3V5.5Z"/><path d="M11.5 4.35L21 3V11.5H11.5V4.35Z"/><path d="M3 12.5H10.5V19.5L3 18.5V12.5Z"/><path d="M11.5 12.5H21V21L11.5 19.65V12.5Z"/></svg>
@@ -189,6 +190,7 @@ hide:
 <p>מחקר סטטי ודינמי, פרידה, פאצ'ינג, חולשות נפוצות וצלילה עמוקה ל-internals</p>
 </div>
 </a>
+-->
 <a class="course-card" href="מחקר-חולשות/">
 <div class="course-card-img" style="background: linear-gradient(135deg, #F43F5E, #7C3AED)">
 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><rect x="8" y="6" width="8" height="14" rx="4"></rect><path d="m19 7-3 2"></path><path d="m5 7 3 2"></path><path d="m19 19-3-2"></path><path d="m5 19 3-2"></path><path d="M20 13h-4"></path><path d="M4 13h4"></path><path d="m10 4 1 2"></path><path d="m14 4-1 2"></path></svg>
@@ -308,6 +310,7 @@ hide:
   </div>
 </div>
 
+<!-- Windows Vulnerability Researcher path - hidden for now
 <div class="roadmap-card">
   <div class="roadmap-title">חוקר חולשות ווינדוס - Windows Vulnerability Researcher</div>
   <div class="roadmap-steps">
@@ -322,6 +325,7 @@ hide:
     <a class="roadmap-step" href="מחקר-ווינדוס/">מחקר ווינדוס</a>
   </div>
 </div>
+-->
 
 <div class="roadmap-card">
   <div class="roadmap-title">מפתח/חוקר Low Level ו-Embedded</div>
@@ -342,8 +346,12 @@ hide:
   <div class="roadmap-title">חוקר חולשות בינארי - Binary Vulnerability Researcher</div>
   <div class="roadmap-steps">
     <a class="roadmap-step" href="תכנות-בסיסי/">תכנות בסיסי</a>
-    <span class="roadmap-arrow">&#8592;</span>
-    <a class="roadmap-step" href="לינוקס-בסיסי/">לינוקס בסיסי</a>
+   <span class="roadmap-arrow">&#8592;</span>
+    <div class="roadmap-parallel">
+      <a class="roadmap-step" href="ווינדוס-בסיסי/">ווינדוס בסיסי</a>
+      <a class="roadmap-step" href="לינוקס-בסיסי/">לינוקס בסיסי</a>
+      <a class="roadmap-step" href="רשתות/">רשתות</a>
+    </div>
     <span class="roadmap-arrow">&#8592;</span>
     <a class="roadmap-step" href="ליבת-המחשב/">ליבת המחשב</a>
     <span class="roadmap-arrow">&#8592;</span>
