@@ -189,6 +189,16 @@ hide:
 <p>מחקר סטטי ודינמי, פרידה, פאצ'ינג, חולשות נפוצות וצלילה עמוקה ל-internals</p>
 </div>
 </a>
+<a class="course-card" href="מחקר-חולשות/">
+<div class="course-card-img" style="background: linear-gradient(135deg, #F43F5E, #7C3AED)">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><rect x="8" y="6" width="8" height="14" rx="4"></rect><path d="m19 7-3 2"></path><path d="m5 7 3 2"></path><path d="m19 19-3-2"></path><path d="m5 19 3-2"></path><path d="M20 13h-4"></path><path d="M4 13h4"></path><path d="m10 4 1 2"></path><path d="m14 4-1 2"></path></svg>
+</div>
+<div class="course-card-body">
+<strong>מחקר חולשות - Binary Exploitation</strong>
+<span class="course-badge">קורס</span>
+<p>ניצול בינארי מאפס - באגים לוגיים, גלישות חוצץ, shellcode, עקיפת NX ו-ROP, מחרוזות פורמט, ניצול heap, ניצול קרנל, ומציאת חולשות אמיתיות עם fuzzing</p>
+</div>
+</a>
 </div>
 
 <div class="section-header">
@@ -325,6 +335,19 @@ hide:
     </div>
     <span class="roadmap-arrow">&#8592;</span>
     <a class="roadmap-step" href="ליבת-המחשב/">ליבת המחשב</a>
+  </div>
+</div>
+
+<div class="roadmap-card">
+  <div class="roadmap-title">חוקר חולשות בינארי - Binary Vulnerability Researcher</div>
+  <div class="roadmap-steps">
+    <a class="roadmap-step" href="תכנות-בסיסי/">תכנות בסיסי</a>
+    <span class="roadmap-arrow">&#8592;</span>
+    <a class="roadmap-step" href="לינוקס-בסיסי/">לינוקס בסיסי</a>
+    <span class="roadmap-arrow">&#8592;</span>
+    <a class="roadmap-step" href="ליבת-המחשב/">ליבת המחשב</a>
+    <span class="roadmap-arrow">&#8592;</span>
+    <a class="roadmap-step" href="מחקר-חולשות/">מחקר חולשות</a>
   </div>
 </div>
 
