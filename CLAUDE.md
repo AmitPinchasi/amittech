@@ -66,3 +66,5 @@ Example: `תכנות-בסיסי/1 - פייתון בסיסי/1.2 - בסיס הב�
 - Never use the long middle dash (em dash). Use a regular hyphen (-) instead
 - When a sentence mixes Hebrew and English words, start the line with a Hebrew character first so Obsidian's auto-RTL detection works correctly
 - When writing a heading that contains an English term, first write the Hebrew translation, then a hyphen, then the English term (e.g., `## הוק - hook`)
+- dont do ---
+- 
