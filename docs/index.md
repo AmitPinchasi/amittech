@@ -38,6 +38,17 @@ hide:
 <p>פייתון מהבסיס ועד נושאים מתקדמים, תכנות מונחה עצמים, מודולים, אלגוריתמיקה וקוד נקי</p>
 </div>
 </a>
+<a class="course-card" href="פיתוח-עם-AI/">
+<div class="course-card-img" style="background: linear-gradient(135deg, #A855F7, #EC4899)">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path><path d="M5 3v4"></path><path d="M19 17v4"></path><path d="M3 5h4"></path><path d="M17 19h4"></path></svg>
+</div>
+<div class="course-card-body">
+<strong>פיתוח עם AI - AI-Assisted Development</strong>
+<span class="course-badge">קורס</span>
+<p>כל כלי ה-AI שמתכנת צריך להכיר, בדגש על פיתוח אג'נטי עם Claude Code - הנדסת פרומפט, זרימות עבודה, ניהול הקשר, MCP וסוכנים, ובנייה מעל ה-API</p>
+</div>
+</a>
+<!--
 <a class="course-card game-card" href="pyquest/">
 <div class="course-card-img" style="background: linear-gradient(135deg, #F59E0B, #EF4444)">
 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
@@ -48,6 +59,7 @@ hide:
 <p>למדו פייתון תוך כדי משחק - אתגרים אינטראקטיביים שמחזקים את מה שלמדתם בקורס התכנות הבסיסי</p>
 </div>
 </a>
+-->
 <a class="course-card" href="צד-שרת/">
 <div class="course-card-img" style="background: linear-gradient(135deg, #6366F1, #A855F7)">
 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><rect x="2" y="2" width="20" height="8" rx="2"></rect><rect x="2" y="14" width="20" height="8" rx="2"></rect><circle cx="6" cy="6" r="1" fill="white"></circle><circle cx="6" cy="18" r="1" fill="white"></circle></svg>
@@ -105,6 +117,7 @@ hide:
 <p>טרמינל, באש, הרשאות, סקריפטים, שירותים וניהול מערכת לינוקס</p>
 </div>
 </a>
+<!--
 <a class="course-card game-card" href="linuxquest/">
 <div class="course-card-img" style="background: linear-gradient(135deg, #00ff41, #0d7a3c)">
 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
@@ -115,6 +128,7 @@ hide:
 <p>למדו לינוקס תוך כדי משחק - אתגרי טרמינל אינטראקטיביים, פקודות, סקריפטים ואבטחה</p>
 </div>
 </a>
+-->
 <a class="course-card" href="רשתות/">
 <div class="course-card-img" style="background: linear-gradient(135deg, #45CAFF, #A855F7)">
 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
@@ -199,6 +213,16 @@ hide:
 <strong>מחקר חולשות - Binary Exploitation</strong>
 <span class="course-badge">קורס</span>
 <p>ניצול בינארי מאפס - באגים לוגיים, גלישות חוצץ, shellcode, עקיפת NX ו-ROP, מחרוזות פורמט, ניצול heap, ניצול קרנל, ומציאת חולשות אמיתיות עם fuzzing</p>
+</div>
+</a>
+<a class="course-card" href="תכנות-GPU/">
+<div class="course-card-img" style="background: linear-gradient(135deg, #22C55E, #0EA5E9)">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><rect x="3" y="5" width="18" height="14" rx="2"></rect><rect x="6.5" y="9" width="4" height="6" rx="1"></rect><rect x="13.5" y="9" width="4" height="6" rx="1"></rect><line x1="3" y1="12" x2="1" y2="12"></line><line x1="23" y1="10" x2="21" y2="10"></line><line x1="23" y1="14" x2="21" y2="14"></line></svg>
+</div>
+<div class="course-card-body">
+<strong>תכנות GPU ו-CUDA</strong>
+<span class="course-badge">קורס</span>
+<p>ארכיטקטורת GPU לעומק, מודל CUDA, זיכרון ו-shared memory, PTX ו-SASS, ספריות ביצועים, ומודל Roofline עם אופטימיזציה ופרופיילינג של kernels אמיתיים</p>
 </div>
 </a>
 </div>
@@ -356,6 +380,26 @@ hide:
     <a class="roadmap-step" href="ליבת-המחשב/">ליבת המחשב</a>
     <span class="roadmap-arrow">&#8592;</span>
     <a class="roadmap-step" href="מחקר-חולשות/">מחקר חולשות</a>
+  </div>
+</div>
+
+<div class="roadmap-card">
+  <div class="roadmap-title">מפתח GPU ו-CUDA - GPU / CUDA Developer</div>
+  <div class="roadmap-steps">
+    <a class="roadmap-step" href="תכנות-בסיסי/">תכנות בסיסי</a>
+    <span class="roadmap-arrow">&#8592;</span>
+    <a class="roadmap-step" href="ליבת-המחשב/">ליבת המחשב</a>
+    <span class="roadmap-arrow">&#8592;</span>
+    <a class="roadmap-step" href="תכנות-GPU/">תכנות GPU ו-CUDA</a>
+  </div>
+</div>
+
+<div class="roadmap-card">
+  <div class="roadmap-title">מפתח בעידן ה-AI - AI-Era Developer</div>
+  <div class="roadmap-steps">
+    <a class="roadmap-step" href="תכנות-בסיסי/">תכנות בסיסי</a>
+    <span class="roadmap-arrow">&#8592;</span>
+    <a class="roadmap-step" href="פיתוח-עם-AI/">פיתוח עם AI</a>
   </div>
 </div>
 
