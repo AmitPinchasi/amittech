@@ -241,6 +241,8 @@ hide:
     <a class="roadmap-step" href="לינוקס-בסיסי/">לינוקס בסיסי</a>
     <span class="roadmap-arrow">&#8592;</span>
     <a class="roadmap-step" href="צד-שרת/">צד שרת</a>
+    <span class="roadmap-arrow">&#8592;</span>
+    <a class="roadmap-step" href="פיתוח-עם-AI/">פיתוח עם AI</a>
   </div>
 </div>
 
@@ -250,6 +252,8 @@ hide:
     <a class="roadmap-step" href="תכנות-בסיסי/">תכנות בסיסי</a>
     <span class="roadmap-arrow">&#8592;</span>
     <a class="roadmap-step" href="צד-לקוח/">צד לקוח</a>
+    <span class="roadmap-arrow">&#8592;</span>
+    <a class="roadmap-step" href="פיתוח-עם-AI/">פיתוח עם AI</a>
   </div>
 </div>
 
@@ -264,6 +268,8 @@ hide:
       <a class="roadmap-step" href="צד-לקוח/">צד לקוח</a>
       <a class="roadmap-step" href="צד-שרת/">צד שרת</a>
     </div>
+    <span class="roadmap-arrow">&#8592;</span>
+    <a class="roadmap-step" href="פיתוח-עם-AI/">פיתוח עם AI</a>
   </div>
 </div>
 
@@ -278,6 +284,7 @@ hide:
       <a class="roadmap-step" href="צד-לקוח/">צד לקוח</a>
       <a class="roadmap-step" href="צד-שרת/">צד שרת</a>
     </div>
+    <span class="roadmap-arrow">&#8592;</span>
     <a class="roadmap-step" href="ארכיטקטורת-תוכנה/">ארכיטקטורת תוכנה</a>
   </div>
 </div>
@@ -334,23 +341,6 @@ hide:
   </div>
 </div>
 
-<!-- Windows Vulnerability Researcher path - hidden for now
-<div class="roadmap-card">
-  <div class="roadmap-title">חוקר חולשות ווינדוס - Windows Vulnerability Researcher</div>
-  <div class="roadmap-steps">
-    <a class="roadmap-step" href="תכנות-בסיסי/">תכנות בסיסי</a>
-   <span class="roadmap-arrow">&#8592;</span>
-    <div class="roadmap-parallel">
-      <a class="roadmap-step" href="ווינדוס-בסיסי/">ווינדוס בסיסי</a>
-      <a class="roadmap-step" href="לינוקס-בסיסי/">לינוקס בסיסי</a>
-      <a class="roadmap-step" href="רשתות/">רשתות</a>
-    </div>
-    <span class="roadmap-arrow">&#8592;</span>
-    <a class="roadmap-step" href="מחקר-ווינדוס/">מחקר ווינדוס</a>
-  </div>
-</div>
--->
-
 <div class="roadmap-card">
   <div class="roadmap-title">מפתח/חוקר Low Level ו-Embedded</div>
   <div class="roadmap-steps">
@@ -367,6 +357,24 @@ hide:
 </div>
 
 <div class="roadmap-card">
+  <div class="roadmap-title">מפתח GPU ו-CUDA - GPU / CUDA Developer</div>
+  <div class="roadmap-steps">
+    <a class="roadmap-step" href="תכנות-בסיסי/">תכנות בסיסי</a>
+    <span class="roadmap-arrow">&#8592;</span>
+    <div class="roadmap-parallel">
+      <a class="roadmap-step" href="ווינדוס-בסיסי/">ווינדוס בסיסי</a>
+      <a class="roadmap-step" href="לינוקס-בסיסי/">לינוקס בסיסי</a>
+      <a class="roadmap-step" href="רשתות/">רשתות</a>
+    </div>
+    <span class="roadmap-arrow">&#8592;</span>
+    <a class="roadmap-step" href="ליבת-המחשב/">ליבת המחשב</a>
+    <span class="roadmap-arrow">&#8592;</span>
+    <a class="roadmap-step" href="תכנות-GPU/">תכנות GPU ו-CUDA</a>
+  </div>
+</div>
+
+
+<div class="roadmap-card">
   <div class="roadmap-title">חוקר חולשות בינארי - Binary Vulnerability Researcher</div>
   <div class="roadmap-steps">
     <a class="roadmap-step" href="תכנות-בסיסי/">תכנות בסיסי</a>
@@ -381,28 +389,6 @@ hide:
     <span class="roadmap-arrow">&#8592;</span>
     <a class="roadmap-step" href="מחקר-חולשות/">מחקר חולשות</a>
   </div>
-</div>
-
-<div class="roadmap-card">
-  <div class="roadmap-title">מפתח GPU ו-CUDA - GPU / CUDA Developer</div>
-  <div class="roadmap-steps">
-    <a class="roadmap-step" href="תכנות-בסיסי/">תכנות בסיסי</a>
-    <span class="roadmap-arrow">&#8592;</span>
-    <a class="roadmap-step" href="ליבת-המחשב/">ליבת המחשב</a>
-    <span class="roadmap-arrow">&#8592;</span>
-    <a class="roadmap-step" href="תכנות-GPU/">תכנות GPU ו-CUDA</a>
-  </div>
-</div>
-
-<div class="roadmap-card">
-  <div class="roadmap-title">מפתח בעידן ה-AI - AI-Era Developer</div>
-  <div class="roadmap-steps">
-    <a class="roadmap-step" href="תכנות-בסיסי/">תכנות בסיסי</a>
-    <span class="roadmap-arrow">&#8592;</span>
-    <a class="roadmap-step" href="פיתוח-עם-AI/">פיתוח עם AI</a>
-  </div>
-</div>
-
 </div>
 
 <div class="homepage-gradient"></div>
