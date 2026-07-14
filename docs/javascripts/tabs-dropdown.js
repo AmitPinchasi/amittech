@@ -2,6 +2,7 @@
   'use strict';
 
   var activeDropdown = null;
+  var categoriesPromise = null;
 
   function getBaseUrl() {
     var homeLink = document.querySelector('.md-tabs__list .md-tabs__item:first-child .md-tabs__link');
@@ -14,39 +15,17 @@
     return '/';
   }
 
-  function extractCategoriesFromNav() {
-    var primaryNav = document.querySelector('.md-sidebar--primary .md-nav--primary');
-    if (!primaryNav) return {};
-
-    var categories = {};
-    var level1Navs = primaryNav.querySelectorAll(':scope > .md-nav__list > .md-nav__item--nested');
-
-    level1Navs.forEach(function(item) {
-      var titleEl = item.querySelector(':scope > .md-nav > .md-nav__title');
-      if (!titleEl) return;
-      var categoryName = titleEl.textContent.replace(/\s+/g, ' ').trim();
-      if (!categoryName) return;
-
-      var courses = [];
-      var level2Items = item.querySelectorAll(':scope > .md-nav > .md-nav__list > .md-nav__item--nested');
-
-      level2Items.forEach(function(courseItem) {
-        var courseLink = courseItem.querySelector(':scope > .md-nav__container > a.md-nav__link');
-        if (!courseLink) return;
-
-        var courseName = courseLink.textContent.replace(/\s+/g, ' ').trim();
-        var courseHref = courseLink.getAttribute('href');
-        if (courseName && courseHref) {
-          courses.push({ name: courseName, href: courseHref });
-        }
-      });
-
-      if (courses.length > 0) {
-        categories[categoryName] = courses;
-      }
-    });
-
-    return categories;
+  /* navigation.prune (mkdocs.yml) strips the sidebar down to the current
+     page's branch, so the category/course tree can no longer be scraped
+     from the DOM. hooks/build_nav_categories.py writes the full tree once
+     at build time instead. */
+  function fetchCategories() {
+    if (!categoriesPromise) {
+      categoriesPromise = fetch(getBaseUrl() + 'assets/nav-categories.json')
+        .then(function(res) { return res.ok ? res.json() : {}; })
+        .catch(function() { return {}; });
+    }
+    return categoriesPromise;
   }
 
   function hideDropdown() {
@@ -67,17 +46,13 @@
     activeDropdown = dropdown;
   }
 
-  function initDropdowns() {
+  function buildDropdowns(categories) {
     var tabsList = document.querySelector('.md-tabs__list');
     if (!tabsList) return false;
 
     var tabs = tabsList.querySelectorAll('.md-tabs__item');
-    if (tabs.length === 0) return false;
+    if (tabs.length === 0 || Object.keys(categories).length === 0) return false;
 
-    var categories = extractCategoriesFromNav();
-    if (Object.keys(categories).length === 0) return false;
-
-    var baseUrl = getBaseUrl();
     var matched = 0;
 
     tabs.forEach(function(tab) {
@@ -148,10 +123,11 @@
   });
 
   function tryInit(attempts) {
-    if (attempts <= 0) return;
-    if (!initDropdowns()) {
-      setTimeout(function() { tryInit(attempts - 1); }, 300);
+    if (!document.querySelector('.md-tabs__list')) {
+      if (attempts > 0) setTimeout(function() { tryInit(attempts - 1); }, 300);
+      return;
     }
+    fetchCategories().then(buildDropdowns);
   }
 
   if (document.readyState === 'loading') {
