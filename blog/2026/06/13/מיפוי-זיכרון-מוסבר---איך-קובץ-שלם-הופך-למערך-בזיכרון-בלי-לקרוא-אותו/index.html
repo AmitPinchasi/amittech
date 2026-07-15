@@ -1,0 +1,1277 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="מה זה מיפוי זיכרון - memory mapping בלינוקס, איך mmap הופך קובץ שלם למערך בזיכרון בלי לקרוא אותו, וההבדל בין מיפוי משותף לפרטי ולמה זה מהיר יותר מ-read.">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/blog/2026/06/13/%D7%9E%D7%99%D7%A4%D7%95%D7%99-%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F-%D7%9E%D7%95%D7%A1%D7%91%D7%A8---%D7%90%D7%99%D7%9A-%D7%A7%D7%95%D7%91%D7%A5-%D7%A9%D7%9C%D7%9D-%D7%94%D7%95%D7%A4%D7%9A-%D7%9C%D7%9E%D7%A2%D7%A8%D7%9A-%D7%91%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F-%D7%91%D7%9C%D7%99-%D7%9C%D7%A7%D7%A8%D7%95%D7%90-%D7%90%D7%95%D7%AA%D7%95/">
+      
+      
+        <link rel="prev" href="../../12/%D7%94%D7%90%D7%9D-oscp-%D7%A9%D7%95%D7%95%D7%94-%D7%90%D7%AA-%D7%96%D7%94---%D7%93%D7%A2%D7%94-%D7%9B%D7%A0%D7%94-%D7%A2%D7%9C-%D7%94%D7%94%D7%A1%D7%9E%D7%9B%D7%94-%D7%94%D7%9B%D7%99-%D7%9E%D7%93%D7%95%D7%91%D7%A8%D7%AA-%D7%91%D7%91%D7%93%D7%99%D7%A7%D7%AA-%D7%97%D7%93%D7%99%D7%A8%D7%95%D7%AA/">
+      
+      
+        <link rel="next" href="../%D7%9E%D7%94-%D7%96%D7%94-path-traversal---%D7%9B%D7%A9%D7%A9%D7%9C%D7%95%D7%A9-%D7%A0%D7%A7%D7%95%D7%93%D7%95%D7%AA-%D7%95%D7%A7%D7%95-%D7%A0%D7%98%D7%95%D7%99-%D7%97%D7%95%D7%A9%D7%A4%D7%95%D7%AA-%D7%90%D7%AA-%D7%9B%D7%9C-%D7%94%D7%A9%D7%A8%D7%AA/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>מיפוי זיכרון מוסבר - איך קובץ שלם הופך למערך בזיכרון בלי לקרוא אותו - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "Article",
+        "headline": "\u05de\u05d9\u05e4\u05d5\u05d9 \u05d6\u05d9\u05db\u05e8\u05d5\u05df \u05de\u05d5\u05e1\u05d1\u05e8 - \u05d0\u05d9\u05da \u05e7\u05d5\u05d1\u05e5 \u05e9\u05dc\u05dd \u05d4\u05d5\u05e4\u05da \u05dc\u05de\u05e2\u05e8\u05da \u05d1\u05d6\u05d9\u05db\u05e8\u05d5\u05df \u05d1\u05dc\u05d9 \u05dc\u05e7\u05e8\u05d5\u05d0 \u05d0\u05d5\u05ea\u05d5",
+        "description": "\u05de\u05d4 \u05d6\u05d4 \u05de\u05d9\u05e4\u05d5\u05d9 \u05d6\u05d9\u05db\u05e8\u05d5\u05df - memory mapping \u05d1\u05dc\u05d9\u05e0\u05d5\u05e7\u05e1, \u05d0\u05d9\u05da mmap \u05d4\u05d5\u05e4\u05da \u05e7\u05d5\u05d1\u05e5 \u05e9\u05dc\u05dd \u05dc\u05de\u05e2\u05e8\u05da \u05d1\u05d6\u05d9\u05db\u05e8\u05d5\u05df \u05d1\u05dc\u05d9 \u05dc\u05e7\u05e8\u05d5\u05d0 \u05d0\u05d5\u05ea\u05d5, \u05d5\u05d4\u05d4\u05d1\u05d3\u05dc \u05d1\u05d9\u05df \u05de\u05d9\u05e4\u05d5\u05d9 \u05de\u05e9\u05d5\u05ea\u05e3 \u05dc\u05e4\u05e8\u05d8\u05d9 \u05d5\u05dc\u05de\u05d4 \u05d6\u05d4 \u05de\u05d4\u05d9\u05e8 \u05d9\u05d5\u05ea\u05e8 \u05de-read.",
+        "image": "https://amittech.dev/assets/images/social/blog/2026/06/13/%D7%9E%D7%99%D7%A4%D7%95%D7%99-%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F-%D7%9E%D7%95%D7%A1%D7%91%D7%A8---%D7%90%D7%99%D7%9A-%D7%A7%D7%95%D7%91%D7%A5-%D7%A9%D7%9C%D7%9D-%D7%94%D7%95%D7%A4%D7%9A-%D7%9C%D7%9E%D7%A2%D7%A8%D7%9A-%D7%91%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F-%D7%91%D7%9C%D7%99-%D7%9C%D7%A7%D7%A8%D7%95%D7%90-%D7%90%D7%95%D7%AA%D7%95.png",
+        "datePublished": "2026-06-13",
+        "dateModified": "2026-07-15T19:14:25Z",
+        "author": { "@type": "Person", "name": "עמית פנחסי" },
+        "publisher": { "@id": "https://amittech.dev/#organization" },
+        "mainEntityOfPage": "https://amittech.dev/blog/2026/06/13/%D7%9E%D7%99%D7%A4%D7%95%D7%99-%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F-%D7%9E%D7%95%D7%A1%D7%91%D7%A8---%D7%90%D7%99%D7%9A-%D7%A7%D7%95%D7%91%D7%A5-%D7%A9%D7%9C%D7%9D-%D7%94%D7%95%D7%A4%D7%9A-%D7%9C%D7%9E%D7%A2%D7%A8%D7%9A-%D7%91%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F-%D7%91%D7%9C%D7%99-%D7%9C%D7%A7%D7%A8%D7%95%D7%90-%D7%90%D7%95%D7%AA%D7%95/",
+        "inLanguage": "he"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Blog",
+            "item": "https://amittech.dev/blog/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "\u05de\u05d9\u05e4\u05d5\u05d9 \u05d6\u05d9\u05db\u05e8\u05d5\u05df \u05de\u05d5\u05e1\u05d1\u05e8 - \u05d0\u05d9\u05da \u05e7\u05d5\u05d1\u05e5 \u05e9\u05dc\u05dd \u05d4\u05d5\u05e4\u05da \u05dc\u05de\u05e2\u05e8\u05da \u05d1\u05d6\u05d9\u05db\u05e8\u05d5\u05df \u05d1\u05dc\u05d9 \u05dc\u05e7\u05e8\u05d5\u05d0 \u05d0\u05d5\u05ea\u05d5",
+            "item": "https://amittech.dev/blog/2026/06/13/%D7%9E%D7%99%D7%A4%D7%95%D7%99-%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F-%D7%9E%D7%95%D7%A1%D7%91%D7%A8---%D7%90%D7%99%D7%9A-%D7%A7%D7%95%D7%91%D7%A5-%D7%A9%D7%9C%D7%9D-%D7%94%D7%95%D7%A4%D7%9A-%D7%9C%D7%9E%D7%A2%D7%A8%D7%9A-%D7%91%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F-%D7%91%D7%9C%D7%99-%D7%9C%D7%A7%D7%A8%D7%95%D7%90-%D7%90%D7%95%D7%AA%D7%95/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="מיפוי זיכרון מוסבר - איך קובץ שלם הופך למערך בזיכרון בלי לקרוא אותו - עמית טק" />
+<meta property="og:description" content="מה זה מיפוי זיכרון - memory mapping בלינוקס, איך mmap הופך קובץ שלם למערך בזיכרון בלי לקרוא אותו, וההבדל בין מיפוי משותף לפרטי ולמה זה מהיר יותר מ-read." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/blog/2026/06/13/%D7%9E%D7%99%D7%A4%D7%95%D7%99-%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F-%D7%9E%D7%95%D7%A1%D7%91%D7%A8---%D7%90%D7%99%D7%9A-%D7%A7%D7%95%D7%91%D7%A5-%D7%A9%D7%9C%D7%9D-%D7%94%D7%95%D7%A4%D7%9A-%D7%9C%D7%9E%D7%A2%D7%A8%D7%9A-%D7%91%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F-%D7%91%D7%9C%D7%99-%D7%9C%D7%A7%D7%A8%D7%95%D7%90-%D7%90%D7%95%D7%AA%D7%95.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/blog/2026/06/13/%D7%9E%D7%99%D7%A4%D7%95%D7%99-%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F-%D7%9E%D7%95%D7%A1%D7%91%D7%A8---%D7%90%D7%99%D7%9A-%D7%A7%D7%95%D7%91%D7%A5-%D7%A9%D7%9C%D7%9D-%D7%94%D7%95%D7%A4%D7%9A-%D7%9C%D7%9E%D7%A2%D7%A8%D7%9A-%D7%91%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F-%D7%91%D7%9C%D7%99-%D7%9C%D7%A7%D7%A8%D7%95%D7%90-%D7%90%D7%95%D7%AA%D7%95/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="מיפוי זיכרון מוסבר - איך קובץ שלם הופך למערך בזיכרון בלי לקרוא אותו - עמית טק" />
+<meta property="twitter:description" content="מה זה מיפוי זיכרון - memory mapping בלינוקס, איך mmap הופך קובץ שלם למערך בזיכרון בלי לקרוא אותו, וההבדל בין מיפוי משותף לפרטי ולמה זה מהיר יותר מ-read." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/blog/2026/06/13/%D7%9E%D7%99%D7%A4%D7%95%D7%99-%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F-%D7%9E%D7%95%D7%A1%D7%91%D7%A8---%D7%90%D7%99%D7%9A-%D7%A7%D7%95%D7%91%D7%A5-%D7%A9%D7%9C%D7%9D-%D7%94%D7%95%D7%A4%D7%9A-%D7%9C%D7%9E%D7%A2%D7%A8%D7%9A-%D7%91%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F-%D7%91%D7%9C%D7%99-%D7%9C%D7%A7%D7%A8%D7%95%D7%90-%D7%90%D7%95%D7%AA%D7%95.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              מיפוי זיכרון מוסבר - איך קובץ שלם הופך למערך בזיכרון בלי לקרוא אותו
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" hidden>
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    בלוג
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../archive/2026/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ארכיון
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אז מה זה בעצם מיפוי זיכרון
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        למה זה מהיר יותר מקריאה רגילה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מיפוי משותף מול מיפוי פרטי
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מיפוי אנונימי - זיכרון בלי קובץ בכלל
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        למה כדאי להכיר את זה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        לסיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+  <div class="md-content md-content--post" data-md-component="content">
+    <div class="md-sidebar md-sidebar--post" data-md-component="sidebar" data-md-type="navigation">
+      <div class="md-sidebar__scrollwrap">
+        <div class="md-sidebar__inner md-post">
+          <nav class="md-nav md-nav--primary">
+            <div class="md-post__back">
+              <div class="md-nav__title md-nav__container">
+                <a href="../../../../" class="md-nav__link">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+                  <span class="md-ellipsis">
+                    חזרה לאינדקס
+                  </span>
+                </a>
+              </div>
+            </div>
+            
+            <ul class="md-post__meta md-nav__list">
+              <li class="md-nav__item md-nav__item--section">
+                <div class="md-post__title">
+                  <span class="md-ellipsis">
+                    מטא-נתונים
+                  </span>
+                </div>
+                <nav class="md-nav">
+                  <ul class="md-nav__list">
+                    <li class="md-nav__item">
+                      <div class="md-nav__link">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 19H5V8h14m-3-7v2H8V1H6v2H5c-1.11 0-2 .89-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-1V1m-1 11h-5v5h5z"/></svg>
+                        <time datetime="2026-06-13 00:00:00+00:00" class="md-ellipsis">13 ביוני 2026</time>
+                      </div>
+                    </li>
+                    
+                    
+                    
+                      
+                      <li class="md-nav__item">
+                        <div class="md-nav__link">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 20a8 8 0 0 0 8-8 8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8m0-18a10 10 0 0 1 10 10 10 10 0 0 1-10 10C6.47 22 2 17.5 2 12A10 10 0 0 1 12 2m.5 5v5.25l4.5 2.67-.75 1.23L11 13V7z"/></svg>
+                          <span class="md-ellipsis">
+                            
+                              3 דקות קריאה
+                            
+                          </span>
+                        </div>
+                      </li>
+                    
+                  </ul>
+                </nav>
+              </li>
+            </ul>
+            
+          </nav>
+          
+        </div>
+      </div>
+    </div>
+    <article class="md-content__inner md-typeset">
+      
+        
+  
+
+
+  <nav class="md-tags" >
+    
+      
+      
+      
+      
+        <a href="../../../../../tags/#tag:low-level" class="md-tag">Low Level</a>
+      
+    
+      
+      
+      
+      
+        <a href="../../../../../tags/#tag:ארכיטקטורה" class="md-tag">ארכיטקטורה</a>
+      
+    
+      
+      
+      
+      
+        <a href="../../../../../tags/#tag:לינוקס" class="md-tag">לינוקס</a>
+      
+    
+  </nav>
+
+
+
+<h1 id="-">מיפוי זיכרון מוסבר - איך קובץ שלם הופך למערך בזיכרון בלי לקרוא אותו<a class="headerlink" href="#-" title="Permanent link">&para;</a></h1>
+<p>הדרך "הרגילה" לגשת לתוכן קובץ היא לקרוא אותו, בית אחר בית או בבלוקים, באמצעות <code>read</code>. אבל יש דרך אחרת, יעילה בהרבה במקרים מסוימים - למפות את הקובץ ישירות לתוך מרחב הזיכרון של התהליך, ולגשת אליו כאילו הוא סתם מערך רגיל בזיכרון. המנגנון הזה נקרא מיפוי זיכרון - memory mapping, והוא אחד הכלים החזקים ביותר שהקרנל נותן לתוכניות.</p>
+<h2 id="_1">אז מה זה בעצם מיפוי זיכרון<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>הקריאה למערכת שמבצעת את זה נקראת <code>mmap</code>. במקום להעתיק תוכן של קובץ מהדיסק לבאפר בזיכרון בתהליך הדרגתי, <code>mmap</code> פשוט מחבר טווח כתובות במרחב הזיכרון הווירטואלי של התהליך, לתוכן של הקובץ. מהרגע הזה, כל גישה לזיכרון בטווח הזה, קריאה או כתיבה, מטופלת אוטומטית על ידי הקרנל כגישה לקובץ, בלי שהתוכנית צריכה לקרוא לפונקציות <code>read</code> או <code>write</code> בכלל.</p>
+<p>זה נשמע כמעט קסום, אבל זה עובד בזכות אותו מנגנון שכבר פגשנו כשדיברנו על טעינת תהליכים - זיכרון וירטואלי ו-demand paging. הקרנל לא טוען את כל הקובץ לזיכרון פיזי מיד. הוא רק יוצר את המיפוי, ורק כשהתוכנית באמת ניגשת לחלק מסוים של הקובץ, מתרחשת טעינה בפועל של אותו עמוד זיכרון ספציפי, לא יותר.</p>
+<h2 id="_2">למה זה מהיר יותר מקריאה רגילה<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>קריאת קובץ עם <code>read</code> דורשת בדרך כלל שני עותקים של הנתונים - אחד בתוך הקרנל, ואחד שמועתק משם לבאפר של התוכנית. עם <code>mmap</code>, אין העתקה כפולה כזאת - הזיכרון של התהליך פשוט "רואה" את אותם עמודי זיכרון שדרכם הקרנל ניגש לקובץ, בלי שכבת העתקה נוספת באמצע.</p>
+<p>זה יתרון משמעותי כשעובדים עם קבצים גדולים, כי אפשר לגשת לחלקים ספציפיים מהקובץ, בלי לטעון את כולו לזיכרון מראש, ובלי לנהל ידנית קריאה שלב אחר שלב. בסיסי נתונים גדולים ומנועי חיפוש משתמשים בטכניקה הזאת בדיוק בשביל זה - לתת למערכת ההפעלה לנהל את הזיכרון בצורה חכמה, במקום לממש את זה ידנית בתוך התוכנית.</p>
+<h2 id="_3">מיפוי משותף מול מיפוי פרטי<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<p>יש שני סוגים עיקריים של מיפוי, וההבדל ביניהם קריטי. מיפוי משותף - shared mapping, אומר ששינויים שתעשו בזיכרון הממופה יזלגו בחזרה לקובץ עצמו על הדיסק, וגם יהיו גלויים לתהליכים אחרים שמיפו את אותו קובץ. זו למעשה דרך נוספת לתקשורת בין תהליכים - כמה תהליכים יכולים לשתף אותו אזור זיכרון ולתקשר דרכו ישירות, בלי צינורות ובלי קריאות מערכת נוספות.</p>
+<p>מיפוי פרטי - private mapping, לעומת זאת, נותן לכל תהליך עותק וירטואלי משלו. שינויים שהתהליך עושה נשארים אצלו בלבד, ולא משפיעים על הקובץ המקורי ולא על תהליכים אחרים - טכניקה שנקראת copy-on-write, שבה עותק אמיתי נוצר רק ברגע שבאמת כותבים לזיכרון, לא לפני כן.</p>
+<h2 id="-_1">מיפוי אנונימי - זיכרון בלי קובץ בכלל<a class="headerlink" href="#-_1" title="Permanent link">&para;</a></h2>
+<p><code>mmap</code> לא חייב להיות קשור לקובץ קיים. אפשר לבקש ממנו מיפוי אנונימי - anonymous mapping, שפשוט מקצה בלוק זיכרון ריק, בלי שום קשר לדיסק. זו בדיוק הדרך שבה מקצי זיכרון כמו <code>malloc</code> מבקשים מהקרנל בלוקים גדולים של זיכרון בפועל, מאחורי הקלעים, לפני שהם מנהלים את החלוקה הפנימית שלו בעצמם.</p>
+<h2 id="_4">למה כדאי להכיר את זה<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<p>מיפוי זיכרון הוא אחד הכלים שמראים הכי טוב איך זיכרון וירטואלי הופך יכולות שנשמעות מסובכות לפעולה פשוטה - קובץ ענק על הדיסק הופך למערך רגיל שגישה אליו עולה כמו גישה לזיכרון, בלי צורך בניהול ידני מסורבל. הבנה של המנגנון הזה חשובה גם לביצועים, וגם להבנה איך תהליכים חולקים ספריות משותפות וזיכרון ביניהם בפועל.</p>
+<p>זה בדיוק סוג ההבנה שאנחנו בונים בקורס <a href="https://amittech.dev/ליבת-המחשב/">ליבת המחשב</a> - איך זיכרון וירטואלי, קבצים, ותהליכים נפגשים במקום אחד.</p>
+<p>ואם <code>mmap</code> נשמע לכם עדיין קצת מופשט, יש קהילה שכבר עברה את השלב הזה.</p>
+<p><a href="https://discord.gg/ef5PQAAca2">הצטרפו לקהילה בדיסקורד</a></p>
+<h2 id="_5">לסיכום<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<p>מיפוי זיכרון מחבר בין קובץ לבין מרחב הזיכרון של תהליך, כך שגישה לקובץ נראית בדיוק כמו גישה למערך רגיל בזיכרון. הוא חוסך העתקות מיותרות, מאפשר לכמה תהליכים לשתף זיכרון בפועל, ומשמש גם בלי קובץ בכלל בתור הבסיס להקצאת זיכרון דינמית. ברגע שרואים אותו כהרחבה טבעית של זיכרון וירטואלי, קל הרבה יותר להבין למה הוא כלי כל כך מרכזי בכל מערכת שמתמודדת עם נתונים גדולים.</p><div class="related-posts"><h2>עוד פוסטים בנושא</h2><ul><li><a href="/blog/2026/03/16/%D7%90%D7%99%D7%9A-%D7%9E%D7%97%D7%A9%D7%91-%D7%A2%D7%95%D7%9C%D7%94-%D7%9E%D7%A8%D7%92%D7%A2-%D7%94%D7%9C%D7%97%D7%99%D7%A6%D7%94-%D7%A2%D7%9C-%D7%94%D7%9B%D7%A4%D7%AA%D7%95%D7%A8-%D7%95%D7%A2%D7%93-%D7%9E%D7%A1%D7%9A-%D7%94%D7%94%D7%AA%D7%97%D7%91%D7%A8%D7%95%D7%AA/">איך מחשב עולה מרגע הלחיצה על הכפתור ועד מסך ההתחברות</a></li>
+<li><a href="/blog/2026/06/30/%D7%90%D7%99%D7%9A-%D7%AA%D7%94%D7%9C%D7%99%D7%9A-%D7%A0%D7%98%D7%A2%D7%9F-%D7%91%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1---%D7%9E%D7%94-%D7%A7%D7%95%D7%A8%D7%94-%D7%91%D7%99%D7%9F-%D7%94%D7%A8%D7%A6%D7%AA-%D7%A4%D7%A7%D7%95%D7%93%D7%94-%D7%9C%D7%A8%D7%92%D7%A2-%D7%A9%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%99%D7%AA-%D7%A8%D7%A6%D7%94/">איך תהליך נטען בלינוקס - מה קורה בין הרצת פקודה לרגע שהתוכנית רצה</a></li>
+<li><a href="/blog/2026/06/23/%D7%94%D7%A7%D7%A8%D7%A0%D7%9C-%D7%A9%D7%9C-%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1-%D7%9E%D7%95%D7%A1%D7%91%D7%A8-%D7%91%D7%A4%D7%A9%D7%98%D7%95%D7%AA---%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94-%D7%A9%D7%9E%D7%A0%D7%94%D7%9C%D7%AA-%D7%90%D7%AA-%D7%9B%D7%9C-%D7%94%D7%A9%D7%90%D7%A8/">הקרנל של לינוקס מוסבר בפשטות - התוכנה שמנהלת את כל השאר</a></li></ul></div>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+  
+
+
+
+      
+    </article>
+  </div>
+
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

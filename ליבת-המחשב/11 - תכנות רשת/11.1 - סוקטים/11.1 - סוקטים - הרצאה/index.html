@@ -1,0 +1,3924 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בפרק 5.5 למדנו על מתארי קבצים (file descriptors) וראינו שבלינוקס "הכל הוא קובץ". בפרק 5.6 למדנו על pipes שמאפשרים תקשורת בין processes על אותה מכונה. בפרק...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/11%20-%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A8%D7%A9%D7%AA/11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D/11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../../10%20-%20C%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/10.6%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A1%D7%99%D7%9B%D7%95%D7%9D/10.6%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A1%D7%99%D7%9B%D7%95%D7%9D%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/">
+      
+      
+        <link rel="next" href="../11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>סוקטים - sockets - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "\u05e1\u05d5\u05e7\u05d8\u05d9\u05dd - sockets",
+            "item": "https://amittech.dev/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/11%20-%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A8%D7%A9%D7%AA/11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D/11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="סוקטים - sockets - עמית טק" />
+<meta property="og:description" content="בפרק 5.5 למדנו על מתארי קבצים (file descriptors) וראינו שבלינוקס "הכל הוא קובץ". בפרק 5.6 למדנו על pipes שמאפשרים תקשורת בין processes על אותה מכונה. בפרק..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/11%20-%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A8%D7%A9%D7%AA/11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D/11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/11%20-%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A8%D7%A9%D7%AA/11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D/11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="סוקטים - sockets - עמית טק" />
+<meta property="twitter:description" content="בפרק 5.5 למדנו על מתארי קבצים (file descriptors) וראינו שבלינוקס "הכל הוא קובץ". בפרק 5.6 למדנו על pipes שמאפשרים תקשורת בין processes על אותה מכונה. בפרק..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/11%20-%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A8%D7%A9%D7%AA/11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D/11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-sockets" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              סוקטים - sockets
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_1" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_1" id="__nav_7_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    ליבת המחשב
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%90%D7%A8%D7%92%D7%95%D7%9F%20%D7%94%D7%9E%D7%97%D7%A9%D7%91/0.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94/0.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   ארגון המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%2016%20%D7%91%D7%99%D7%98/1.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94/1.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   אסמבלי 16 ביט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%2032%20%D7%91%D7%99%D7%98/2.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/2.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   אסמבלי 32 ביט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%A9%D7%A4%D7%AA%20C/3.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/3.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   שפת C
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%99%D7%AA%20libc/4.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/4.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   ספריית libc
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/5.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/5.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   לינוקס
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C/6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   הקרנל של לינוקס
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94/7.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94/7.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   הנדסה הפוכה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%9E%D7%A2%D7%91%D7%93/8.1%20-%20%D7%A6%D7%99%D7%A0%D7%95%D7%A8%20%D7%94%D7%94%D7%95%D7%A8%D7%90%D7%95%D7%AA/8.1%20-%20%D7%A6%D7%99%D7%A0%D7%95%D7%A8%20%D7%94%D7%94%D7%95%D7%A8%D7%90%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   ארכיטקטורת מעבד
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%9C%D7%A6%D7%99%D7%94%20%D7%95%D7%9C%D7%99%D7%A0%D7%A7%D7%95%D7%92/9.1%20-%20%D7%A9%D7%9C%D7%91%D7%99%20%D7%94%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%9C%D7%A6%D7%99%D7%94/9.1%20-%20%D7%A9%D7%9C%D7%91%D7%99%20%D7%94%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%9C%D7%A6%D7%99%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   קומפילציה ולינקוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../10%20-%20C%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/10.1%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%20%D7%91%D7%AA%D7%95%D7%9A%20C/10.1%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%20%D7%91%D7%AA%D7%95%D7%9A%20C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10   C מתקדם
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_1_13" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_1_13" id="__nav_7_1_13_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    11   תכנות רשת
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_1_13_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_1_13">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    11   תכנות רשת
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_1_13_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_1_13_1" id="__nav_7_1_13_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    11.1   סוקטים
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_1_13_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_1_13_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    11.1   סוקטים
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    סוקטים - sockets
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    סוקטים - sockets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הקדמה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-socket-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סוגי סוקטים - socket types
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="סוגי סוקטים - socket types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-sock_stream-tcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        זרם - SOCK_STREAM - TCP
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-sock_dgram-udp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דאטאגרם - SOCK_DGRAM - UDP
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-sock_raw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        גולמי - SOCK_RAW
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-address-families" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        משפחות כתובות - address families
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#socket-the-socket-syscall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קריאת המערכת socket - the socket syscall
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-sockaddr_in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מבנה הכתובת - sockaddr_in
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-byte-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סדר בתים - byte order
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ip-inet_pton-inet_ntop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        המרת כתובות IP - inet_pton / inet_ntop
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tcp-tcp-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        לקוח TCP - TCP client
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="לקוח TCP - TCP client">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 1: יצירת סוקט
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 2: הגדרת כתובת השרת
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 3: התחברות לשרת
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 4: שליחת נתונים
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 5: קבלת נתונים
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 6: סגירת הסוקט
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-tcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דוגמה מלאה - לקוח TCP
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tcp-tcp-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שרת TCP - TCP server
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="שרת TCP - TCP server">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 1: יצירת סוקט
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-so_reuseaddr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 2: הגדרת SO_REUSEADDR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-bind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 3: קשירת כתובת - bind
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-listen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 4: התחלת האזנה - listen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-accept" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 5: קבלת חיבור - accept
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 6: תקשורת עם הלקוח
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 7: סגירה וחזרה ללולאה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-echo-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דוגמה מלאה - שרת הד - echo server
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הבעיה עם השרת הזה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סוקטים ומתארי קבצים - הקשר
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    11.1 - סוקטים - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    11.1 - סוקטים - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../11.2%20-%20%D7%A9%D7%A8%D7%AA%20TCP%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/11.2%20-%20%D7%A9%D7%A8%D7%AA%20TCP%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    11.2   שרת TCP מתקדם
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../11.3%20-%20UDP%20%D7%95-raw%20sockets/11.3%20-%20UDP%20%D7%95-raw%20sockets%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    11.3   UDP ו raw sockets
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../11.4%20-%20%D7%A4%D7%A8%D7%95%D7%98%D7%95%D7%A7%D7%95%D7%9C%20HTTP/11.4%20-%20%D7%A4%D7%A8%D7%95%D7%98%D7%95%D7%A7%D7%95%D7%9C%20HTTP%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    11.4   פרוטוקול HTTP
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../12%20-%20%D7%9E%D7%A7%D7%91%D7%99%D7%9C%D7%99%D7%95%D7%AA%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%AA/12.1%20-%20%D7%93%D7%A4%D7%95%D7%A1%D7%99%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%9E%D7%A7%D7%91%D7%99%D7%9C%D7%99/12.1%20-%20%D7%93%D7%A4%D7%95%D7%A1%D7%99%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%9E%D7%A7%D7%91%D7%99%D7%9C%D7%99%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    12   מקביליות מתקדמת
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הקדמה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-socket-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סוגי סוקטים - socket types
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="סוגי סוקטים - socket types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-sock_stream-tcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        זרם - SOCK_STREAM - TCP
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-sock_dgram-udp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דאטאגרם - SOCK_DGRAM - UDP
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-sock_raw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        גולמי - SOCK_RAW
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-address-families" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        משפחות כתובות - address families
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#socket-the-socket-syscall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קריאת המערכת socket - the socket syscall
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-sockaddr_in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מבנה הכתובת - sockaddr_in
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-byte-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סדר בתים - byte order
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ip-inet_pton-inet_ntop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        המרת כתובות IP - inet_pton / inet_ntop
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tcp-tcp-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        לקוח TCP - TCP client
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="לקוח TCP - TCP client">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 1: יצירת סוקט
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 2: הגדרת כתובת השרת
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 3: התחברות לשרת
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 4: שליחת נתונים
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 5: קבלת נתונים
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 6: סגירת הסוקט
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-tcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דוגמה מלאה - לקוח TCP
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tcp-tcp-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שרת TCP - TCP server
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="שרת TCP - TCP server">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 1: יצירת סוקט
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-so_reuseaddr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 2: הגדרת SO_REUSEADDR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-bind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 3: קשירת כתובת - bind
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-listen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 4: התחלת האזנה - listen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-accept" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 5: קבלת חיבור - accept
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 6: תקשורת עם הלקוח
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צעד 7: סגירה וחזרה ללולאה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-echo-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דוגמה מלאה - שרת הד - echo server
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הבעיה עם השרת הזה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סוקטים ומתארי קבצים - הקשר
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    ליבת המחשב
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    11   תכנות רשת
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    11.1   סוקטים
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="-sockets">סוקטים - sockets<a class="headerlink" href="#-sockets" title="Permanent link">&para;</a></h1>
+<h2 id="_1">הקדמה<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>בפרק 5.5 למדנו על מתארי קבצים (file descriptors) וראינו שבלינוקס "הכל הוא קובץ". בפרק 5.6 למדנו על pipes שמאפשרים תקשורת בין processes על אותה מכונה. בפרק 6.9 ראינו איך הקרנל מנהל את מחסנית הרשת - שכבות הפרוטוקולים, ניתוב, וטיפול בחבילות.</p>
+<p>עכשיו הגיע הזמן לחבר את כל החלקים ולכתוב קוד שמתקשר דרך הרשת. הכלי לעשות את זה הוא <strong>סוקט - socket</strong>.</p>
+<p>סוקט הוא file descriptor לתקשורת רשת. בדיוק כמו שפתחנו קובץ עם <code>open</code> וקיבלנו fd שאפשר לקרוא ממנו ולכתוב אליו, אנחנו יוצרים סוקט עם <code>socket</code> ומקבלים fd שאפשר לקרוא ממנו ולכתוב אליו - אבל הפעם הנתונים עוברים דרך הרשת למכונה אחרת.</p>
+<p>זה הכוח של הפילוסופיה "הכל הוא קובץ": אחרי שיצרנו סוקט וחיברנו אותו, אפשר להשתמש ב-<code>read</code> ו-<code>write</code> הרגילים עליו, בדיוק כמו על קובץ.</p>
+<hr />
+<h2 id="-socket-types">סוגי סוקטים - socket types<a class="headerlink" href="#-socket-types" title="Permanent link">&para;</a></h2>
+<p>כשיוצרים סוקט, צריך לבחור את סוג התקשורת. שלושת הסוגים העיקריים:</p>
+<h3 id="-sock_stream-tcp">זרם - SOCK_STREAM - TCP<a class="headerlink" href="#-sock_stream-tcp" title="Permanent link">&para;</a></h3>
+<p>סוקט מסוג <code>SOCK_STREAM</code> משתמש בפרוטוקול TCP. המאפיינים שלו:</p>
+<ul>
+<li><strong>אמין - reliable</strong> - הנתונים מגיעים בוודאות. אם חבילה אובדת, TCP שולח אותה שוב</li>
+<li><strong>מסודר - ordered</strong> - הנתונים מגיעים בסדר שנשלחו</li>
+<li><strong>מבוסס חיבור - connection-based</strong> - לפני שליחת נתונים, צריך ליצור חיבור בין הצדדים</li>
+<li><strong>זרם בתים - byte stream</strong> - אין גבולות הודעות. אם שלחת 100 בתים ואז 200 בתים, הצד השני עשוי לקבל 300 בתים בקריאה אחת, או 50 בתים בשש קריאות - אין הבטחה</li>
+</ul>
+<p>זה הסוג הנפוץ ביותר. HTTP, SSH, FTP - כולם משתמשים ב-TCP.</p>
+<h3 id="-sock_dgram-udp">דאטאגרם - SOCK_DGRAM - UDP<a class="headerlink" href="#-sock_dgram-udp" title="Permanent link">&para;</a></h3>
+<p>סוקט מסוג <code>SOCK_DGRAM</code> משתמש בפרוטוקול UDP. המאפיינים שלו:</p>
+<ul>
+<li><strong>לא אמין - unreliable</strong> - חבילות יכולות ללכת לאיבוד. אף אחד לא ישלח אותן שוב</li>
+<li><strong>לא מסודר - unordered</strong> - חבילות יכולות להגיע בסדר שונה מהסדר שנשלחו</li>
+<li><strong>ללא חיבור - connectionless</strong> - אין צורך ליצור חיבור. פשוט שולחים חבילה עם כתובת יעד</li>
+<li><strong>דאטאגרמים - datagrams</strong> - כל שליחה היא הודעה נפרדת עם גבולות ברורים</li>
+</ul>
+<p>למה להשתמש בUDP אם הוא לא אמין? כי הוא <strong>מהיר</strong>. DNS, משחקי רשת, סטרימינג של וידאו - כשמהירות חשובה יותר מאמינות.</p>
+<h3 id="-sock_raw">גולמי - SOCK_RAW<a class="headerlink" href="#-sock_raw" title="Permanent link">&para;</a></h3>
+<p>סוקט גולמי נותן שליטה מלאה על חבילות הרשת - אפשר לבנות את הheaders בעצמנו. צריך הרשאות root (או CAP_NET_RAW). נדבר על זה בפרק 11.3.</p>
+<hr />
+<h2 id="-address-families">משפחות כתובות - address families<a class="headerlink" href="#-address-families" title="Permanent link">&para;</a></h2>
+<p>כשיוצרים סוקט, צריך גם לבחור איזה סוג כתובות נשתמש בהן:</p>
+<table>
+<thead>
+<tr>
+<th>משפחה</th>
+<th>תיאור</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AF_INET</code></td>
+<td>כתובות IPv4 (הנפוץ ביותר)</td>
+</tr>
+<tr>
+<td><code>AF_INET6</code></td>
+<td>כתובות IPv6</td>
+</tr>
+<tr>
+<td><code>AF_UNIX</code></td>
+<td>תקשורת מקומית בין processes על אותה מכונה (כמו pipe, אבל דו-כיווני)</td>
+</tr>
+</tbody>
+</table>
+<p>בהרצאה הזו נתמקד ב-<code>AF_INET</code> (IPv4) כי זה הפשוט ביותר להתחלה.</p>
+<hr />
+<h2 id="socket-the-socket-syscall">קריאת המערכת socket - the socket syscall<a class="headerlink" href="#socket-the-socket-syscall" title="Permanent link">&para;</a></h2>
+<p>יצירת סוקט נעשית עם הsyscall <code>socket</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;sys/socket.h&gt;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kt">int</span><span class="w"> </span><span class="n">sockfd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">socket</span><span class="p">(</span><span class="n">AF_INET</span><span class="p">,</span><span class="w"> </span><span class="n">SOCK_STREAM</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">sockfd</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="n">perror</span><span class="p">(</span><span class="s">&quot;socket&quot;</span><span class="p">);</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">}</span>
+</code></pre></div>
+<p>שלושה פרמטרים:<br />
+1. <strong>משפחת כתובות - domain</strong> - <code>AF_INET</code> לIPv4<br />
+2. <strong>סוג סוקט - type</strong> - <code>SOCK_STREAM</code> לTCP, <code>SOCK_DGRAM</code> לUDP<br />
+3. <strong>פרוטוקול - protocol</strong> - בדרך כלל 0 (הקרנל בוחר את הפרוטוקול המתאים אוטומטית)</p>
+<p>הפונקציה מחזירה file descriptor - מספר שלם, בדיוק כמו <code>open</code>. אם יש שגיאה, מחזירה -1.</p>
+<hr />
+<h2 id="-sockaddr_in">מבנה הכתובת - sockaddr_in<a class="headerlink" href="#-sockaddr_in" title="Permanent link">&para;</a></h2>
+<p>כדי לחבר סוקט לשרת, צריך לציין כתובת: IP ופורט. המבנה שמייצג כתובת IPv4:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;netinet/in.h&gt;</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">struct</span><span class="w"> </span><span class="nc">sockaddr_in</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="n">sa_family_t</span><span class="w">    </span><span class="n">sin_family</span><span class="p">;</span><span class="w">  </span><span class="c1">// address family: AF_INET</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="n">in_port_t</span><span class="w">      </span><span class="n">sin_port</span><span class="p">;</span><span class="w">    </span><span class="c1">// port number (in network byte order!)</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">in_addr</span><span class="w"> </span><span class="n">sin_addr</span><span class="p">;</span><span class="w">    </span><span class="c1">// IP address</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="p">};</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="k">struct</span><span class="w"> </span><span class="nc">in_addr</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">s_addr</span><span class="p">;</span><span class="w">            </span><span class="c1">// IP address as a 32-bit number</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="p">};</span>
+</code></pre></div>
+<p>דוגמה - מילוי מבנה כתובת:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">sockaddr_in</span><span class="w"> </span><span class="n">server_addr</span><span class="p">;</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">server_addr</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">server_addr</span><span class="p">));</span><span class="w">   </span><span class="c1">// zero everything</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">server_addr</span><span class="p">.</span><span class="n">sin_family</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AF_INET</span><span class="p">;</span><span class="w">               </span><span class="c1">// IPv4</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">server_addr</span><span class="p">.</span><span class="n">sin_port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">htons</span><span class="p">(</span><span class="mi">8080</span><span class="p">);</span><span class="w">             </span><span class="c1">// port 8080</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">inet_pton</span><span class="p">(</span><span class="n">AF_INET</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;127.0.0.1&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">server_addr</span><span class="p">.</span><span class="n">sin_addr</span><span class="p">);</span><span class="w">  </span><span class="c1">// IP address</span>
+</code></pre></div>
+<p>שימו לב לשתי פונקציות חשובות שמופיעות כאן: <code>htons</code> ו-<code>inet_pton</code>. נסביר אותן עכשיו.</p>
+<hr />
+<h2 id="-byte-order">סדר בתים - byte order<a class="headerlink" href="#-byte-order" title="Permanent link">&para;</a></h2>
+<p>נתון קריטי: מעבדים שונים מאחסנים מספרים בסדר בתים שונה.</p>
+<ul>
+<li><strong>ליטל-אנדיאן - little-endian</strong> - הבית הנמוך ראשון (x86 עובד ככה)</li>
+<li><strong>ביג-אנדיאן - big-endian</strong> - הבית הגבוה ראשון</li>
+</ul>
+<p>פרוטוקולי הרשת משתמשים בביג-אנדיאן (נקרא <strong>network byte order</strong>). אם המעבד שלנו הוא ליטל-אנדיאן (וב-x86 הוא תמיד כזה), צריך להמיר את סדר הבתים לפני שליחה דרך הרשת.</p>
+<p>לזה יש ארבע פונקציות:</p>
+<table>
+<thead>
+<tr>
+<th>פונקציה</th>
+<th>כיוון</th>
+<th>גודל</th>
+<th>תיאור</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>htons()</code></td>
+<td>מהמעבד לרשת - host to network</td>
+<td>16 ביט (short)</td>
+<td>לפורטים</td>
+</tr>
+<tr>
+<td><code>htonl()</code></td>
+<td>מהמעבד לרשת - host to network</td>
+<td>32 ביט (long)</td>
+<td>לכתובות IP</td>
+</tr>
+<tr>
+<td><code>ntohs()</code></td>
+<td>מהרשת למעבד - network to host</td>
+<td>16 ביט (short)</td>
+<td>לפורטים</td>
+</tr>
+<tr>
+<td><code>ntohl()</code></td>
+<td>מהרשת למעבד - network to host</td>
+<td>32 ביט (long)</td>
+<td>לכתובות IP</td>
+</tr>
+</tbody>
+</table>
+<p><strong>כלל חשוב:</strong> תמיד תמירו מספרי פורט עם <code>htons</code> לפני שמכניסים אותם ל-<code>sin_port</code>. שכחת ההמרה היא באג נפוץ ומאוד מבלבל - הפורט פשוט יהיה לא נכון.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1">// correct:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">server_addr</span><span class="p">.</span><span class="n">sin_port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">htons</span><span class="p">(</span><span class="mi">8080</span><span class="p">);</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1">// wrong! the port will be garbled:</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">server_addr</span><span class="p">.</span><span class="n">sin_port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">8080</span><span class="p">;</span><span class="w">  </span><span class="c1">// don&#39;t do this</span>
+</code></pre></div>
+<hr />
+<h2 id="ip-inet_pton-inet_ntop">המרת כתובות IP - inet_pton / inet_ntop<a class="headerlink" href="#ip-inet_pton-inet_ntop" title="Permanent link">&para;</a></h2>
+<p>כתובת IP מיוצגת כמחרוזת ("192.168.1.1") אבל בsockaddr_in היא מאוחסנת כמספר 32-ביט. צריך להמיר ביניהם:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;arpa/inet.h&gt;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1">// string to number (presentation to network)</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="k">struct</span><span class="w"> </span><span class="nc">in_addr</span><span class="w"> </span><span class="n">addr</span><span class="p">;</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">inet_pton</span><span class="p">(</span><span class="n">AF_INET</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;192.168.1.1&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">addr</span><span class="p">);</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1">// number to string (network to presentation)</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="kt">char</span><span class="w"> </span><span class="n">ip_str</span><span class="p">[</span><span class="n">INET_ADDRSTRLEN</span><span class="p">];</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="n">inet_ntop</span><span class="p">(</span><span class="n">AF_INET</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">addr</span><span class="p">,</span><span class="w"> </span><span class="n">ip_str</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">ip_str</span><span class="p">));</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="n">printf</span><span class="p">(</span><span class="s">&quot;IP: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ip_str</span><span class="p">);</span><span class="w">  </span><span class="c1">// &quot;192.168.1.1&quot;</span>
+</code></pre></div>
+<p>השם <code>pton</code> = presentation to network (מהצגה למספר), <code>ntop</code> = network to presentation (ממספר להצגה).</p>
+<hr />
+<h2 id="tcp-tcp-client">לקוח TCP - TCP client<a class="headerlink" href="#tcp-tcp-client" title="Permanent link">&para;</a></h2>
+<p>בואו נבנה לקוח TCP צעד אחרי צעד. תהליך העבודה של לקוח:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>socket() -&gt; connect() -&gt; write()/send() -&gt; read()/recv() -&gt; close()
+</code></pre></div>
+<h3 id="1">צעד 1: יצירת סוקט<a class="headerlink" href="#1" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kt">int</span><span class="w"> </span><span class="n">sockfd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">socket</span><span class="p">(</span><span class="n">AF_INET</span><span class="p">,</span><span class="w"> </span><span class="n">SOCK_STREAM</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">sockfd</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="n">perror</span><span class="p">(</span><span class="s">&quot;socket&quot;</span><span class="p">);</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="2">צעד 2: הגדרת כתובת השרת<a class="headerlink" href="#2" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">sockaddr_in</span><span class="w"> </span><span class="n">server_addr</span><span class="p">;</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">server_addr</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">server_addr</span><span class="p">));</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">server_addr</span><span class="p">.</span><span class="n">sin_family</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AF_INET</span><span class="p">;</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">server_addr</span><span class="p">.</span><span class="n">sin_port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">htons</span><span class="p">(</span><span class="mi">8080</span><span class="p">);</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">inet_pton</span><span class="p">(</span><span class="n">AF_INET</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;127.0.0.1&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">server_addr</span><span class="p">.</span><span class="n">sin_addr</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="3">צעד 3: התחברות לשרת<a class="headerlink" href="#3" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">connect</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">sockaddr</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">server_addr</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">server_addr</span><span class="p">))</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span><span class="n">perror</span><span class="p">(</span><span class="s">&quot;connect&quot;</span><span class="p">);</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="n">close</span><span class="p">(</span><span class="n">sockfd</span><span class="p">);</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="p">}</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="n">printf</span><span class="p">(</span><span class="s">&quot;connected to server!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+</code></pre></div>
+<p>שימו לב לcasting ל-<code>(struct sockaddr *)</code>. הפונקציה <code>connect</code> מקבלת מצביע ל-<code>struct sockaddr</code> הגנרי, אבל אנחנו מעבירים <code>struct sockaddr_in</code> הספציפי ל-IPv4. הcasting הזה נפוץ בכל interface הסוקטים.</p>
+<h3 id="4">צעד 4: שליחת נתונים<a class="headerlink" href="#4" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">msg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Hello, server!&quot;</span><span class="p">;</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="kt">ssize_t</span><span class="w"> </span><span class="n">bytes_sent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">write</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span><span class="w"> </span><span class="n">msg</span><span class="p">,</span><span class="w"> </span><span class="n">strlen</span><span class="p">(</span><span class="n">msg</span><span class="p">));</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">bytes_sent</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="n">perror</span><span class="p">(</span><span class="s">&quot;write&quot;</span><span class="p">);</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="p">}</span>
+</code></pre></div>
+<p>אפשר גם להשתמש ב-<code>send</code> במקום <code>write</code>. ההבדל: <code>send</code> מקבלת פרמטר נוסף של דגלים (flags) שמאפשרים שליטה נוספת. <code>write</code> פשוט שולחת עם דגלים 0.</p>
+<h3 id="5">צעד 5: קבלת נתונים<a class="headerlink" href="#5" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kt">char</span><span class="w"> </span><span class="n">buffer</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="kt">ssize_t</span><span class="w"> </span><span class="n">bytes_received</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span><span class="w"> </span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">bytes_received</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="n">perror</span><span class="p">(</span><span class="s">&quot;read&quot;</span><span class="p">);</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">bytes_received</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;server closed connection</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">    </span><span class="n">buffer</span><span class="p">[</span><span class="n">bytes_received</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sc">&#39;\0&#39;</span><span class="p">;</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;received: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">buffer</span><span class="p">);</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="p">}</span>
+</code></pre></div>
+<p>חשוב: <code>read</code> מחזירה 0 כשהצד השני סגר את החיבור. זה הסימן ש"אין יותר נתונים".</p>
+<h3 id="6">צעד 6: סגירת הסוקט<a class="headerlink" href="#6" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">close</span><span class="p">(</span><span class="n">sockfd</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="-tcp">דוגמה מלאה - לקוח TCP<a class="headerlink" href="#-tcp" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdlib.h&gt;</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;string.h&gt;</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;unistd.h&gt;</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;sys/socket.h&gt;</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;netinet/in.h&gt;</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;arpa/inet.h&gt;</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="p">{</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">argc</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="w">        </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;usage: %s &lt;ip&gt; &lt;port&gt;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="w">        </span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>
+<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">ip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">atoi</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
+<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>
+<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a><span class="w">    </span><span class="cm">/* step 1: create socket */</span>
+<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">sockfd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">socket</span><span class="p">(</span><span class="n">AF_INET</span><span class="p">,</span><span class="w"> </span><span class="n">SOCK_STREAM</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">sockfd</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a><span class="w">        </span><span class="n">perror</span><span class="p">(</span><span class="s">&quot;socket&quot;</span><span class="p">);</span>
+<a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a><span class="w">        </span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a>
+<a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a><span class="w">    </span><span class="cm">/* step 2: set up server address */</span>
+<a id="__codelineno-12-27" name="__codelineno-12-27" href="#__codelineno-12-27"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">sockaddr_in</span><span class="w"> </span><span class="n">server_addr</span><span class="p">;</span>
+<a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a><span class="w">    </span><span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">server_addr</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">server_addr</span><span class="p">));</span>
+<a id="__codelineno-12-29" name="__codelineno-12-29" href="#__codelineno-12-29"></a><span class="w">    </span><span class="n">server_addr</span><span class="p">.</span><span class="n">sin_family</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AF_INET</span><span class="p">;</span>
+<a id="__codelineno-12-30" name="__codelineno-12-30" href="#__codelineno-12-30"></a><span class="w">    </span><span class="n">server_addr</span><span class="p">.</span><span class="n">sin_port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">htons</span><span class="p">(</span><span class="n">port</span><span class="p">);</span>
+<a id="__codelineno-12-31" name="__codelineno-12-31" href="#__codelineno-12-31"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">inet_pton</span><span class="p">(</span><span class="n">AF_INET</span><span class="p">,</span><span class="w"> </span><span class="n">ip</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">server_addr</span><span class="p">.</span><span class="n">sin_addr</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-12-32" name="__codelineno-12-32" href="#__codelineno-12-32"></a><span class="w">        </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;invalid address: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ip</span><span class="p">);</span>
+<a id="__codelineno-12-33" name="__codelineno-12-33" href="#__codelineno-12-33"></a><span class="w">        </span><span class="n">close</span><span class="p">(</span><span class="n">sockfd</span><span class="p">);</span>
+<a id="__codelineno-12-34" name="__codelineno-12-34" href="#__codelineno-12-34"></a><span class="w">        </span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<a id="__codelineno-12-35" name="__codelineno-12-35" href="#__codelineno-12-35"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-12-36" name="__codelineno-12-36" href="#__codelineno-12-36"></a>
+<a id="__codelineno-12-37" name="__codelineno-12-37" href="#__codelineno-12-37"></a><span class="w">    </span><span class="cm">/* step 3: connect */</span>
+<a id="__codelineno-12-38" name="__codelineno-12-38" href="#__codelineno-12-38"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">connect</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">sockaddr</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">server_addr</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">server_addr</span><span class="p">))</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-12-39" name="__codelineno-12-39" href="#__codelineno-12-39"></a><span class="w">        </span><span class="n">perror</span><span class="p">(</span><span class="s">&quot;connect&quot;</span><span class="p">);</span>
+<a id="__codelineno-12-40" name="__codelineno-12-40" href="#__codelineno-12-40"></a><span class="w">        </span><span class="n">close</span><span class="p">(</span><span class="n">sockfd</span><span class="p">);</span>
+<a id="__codelineno-12-41" name="__codelineno-12-41" href="#__codelineno-12-41"></a><span class="w">        </span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<a id="__codelineno-12-42" name="__codelineno-12-42" href="#__codelineno-12-42"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-12-43" name="__codelineno-12-43" href="#__codelineno-12-43"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;connected to %s:%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ip</span><span class="p">,</span><span class="w"> </span><span class="n">port</span><span class="p">);</span>
+<a id="__codelineno-12-44" name="__codelineno-12-44" href="#__codelineno-12-44"></a>
+<a id="__codelineno-12-45" name="__codelineno-12-45" href="#__codelineno-12-45"></a><span class="w">    </span><span class="cm">/* step 4: send */</span>
+<a id="__codelineno-12-46" name="__codelineno-12-46" href="#__codelineno-12-46"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">msg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Hello from client!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+<a id="__codelineno-12-47" name="__codelineno-12-47" href="#__codelineno-12-47"></a><span class="w">    </span><span class="n">write</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span><span class="w"> </span><span class="n">msg</span><span class="p">,</span><span class="w"> </span><span class="n">strlen</span><span class="p">(</span><span class="n">msg</span><span class="p">));</span>
+<a id="__codelineno-12-48" name="__codelineno-12-48" href="#__codelineno-12-48"></a>
+<a id="__codelineno-12-49" name="__codelineno-12-49" href="#__codelineno-12-49"></a><span class="w">    </span><span class="cm">/* step 5: receive */</span>
+<a id="__codelineno-12-50" name="__codelineno-12-50" href="#__codelineno-12-50"></a><span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">buffer</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span>
+<a id="__codelineno-12-51" name="__codelineno-12-51" href="#__codelineno-12-51"></a><span class="w">    </span><span class="kt">ssize_t</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span><span class="w"> </span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+<a id="__codelineno-12-52" name="__codelineno-12-52" href="#__codelineno-12-52"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-12-53" name="__codelineno-12-53" href="#__codelineno-12-53"></a><span class="w">        </span><span class="n">buffer</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sc">&#39;\0&#39;</span><span class="p">;</span>
+<a id="__codelineno-12-54" name="__codelineno-12-54" href="#__codelineno-12-54"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;server replied: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">buffer</span><span class="p">);</span>
+<a id="__codelineno-12-55" name="__codelineno-12-55" href="#__codelineno-12-55"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-12-56" name="__codelineno-12-56" href="#__codelineno-12-56"></a>
+<a id="__codelineno-12-57" name="__codelineno-12-57" href="#__codelineno-12-57"></a><span class="w">    </span><span class="cm">/* step 6: close */</span>
+<a id="__codelineno-12-58" name="__codelineno-12-58" href="#__codelineno-12-58"></a><span class="w">    </span><span class="n">close</span><span class="p">(</span><span class="n">sockfd</span><span class="p">);</span>
+<a id="__codelineno-12-59" name="__codelineno-12-59" href="#__codelineno-12-59"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-12-60" name="__codelineno-12-60" href="#__codelineno-12-60"></a><span class="p">}</span>
+</code></pre></div>
+<p>קומפילציה והרצה:<br />
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>gcc<span class="w"> </span>-o<span class="w"> </span>client<span class="w"> </span>client.c
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>./client<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span><span class="m">8080</span>
+</code></pre></div></p>
+<hr />
+<h2 id="tcp-tcp-server">שרת TCP - TCP server<a class="headerlink" href="#tcp-tcp-server" title="Permanent link">&para;</a></h2>
+<p>שרת TCP מורכב יותר מלקוח. תהליך העבודה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>socket() -&gt; bind() -&gt; listen() -&gt; accept() -&gt; read()/write() -&gt; close()
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>                                     |                              |
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>                                     +------------------------------+
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>                                        (loop - back to accept)
+</code></pre></div>
+<h3 id="1_1">צעד 1: יצירת סוקט<a class="headerlink" href="#1_1" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kt">int</span><span class="w"> </span><span class="n">server_fd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">socket</span><span class="p">(</span><span class="n">AF_INET</span><span class="p">,</span><span class="w"> </span><span class="n">SOCK_STREAM</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">server_fd</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span><span class="n">perror</span><span class="p">(</span><span class="s">&quot;socket&quot;</span><span class="p">);</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">    </span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="2-so_reuseaddr">צעד 2: הגדרת SO_REUSEADDR<a class="headerlink" href="#2-so_reuseaddr" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kt">int</span><span class="w"> </span><span class="n">opt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="n">setsockopt</span><span class="p">(</span><span class="n">server_fd</span><span class="p">,</span><span class="w"> </span><span class="n">SOL_SOCKET</span><span class="p">,</span><span class="w"> </span><span class="n">SO_REUSEADDR</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">opt</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">opt</span><span class="p">));</span>
+</code></pre></div>
+<p>למה? בלי זה, אחרי שסוגרים את השרת ומנסים להפעיל אותו שוב, נקבל שגיאת "Address already in use". זה קורה כי TCP שומר את הפורט "תפוס" למשך כמה דקות אחרי סגירה (מצב TIME_WAIT). הדגל <code>SO_REUSEADDR</code> מאפשר לנו להתעלם מזה ולהשתמש בפורט מיד.</p>
+<h3 id="3-bind">צעד 3: קשירת כתובת - bind<a class="headerlink" href="#3-bind" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">sockaddr_in</span><span class="w"> </span><span class="n">server_addr</span><span class="p">;</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">server_addr</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">server_addr</span><span class="p">));</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="n">server_addr</span><span class="p">.</span><span class="n">sin_family</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AF_INET</span><span class="p">;</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="n">server_addr</span><span class="p">.</span><span class="n">sin_port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">htons</span><span class="p">(</span><span class="mi">8080</span><span class="p">);</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="n">server_addr</span><span class="p">.</span><span class="n">sin_addr</span><span class="p">.</span><span class="n">s_addr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">INADDR_ANY</span><span class="p">;</span><span class="w">  </span><span class="c1">// listen on all interfaces</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">bind</span><span class="p">(</span><span class="n">server_fd</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">sockaddr</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">server_addr</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">server_addr</span><span class="p">))</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="w">    </span><span class="n">perror</span><span class="p">(</span><span class="s">&quot;bind&quot;</span><span class="p">);</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="w">    </span><span class="n">close</span><span class="p">(</span><span class="n">server_fd</span><span class="p">);</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="w">    </span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="p">}</span>
+</code></pre></div>
+<p><code>bind</code> קושרת את הסוקט לכתובת ופורט מסוימים. <code>INADDR_ANY</code> (שזה בעצם 0) אומר "תאזין על כל interfaces הרשת של המכונה". אם נרצה להאזין רק על localhost, נשתמש ב-<code>inet_pton(AF_INET, "127.0.0.1", &amp;server_addr.sin_addr)</code>.</p>
+<h3 id="4-listen">צעד 4: התחלת האזנה - listen<a class="headerlink" href="#4-listen" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">listen</span><span class="p">(</span><span class="n">server_fd</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">    </span><span class="n">perror</span><span class="p">(</span><span class="s">&quot;listen&quot;</span><span class="p">);</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">    </span><span class="n">close</span><span class="p">(</span><span class="n">server_fd</span><span class="p">);</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">    </span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="p">}</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="n">printf</span><span class="p">(</span><span class="s">&quot;listening on port 8080...</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+</code></pre></div>
+<p><code>listen</code> אומרת למערכת ההפעלה: "הסוקט הזה הוא שרת, תתחיל לקבל חיבורים". הפרמטר השני (5) הוא ה-backlog - כמה חיבורים ממתינים מותר לצבור בqueue לפני שהשרת מגיע לטפל בהם.</p>
+<h3 id="5-accept">צעד 5: קבלת חיבור - accept<a class="headerlink" href="#5-accept" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">sockaddr_in</span><span class="w"> </span><span class="n">client_addr</span><span class="p">;</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="kt">socklen_t</span><span class="w"> </span><span class="n">client_len</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">client_addr</span><span class="p">);</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="kt">int</span><span class="w"> </span><span class="n">client_fd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">accept</span><span class="p">(</span><span class="n">server_fd</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">sockaddr</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">client_addr</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">client_len</span><span class="p">);</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">client_fd</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">    </span><span class="n">perror</span><span class="p">(</span><span class="s">&quot;accept&quot;</span><span class="p">);</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="w">    </span><span class="c1">// continue - don&#39;t exit, try again</span>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>הנקודה הקריטית:</strong> <code>accept</code> מחזירה <strong>file descriptor חדש</strong> - סוקט חדש שמייצג את החיבור ללקוח הספציפי הזה. הסוקט המקורי (<code>server_fd</code>) ממשיך להאזין לחיבורים חדשים. ה-fd החדש (<code>client_fd</code>) הוא ערוץ התקשורת עם הלקוח.</p>
+<p><code>accept</code> גם ממלאת את <code>client_addr</code> בכתובת הלקוח שהתחבר, כך שנוכל לדעת מי התחבר:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="kt">char</span><span class="w"> </span><span class="n">client_ip</span><span class="p">[</span><span class="n">INET_ADDRSTRLEN</span><span class="p">];</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="n">inet_ntop</span><span class="p">(</span><span class="n">AF_INET</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">client_addr</span><span class="p">.</span><span class="n">sin_addr</span><span class="p">,</span><span class="w"> </span><span class="n">client_ip</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">client_ip</span><span class="p">));</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="n">printf</span><span class="p">(</span><span class="s">&quot;client connected from %s:%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">client_ip</span><span class="p">,</span><span class="w"> </span><span class="n">ntohs</span><span class="p">(</span><span class="n">client_addr</span><span class="p">.</span><span class="n">sin_port</span><span class="p">));</span>
+</code></pre></div>
+<h3 id="6_1">צעד 6: תקשורת עם הלקוח<a class="headerlink" href="#6_1" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="kt">char</span><span class="w"> </span><span class="n">buffer</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="kt">ssize_t</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read</span><span class="p">(</span><span class="n">client_fd</span><span class="p">,</span><span class="w"> </span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">    </span><span class="n">buffer</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sc">&#39;\0&#39;</span><span class="p">;</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;client said: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">buffer</span><span class="p">);</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="w">    </span><span class="n">write</span><span class="p">(</span><span class="n">client_fd</span><span class="p">,</span><span class="w"> </span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">);</span><span class="w">  </span><span class="c1">// send back (echo)</span>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="7">צעד 7: סגירה וחזרה ללולאה<a class="headerlink" href="#7" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="n">close</span><span class="p">(</span><span class="n">client_fd</span><span class="p">);</span><span class="w">  </span><span class="c1">// close the connection to the client</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="c1">// go back to accept to get the next client</span>
+</code></pre></div>
+<h3 id="-echo-server">דוגמה מלאה - שרת הד - echo server<a class="headerlink" href="#-echo-server" title="Permanent link">&para;</a></h3>
+<p>שרת שמקבל הודעה מלקוח ושולח אותה בחזרה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdlib.h&gt;</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;string.h&gt;</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;unistd.h&gt;</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;sys/socket.h&gt;</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;netinet/in.h&gt;</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;arpa/inet.h&gt;</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="cp">#define PORT 8080</span>
+<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a><span class="cp">#define BUFFER_SIZE 1024</span>
+<a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a>
+<a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<a id="__codelineno-23-13" name="__codelineno-23-13" href="#__codelineno-23-13"></a><span class="p">{</span>
+<a id="__codelineno-23-14" name="__codelineno-23-14" href="#__codelineno-23-14"></a><span class="w">    </span><span class="cm">/* create socket */</span>
+<a id="__codelineno-23-15" name="__codelineno-23-15" href="#__codelineno-23-15"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">server_fd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">socket</span><span class="p">(</span><span class="n">AF_INET</span><span class="p">,</span><span class="w"> </span><span class="n">SOCK_STREAM</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">server_fd</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-23-17" name="__codelineno-23-17" href="#__codelineno-23-17"></a><span class="w">        </span><span class="n">perror</span><span class="p">(</span><span class="s">&quot;socket&quot;</span><span class="p">);</span>
+<a id="__codelineno-23-18" name="__codelineno-23-18" href="#__codelineno-23-18"></a><span class="w">        </span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<a id="__codelineno-23-19" name="__codelineno-23-19" href="#__codelineno-23-19"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-23-20" name="__codelineno-23-20" href="#__codelineno-23-20"></a>
+<a id="__codelineno-23-21" name="__codelineno-23-21" href="#__codelineno-23-21"></a><span class="w">    </span><span class="cm">/* SO_REUSEADDR */</span>
+<a id="__codelineno-23-22" name="__codelineno-23-22" href="#__codelineno-23-22"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">opt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<a id="__codelineno-23-23" name="__codelineno-23-23" href="#__codelineno-23-23"></a><span class="w">    </span><span class="n">setsockopt</span><span class="p">(</span><span class="n">server_fd</span><span class="p">,</span><span class="w"> </span><span class="n">SOL_SOCKET</span><span class="p">,</span><span class="w"> </span><span class="n">SO_REUSEADDR</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">opt</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">opt</span><span class="p">));</span>
+<a id="__codelineno-23-24" name="__codelineno-23-24" href="#__codelineno-23-24"></a>
+<a id="__codelineno-23-25" name="__codelineno-23-25" href="#__codelineno-23-25"></a><span class="w">    </span><span class="cm">/* bind */</span>
+<a id="__codelineno-23-26" name="__codelineno-23-26" href="#__codelineno-23-26"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">sockaddr_in</span><span class="w"> </span><span class="n">server_addr</span><span class="p">;</span>
+<a id="__codelineno-23-27" name="__codelineno-23-27" href="#__codelineno-23-27"></a><span class="w">    </span><span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">server_addr</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">server_addr</span><span class="p">));</span>
+<a id="__codelineno-23-28" name="__codelineno-23-28" href="#__codelineno-23-28"></a><span class="w">    </span><span class="n">server_addr</span><span class="p">.</span><span class="n">sin_family</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AF_INET</span><span class="p">;</span>
+<a id="__codelineno-23-29" name="__codelineno-23-29" href="#__codelineno-23-29"></a><span class="w">    </span><span class="n">server_addr</span><span class="p">.</span><span class="n">sin_port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">htons</span><span class="p">(</span><span class="n">PORT</span><span class="p">);</span>
+<a id="__codelineno-23-30" name="__codelineno-23-30" href="#__codelineno-23-30"></a><span class="w">    </span><span class="n">server_addr</span><span class="p">.</span><span class="n">sin_addr</span><span class="p">.</span><span class="n">s_addr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">INADDR_ANY</span><span class="p">;</span>
+<a id="__codelineno-23-31" name="__codelineno-23-31" href="#__codelineno-23-31"></a>
+<a id="__codelineno-23-32" name="__codelineno-23-32" href="#__codelineno-23-32"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">bind</span><span class="p">(</span><span class="n">server_fd</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">sockaddr</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">server_addr</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">server_addr</span><span class="p">))</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-23-33" name="__codelineno-23-33" href="#__codelineno-23-33"></a><span class="w">        </span><span class="n">perror</span><span class="p">(</span><span class="s">&quot;bind&quot;</span><span class="p">);</span>
+<a id="__codelineno-23-34" name="__codelineno-23-34" href="#__codelineno-23-34"></a><span class="w">        </span><span class="n">close</span><span class="p">(</span><span class="n">server_fd</span><span class="p">);</span>
+<a id="__codelineno-23-35" name="__codelineno-23-35" href="#__codelineno-23-35"></a><span class="w">        </span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<a id="__codelineno-23-36" name="__codelineno-23-36" href="#__codelineno-23-36"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-23-37" name="__codelineno-23-37" href="#__codelineno-23-37"></a>
+<a id="__codelineno-23-38" name="__codelineno-23-38" href="#__codelineno-23-38"></a><span class="w">    </span><span class="cm">/* listen */</span>
+<a id="__codelineno-23-39" name="__codelineno-23-39" href="#__codelineno-23-39"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">listen</span><span class="p">(</span><span class="n">server_fd</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-23-40" name="__codelineno-23-40" href="#__codelineno-23-40"></a><span class="w">        </span><span class="n">perror</span><span class="p">(</span><span class="s">&quot;listen&quot;</span><span class="p">);</span>
+<a id="__codelineno-23-41" name="__codelineno-23-41" href="#__codelineno-23-41"></a><span class="w">        </span><span class="n">close</span><span class="p">(</span><span class="n">server_fd</span><span class="p">);</span>
+<a id="__codelineno-23-42" name="__codelineno-23-42" href="#__codelineno-23-42"></a><span class="w">        </span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<a id="__codelineno-23-43" name="__codelineno-23-43" href="#__codelineno-23-43"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-23-44" name="__codelineno-23-44" href="#__codelineno-23-44"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;echo server listening on port %d...</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">PORT</span><span class="p">);</span>
+<a id="__codelineno-23-45" name="__codelineno-23-45" href="#__codelineno-23-45"></a>
+<a id="__codelineno-23-46" name="__codelineno-23-46" href="#__codelineno-23-46"></a><span class="w">    </span><span class="cm">/* main loop */</span>
+<a id="__codelineno-23-47" name="__codelineno-23-47" href="#__codelineno-23-47"></a><span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-23-48" name="__codelineno-23-48" href="#__codelineno-23-48"></a><span class="w">        </span><span class="cm">/* accept */</span>
+<a id="__codelineno-23-49" name="__codelineno-23-49" href="#__codelineno-23-49"></a><span class="w">        </span><span class="k">struct</span><span class="w"> </span><span class="nc">sockaddr_in</span><span class="w"> </span><span class="n">client_addr</span><span class="p">;</span>
+<a id="__codelineno-23-50" name="__codelineno-23-50" href="#__codelineno-23-50"></a><span class="w">        </span><span class="kt">socklen_t</span><span class="w"> </span><span class="n">client_len</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">client_addr</span><span class="p">);</span>
+<a id="__codelineno-23-51" name="__codelineno-23-51" href="#__codelineno-23-51"></a><span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">client_fd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">accept</span><span class="p">(</span><span class="n">server_fd</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">sockaddr</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">client_addr</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">client_len</span><span class="p">);</span>
+<a id="__codelineno-23-52" name="__codelineno-23-52" href="#__codelineno-23-52"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">client_fd</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-23-53" name="__codelineno-23-53" href="#__codelineno-23-53"></a><span class="w">            </span><span class="n">perror</span><span class="p">(</span><span class="s">&quot;accept&quot;</span><span class="p">);</span>
+<a id="__codelineno-23-54" name="__codelineno-23-54" href="#__codelineno-23-54"></a><span class="w">            </span><span class="k">continue</span><span class="p">;</span>
+<a id="__codelineno-23-55" name="__codelineno-23-55" href="#__codelineno-23-55"></a><span class="w">        </span><span class="p">}</span>
+<a id="__codelineno-23-56" name="__codelineno-23-56" href="#__codelineno-23-56"></a>
+<a id="__codelineno-23-57" name="__codelineno-23-57" href="#__codelineno-23-57"></a><span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">client_ip</span><span class="p">[</span><span class="n">INET_ADDRSTRLEN</span><span class="p">];</span>
+<a id="__codelineno-23-58" name="__codelineno-23-58" href="#__codelineno-23-58"></a><span class="w">        </span><span class="n">inet_ntop</span><span class="p">(</span><span class="n">AF_INET</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">client_addr</span><span class="p">.</span><span class="n">sin_addr</span><span class="p">,</span><span class="w"> </span><span class="n">client_ip</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">client_ip</span><span class="p">));</span>
+<a id="__codelineno-23-59" name="__codelineno-23-59" href="#__codelineno-23-59"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;client connected from %s:%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">client_ip</span><span class="p">,</span><span class="w"> </span><span class="n">ntohs</span><span class="p">(</span><span class="n">client_addr</span><span class="p">.</span><span class="n">sin_port</span><span class="p">));</span>
+<a id="__codelineno-23-60" name="__codelineno-23-60" href="#__codelineno-23-60"></a>
+<a id="__codelineno-23-61" name="__codelineno-23-61" href="#__codelineno-23-61"></a><span class="w">        </span><span class="cm">/* read and echo back */</span>
+<a id="__codelineno-23-62" name="__codelineno-23-62" href="#__codelineno-23-62"></a><span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">buffer</span><span class="p">[</span><span class="n">BUFFER_SIZE</span><span class="p">];</span>
+<a id="__codelineno-23-63" name="__codelineno-23-63" href="#__codelineno-23-63"></a><span class="w">        </span><span class="kt">ssize_t</span><span class="w"> </span><span class="n">n</span><span class="p">;</span>
+<a id="__codelineno-23-64" name="__codelineno-23-64" href="#__codelineno-23-64"></a><span class="w">        </span><span class="k">while</span><span class="w"> </span><span class="p">((</span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read</span><span class="p">(</span><span class="n">client_fd</span><span class="p">,</span><span class="w"> </span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">)))</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-23-65" name="__codelineno-23-65" href="#__codelineno-23-65"></a><span class="w">            </span><span class="n">write</span><span class="p">(</span><span class="n">client_fd</span><span class="p">,</span><span class="w"> </span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">);</span>
+<a id="__codelineno-23-66" name="__codelineno-23-66" href="#__codelineno-23-66"></a><span class="w">        </span><span class="p">}</span>
+<a id="__codelineno-23-67" name="__codelineno-23-67" href="#__codelineno-23-67"></a>
+<a id="__codelineno-23-68" name="__codelineno-23-68" href="#__codelineno-23-68"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;client disconnected</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-23-69" name="__codelineno-23-69" href="#__codelineno-23-69"></a><span class="w">        </span><span class="n">close</span><span class="p">(</span><span class="n">client_fd</span><span class="p">);</span>
+<a id="__codelineno-23-70" name="__codelineno-23-70" href="#__codelineno-23-70"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-23-71" name="__codelineno-23-71" href="#__codelineno-23-71"></a>
+<a id="__codelineno-23-72" name="__codelineno-23-72" href="#__codelineno-23-72"></a><span class="w">    </span><span class="n">close</span><span class="p">(</span><span class="n">server_fd</span><span class="p">);</span>
+<a id="__codelineno-23-73" name="__codelineno-23-73" href="#__codelineno-23-73"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-23-74" name="__codelineno-23-74" href="#__codelineno-23-74"></a><span class="p">}</span>
+</code></pre></div>
+<p>קומפילציה והרצה:<br />
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>gcc<span class="w"> </span>-o<span class="w"> </span>echo_server<span class="w"> </span>echo_server.c
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>./echo_server
+</code></pre></div></p>
+<p>אפשר לבדוק את השרת עם:<br />
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># in another terminal:</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>nc<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span><span class="m">8080</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="c1"># or with the client we wrote earlier:</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>./client<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span><span class="m">8080</span>
+</code></pre></div></p>
+<hr />
+<h2 id="_2">הבעיה עם השרת הזה<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>השרת הזה עובד, אבל יש לו בעיה גדולה: הוא מטפל בלקוח אחד בכל פעם. כל עוד הוא בלולאת <code>read</code> עם לקוח אחד, הוא לא יכול לקבל לקוחות חדשים. בפרק 11.2 נלמד איך לפתור את זה.</p>
+<hr />
+<h2 id="-">סוקטים ומתארי קבצים - הקשר<a class="headerlink" href="#-" title="Permanent link">&para;</a></h2>
+<p>כפי שאמרנו, סוקט הוא fd. אחרי <code>accept</code>, ה-fd החדש הוא fd רגיל לכל דבר. זה אומר שאפשר לעשות עליו את כל מה שעושים על fd:</p>
+<ul>
+<li><code>read</code> / <code>write</code> - כמו שראינו</li>
+<li><code>dup2</code> - לשכפל אותו. זה מאפשר דבר מדהים: אפשר לקחת את ה-fd של הסוקט ולהפנות אותו ל-stdin/stdout!</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="cm">/* after accept: */</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="n">dup2</span><span class="p">(</span><span class="n">client_fd</span><span class="p">,</span><span class="w"> </span><span class="n">STDIN_FILENO</span><span class="p">);</span><span class="w">   </span><span class="c1">// stdin comes from the socket</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="n">dup2</span><span class="p">(</span><span class="n">client_fd</span><span class="p">,</span><span class="w"> </span><span class="n">STDOUT_FILENO</span><span class="p">);</span><span class="w">  </span><span class="c1">// stdout goes to the socket</span>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="n">dup2</span><span class="p">(</span><span class="n">client_fd</span><span class="p">,</span><span class="w"> </span><span class="n">STDERR_FILENO</span><span class="p">);</span><span class="w">  </span><span class="c1">// stderr goes to the socket</span>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="n">close</span><span class="p">(</span><span class="n">client_fd</span><span class="p">);</span><span class="w">                </span><span class="c1">// no longer need the original fd</span>
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>
+<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a><span class="cm">/* now every printf goes to the client, and every scanf reads from the client! */</span>
+<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a><span class="n">execvp</span><span class="p">(</span><span class="s">&quot;/bin/sh&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">[]){</span><span class="s">&quot;sh&quot;</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">});</span>
+<a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a><span class="cm">/* the client gets a remote shell */</span>
+</code></pre></div>
+<p>זה בדיוק הרעיון מאחורי reverse shell שראינו בקורס בודק חדירות - חיבור סוקט, הפניית stdin/stdout/stderr, והרצת shell. עכשיו אתם מבינים בדיוק איך זה עובד ברמת הsyscalls.</p>
+<hr />
+<h2 id="_3">סיכום<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<ul>
+<li>סוקט הוא fd לתקשורת רשת - כמו קובץ, אבל הנתונים עוברים דרך הרשת</li>
+<li><code>SOCK_STREAM</code> (TCP) - אמין, מסודר, מבוסס חיבור</li>
+<li><code>SOCK_DGRAM</code> (UDP) - מהיר, ללא חיבור, לא מובטח</li>
+<li>מבנה הכתובת <code>sockaddr_in</code> מכיל משפחה, פורט, וכתובת IP</li>
+<li>תמיד להמיר פורטים עם <code>htons</code> ולהמיר כתובות IP עם <code>inet_pton</code></li>
+<li>לקוח: <code>socket</code> -&gt; <code>connect</code> -&gt; <code>write</code> -&gt; <code>read</code> -&gt; <code>close</code></li>
+<li>שרת: <code>socket</code> -&gt; <code>bind</code> -&gt; <code>listen</code> -&gt; <code>accept</code> -&gt; <code>read</code>/<code>write</code> -&gt; <code>close</code></li>
+<li><code>accept</code> מחזירה fd חדש לכל חיבור - הסוקט המקורי ממשיך להאזין</li>
+<li><code>SO_REUSEADDR</code> מונע שגיאת "Address already in use" אחרי הפעלה מחדש</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

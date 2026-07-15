@@ -1,0 +1,4136 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בפרקים הקודמים למדנו איך לינוקס נראה מצד היוזר מוד - syscall-ים, processes, fork, סיגנלים, mmap, threads, ועוד.">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C/6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../../5%20-%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/5.12%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A1%D7%99%D7%9B%D7%95%D7%9D/5.12%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A1%D7%99%D7%9B%D7%95%D7%9D%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/">
+      
+      
+        <link rel="next" href="../6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>6.1 - הקדמה לקרנל - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "6.1 - \u05d4\u05e7\u05d3\u05de\u05d4 \u05dc\u05e7\u05e8\u05e0\u05dc - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C/6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="6.1 - הקדמה לקרנל - הרצאה - עמית טק" />
+<meta property="og:description" content="בפרקים הקודמים למדנו איך לינוקס נראה מצד היוזר מוד - syscall-ים, processes, fork, סיגנלים, mmap, threads, ועוד." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C/6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C/6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="6.1 - הקדמה לקרנל - הרצאה - עמית טק" />
+<meta property="twitter:description" content="בפרקים הקודמים למדנו איך לינוקס נראה מצד היוזר מוד - syscall-ים, processes, fork, סיגנלים, mmap, threads, ועוד." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C/6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              6.1 - הקדמה לקרנל - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_1" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_1" id="__nav_7_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    ליבת המחשב
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%90%D7%A8%D7%92%D7%95%D7%9F%20%D7%94%D7%9E%D7%97%D7%A9%D7%91/0.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94/0.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   ארגון המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%2016%20%D7%91%D7%99%D7%98/1.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94/1.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   אסמבלי 16 ביט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%2032%20%D7%91%D7%99%D7%98/2.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/2.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   אסמבלי 32 ביט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%A9%D7%A4%D7%AA%20C/3.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/3.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   שפת C
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%99%D7%AA%20libc/4.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/4.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   ספריית libc
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/5.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/5.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   לינוקס
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_1_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_1_8" id="__nav_7_1_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   הקרנל של לינוקס
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_1_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_1_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    6   הקרנל של לינוקס
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_1_8_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_1_8_1" id="__nav_7_1_8_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.1   הקדמה לקרנל
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_1_8_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_1_8_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    6.1   הקדמה לקרנל
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.1 - הקדמה לקרנל - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.1 - הקדמה לקרנל - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הקדמה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה זה קרנל - kernel?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-monolithic-vs-microkernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קרנל מונוליטי מול מיקרוקרנל - monolithic vs microkernel
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="קרנל מונוליטי מול מיקרוקרנל - monolithic vs microkernel">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-monolithic-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קרנל מונוליטי - monolithic kernel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-microkernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מיקרוקרנל - microkernel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        לינוקס - מונוליטי אבל מודולרי
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-source-tree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        עץ קוד המקור של לינוקס - source tree
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-boot-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תהליך האתחול - boot process
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="תהליך האתחול - boot process">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-bios-uefi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 1: הBIOS או UEFI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-bootloader-grub" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 2: הbootloader (בדרך כלל GRUB)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 3: הקרנל עולה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-process-init-process-1-pid-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 4: הprocess הinit (process 1 - PID 1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-kernel-space-vs-user-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מרחב קרנל ומרחב יוזר - kernel space vs user space
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מרחב קרנל ומרחב יוזר - kernel space vs user space">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#32" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        בארכיטקטורת 32 ביט
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#64" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        בארכיטקטורת 64 ביט
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הנקודה החשובה
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-kernel-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מודולים של קרנל - kernel modules
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מודולים של קרנל - kernel modules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פקודות לניהול מודולים
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        כתיבת מודול בסיסי - "שלום עולם"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קימפול המודול
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        טעינה והסרה
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-dmesg" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הלוג של הקרנל - dmesg
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interfaces-proc-sys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הinterfaces לקרנל - proc ו-sys
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-kernel-panic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פניקת קרנל - kernel panic
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.1 - הקדמה לקרנל - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.1 - הקדמה לקרנל - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.2%20-%20%D7%94syscall%20%D7%9E%D7%91%D7%A4%D7%A0%D7%99%D7%9D/6.2%20-%20%D7%94syscall%20%D7%9E%D7%91%D7%A4%D7%A0%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.2   הsyscall מבפנים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.3%20-%20%D7%9E%D7%AA%D7%96%D7%9E%D7%9F%20%D7%94%D7%AA%D7%94%D7%9C%D7%99%D7%9B%D7%99%D7%9D/6.3%20-%20%D7%9E%D7%AA%D7%96%D7%9E%D7%9F%20%D7%94%D7%AA%D7%94%D7%9C%D7%99%D7%9B%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.3   מתזמן התהליכים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.4%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F/6.4%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.4   ניהול זכרון
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.5%20-%20%D7%9E%D7%A2%D7%A8%D7%9B%D7%AA%20%D7%94%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%94%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/6.5%20-%20%D7%9E%D7%A2%D7%A8%D7%9B%D7%AA%20%D7%94%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%94%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.5   מערכת הקבצים הוירטואלית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.6   הקצאת זכרון בקרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions/6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.7   פסיקות ו exceptions
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.8%20-%20%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%D7%99%D7%9D/6.8%20-%20%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.8   דרייברים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.9%20-%20%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA%20%D7%94%D7%A8%D7%A9%D7%AA/6.9%20-%20%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA%20%D7%94%D7%A8%D7%A9%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.9   מחסנית הרשת
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.10   סנכרון בקרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.11%20-%20%D7%90%D7%91%D7%98%D7%97%D7%94%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.11%20-%20%D7%90%D7%91%D7%98%D7%97%D7%94%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.11   אבטחה בקרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C/6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.12   דיבוג קרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.13%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A1%D7%99%D7%9B%D7%95%D7%9D/6.13%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A1%D7%99%D7%9B%D7%95%D7%9D%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.13   פרויקט סיכום
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94/7.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94/7.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   הנדסה הפוכה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%9E%D7%A2%D7%91%D7%93/8.1%20-%20%D7%A6%D7%99%D7%A0%D7%95%D7%A8%20%D7%94%D7%94%D7%95%D7%A8%D7%90%D7%95%D7%AA/8.1%20-%20%D7%A6%D7%99%D7%A0%D7%95%D7%A8%20%D7%94%D7%94%D7%95%D7%A8%D7%90%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   ארכיטקטורת מעבד
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%9C%D7%A6%D7%99%D7%94%20%D7%95%D7%9C%D7%99%D7%A0%D7%A7%D7%95%D7%92/9.1%20-%20%D7%A9%D7%9C%D7%91%D7%99%20%D7%94%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%9C%D7%A6%D7%99%D7%94/9.1%20-%20%D7%A9%D7%9C%D7%91%D7%99%20%D7%94%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%9C%D7%A6%D7%99%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   קומפילציה ולינקוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../10%20-%20C%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/10.1%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%20%D7%91%D7%AA%D7%95%D7%9A%20C/10.1%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%20%D7%91%D7%AA%D7%95%D7%9A%20C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10   C מתקדם
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../11%20-%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A8%D7%A9%D7%AA/11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D/11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    11   תכנות רשת
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../12%20-%20%D7%9E%D7%A7%D7%91%D7%99%D7%9C%D7%99%D7%95%D7%AA%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%AA/12.1%20-%20%D7%93%D7%A4%D7%95%D7%A1%D7%99%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%9E%D7%A7%D7%91%D7%99%D7%9C%D7%99/12.1%20-%20%D7%93%D7%A4%D7%95%D7%A1%D7%99%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%9E%D7%A7%D7%91%D7%99%D7%9C%D7%99%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    12   מקביליות מתקדמת
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הקדמה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה זה קרנל - kernel?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-monolithic-vs-microkernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קרנל מונוליטי מול מיקרוקרנל - monolithic vs microkernel
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="קרנל מונוליטי מול מיקרוקרנל - monolithic vs microkernel">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-monolithic-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קרנל מונוליטי - monolithic kernel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-microkernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מיקרוקרנל - microkernel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        לינוקס - מונוליטי אבל מודולרי
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-source-tree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        עץ קוד המקור של לינוקס - source tree
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-boot-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תהליך האתחול - boot process
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="תהליך האתחול - boot process">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-bios-uefi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 1: הBIOS או UEFI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-bootloader-grub" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 2: הbootloader (בדרך כלל GRUB)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 3: הקרנל עולה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-process-init-process-1-pid-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 4: הprocess הinit (process 1 - PID 1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-kernel-space-vs-user-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מרחב קרנל ומרחב יוזר - kernel space vs user space
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מרחב קרנל ומרחב יוזר - kernel space vs user space">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#32" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        בארכיטקטורת 32 ביט
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#64" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        בארכיטקטורת 64 ביט
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הנקודה החשובה
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-kernel-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מודולים של קרנל - kernel modules
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מודולים של קרנל - kernel modules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פקודות לניהול מודולים
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        כתיבת מודול בסיסי - "שלום עולם"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קימפול המודול
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        טעינה והסרה
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-dmesg" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הלוג של הקרנל - dmesg
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interfaces-proc-sys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הinterfaces לקרנל - proc ו-sys
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-kernel-panic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פניקת קרנל - kernel panic
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    ליבת המחשב
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    6   הקרנל של לינוקס
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    6.1   הקדמה לקרנל
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>6.1 - הקדמה לקרנל - הרצאה</h1>
+
+<h2 id="_1">הקדמה<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>בפרקים הקודמים למדנו איך לינוקס נראה מצד היוזר מוד - syscall-ים, processes, fork, סיגנלים, mmap, threads, ועוד.<br />
+עכשיו הגיע הזמן לצלול פנימה, אל הצד השני של המשוואה - <strong>הקרנל עצמו</strong>.</p>
+<p>בפרק הזה נלמד מה זה קרנל, איך קוד המקור של הקרנל של לינוקס מאורגן, איך הקרנל עולה כשאנחנו מדליקים את המחשב, ואיך אפשר להרחיב את הקרנל בזמן ריצה עם מודולים.</p>
+<hr />
+<h2 id="-kernel">מה זה קרנל - kernel?<a class="headerlink" href="#-kernel" title="Permanent link">&para;</a></h2>
+<p>הקרנל הוא התוכנה המרכזית שרצה על המחשב. היא רצה ב-Ring 0 (קרנל מוד), ויש לה גישה מלאה לחומרה, לזכרון, ולכל משאב במערכת.<br />
+כזכור מפרק 2, ב-Protected Mode הגדרנו הפרדה בין קוד קרנלי (Ring 0) לקוד יוזר מודי (Ring 3). הקרנל הוא בדיוק הקוד שרץ ב-Ring 0.</p>
+<p>התפקידים המרכזיים של הקרנל:<br />
+- <strong>ניהול חומרה</strong> - מדבר עם הדיסקים, כרטיסי הרשת, המסך, המקלדת, ושאר ההתקנים<br />
+- <strong>ניהול זכרון</strong> - מנהל את הpaging (כזכור מפרק 2.5), מקצה זכרון פיזי ווירטואלי לprocesses<br />
+- <strong>ניהול processes</strong> - יוצר processes, מבצע context switch ביניהם (כזכור מפרק 2.4), ומחליט מי רץ<br />
+- <strong>הinterface למשתמש</strong> - חושף את כל היכולות האלה ליוזר מוד דרך syscall-ים (כזכור מפרק 5.1)</p>
+<p>אפשר להגיד שהקרנל הוא "התוכנה שמנהלת את כל שאר התוכנות". כל תוכנה יוזר מודית שרצה על המחשב - תלויה בקרנל כדי לקבל זכרון, לפתוח קבצים, לתקשר ברשת, ולעשות כל פעולה שדורשת גישה לחומרה.</p>
+<hr />
+<h2 id="-monolithic-vs-microkernel">קרנל מונוליטי מול מיקרוקרנל - monolithic vs microkernel<a class="headerlink" href="#-monolithic-vs-microkernel" title="Permanent link">&para;</a></h2>
+<p>יש שתי גישות עיקריות לבניית קרנל:</p>
+<h3 id="-monolithic-kernel">קרנל מונוליטי - monolithic kernel<a class="headerlink" href="#-monolithic-kernel" title="Permanent link">&para;</a></h3>
+<p>בגישה הזו, כל הקוד של הקרנל - דרייברים, מערכת קבצים, ניהול זכרון, רשת - הכל רץ באותו מרחב כתובות, באותו Ring 0. זה מה שלינוקס עושה.</p>
+<p>היתרון: ביצועים גבוהים. כשהקרנל צריך לקרוא לדרייבר או למערכת הקבצים, זו פשוט קריאת פונקציה רגילה - אין צורך במעבר הרשאות או context switch.</p>
+<p>החיסרון: באג בדרייבר אחד יכול להפיל את כל המערכת. אם דרייבר של כרטיס רשת כותב לכתובת לא חוקית, כל הקרנל קורס.</p>
+<h3 id="-microkernel">מיקרוקרנל - microkernel<a class="headerlink" href="#-microkernel" title="Permanent link">&para;</a></h3>
+<p>בגישה הזו, רק הליבה הקטנה ביותר רצה ב-Ring 0 (context switch, IPC בסיסי, ניהול הרשאות). כל השאר - דרייברים, מערכת קבצים, רשת - רץ ביוזר מוד כprocesses נפרדים.</p>
+<p>דוגמאות: Minix, QNX, GNU Hurd.</p>
+<p>היתרון: אם דרייבר קורס, אפשר פשוט להפעיל אותו מחדש בלי שכל המערכת נופלת.</p>
+<p>החיסרון: כל תקשורת בין הרכיבים דורשת מעבר הרשאות (מיוזר מוד לקרנל ובחזרה), מה שמאט משמעותית.</p>
+<h3 id="-">לינוקס - מונוליטי אבל מודולרי<a class="headerlink" href="#-" title="Permanent link">&para;</a></h3>
+<p>לינוקס הוא קרנל מונוליטי, אבל הוא מודולרי - ניתן לטעון ולהסיר קוד מהקרנל בזמן ריצה באמצעות <strong>מודולים של קרנל</strong> (kernel modules). ניתן לחשוב על זה כעל DLL-ים של הקרנל. למשל, דרייבר של כרטיס רשת חדש יכול להיטען בלי לאתחל מחדש את המחשב. נדבר על זה בהמשך ההרצאה.</p>
+<hr />
+<h2 id="-source-tree">עץ קוד המקור של לינוקס - source tree<a class="headerlink" href="#-source-tree" title="Permanent link">&para;</a></h2>
+<p>הקרנל של לינוקס הוא פרויקט קוד פתוח ענק - מיליוני שורות קוד. אבל הוא מאורגן בצורה מאוד ברורה. הנה התיקיות המרכזיות בעץ קוד המקור:</p>
+<table>
+<thead>
+<tr>
+<th>תיקיה</th>
+<th>מה יש בה</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>arch/</code></td>
+<td>קוד ספציפי לארכיטקטורה - x86, ARM, RISC-V וכו'. כאן נמצא הקוד של כניסת ה-syscall, ה-boot, ניהול הpaging הספציפי לx86, וכו'</td>
+</tr>
+<tr>
+<td><code>kernel/</code></td>
+<td>הליבה של הקרנל - הscheduler, סיגנלים, fork, ניהול processes</td>
+</tr>
+<tr>
+<td><code>mm/</code></td>
+<td>ניהול זכרון - page allocator, slab allocator, mmap, page fault handler</td>
+</tr>
+<tr>
+<td><code>fs/</code></td>
+<td>מערכות קבצים - ext4, proc, tmpfs, ומעל הכל שכבת ה-VFS (interface אחיד לכל מערכות הקבצים)</td>
+</tr>
+<tr>
+<td><code>drivers/</code></td>
+<td>דרייברים - החלק הכי גדול בקרנל! דרייברים לכל סוגי החומרה</td>
+</tr>
+<tr>
+<td><code>net/</code></td>
+<td>מחסנית הרשת - TCP/IP, UDP, sockets, ניתוב</td>
+</tr>
+<tr>
+<td><code>include/</code></td>
+<td>קבצי header - הגדרות של מבני נתונים, מאקרואים, interfaces</td>
+</tr>
+<tr>
+<td><code>init/</code></td>
+<td>קוד אתחול - כאן נמצאת הפונקציה <code>start_kernel()</code> שממנה הכל מתחיל</td>
+</tr>
+</tbody>
+</table>
+<p>כשנלמד בפרקים הבאים על syscall-ים מבפנים או על הscheduler, נראה קוד אמיתי מתוך התיקיות האלה.</p>
+<hr />
+<h2 id="-boot-process">תהליך האתחול - boot process<a class="headerlink" href="#-boot-process" title="Permanent link">&para;</a></h2>
+<p>בואו נבין מה קורה מרגע שמדליקים את המחשב ועד שהקרנל רץ. זה חיבור ישיר למה שלמדנו בפרק 2 על Protected Mode ו-Paging.</p>
+<h3 id="1-bios-uefi">שלב 1: הBIOS או UEFI<a class="headerlink" href="#1-bios-uefi" title="Permanent link">&para;</a></h3>
+<p>כשהמחשב נדלק, המעבד מתחיל לבצע קוד מכתובת קבועה ב-ROM. הקוד הזה הוא ה-BIOS (או UEFI במחשבים מודרניים). הוא מבצע בדיקות חומרה בסיסיות (POST), מזהה דיסקים, ומחפש bootloader.</p>
+<h3 id="2-bootloader-grub">שלב 2: הbootloader (בדרך כלל GRUB)<a class="headerlink" href="#2-bootloader-grub" title="Permanent link">&para;</a></h3>
+<p>ה-BIOS טוען את ה-bootloader מהדיסק. בלינוקס זה בדרך כלל GRUB. ה-bootloader מציג תפריט (אם יש כמה מערכות הפעלה), ואז טוען את image דחוס של הקרנל לזכרון.</p>
+<h3 id="3">שלב 3: הקרנל עולה<a class="headerlink" href="#3" title="Permanent link">&para;</a></h3>
+<p>הקרנל מפרק את עצמו מה-image הדחוס, עובר ל-Protected Mode (אם עדיין ב-Real Mode), מפעיל את ה-Paging, ומתחיל לרוץ מהפונקציה <code>start_kernel()</code> שנמצאת בקובץ <code>init/main.c</code>.</p>
+<p>הפונקציה <code>start_kernel()</code> היא הפונקציה המרכזית שמאתחלת את כל תתי המערכות של הקרנל:<br />
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1">// init/main.c (simplified)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">asmlinkage</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">__init</span><span class="w"> </span><span class="n">start_kernel</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">{</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="c1">// Initialize the kernel logs</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="n">setup_log_buf</span><span class="p">();</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span><span class="c1">// Initialize the scheduler</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="n">sched_init</span><span class="p">();</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="c1">// Initialize memory management</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="n">mm_init</span><span class="p">();</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">    </span><span class="c1">// Initialize the VFS (virtual file system)</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">    </span><span class="n">vfs_caches_init</span><span class="p">();</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">    </span><span class="c1">// Initialize interrupts</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">    </span><span class="n">init_IRQ</span><span class="p">();</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">    </span><span class="c1">// Initialize the timer</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">    </span><span class="n">time_init</span><span class="p">();</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">    </span><span class="c1">// ... plenty more initialization ...</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">    </span><span class="c1">// Finally - starts the init process</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">    </span><span class="n">rest_init</span><span class="p">();</span><span class="w">  </span><span class="c1">// creates process PID 1</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="p">}</span>
+</code></pre></div></p>
+<h3 id="4-process-init-process-1-pid-1">שלב 4: הprocess הinit (process 1 - PID 1)<a class="headerlink" href="#4-process-init-process-1-pid-1" title="Permanent link">&para;</a></h3>
+<p>אחרי שהקרנל סיים לאתחל את כל תתי המערכות, הוא מעלה (mount) את מערכת הקבצים הראשית (root filesystem), ואז מריץ את התוכנית <code>/sbin/init</code> (או <code>systemd</code> בהפצות מודרניות) כprocess יוזר מודי ראשון - עם PID 1.<br />
+מכאן ואילך, הכל רץ כמו שלמדנו בפרק 5 - processes שיוצרים processes אחרים עם fork ו-execve, שירותים שעולים, ובסוף אנחנו מקבלים terminal שאנחנו יכולים לעבוד בו.</p>
+<p>זוכרים שדיברנו על עץ הprocesses בפרק 5.2? הprocess ה-init הוא השורש של העץ הזה.</p>
+<hr />
+<h2 id="-kernel-space-vs-user-space">מרחב קרנל ומרחב יוזר - kernel space vs user space<a class="headerlink" href="#-kernel-space-vs-user-space" title="Permanent link">&para;</a></h2>
+<p>בפרק 2.5 למדנו על Paging - כל process רואה מרחב כתובות וירטואלי משלו. אבל מה בדיוק נמצא במרחב הזה?</p>
+<h3 id="32">בארכיטקטורת 32 ביט<a class="headerlink" href="#32" title="Permanent link">&para;</a></h3>
+<p>במערכת 32 ביט יש 4GB של מרחב כתובות וירטואלי. לינוקס מחלק אותו כך:<br />
+- <strong>הגיגה העליונה</strong> (0xC0000000 עד 0xFFFFFFFF) - שייכת לקרנל<br />
+- <strong>3 הגיגות התחתונות</strong> (0x00000000 עד 0xBFFFFFFF) - שייכות ליוזר מוד</p>
+<h3 id="64">בארכיטקטורת 64 ביט<a class="headerlink" href="#64" title="Permanent link">&para;</a></h3>
+<p>ב-64 ביט המרחב הוא הרבה יותר גדול, והחלוקה שונה - החצי העליון של המרחב הוא של הקרנל, והחצי התחתון הוא של היוזר מוד. בפועל רק חלק קטן מהמרחב מנוצל.</p>
+<h3 id="_2">הנקודה החשובה<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<p>הpages של הקרנל ממופים בטבלאות הpaging של <strong>כל</strong> process. כלומר, לא משנה איזה process רץ, הכתובות העליונות תמיד מצביעות לאותו קוד ונתונים של הקרנל. ההבדל הוא שהpages האלה מסומנים ברמת הרשאות Ring 0 - אז קוד יוזר מודי לא יכול לגשת אליהם. אם process יוזר מודי מנסה לקרוא מכתובת בקרנל, המעבד יייצר page fault ומערכת ההפעלה תהרוג את הprocess עם SIGSEGV.</p>
+<p>זו הסיבה שכשמתבצע syscall ועוברים מ-Ring 3 ל-Ring 0, אין צורך להחליף את טבלאות הpaging (את ה-CR3). הקוד של הקרנל כבר ממופה - המעבד פשוט מקבל הרשאה לגשת אליו כי עכשיו אנחנו ב-Ring 0.</p>
+<hr />
+<h2 id="-kernel-modules">מודולים של קרנל - kernel modules<a class="headerlink" href="#-kernel-modules" title="Permanent link">&para;</a></h2>
+<p>אמרנו שלינוקס הוא קרנל מונוליטי אבל מודולרי. מה זה אומר בפועל?</p>
+<p>מודול של קרנל (kernel module) הוא קטע קוד שאפשר לטעון לתוך הקרנל <strong>בזמן ריצה</strong>, בלי לאתחל מחדש את המחשב ובלי לקמפל את כל הקרנל מחדש. ברגע שמודול נטען, הוא רץ ב-Ring 0 כחלק מהקרנל.</p>
+<p>דוגמאות לשימושים:<br />
+- דרייברים לחומרה (כרטיס רשת, כרטיס מסך, USB)<br />
+- מערכות קבצים (NTFS, exFAT)<br />
+- פרוטוקולי רשת<br />
+- מודולי אבטחה</p>
+<h3 id="_3">פקודות לניהול מודולים<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>lsmod</code> - מציגה את כל המודולים הטעונים כרגע</li>
+<li><code>insmod module.ko</code> - טוענת מודול לקרנל</li>
+<li><code>rmmod module</code> - מסירה מודול מהקרנל</li>
+<li><code>modprobe module</code> - טוענת מודול כולל כל התלויות שלו (יותר חכם מ-insmod)</li>
+<li><code>modinfo module</code> - מציגה מידע על מודול</li>
+</ul>
+<h3 id="-_1">כתיבת מודול בסיסי - "שלום עולם"<a class="headerlink" href="#-_1" title="Permanent link">&para;</a></h3>
+<p>בואו נכתוב את המודול הכי פשוט שיש - מודול שמדפיס הודעה כשהוא נטען ועוד הודעה כשהוא מוסר:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;linux/init.h&gt;</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;linux/module.h&gt;</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;linux/kernel.h&gt;</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="n">MODULE_LICENSE</span><span class="p">(</span><span class="s">&quot;GPL&quot;</span><span class="p">);</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="k">static</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">__init</span><span class="w"> </span><span class="nf">hello_init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">{</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="n">printk</span><span class="p">(</span><span class="n">KERN_INFO</span><span class="w"> </span><span class="s">&quot;Hello from kernel module!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="p">}</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">__exit</span><span class="w"> </span><span class="nf">hello_exit</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="p">{</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span><span class="n">printk</span><span class="p">(</span><span class="n">KERN_INFO</span><span class="w"> </span><span class="s">&quot;Goodbye from kernel module!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="p">}</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="n">module_init</span><span class="p">(</span><span class="n">hello_init</span><span class="p">);</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="n">module_exit</span><span class="p">(</span><span class="n">hello_exit</span><span class="p">);</span>
+</code></pre></div>
+<p>בואו נפרק את הקוד:<br />
+- <strong><code>#include &lt;linux/init.h&gt;</code></strong> - מכיל את המאקרואים <code>__init</code> ו-<code>__exit</code><br />
+- <strong><code>#include &lt;linux/module.h&gt;</code></strong> - מכיל את המאקרואים <code>module_init</code> ו-<code>module_exit</code><br />
+- <strong><code>#include &lt;linux/kernel.h&gt;</code></strong> - מכיל את <code>printk</code> ואת מאקרואי רמות הלוג כמו <code>KERN_INFO</code><br />
+- <strong><code>MODULE_LICENSE("GPL")</code></strong> - מגדיר את הרישיון של המודול. הקרנל דורש את זה, ומודולים ללא רישיון GPL מקבלים פחות גישה לAPI פנימי<br />
+- <strong><code>__init</code></strong> - סימון שהפונקציה רלוונטית רק בזמן טעינה, ואפשר לשחרר את הזכרון שלה אחרי<br />
+- <strong><code>__exit</code></strong> - סימון שהפונקציה רלוונטית רק בזמן הסרה<br />
+- <strong><code>printk</code></strong> - הגרסה הקרנלית של printf. לא ניתן להשתמש ב-printf רגיל בקרנל! כי printf הוא פונקציה של libc, ו-libc היא ספרייה יוזר מודית. הפונקציה printk כותבת ללוג הקרנלי שאפשר לקרוא עם <code>dmesg</code><br />
+- <strong><code>module_init(hello_init)</code></strong> - מגדיר איזו פונקציה תיקרא כשטוענים את המודול<br />
+- <strong><code>module_exit(hello_exit)</code></strong> - מגדיר איזו פונקציה תיקרא כשמסירים את המודול</p>
+<h3 id="_4">קימפול המודול<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<p>כדי לקמפל מודול של קרנל, צריך Makefile מיוחד שמשתמש במערכת הבנייה של הקרנל:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">obj-m</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span>hello.o
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nf">all</span><span class="o">:</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span>make<span class="w"> </span>-C<span class="w"> </span>/lib/modules/<span class="k">$(</span>shell<span class="w"> </span>uname<span class="w"> </span>-r<span class="k">)</span>/build<span class="w"> </span><span class="nv">M</span><span class="o">=</span><span class="k">$(</span>PWD<span class="k">)</span><span class="w"> </span>modules
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="nf">clean</span><span class="o">:</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span>make<span class="w"> </span>-C<span class="w"> </span>/lib/modules/<span class="k">$(</span>shell<span class="w"> </span>uname<span class="w"> </span>-r<span class="k">)</span>/build<span class="w"> </span><span class="nv">M</span><span class="o">=</span><span class="k">$(</span>PWD<span class="k">)</span><span class="w"> </span>clean
+</code></pre></div>
+<p>מה שקורה כאן: ה-Makefile מפנה את הקימפול למערכת הבנייה של הקרנל המותקן (<code>/lib/modules/...</code>), שיודעת לקמפל את הקובץ בפורמט הנכון ועם כל הדגלים הנכונים. התוצאה היא קובץ <code>hello.ko</code> (ko = kernel object).</p>
+<h3 id="_5">טעינה והסרה<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># load the module</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>sudo<span class="w"> </span>insmod<span class="w"> </span>hello.ko
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># see the message in the kernel log</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>dmesg<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-1
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># Hello from kernel module!</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="c1"># remove the module</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>sudo<span class="w"> </span>rmmod<span class="w"> </span>hello
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="c1"># see the goodbye message</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>dmesg<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-1
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="c1"># Goodbye from kernel module!</span>
+</code></pre></div>
+<hr />
+<h2 id="-dmesg">הלוג של הקרנל - dmesg<a class="headerlink" href="#-dmesg" title="Permanent link">&para;</a></h2>
+<p>הקרנל לא יכול להדפיס למסך כמו תוכנית יוזר מודית רגילה (אין לו stdout). במקום זאת, כל ההודעות של הקרנל נכתבות לbuffer פנימי שנקרא ring buffer.</p>
+<p>הפקודה <code>dmesg</code> מאפשרת לקרוא את ההודעות האלה:<br />
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># all the kernel messages</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>dmesg
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># only the last 10 messages</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>dmesg<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-10
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># real-time follow (like tail -f)</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>dmesg<span class="w"> </span>-w
+</code></pre></div></p>
+<p>ההודעות של הקרנל כוללות מידע על אתחול החומרה, טעינת דרייברים, שגיאות, ועוד. אם יש בעיות חומרה או שגיאות קרנליות, <code>dmesg</code> הוא המקום הראשון לחפש בו.</p>
+<hr />
+<h2 id="interfaces-proc-sys">הinterfaces לקרנל - proc ו-sys<a class="headerlink" href="#interfaces-proc-sys" title="Permanent link">&para;</a></h2>
+<p>בפרק 5.9 למדנו על מערכת הקבצים <code>/proc</code> - מערכת קבצים וירטואלית שהקרנל חושף דרכה מידע על processes ועל המערכת.</p>
+<p>יש מערכת קבצים וירטואלית נוספת שכדאי להכיר: <strong><code>/sys</code></strong> (sysfs). בעוד ש-<code>/proc</code> מכיל בעיקר מידע על processes ומידע כללי על המערכת, <code>/sys</code> מכיל מידע על <strong>חומרה ודרייברים</strong> בצורה מאורגנת ומסודרת.</p>
+<p>דוגמאות:<br />
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># information about the CPUs</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>ls<span class="w"> </span>/sys/devices/system/cpu/
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># information about disk blocks</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>ls<span class="w"> </span>/sys/block/
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># screen brightness (on a laptop)</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>cat<span class="w"> </span>/sys/class/backlight/*/brightness
+</code></pre></div></p>
+<p>גם <code>/proc</code> וגם <code>/sys</code> הם לא קבצים אמיתיים על הדיסק - הם נוצרים דינמית על ידי הקרנל כשקוראים אותם. זה interface נוח שמאפשר ליוזר מוד לקרוא מידע מהקרנל ולפעמים גם לכתוב אליו (למשל לשנות הגדרות).</p>
+<hr />
+<h2 id="-kernel-panic">פניקת קרנל - kernel panic<a class="headerlink" href="#-kernel-panic" title="Permanent link">&para;</a></h2>
+<p>כשהקרנל נתקל בשגיאה שהוא לא יכול להתאושש ממנה, הוא מבצע <strong>kernel panic</strong> - עוצר הכל ומציג הודעת שגיאה. זה המקבילה הקרנלית של segfault ביוזר מוד, אבל הרבה יותר גרוע - כי אם הקרנל קורס, כל המערכת קורסת.</p>
+<p>דוגמאות למצבים שגורמים ל-kernel panic:<br />
+- באג בדרייבר שגורם לכתיבה לכתובת לא חוקית בזכרון הקרנל<br />
+- הקרנל לא מצליח למצוא את מערכת הקבצים הראשית (root filesystem) בזמן boot<br />
+- קורפשן (corruption) במבני נתונים פנימיים קריטיים של הקרנל</p>
+<p>כשיש kernel panic, המערכת נתקעת ובדרך כלל צריך לאתחל ידנית. הודעת הpanic נשמרת בלוג ואפשר לראות אותה אחרי האתחול עם <code>dmesg</code> (אם המערכת הצליחה לשמור אותה).</p>
+<hr />
+<h2 id="_6">סיכום<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
+<p>בהרצאה הזו הנחנו את הבסיס להבנת הקרנל של לינוקס:<br />
+- הקרנל הוא התוכנה שרצה ב-Ring 0 ומנהלת את כל החומרה, הזכרון והprocesses<br />
+- לינוקס הוא קרנל מונוליטי מודולרי - כל הקוד ב-Ring 0, אבל אפשר לטעון ולהסיר מודולים<br />
+- הקרנל עולה דרך שרשרת של BIOS -&gt; bootloader -&gt; start_kernel -&gt; init<br />
+- מרחב הכתובות מחולק בין קרנל ליוזר מוד, כשהקרנל ממופה בכל טבלת paging<br />
+- מודולים של קרנל מרחיבים את הקרנל בזמן ריצה<br />
+- הקרנל מתקשר דרך printk ו-dmesg, ודרך מערכות הקבצים הוירטואליות proc ו-sys</p>
+<p>בפרקים הבאים ניכנס לעומק - נראה מה קורה בתוך הקרנל כשקוראים ל-syscall, ואיך הscheduler מחליט מי רץ.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

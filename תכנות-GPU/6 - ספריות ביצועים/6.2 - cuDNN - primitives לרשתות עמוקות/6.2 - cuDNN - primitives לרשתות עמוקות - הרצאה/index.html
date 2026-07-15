@@ -1,0 +1,2786 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בשיעור 6.1 הכרנו את cuBLAS - הספרייה שנותנת לנו kernel מהיר וסגור לאלגברה לינארית כללית, בוחרת בעצמה את המימוש הטוב ביותר לפי הוריסטיקה אטומה, ומצפה...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.2%20-%20cuDNN%20-%20primitives%20%D7%9C%D7%A8%D7%A9%D7%AA%D7%95%D7%AA%20%D7%A2%D7%9E%D7%95%D7%A7%D7%95%D7%AA/6.2%20-%20cuDNN%20-%20primitives%20%D7%9C%D7%A8%D7%A9%D7%AA%D7%95%D7%AA%20%D7%A2%D7%9E%D7%95%D7%A7%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../../6.3%20-%20CUTLASS%20-%20%D7%91%D7%A0%D7%99%D7%99%D7%AA%20GEMM%20%D7%91%D7%AA%D7%91%D7%A0%D7%99%D7%95%D7%AA/6.3%20-%20CUTLASS%20-%20%D7%91%D7%A0%D7%99%D7%99%D7%AA%20GEMM%20%D7%91%D7%AA%D7%91%D7%A0%D7%99%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>6.2 - cuDNN - primitives לרשתות עמוקות - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "6.2 - cuDNN - primitives \u05dc\u05e8\u05e9\u05ea\u05d5\u05ea \u05e2\u05de\u05d5\u05e7\u05d5\u05ea - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.2%20-%20cuDNN%20-%20primitives%20%D7%9C%D7%A8%D7%A9%D7%AA%D7%95%D7%AA%20%D7%A2%D7%9E%D7%95%D7%A7%D7%95%D7%AA/6.2%20-%20cuDNN%20-%20primitives%20%D7%9C%D7%A8%D7%A9%D7%AA%D7%95%D7%AA%20%D7%A2%D7%9E%D7%95%D7%A7%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="6.2 - cuDNN - primitives לרשתות עמוקות - הרצאה - עמית טק" />
+<meta property="og:description" content="בשיעור 6.1 הכרנו את cuBLAS - הספרייה שנותנת לנו kernel מהיר וסגור לאלגברה לינארית כללית, בוחרת בעצמה את המימוש הטוב ביותר לפי הוריסטיקה אטומה, ומצפה..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.2%20-%20cuDNN%20-%20primitives%20%D7%9C%D7%A8%D7%A9%D7%AA%D7%95%D7%AA%20%D7%A2%D7%9E%D7%95%D7%A7%D7%95%D7%AA/6.2%20-%20cuDNN%20-%20primitives%20%D7%9C%D7%A8%D7%A9%D7%AA%D7%95%D7%AA%20%D7%A2%D7%9E%D7%95%D7%A7%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.2%20-%20cuDNN%20-%20primitives%20%D7%9C%D7%A8%D7%A9%D7%AA%D7%95%D7%AA%20%D7%A2%D7%9E%D7%95%D7%A7%D7%95%D7%AA/6.2%20-%20cuDNN%20-%20primitives%20%D7%9C%D7%A8%D7%A9%D7%AA%D7%95%D7%AA%20%D7%A2%D7%9E%D7%95%D7%A7%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="6.2 - cuDNN - primitives לרשתות עמוקות - הרצאה - עמית טק" />
+<meta property="twitter:description" content="בשיעור 6.1 הכרנו את cuBLAS - הספרייה שנותנת לנו kernel מהיר וסגור לאלגברה לינארית כללית, בוחרת בעצמה את המימוש הטוב ביותר לפי הוריסטיקה אטומה, ומצפה..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.2%20-%20cuDNN%20-%20primitives%20%D7%9C%D7%A8%D7%A9%D7%AA%D7%95%D7%AA%20%D7%A2%D7%9E%D7%95%D7%A7%D7%95%D7%AA/6.2%20-%20cuDNN%20-%20primitives%20%D7%9C%D7%A8%D7%A9%D7%AA%D7%95%D7%AA%20%D7%A2%D7%9E%D7%95%D7%A7%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cudnn-cuda-deep-neural-network" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              6.2 - cuDNN - primitives לרשתות עמוקות - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_8" id="__nav_7_3_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    6   ספריות ביצועים
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.1   cuBLAS   אלגברה לינארית מואצת
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_8_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_8_2" id="__nav_7_3_8_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.2   cuDNN   primitives לרשתות עמוקות
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_8_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_8_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    6.2   cuDNN   primitives לרשתות עמוקות
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.2 - cuDNN - primitives לרשתות עמוקות - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.2 - cuDNN - primitives לרשתות עמוקות - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#cudnn-cuda-deep-neural-network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מהי cuDNN - CUDA Deep Neural Network
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-primitives-attention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קטלוג ה-primitives - מקונבולוציה ל-attention
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-graph-api-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ה-Graph API - תיאור דקלרטיבי של גרף פעולות
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-fusion-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מיזוג פעולות - Fusion - kernel אחד במקום שלושה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-cublas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        בחירת מימוש הוריסטית - אותה פילוסופיה של cuBLAS
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-cnns-ampere-transformers-hopper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מרכז הכובד - CNNs על Ampere מול Transformers על Hopper
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frameworks-cudnn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איך frameworks יושבים מעל cuDNN
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.3%20-%20CUTLASS%20-%20%D7%91%D7%A0%D7%99%D7%99%D7%AA%20GEMM%20%D7%91%D7%AA%D7%91%D7%A0%D7%99%D7%95%D7%AA/6.3%20-%20CUTLASS%20-%20%D7%91%D7%A0%D7%99%D7%99%D7%AA%20GEMM%20%D7%91%D7%AA%D7%91%D7%A0%D7%99%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.3   CUTLASS   בניית GEMM בתבניות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.4%20-%20CuTe%20%D7%95-CuTe%20DSL%20-%20layouts%20%D7%95-tiles/6.4%20-%20CuTe%20%D7%95-CuTe%20DSL%20-%20layouts%20%D7%95-tiles%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.4   CuTe ו CuTe DSL   layouts ו tiles
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#cudnn-cuda-deep-neural-network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מהי cuDNN - CUDA Deep Neural Network
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-primitives-attention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קטלוג ה-primitives - מקונבולוציה ל-attention
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-graph-api-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ה-Graph API - תיאור דקלרטיבי של גרף פעולות
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-fusion-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מיזוג פעולות - Fusion - kernel אחד במקום שלושה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-cublas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        בחירת מימוש הוריסטית - אותה פילוסופיה של cuBLAS
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-cnns-ampere-transformers-hopper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מרכז הכובד - CNNs על Ampere מול Transformers על Hopper
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frameworks-cudnn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איך frameworks יושבים מעל cuDNN
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    6   ספריות ביצועים
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    6.2   cuDNN   primitives לרשתות עמוקות
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>6.2 - cuDNN - primitives לרשתות עמוקות - הרצאה</h1>
+
+<p>בשיעור 6.1 הכרנו את cuBLAS - הספרייה שנותנת לנו kernel מהיר וסגור לאלגברה לינארית כללית, בוחרת בעצמה את המימוש הטוב ביותר לפי הוריסטיקה אטומה, ומצפה למטריצות בסדר column-major. cuBLAS מכסה יפה את הכפל הצפוף (dense GEMM) שיושב בלב שכבות ה-linear של רשת עצבית, אבל רשת עמוקה מודרנית עשויה מהרבה יותר מכפל מטריצות: קונבולוציות (convolutions), נרמולים (normalizations), pooling, פונקציות אקטיבציה, ומנגנוני attention. עבור אלה NVIDIA מספקת ספרייה אחות ל-cuBLAS: cuDNN - ספריית רשתות עצביות עמוקות ל-CUDA (CUDA Deep Neural Network). בשיעור הזה נבין מה cuDNN מכילה, למה ה-Graph API החדש שלה הוא קפיצת מדרגה על פני הקריאה הישירה לפעולה בודדת, איך fusion של פעולות לתוך kernel יחיד חוסך רוחב פס לזיכרון, ולמה - למרות כל זה - מרכז הכובד של cuDNN נשאר ברשתות קונבולוציה על ארכיטקטורת Ampere, בעוד שעבור Transformers על Hopper ו-Blackwell מפנה NVIDIA את המפתחים אל CUTLASS, נושא שיפתח את שיעור 6.3.</p>
+<h2 id="cudnn-cuda-deep-neural-network">מהי cuDNN - CUDA Deep Neural Network<a class="headerlink" href="#cudnn-cuda-deep-neural-network" title="Permanent link">&para;</a></h2>
+<p>cuDNN היא, בלשון ה-glossary, "ספריית primitives לבניית רשתות עצביות עמוקות מואצות-GPU". המילה primitives היא המפתח: אלה אבני הבניין הבסיסיות שכל רשת עמוקה מורכבת מהן, כתובות פעם אחת, ומכוונות ביד עד קצה היכולת של החומרה, כדי שכותבי ה-frameworks (כמו PyTorch ו-TensorFlow) לא ייאלצו לממש אותן מחדש בעצמם. בדיוק כפי ש-cuBLAS חוסך מאיתנו לכתוב GEMM מאופס, cuDNN חוסך מאיתנו לכתוב קונבולציה, batch normalization או attention מאופסים.</p>
+<p>חשוב למקם אותה נכון במחסנית התוכנה שמיפינו בפרק 5. cuDNN יושבת בשכבת האפליקציה של פלטפורמת CUDA, בדיוק לצד cuBLAS, מעל ה-Runtime API ומעל הדרייבר. היא איננה חלק מהדרייבר ואיננה חלק מ-CUDA Toolkit הבסיסי - היא חבילה נפרדת שמתקינים בנפרד (וה-frameworks מביאים איתם גרסה משלהם).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>   cuDNN&#39;s place in the software stack (continuation of chapter 5):
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>   ┌─────────────────────────────────────────────┐
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>   │  framework:  PyTorch / TensorFlow / JAX      │
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>   ├──────────────────────┬──────────────────────┤
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>   │  cuBLAS              │  cuDNN               │  ← the libraries layer (6.1, 6.2)
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>   │  (GEMM, general algebra) │  (conv, norm, attn)  │
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>   ├──────────────────────┴──────────────────────┤
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>   │  CUDA Runtime API  (libcudart)  ← chapter 5  │
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>   ├─────────────────────────────────────────────┤
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>   │  Driver API / libcuda / nvidia.ko            │
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>   ├─────────────────────────────────────────────┤
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>   │  GPU hardware  (H100: 132 SMs, Tensor Cores) │  ← chapter 1
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>   └─────────────────────────────────────────────┘
+</code></pre></div>
+<p>חלוקת העבודה בין שתי האחיות ברורה, ושווה לזכור אותה: ה-frameworks נשענים על <strong>cuBLAS</strong> לאלגברה לינארית כללית - הכפלים הצפופים של שכבות ה-linear - ועל <strong>cuDNN</strong> ל-primitives המתמחים: שכבות קונבולוציה, נרמולים, ו-attention. שתיהן סגורות, שתיהן הוריסטיות, ושתיהן משרתות את אותו לקוח - ה-framework שמעליהן.</p>
+<h2 id="-primitives-attention">קטלוג ה-primitives - מקונבולוציה ל-attention<a class="headerlink" href="#-primitives-attention" title="Permanent link">&para;</a></h2>
+<p>בניגוד לרושם הרווח, cuDNN כבר מזמן אינה "ספריית הקונבולוציות". נכון שהקונבולוציה היא הליבה ההיסטורית שלה - cuDNN נולדה בעידן שבו רשתות קונבולוציה (CNNs) שלטו בראייה ממוחשבת, וזו עדיין נקודת החוזק המזוהה איתה ביותר - אבל הקטלוג של היום רחב בהרבה. הטבלה הבאה מסכמת את משפחות ה-primitives המרכזיות ואת מקומן ברשת:</p>
+<table>
+<thead>
+<tr>
+<th>primitive</th>
+<th>מה זה עושה</th>
+<th>היכן ברשת</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Convolution</td>
+<td>קונבולוציה דו/תלת-ממדית, ליבת cuDNN ההיסטורית</td>
+<td>שכבות conv ב-CNN (ResNet, U-Net)</td>
+</tr>
+<tr>
+<td>Attention / scaled dot-product</td>
+<td>attention בסגנון FlashAttention, כולל softmax מובנה</td>
+<td>בלוקי ה-Transformer</td>
+</tr>
+<tr>
+<td>Matrix multiplication</td>
+<td>כפל מטריצות, לרוב בשילוב עם epilogue מותך</td>
+<td>linear / projection layers</td>
+</tr>
+<tr>
+<td>Normalizations</td>
+<td>batch/layer/group normalization</td>
+<td>אחרי conv או בתוך בלוק Transformer</td>
+</tr>
+<tr>
+<td>Pooling</td>
+<td>max/average pooling, דגימה-למטה</td>
+<td>בין שכבות conv ב-CNN</td>
+</tr>
+<tr>
+<td>Activations</td>
+<td>ReLU, GELU, sigmoid וכו'</td>
+<td>אחרי כמעט כל שכבה</td>
+</tr>
+</tbody>
+</table>
+<p>שני פריטים בטבלה ראויים להדגשה. הראשון הוא ה-<strong>attention</strong>: cuDNN מספקת מימוש של scaled dot-product attention בסגנון FlashAttention - כלומר attention שמחשב את softmax בזרימה (streaming) מבלי לכתוב את מטריצת ה-scores המלאה בגודל N×N לזיכרון הגלובלי. זה הופך את cuDNN מספריית CNN טהורה לספרייה שרלוונטית גם ל-Transformers, לפחות ברמת ה-primitive. השני הוא ה-<strong>matmul</strong>: cuDNN אכן יודעת לכפול מטריצות, אבל לא כתחליף ל-cuBLAS - היא עושה זאת בעיקר כדי לשלב את הכפל בתוך גרף פעולות מותך, נושא הסעיף הבא.</p>
+<h2 id="-graph-api-">ה-Graph API - תיאור דקלרטיבי של גרף פעולות<a class="headerlink" href="#-graph-api-" title="Permanent link">&para;</a></h2>
+<p>הדרך המודרנית לעבוד עם cuDNN אינה קריאה לפונקציה בודדת פר פעולה, אלא בנייה של <strong>גרף פעולות</strong> (operation graph) דרך ה-<strong>Graph API</strong> הדקלרטיבי. הרעיון קרוב מאוד למה שראינו בשיעור 5.5 על גרפי CUDA, אבל ברמת הפשטה גבוהה יותר: שם תיארנו גרף של kernel launches, וכאן אנחנו מתארים גרף של פעולות מתמטיות מופשטות (conv, bias, activation) ונותנים ל-cuDNN לבחור אילו kernels יממשו אותן.</p>
+<p>ההבדל בין דקלרטיבי לאימפרטיבי הוא לב העניין. בסגנון האימפרטיבי הישן היינו קוראים לפונקציה, מקבלים תוצאה בזיכרון הגלובלי, קוראים לפונקציה הבאה עליה, וכן הלאה - כל פעולה אטומה וחסרת מודעות לשכנותיה. בסגנון הדקלרטיבי אנחנו מתארים ל-cuDNN את <strong>כל</strong> רצף הפעולות מראש, כטופולוגיה, ורק אז מבקשים ממנה לממש אותו. משום שהיא רואה את הגרף השלם לפני שהיא מהדרת משהו, היא יכולה לנתח אותו ולבצע אופטימיזציות חוצות-פעולה שאי אפשר לבצע כשרואים פעולה אחת בכל פעם - בראש ובראשונה fusion, שנראה בסעיף הבא.</p>
+<p>מבחינת ה-API עצמו, יש כאן מבנה של frontend פתוח מעל backend סגור, וכדאי להבין אותו לעומק:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>   ┌──────────────────────────────────────────────┐
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>   │  cuDNN frontend  (open-source)                │
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>   │  Python  +  C++                               │
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>   │  this is where the operation graph is built   │
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>   │  declaratively                                │
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>   └───────────────────┬──────────────────────────┘
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>                       │  calls into
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>   ┌───────────────────▼──────────────────────────┐
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>   │  cuDNN C backend  (closed-source)             │
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>   │  analyzes the graph, chooses implementations,  │
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>   │  compiles kernels                             │
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>   └──────────────────────────────────────────────┘
+</code></pre></div>
+<p>השכבה העליונה, ה-<strong>frontend</strong>, היא ספרייה בקוד פתוח עם interfaces Python ו-C++. זו השכבה שבה כותבים בפועל - מגדירים tensors, מגדירים פעולות, ומחברים אותן לגרף. השכבה התחתונה, ה-<strong>backend</strong>, היא ספריית C בקוד סגור. היא זו שמקבלת את הגרף המתואר, מנתחת אותו, בוחרת את המימושים הקונקרטיים ומהדרת אותם. ה-backend הסגור נגיש גם ישירות דרך C FFI עבור מקרי שימוש legacy, אבל המפתח המודרני עובד כמעט תמיד דרך ה-frontend הפתוח.</p>
+<p>בקוד Python מינימלי, בניית גרף conv-bias-relu נראית עקרונית כך (סכמטי, להמחשת הזרימה):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">cudnn</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">graph</span> <span class="o">=</span> <span class="n">cudnn</span><span class="o">.</span><span class="n">pygraph</span><span class="p">(</span><span class="n">io_data_type</span><span class="o">=</span><span class="n">cudnn</span><span class="o">.</span><span class="n">data_type</span><span class="o">.</span><span class="n">HALF</span><span class="p">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>                      <span class="n">compute_data_type</span><span class="o">=</span><span class="n">cudnn</span><span class="o">.</span><span class="n">data_type</span><span class="o">.</span><span class="n">FLOAT</span><span class="p">)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">X</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="p">[</span><span class="n">N</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">W</span><span class="p">])</span>      <span class="c1"># input</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="n">W_filt</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;W&quot;</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">S</span><span class="p">])</span>  <span class="c1"># convolution filter</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="n">B</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>       <span class="c1"># bias</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># describing the graph declaratively, operation by operation:</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="n">conv_out</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">conv_fprop</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">W_filt</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">stride</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="n">bias_out</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">bias</span><span class="p">(</span><span class="n">conv_out</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="n">Y</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">bias_out</span><span class="p">)</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="n">Y</span><span class="o">.</span><span class="n">set_output</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="c1"># only now does cuDNN see the whole graph and build an execution plan:</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="n">graph</span><span class="o">.</span><span class="n">build</span><span class="p">([</span><span class="n">cudnn</span><span class="o">.</span><span class="n">heur_mode</span><span class="o">.</span><span class="n">A</span><span class="p">])</span>
+</code></pre></div>
+<p>שימו לב לסדר: כל שורות ה-tensor וה-conv/bias/relu הן <strong>תיאור</strong> בלבד - הן לא מריצות דבר על ה-GPU. רק הקריאה ל-<code>build</code> היא זו ש-cuDNN מנתחת בה את הגרף השלם, מחליטה על fusion, בוחרת מימושים, ומכינה את התוכנית. זה בדיוק הפיצול תיאור/הכנה/הרצה שראינו בגרפי CUDA בשיעור 5.5, ומאותו טעם: את העבודה היקרה של הניתוח והבחירה עושים פעם אחת, ומופחתים (amortize) אותה על פני אלפי הרצות.</p>
+<h2 id="-fusion-kernel">מיזוג פעולות - Fusion - kernel אחד במקום שלושה<a class="headerlink" href="#-fusion-kernel" title="Permanent link">&para;</a></h2>
+<p>ה-fusion (מיזוג פעולות) הוא הרווח המרכזי שה-Graph API מאפשר, ושווה להבין אותו דרך המספרים, כי הוא סיפור על רוחב פס לזיכרון ולא על כמות חישוב. ניקח את הרצף הקלאסי <code>Convolution + Bias + ReLU</code>, שמופיע פעמים אינספור ברשת קונבולוציה.</p>
+<p>בלי fusion, כל פעולה היא kernel נפרד, וכל kernel חייב לקרוא את הקלט שלו מהזיכרון הגלובלי (global memory, ה-VRAM של הכרטיס) ולכתוב את הפלט שלו בחזרה אליו:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>   without fusion (three kernels, three round trips to global memory):
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>   [conv] ── writes ──► intermediate tensor (global) ── reads ──► [bias]
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>                        │                                    │
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>                        └─ writes ──► intermediate tensor ─ reads ─► [relu] ──► output
+</code></pre></div>
+<p>התוצאה של ה-conv נכתבת במלואה ל-global memory, נקראת ממנו במלואה על ידי ה-bias, נכתבת שוב, ונקראת שוב על ידי ה-relu. עבור tensor ביניים גדול, אלה מגה-בייטים רבים שנוסעים הלוך-ושוב על ערוץ ה-HBM3 - וה-bias וה-relu הם פעולות אלמנט-אחר-אלמנט זולות מאוד חישובית, כך ששני ה-kernels האלה memory-bound לחלוטין. אנחנו משלמים את מלוא מחיר רוחב הפס על חישוב פעוט.</p>
+<p>עם fusion, cuDNN ממזגת את השלושה ל-<strong>kernel יחיד</strong>. תוצאת הביניים של ה-conv נשמרת ב-<strong>shared memory</strong> (זיכרון משותף על ה-SM, מהיר בסדר גודל מה-global) או באוגרים, וה-bias וה-relu מוחלים עליה שם, בלי לגעת בזיכרון הגלובלי כלל:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>   with fusion (one kernel, one round trip to global memory):
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>   [conv → bias → relu]   ← the intermediate lives in shared memory / registers
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>        │
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>        └── writes once ──► output (global)
+</code></pre></div>
+<p>נעשה חשבון גס על tensor ביניים ב-FP16 בגודל N=32, C=256, H=W=56, כלומר כ-32·256·56·56 ≈ 25.7 מיליון אלמנטים, בערך 51 מגה-בייט:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>   global memory traffic for the bias+relu stage:
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>   without fusion:  read 51MB + write 51MB (bias)  +
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>                    read 51MB + write 51MB (relu)   =  ~204 MB
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>   with fusion:      the intermediate never goes to global at all  =  ~0 MB extra
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>   on the H100&#39;s HBM3 (~3.35 TB/s), a saving of ~204MB
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>   is equivalent to a saving of ~61 microseconds of memory time - and over
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>   millions of calls across a whole network, this becomes significant.
+</code></pre></div>
+<p>הרווח, אם כן, אינו בכמות ה-FLOPs - אותו מספר כפל-חיבור מתבצע כך או כך - אלא בכך שאנחנו מוחקים את נסיעות הזיכרון של תוצאות הביניים. זה בדיוק ההיגיון של ה-tiling ב-shared memory שראינו בשיעור 3.3, מוחל כאן אוטומטית על ידי הספרייה במקום ידנית על ידינו. וזו גם הסיבה שה-fusion חייב את הראייה הגלובלית של הגרף: kernel של conv בודד לא יודע ש-bias ו-relu עומדים לבוא אחריו, ולכן חייב לכתוב את תוצאתו החוצה; רק כש-cuDNN רואה את שלושתם יחד היא יכולה להחליט להשאיר את הביניים על ה-chip.</p>
+<h2 id="-cublas">בחירת מימוש הוריסטית - אותה פילוסופיה של cuBLAS<a class="headerlink" href="#-cublas" title="Permanent link">&para;</a></h2>
+<p>כמו cuBLAS, גם cuDNN אינה מריצה "מימוש אחד" לכל פעולה. לכל primitive היא מחזיקה <strong>מספר מימושים בסיסיים</strong> שונים, ובוחרת ביניהם בזמן ריצה באמצעות הוריסטיקה פנימית - שה-glossary מסמן במפורש, שוב, כ"(unknown)", כלומר אטומה ולא מתועדת. הבחירה נעשית לפי שלושה צירים:</p>
+<ul>
+<li>ארכיטקטורת ה-<strong>SM</strong> של הכרטיס (Ampere מול Hopper מול Blackwell) - קונבולוציה על H100 עשויה להיבחר אחרת מאשר על A100.</li>
+<li>ה-<strong>data type</strong> של הקלט (FP32, FP16, BF16, INT8) - מימוש שמנצל Tensor Cores ב-FP16 שונה מזה שרץ על CUDA Cores ב-FP32.</li>
+<li><strong>גודל הקלט</strong> - ה-batch, מספר הערוצים, ממדי הפילטר וה-spatial. קונבולוציה 1×1 על tensor רזה נבחרת אחרת מקונבולוציה 3×3 על tensor שמן.</li>
+</ul>
+<p>זו בדיוק אותה פילוסופיה שראינו ב-6.1: הרבה kernels קונקרטיים לכל פעולה לוגית אחת, והמפתח <strong>אינו</strong> בוחר ביניהם - הספרייה בוחרת. אתם מתארים את הגרף באופן דקלרטיבי, ו-cuDNN בעלת הבעלות על הבחירה של המימוש הקונקרטי. היתרון ברור - אתם מקבלים kernel קרוב-לאופטימלי בלי להיות מומחי חומרה - אבל יש לזה מחיר ותופעות לוואי שכדאי להכיר:</p>
+<ul>
+<li><strong>ביצועים לא צפויים לחלוטין.</strong> אותה שכבה עם batch מעט שונה או dtype שונה עלולה ליפול על מימוש אחר לגמרי, עם ביצועים שונים מהותית. שינוי קטן בקלט יכול לשנות את הבחירה.</li>
+<li><strong>תלות בגרסה ובארכיטקטורה.</strong> מעבר מ-A100 ל-H100, או שדרוג גרסת cuDNN, יכול לשנות איזה kernel נבחר - ולכן גם את הביצועים, לפעמים לרעה.</li>
+<li><strong>מצבי heuristic.</strong> ה-frontend מאפשר לבקש מצב הוריסטי מהיר (<code>heur_mode.A</code>) לעומת מצב שמתלבט יותר, ואף למדוד מספר תוכניות ולבחור את המהירה בפועל - אבל את זהות ה-kernel הסופי עדיין לא אתם קובעים.</li>
+</ul>
+<p>וזו בדיוק נקודת המפנה אל CUTLASS. כשאתם צריכים kernel ספציפי שאתם <strong>כן</strong> רוצים לשלוט בו - צורה חריגה, fusion שהספרייה לא מכירה, או מיצוי אחרון של Tensor Cores על ארכיטקטורה חדשה - הקופסה השחורה ההוריסטית כבר לא מספיקה, ואתם יורדים לרמת הבנייה. על כך ב-6.3.</p>
+<h2 id="-cnns-ampere-transformers-hopper">מרכז הכובד - CNNs על Ampere מול Transformers על Hopper<a class="headerlink" href="#-cnns-ampere-transformers-hopper" title="Permanent link">&para;</a></h2>
+<p>הנקודה הכי חשובה למקם נכון בשיעור הזה היא ש-cuDNN אינה "הפתרון של NVIDIA לכל רשת עמוקה" באופן אחיד. יש לה מרכז כובד היסטורי, ו-NVIDIA עצמה מכוונת מפתחים למקום אחר עבור העבודות החדשות ביותר.</p>
+<p>cuDNN נולדה כדי להאיץ <strong>רשתות קונבולוציה (CNNs)</strong>, וההתמחות ההיסטורית והחזקה ביותר שלה היא שם - במיוחד על ארכיטקטורת <strong>Ampere</strong> (דור ה-A100). כל עולם ה-ResNet, ה-U-Net והדומים להם יושב בנוחות על cuDNN, וה-fusion של conv-bias-activation שראינו הוא בדיוק התבנית שחוזרת שם אינסוף פעמים.</p>
+<p>אבל בעולם ה-<strong>Transformers</strong> על הארכיטקטורות החדשות - <strong>Hopper</strong> (H100) ו-<strong>Blackwell</strong> (B200) - NVIDIA מדגישה דווקא את ספריית <strong>CUTLASS</strong>, ולא את cuDNN, ככלי המועדף לכתיבת ה-kernels הקריטיים (במיוחד ה-GEMM וה-attention המותכים שממצים את ה-Tensor Cores של הדור החדש). המשמעות המעשית:</p>
+<table>
+<thead>
+<tr>
+<th>ציר</th>
+<th>cuDNN</th>
+<th>CUTLASS (שיעור 6.3)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>סוג</td>
+<td>primitives מוכנים לקריאה</td>
+<td>toolkit לבניית kernels</td>
+</tr>
+<tr>
+<td>בחירת kernel</td>
+<td>הוריסטיקה סגורה, לא אתם</td>
+<td>אתם, בקוד</td>
+</tr>
+<tr>
+<td>מרכז כובד</td>
+<td>CNNs על Ampere</td>
+<td>Transformers על Hopper/Blackwell</td>
+</tr>
+<tr>
+<td>קוד</td>
+<td>frontend פתוח, backend סגור</td>
+<td>קוד פתוח מלא, header-only C++</td>
+</tr>
+</tbody>
+</table>
+<p>אין כאן "ספרייה טובה מול רעה" - יש כלים לשכבות שונות של הצורך. אם אתם בונים inference של CNN קלאסי, cuDNN דרך ה-framework תיתן לכם ביצועים מצוינים כמעט בחינם. אם אתם בחזית של kernel ל-Transformer על Hopper - fused attention בצורה לא-סטנדרטית, למשל - תמצאו את עצמכם ב-CUTLASS. השיעור הבא, 6.3, נכנס בדיוק לפער הזה: מדוע ומתי יורדים מספרייה סגורה שקוראים לה, ל-toolkit פתוח שבונים איתו.</p>
+<h2 id="frameworks-cudnn">איך frameworks יושבים מעל cuDNN<a class="headerlink" href="#frameworks-cudnn" title="Permanent link">&para;</a></h2>
+<p>בפועל, כמעט אף אחד לא קורא ל-cuDNN ישירות. הצרכן הכמעט-בלעדי שלה הוא שכבת ה-frameworks - <strong>PyTorch</strong>, <strong>TensorFlow</strong>, JAX - שמשתמשת בה כ-backend למימוש פעולות הרשת. כשאתם כותבים ב-PyTorch שורה תמימה כמו:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">56</span><span class="p">,</span> <span class="mi">56</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;cuda&quot;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float16</span><span class="p">)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">w</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;cuda&quot;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float16</span><span class="p">)</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="n">y</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>   <span class="c1"># one line in Python</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">y</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+</code></pre></div>
+<p>מה שקורה מתחת הוא בדיוק המחסנית שתיארנו: ה-<code>conv2d</code> מתורגם על ידי PyTorch לקריאה אל cuDNN, שבונה גרף פעולות, בוחרת מימוש בהוריסטיקה, ואולי אף ממזגת אותו עם ה-<code>relu</code> שאחריו ל-kernel יחיד. חלוקת העבודה בין האחיות ניכרת גם כאן: אם השורה הייתה <code>torch.matmul</code> על שני tensors דו-ממדיים, PyTorch היה נוטה לנתב אותה אל <strong>cuBLAS</strong>; משום שזו קונבולוציה, היא הולכת אל <strong>cuDNN</strong>.</p>
+<p>שווה להזכיר גם את מנגנוני האוטו-כוונון של ה-frameworks. ב-PyTorch, הדגל <code>torch.backends.cudnn.benchmark = True</code> אומר ל-cuDNN למדוד בפועל כמה מימושים בהרצה הראשונה של כל צורת קלט חדשה, ולזכור את המהיר. זה משפר throughput כשצורות הקלט קבועות, אבל דוחף עלות למדידה בהרצה הראשונה - ואם הצורות משתנות כל הזמן, הוא דווקא מזיק. זו דוגמה יפה לכך שההוריסטיקה הסגורה של cuDNN חשופה כלפי מעלה דרך כמה כפתורים בודדים, אבל את הבחירה הסופית של ה-kernel עדיין אתם לא שולטים בה.</p>
+<p>מי שלומד ללא GPU של NVIDIA יכול לתרגל את כל זה ב-Google Colab (כרטיס T4 חינמי) או על ענן שכור (Modal, Lambda, מכונות ענן) - בכל הסביבות האלה PyTorch כבר מגיע עם cuDNN מקומפל, וכל <code>conv2d</code> שתריצו כבר עובר דרכה.</p>
+<h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>cuDNN היא ספריית ה-primitives של NVIDIA לרשתות עמוקות, אחות ל-cuBLAS: cuBLAS נותנת אלגברה לינארית כללית (dense GEMM), ו-cuDNN נותנת את ה-primitives המתמחים - convolution, attention, normalization, pooling ו-activations.</li>
+<li>הקונבולוציה היא הליבה ההיסטורית של cuDNN, אבל היום היא מכסה גם scaled dot-product attention בסגנון FlashAttention, matmul ונרמולים, כך שהיא רלוונטית גם ל-Transformers ולא רק ל-CNNs.</li>
+<li>ה-Graph API המודרני הוא דקלרטיבי: מתארים גרף שלם של פעולות דרך frontend פתוח ב-Python/C++, מעל backend C סגור, ורק אז cuDNN מנתחת את הגרף השלם ובונה תוכנית ביצוע.</li>
+<li>ה-fusion ממזג רצף כמו Convolution+Bias+ReLU ל-kernel יחיד ששומר את תוצאות הביניים ב-shared memory במקום להוריד אותן ל-global memory, וכך חוסך רוחב פס - רווח שהוא כולו על תעבורת זיכרון, לא על כמות החישוב.</li>
+<li>ה-fusion מתאפשר רק בזכות הראייה הגלובלית של הגרף: פעולה בודדת לא יודעת מה בא אחריה, ולכן חייבת לכתוב את תוצאתה ל-global; רק כש-cuDNN רואה את כל הרצף היא יכולה להשאיר את הביניים על ה-chip.</li>
+<li>לכל primitive יש מספר מימושים, ו-cuDNN בוחרת ביניהם בהוריסטיקה סגורה ("unknown") לפי ארכיטקטורת ה-SM, ה-data type וגודל הקלט - אותה פילוסופיה אטומה של cuBLAS, על המחיר של ביצועים לא-צפויים ותלות בגרסה ובכרטיס.</li>
+<li>מרכז הכובד של cuDNN הוא CNNs על Ampere; עבור Transformers על Hopper ו-Blackwell מפנה NVIDIA את המפתחים אל CUTLASS, וזו נקודת המעבר לשיעור 6.3.</li>
+<li>בפועל כמעט אף אחד לא קורא ל-cuDNN ישירות: PyTorch, TensorFlow ו-JAX משתמשים בה כ-backend, ומנתבים קונבולוציות אליה בעוד כפלי מטריצות צפופים הולכים אל cuBLAS.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

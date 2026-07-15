@@ -1,0 +1,3132 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="זהו הפרויקט המסכם השני של הקורס, והוא בן-הזוג המשלים של פרויקט ה-GEMM (9.3). שם עסקנו בבעיה compute-bound (compute-bound) שכל עניינה arithmetic intensity...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.4%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20reduction%2C%20scan%20%D7%95-softmax/9.4%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20reduction%2C%20scan%20%D7%95-softmax%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/">
+      
+      
+        <link rel="prev" href="../../9.3%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%99%D7%AA%20GEMM%20%D7%A6%D7%A2%D7%93%20%D7%90%D7%97%D7%A8%20%D7%A6%D7%A2%D7%93/9.3%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%99%D7%AA%20GEMM%20%D7%A6%D7%A2%D7%93%20%D7%90%D7%97%D7%A8%20%D7%A6%D7%A2%D7%93%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/">
+      
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>9.4 - פרויקט - reduction, scan ו-softmax - פרויקט - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "9.4 - \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8 - reduction, scan \u05d5-softmax - \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.4%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20reduction%2C%20scan%20%D7%95-softmax/9.4%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20reduction%2C%20scan%20%D7%95-softmax%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="9.4 - פרויקט - reduction, scan ו-softmax - פרויקט - עמית טק" />
+<meta property="og:description" content="זהו הפרויקט המסכם השני של הקורס, והוא בן-הזוג המשלים של פרויקט ה-GEMM (9.3). שם עסקנו בבעיה compute-bound (compute-bound) שכל עניינה arithmetic intensity..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.4%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20reduction%2C%20scan%20%D7%95-softmax/9.4%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20reduction%2C%20scan%20%D7%95-softmax%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.4%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20reduction%2C%20scan%20%D7%95-softmax/9.4%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20reduction%2C%20scan%20%D7%95-softmax%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="9.4 - פרויקט - reduction, scan ו-softmax - פרויקט - עמית טק" />
+<meta property="twitter:description" content="זהו הפרויקט המסכם השני של הקורס, והוא בן-הזוג המשלים של פרויקט ה-GEMM (9.3). שם עסקנו בבעיה compute-bound (compute-bound) שכל עניינה arithmetic intensity..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.4%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20reduction%2C%20scan%20%D7%95-softmax/9.4%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20reduction%2C%20scan%20%D7%95-softmax%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-reduction-scan-softmax" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              9.4 - פרויקט - reduction, scan ו-softmax - פרויקט
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_11" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_11" id="__nav_7_3_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_11_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    9   פרופיילינג ופרויקטים
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9.1   פרופיילינג   Nsight Systems ו Nsight Compute
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../9.2%20-%20%D7%9E%D7%AA%D7%95%D7%93%D7%95%D7%9C%D7%95%D7%92%D7%99%D7%99%D7%AA%20%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94%20%D7%9E%D7%A7%D7%A6%D7%94%20%D7%9C%D7%A7%D7%A6%D7%94/9.2%20-%20%D7%9E%D7%AA%D7%95%D7%93%D7%95%D7%9C%D7%95%D7%92%D7%99%D7%99%D7%AA%20%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94%20%D7%9E%D7%A7%D7%A6%D7%94%20%D7%9C%D7%A7%D7%A6%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9.2   מתודולוגיית אופטימיזציה מקצה לקצה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../9.3%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%99%D7%AA%20GEMM%20%D7%A6%D7%A2%D7%93%20%D7%90%D7%97%D7%A8%20%D7%A6%D7%A2%D7%93/9.3%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%99%D7%AA%20GEMM%20%D7%A6%D7%A2%D7%93%20%D7%90%D7%97%D7%A8%20%D7%A6%D7%A2%D7%93%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9.3   פרויקט   אופטימיזציית GEMM צעד אחר צעד
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_11_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_11_4" id="__nav_7_3_11_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9.4   פרויקט   reduction, scan ו softmax
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_11_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_11_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    9.4   פרויקט   reduction, scan ו softmax
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9.4 - פרויקט - reduction, scan ו-softmax - פרויקט
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9.4 - פרויקט - reduction, scan ו-softmax - פרויקט
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-reduction-scan-softmax" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פרויקט - reduction, scan ו-softmax
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="פרויקט - reduction, scan ו-softmax">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-the-three-primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה נבנה - the three primitives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-why-bandwidth-not-flops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הרקע המספרי - why bandwidth, not FLOPs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-starter-scaffolding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תשתית ההתחלה - starter scaffolding
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-0-naive-interleaved-divergence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חלק A, שלב 0 - naive interleaved עם divergence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-1-non-divergent-interleaved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חלק A, שלב 1 - non-divergent interleaved
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-2-sequential-addressing-bank-conflict-free" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חלק A, שלב 2 - sequential addressing (bank-conflict-free)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-3-first-add-during-global-load" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חלק A, שלב 3 - first add during global load
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-4-warp-shuffle-unrolling-warp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חלק A, שלב 4 - warp-shuffle unrolling של ה-warp האחרון
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-5-multi-block-pass-atomics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חלק A, שלב 5 - multi-block: pass שני מול atomics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b-prefix-sum-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חלק B - prefix sum / scan
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c-1-stable-softmax" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חלק C, שלב 1 - stable softmax
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c-2-online-streaming-softmax-flashattention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חלק C, שלב 2 - online / streaming softmax (FlashAttention)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-acceptance-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קריטריוני קבלה - acceptance criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-what-comes-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום ולאן ממשיכים - what comes next
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-reduction-scan-softmax" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פרויקט - reduction, scan ו-softmax
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="פרויקט - reduction, scan ו-softmax">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-the-three-primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה נבנה - the three primitives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-why-bandwidth-not-flops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הרקע המספרי - why bandwidth, not FLOPs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-starter-scaffolding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תשתית ההתחלה - starter scaffolding
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-0-naive-interleaved-divergence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חלק A, שלב 0 - naive interleaved עם divergence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-1-non-divergent-interleaved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חלק A, שלב 1 - non-divergent interleaved
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-2-sequential-addressing-bank-conflict-free" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חלק A, שלב 2 - sequential addressing (bank-conflict-free)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-3-first-add-during-global-load" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חלק A, שלב 3 - first add during global load
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-4-warp-shuffle-unrolling-warp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חלק A, שלב 4 - warp-shuffle unrolling של ה-warp האחרון
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-5-multi-block-pass-atomics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חלק A, שלב 5 - multi-block: pass שני מול atomics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b-prefix-sum-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חלק B - prefix sum / scan
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c-1-stable-softmax" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חלק C, שלב 1 - stable softmax
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c-2-online-streaming-softmax-flashattention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חלק C, שלב 2 - online / streaming softmax (FlashAttention)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-acceptance-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קריטריוני קבלה - acceptance criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-what-comes-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום ולאן ממשיכים - what comes next
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    9   פרופיילינג ופרויקטים
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    9.4   פרויקט   reduction, scan ו softmax
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>9.4 - פרויקט - reduction, scan ו-softmax - פרויקט</h1>
+
+<h2 id="-reduction-scan-softmax">פרויקט - reduction, scan ו-softmax<a class="headerlink" href="#-reduction-scan-softmax" title="Permanent link">&para;</a></h2>
+<p>זהו הפרויקט המסכם השני של הקורס, והוא בן-הזוג המשלים של פרויקט ה-GEMM (9.3). שם עסקנו בבעיה compute-bound (compute-bound) שכל עניינה arithmetic intensity ו-Tensor Cores; כאן נעסוק בשלוש אבני-הבניין המקבילות (parallel primitives) של כמעט כל kernel אמיתי - reduction (צמצום), scan (סכום-רץ / prefix sum) ו-softmax - וכולן memory-bound (memory-bound) או שגר קרוב לכך. הבעיה המרכזית כאן איננה לדחוס עוד FLOPs, אלא לתאם 32, 256 או אלפי threads כך שיצרכו את רוחב הפס של ה-HBM (זיכרון ה-GPU) עד תום, בלי warp divergence (התפצלות ה-warp, פרק 8.3), בלי bank conflicts (התנגשות בנקים, פרק 8.4) ותוך coalescing (איחוד גישות) מלא. נבנה כל primitive בשלבים, נמדוד בכל שלב את רוחב הפס המושג כאחוז מה-peak של ה-HBM, ונסביר כל קפיצה במושג שלמדנו: SIMT (פרק 2), shared memory (פרק 3), warp primitives כמו <code>__shfl_down_sync</code>, וה-SFU (יחידת הפונקציות המיוחדות) עבור <code>exp</code>. בסוף softmax נגיע לניסוח ה-online/streaming שהוא לב-ליבו של FlashAttention, ונבין למה בלעדיו לא הייתה קיימת attention יעילה בזיכרון.</p>
+<h3 id="-the-three-primitives">מה נבנה - the three primitives<a class="headerlink" href="#-the-three-primitives" title="Permanent link">&para;</a></h3>
+<p>הפרויקט מחולק לשלושה חלקים עצמאיים, כל אחד עם סולם (ladder) משלו וקריטריוני קבלה משלו. את חלק A (reduction) בונים במלואו כי הוא מלמד את כל טכניקות התיאום; חלקים B ו-C נשענים עליו.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>   part  primitive     the ladder                                  the key metric
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>   ────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>   A     reduction     0 naive divergent -&gt; 1 non-divergent -&gt;     % of HBM peak
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>         (sum)          2 sequential addressing -&gt; 3 first-add-      (memory-bound)
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                       on-load -&gt; 4 warp-shuffle -&gt; 5 multi-block
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>   B     scan          Hillis-Steele within block -&gt; composition    correctness + BW
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>         (prefix sum)  across blocks (block sums + scan + addition)
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>   C     softmax       stable (max, exp, sum, normalize) -&gt;         correctness (rtol)
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>                       online/streaming (FlashAttention)            + single pass
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>   ────────────────────────────────────────────────────────────────────────────
+</code></pre></div>
+<p>ה-GPU הרץ לדוגמה הוא H100 (SXM), כרגיל בקורס. עבור reduction נעבוד עם וקטור של <code>N = 2^28 = 268,435,456</code> איברי <code>float</code> (בדיוק 1 GiB, 1,073,741,824 בתים) - גדול מספיק כדי שרוחב הפס, ולא הoverhead של הlaunch, ישלוט בזמן.</p>
+<h3 id="-why-bandwidth-not-flops">הרקע המספרי - why bandwidth, not FLOPs<a class="headerlink" href="#-why-bandwidth-not-flops" title="Permanent link">&para;</a></h3>
+<p>ב-GEMM מדדנו GFLOP/s כי הבעיה compute-bound. reduction הפוכה לחלוטין: לסכום <code>N</code> איברים דורש <code>N-1</code> חיבורים בלבד - פעולת חישוב אחת לכל איבר - אבל קוראים <code>N</code> איברים מ-global memory. הarithmetic intensity היא בערך <code>1/4</code> FLOP לבית, נמוכה בסדרי גודל מנקודת ה-ridge של ה-H100. לכן התקרה איננה חישובית אלא <strong>רוחב הפס של ה-HBM</strong>: כמה מהר אפשר לשפוך את הווקטור דרך ה-SMs. ב-H100 SXM עם HBM3 רוחב הפס הוא כ-<strong>3.35 TB/s = 3350 GB/s</strong>, וזו התקרה שכל מדידה תימדד מולה.</p>
+<p>הגבול התחתון לזמן הוא זמן הקריאה של הווקטור פעם אחת:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>   bytes            = N * sizeof(float) = 2^28 * 4 = 1,073,741,824 B ≈ 1.0737 GB
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>   t_min (peak HBM) = bytes / 3.35e12  ≈ 0.320 ms
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>   BW_achieved      = bytes / (time_in_seconds)               [GB/s]
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>   % HBM peak       = 100 * BW_achieved / 3350
+</code></pre></div>
+<p>כל reduction נכון קורא כל איבר בדיוק פעם אחת, ולכן <code>bytes</code> קבוע בכל השלבים - בדיוק כמו ש-<code>2N^3</code> היה קבוע ב-GEMM. מה שמשתנה הוא כמה קרוב לתקרת ה-3350 GB/s אנחנו מגיעים. reduction מכוונן היטב מגיע ל-85%-95% מה-peak; זו המטרה של החלק.</p>
+<h3 id="-starter-scaffolding">תשתית ההתחלה - starter scaffolding<a class="headerlink" href="#-starter-scaffolding" title="Permanent link">&para;</a></h3>
+<p>שמרו את השלד כ-<code>primitives.cu</code>. הוא כולל את מקרו ה-<code>CUDA_CHECK</code>, מד-זמן מבוסס <code>cudaEvent</code> (זהה לזה מ-9.3), ומחשבון רוחב-פס ואחוז-peak. השלימו את ה-kernels שלב אחר שלב.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdio&gt;</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdlib&gt;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cmath&gt;</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cuda_runtime.h&gt;</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="cp">#define CUDA_CHECK(call)                                                      \</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="cp">    do {                                                                      \</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="cp">        cudaError_t err_ = (call);                                            \</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="cp">        if (err_ != cudaSuccess) {                                            \</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="cp">            fprintf(stderr, &quot;CUDA error at %s:%d\n  &#39;%s&#39;\n  -&gt; %s\n&quot;,         \</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="cp">                    __FILE__, __LINE__, #call, cudaGetErrorString(err_));     \</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="cp">            exit(EXIT_FAILURE);                                               \</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="cp">        }                                                                     \</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="cp">    } while (0)</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="c1">// theoretical bandwidth of HBM3 on H100 SXM, in GB/s</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">H100_HBM_PEAK_GBPS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">3350.0</span><span class="p">;</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="c1">// ------- cudaEvent-based timer: warmup + reps, average time per kernel -------</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">LaunchFn</span><span class="o">&gt;</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="kt">float</span><span class="w"> </span><span class="n">timeKernel</span><span class="p">(</span><span class="n">LaunchFn</span><span class="w"> </span><span class="n">launch</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">reps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">50</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="w">    </span><span class="n">cudaEvent_t</span><span class="w"> </span><span class="n">start</span><span class="p">,</span><span class="w"> </span><span class="n">stop</span><span class="p">;</span>
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventCreate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">start</span><span class="p">));</span>
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventCreate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">stop</span><span class="p">));</span>
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>
+<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a><span class="w">    </span><span class="n">launch</span><span class="p">();</span><span class="w">                                 </span><span class="c1">// warmup: takes JIT/caches out of the picture</span>
+<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaGetLastError</span><span class="p">());</span>
+<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaDeviceSynchronize</span><span class="p">());</span>
+<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a>
+<a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventRecord</span><span class="p">(</span><span class="n">start</span><span class="p">));</span>
+<a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">reps</span><span class="p">;</span><span class="w"> </span><span class="n">r</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="n">launch</span><span class="p">();</span>
+<a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventRecord</span><span class="p">(</span><span class="n">stop</span><span class="p">));</span>
+<a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventSynchronize</span><span class="p">(</span><span class="n">stop</span><span class="p">));</span>
+<a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a>
+<a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">ms</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-2-36" name="__codelineno-2-36" href="#__codelineno-2-36"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventElapsedTime</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ms</span><span class="p">,</span><span class="w"> </span><span class="n">start</span><span class="p">,</span><span class="w"> </span><span class="n">stop</span><span class="p">));</span>
+<a id="__codelineno-2-37" name="__codelineno-2-37" href="#__codelineno-2-37"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventDestroy</span><span class="p">(</span><span class="n">start</span><span class="p">));</span>
+<a id="__codelineno-2-38" name="__codelineno-2-38" href="#__codelineno-2-38"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventDestroy</span><span class="p">(</span><span class="n">stop</span><span class="p">));</span>
+<a id="__codelineno-2-39" name="__codelineno-2-39" href="#__codelineno-2-39"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">ms</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">reps</span><span class="p">;</span>
+<a id="__codelineno-2-40" name="__codelineno-2-40" href="#__codelineno-2-40"></a><span class="p">}</span>
+<a id="__codelineno-2-41" name="__codelineno-2-41" href="#__codelineno-2-41"></a>
+<a id="__codelineno-2-42" name="__codelineno-2-42" href="#__codelineno-2-42"></a><span class="c1">// ------- bandwidth report for reduction (each element read exactly once) -------</span>
+<a id="__codelineno-2-43" name="__codelineno-2-43" href="#__codelineno-2-43"></a><span class="kt">void</span><span class="w"> </span><span class="n">reportBW</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">bytes</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">ms</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-44" name="__codelineno-2-44" href="#__codelineno-2-44"></a><span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">gbps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">double</span><span class="p">)</span><span class="n">bytes</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">ms</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1000.0</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="p">;</span>
+<a id="__codelineno-2-45" name="__codelineno-2-45" href="#__codelineno-2-45"></a><span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">pct</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="mf">100.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">gbps</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">H100_HBM_PEAK_GBPS</span><span class="p">;</span>
+<a id="__codelineno-2-46" name="__codelineno-2-46" href="#__codelineno-2-46"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;  %-22s %8.4f ms  %8.1f GB/s  %5.1f%% HBM</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">ms</span><span class="p">,</span><span class="w"> </span><span class="n">gbps</span><span class="p">,</span><span class="w"> </span><span class="n">pct</span><span class="p">);</span>
+<a id="__codelineno-2-47" name="__codelineno-2-47" href="#__codelineno-2-47"></a><span class="p">}</span>
+</code></pre></div>
+<p>שתי הערות שחשוב להפנים לפני שממשיכים:</p>
+<ul>
+<li><strong>reduction היא memory-bound, ולכן המדד הוא GB/s ולא GFLOP/s.</strong> אם תדווחו GFLOP/s תקבלו מספר קטן ומטעה שאינו אומר דבר על איכות ה-kernel. המדד הנכון הוא: כמה מרוחב הפס של ה-HBM ניצלתם.</li>
+<li><strong>צמצום דורש ערך התחלה נייטרלי (identity).</strong> עבור סכום זהו <code>0.0f</code>, עבור max זהו <code>-INFINITY</code>. הthreads שנופלים מחוץ לתחום (<code>i &gt;= n</code>) חייבים לתרום את ה-identity, אחרת יזהמו את התוצאה.</li>
+</ul>
+<h3 id="a-0-naive-interleaved-divergence">חלק A, שלב 0 - naive interleaved עם divergence<a class="headerlink" href="#a-0-naive-interleaved-divergence" title="Permanent link">&para;</a></h3>
+<p>הגישה הקלאסית: כל block טוען את מנתו ל-shared memory, ואז מצמצם בעץ בינארי עם "כתובות משתלבות" (interleaved addressing). הגרסה הראשונה, התמימה, מבצעת את החיבור בכל צעד רק בthreads ש-<code>tid</code> שלהם מתחלק ב-<code>2s</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">reduce0</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="k">extern</span><span class="w"> </span><span class="n">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">sdata</span><span class="p">[];</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="n">tid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="n">i</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">tid</span><span class="p">;</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="n">sdata</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">in</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span><span class="w">         </span><span class="c1">// identity for threads out of range</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">;</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">tid</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w">                  </span><span class="c1">// &lt;-- source of the divergence</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">            </span><span class="n">sdata</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">sdata</span><span class="p">[</span><span class="n">tid</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">s</span><span class="p">];</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">        </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">tid</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">out</span><span class="p">[</span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sdata</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span><span class="w">    </span><span class="c1">// one partial sum per block</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="p">}</span>
+</code></pre></div>
+<p>הבעיה היא בדיוק ב-<code>tid % (2*s) == 0</code>. בתוך warp (קבוצת 32 threads) התנאי הזה מפצל את הthreads: בצעד הראשון רק הthreads הזוגיים עובדים, בשני רק כל רביעי, וכו'. זו warp divergence קלאסית (פרק 8.3) - החומרה מריצה את ה-warp פעמיים, פעם למסלול העובד ופעם לריק, ומחצית מ-issue slots מתבזבזת. בנוסף, האופרטור <code>%</code> על ה-CUDA Cores יקר יחסית.</p>
+<p><strong>קריטריון קבלה:</strong> הסכום שווה לייחוס על ה-CPU (בסובלנות <code>rtol=1e-4</code>, כי FP32 צובר שגיאת עיגול), ורשום GB/s ו-%HBM. אין דרישת ביצועים; זהו הבסיס.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>  reduce0 naive-diverg     1.7890 ms     600.2 GB/s   17.9% HBM
+</code></pre></div>
+<p>בערך 18% מרוחב הפס - הרבה מתחת לתקרה. הבא נעיף את ה-divergence.</p>
+<h3 id="a-1-non-divergent-interleaved">חלק A, שלב 1 - non-divergent interleaved<a class="headerlink" href="#a-1-non-divergent-interleaved" title="Permanent link">&para;</a></h3>
+<p>התיקון: במקום לבדוק <code>tid % (2s)</code>, נחשב אינדקס רציף <code>index = 2*s*tid</code> ונבדוק אם הוא בתחום. עכשיו הthreads הפעילים בכל צעד הם ה-<code>blockDim.x/(2s)</code> הראשונים - כלומר warps שלמים עובדים או warps שלמים לא עובדים, בלי פיצול בתוך ה-warp:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">;</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="n">index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">tid</span><span class="p">;</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">index</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="w">                      </span><span class="c1">// whole warps, no divergence</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">        </span><span class="n">sdata</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">sdata</span><span class="p">[</span><span class="n">index</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">s</span><span class="p">];</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">}</span>
+</code></pre></div>
+<p>הסרנו את ה-divergence, אבל יצרנו בעיה חדשה: הגישה <code>sdata[index]</code> עם <code>index = 2*s*tid</code> היא מדורגת (strided) ב-shared memory. כבר בצעד השני, threads מרובים נופלים על אותו bank מבין 32 הבנקים - bank conflict (פרק 8.4) - והגישות מסתדרות טורית. כך שהרווחנו על החישוב אבל נחסמנו על ה-shared memory.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>  reduce1 non-diverg       1.1300 ms     950.2 GB/s   28.4% HBM
+</code></pre></div>
+<p>פי 1.6 מהר יותר. עדיין רחוק; מקור החסימה עכשיו הוא bank conflicts.</p>
+<h3 id="a-2-sequential-addressing-bank-conflict-free">חלק A, שלב 2 - sequential addressing (bank-conflict-free)<a class="headerlink" href="#a-2-sequential-addressing-bank-conflict-free" title="Permanent link">&para;</a></h3>
+<p>הרעיון המרכזי של Mark Harris: להפוך את כיוון הלולאה. במקום stride שגדל, מתחילים ב-stride של חצי-block ומקטינים אותו. עכשיו הthreads הפעילים בכל צעד הם ה-<code>s</code> הראשונים, כל אחד ניגש ל-<code>sdata[tid]</code> וְל-<code>sdata[tid+s]</code> - כתובות רצופות, כל thread ל-bank שונה, אפס bank conflicts:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">&gt;&gt;=</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">tid</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="w">                                 </span><span class="c1">// threads 0..s-1: contiguous addresses</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">        </span><span class="n">sdata</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">sdata</span><span class="p">[</span><span class="n">tid</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">s</span><span class="p">];</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="p">}</span>
+</code></pre></div>
+<p>ההפרש דק בקוד אך עמוק ברעיון: <code>sdata[tid] += sdata[tid+s]</code> מבטיח שכל 32 threads ה-warp הפעיל ניגשים ל-32 בנקים שונים (word <code>w</code> ממופה ל-bank <code>w mod 32</code>), ולכן כל שלב הוא transaction בודד של shared memory.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>  reduce2 sequential       0.7670 ms    1399.9 GB/s   41.8% HBM
+</code></pre></div>
+<p>פי 1.5 נוסף. עברנו 40% מה-peak, אבל עדיין מחצית מהthreads בטלים כבר בצעד הראשון של הלולאה. את זה נתקן בשלב הבא, שכבר בטעינה מנצל את הthreads הבטלים.</p>
+<h3 id="a-3-first-add-during-global-load">חלק A, שלב 3 - first add during global load<a class="headerlink" href="#a-3-first-add-during-global-load" title="Permanent link">&para;</a></h3>
+<p>הבזבוז הגדול: בצעד הראשון של הלולאה חצי מהthreads כבר לא עושים כלום. במקום שכל block יטען <code>blockDim.x</code> איברים, נשק חצי מהבלוקים, וכל thread יטען <strong>שני</strong> איברים מ-global memory ויחבר אותם כבר בטעינה. כך אף thread לא נולד בטל, ומספר ה-blocks (וה-overhead שלהם) נחתך בחצי:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">reduce3</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span><span class="k">extern</span><span class="w"> </span><span class="n">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">sdata</span><span class="p">[];</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="n">tid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="n">i</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">tid</span><span class="p">;</span><span class="w">   </span><span class="c1">// each block: 2*blockDim</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w">               </span><span class="o">?</span><span class="w"> </span><span class="n">in</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w">               </span><span class="o">:</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w">  </span><span class="o">?</span><span class="w"> </span><span class="n">in</span><span class="p">[</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">]</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">    </span><span class="n">sdata</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">b</span><span class="p">;</span><span class="w">                                   </span><span class="c1">// first add on load</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">    </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">&gt;&gt;=</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">tid</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="n">sdata</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">sdata</span><span class="p">[</span><span class="n">tid</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">s</span><span class="p">];</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="w">        </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">tid</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">out</span><span class="p">[</span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sdata</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="p">}</span>
+</code></pre></div>
+<p>שתי הקריאות <code>in[i]</code> ו-<code>in[i + blockDim.x]</code> נשארות מאוחדות (coalesced): בתוך warp, <code>tid</code> רץ, ולכן שתי הקבוצות הן שני מקטעים רצופים של 128 בתים כל אחד. שימו לב שכל איבר עדיין נקרא בדיוק פעם אחת, כך ש-<code>bytes</code> לא השתנה - רק חתכנו את הoverhead והעלנו את ה-issue efficiency.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>  reduce3 first-add-load   0.4470 ms    2402.0 GB/s   71.7% HBM
+</code></pre></div>
+<p>קפיצה גדולה - פי 1.7, ל-72% מה-peak. כעת רוחב הפס כבר קרוב לתקרה, ומה שנשאר הוא הoverhead של הצעדים האחרונים בעץ, שבהם רק warp בודד עובד אך עדיין משלם <code>__syncthreads</code>.</p>
+<h3 id="a-4-warp-shuffle-unrolling-warp">חלק A, שלב 4 - warp-shuffle unrolling של ה-warp האחרון<a class="headerlink" href="#a-4-warp-shuffle-unrolling-warp" title="Permanent link">&para;</a></h3>
+<p>כש-<code>s &lt;= 32</code>, רק warp אחד נשאר פעיל. בתוך warp בודד אין צורך ב-<code>__syncthreads</code> (הthreads כבר בלוק-סטפ תחת SIMT), ואין צורך אפילו ב-shared memory: נשתמש ב-warp primitive ‏<code>__shfl_down_sync</code>, שמעביר ערך מ-register של thread אחד ל-register של thread אחר באותו warp בלי לגעת ב-shared memory כלל. זה מוחק גם את ה-barriers וגם את גישות ה-shared memory של חמשת הצעדים האחרונים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">reduce4</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span><span class="k">extern</span><span class="w"> </span><span class="n">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">sdata</span><span class="p">[];</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="n">tid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="n">i</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">tid</span><span class="p">;</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w">              </span><span class="o">?</span><span class="w"> </span><span class="n">in</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w">              </span><span class="o">:</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">in</span><span class="p">[</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">]</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">    </span><span class="n">sdata</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">b</span><span class="p">;</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="w">    </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="w">    </span><span class="c1">// reduce in shared until 64 elements remain (two warps)</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">32</span><span class="p">;</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">&gt;&gt;=</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">tid</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="n">sdata</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">sdata</span><span class="p">[</span><span class="n">tid</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">s</span><span class="p">];</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="w">        </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="w">    </span><span class="c1">// the last warp: 64 -&gt; 1 with shuffle, no shared and no __syncthreads</span>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">tid</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">32</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sdata</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">sdata</span><span class="p">[</span><span class="n">tid</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">32</span><span class="p">];</span>
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">offset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">16</span><span class="p">;</span><span class="w"> </span><span class="n">offset</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">offset</span><span class="w"> </span><span class="o">&gt;&gt;=</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a><span class="w">            </span><span class="n">v</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">__shfl_down_sync</span><span class="p">(</span><span class="mh">0xffffffff</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">,</span><span class="w"> </span><span class="n">offset</span><span class="p">);</span><span class="w">   </span><span class="c1">// mask: all 32 threads</span>
+<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">tid</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">out</span><span class="p">[</span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">v</span><span class="p">;</span>
+<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a><span class="p">}</span>
+</code></pre></div>
+<p>הפרמטר הראשון של <code>__shfl_down_sync</code> הוא מסכת ה-warp הפעיל, <code>0xffffffff</code> = כל 32 הthreads משתתפים. הקריאה מחזירה לthread <code>tid</code> את הערך של thread <code>tid + offset</code>; threads בקצה, שעבורם <code>tid + offset</code> חורג מהטווח, מקבלים בחזרה את הערך של עצמם (כל 32 הthreads משתתפים במסכה <code>0xffffffff</code>, ולכן ההתנהגות דטרמיניסטית ולא לא-מוגדרת). כתוצאה מכך התוצאות החלקיות שלהם חסרות משמעות, ורק <code>tid == 0</code> מחזיק את הסכום הכולל הנכון - ולכן חשוב שרק <code>tid == 0</code> יכתוב את התוצאה. דורש <code>blockDim.x &gt;= 64</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>  reduce4 warp-shuffle     0.3700 ms    2901.9 GB/s   86.6% HBM
+</code></pre></div>
+<p>87% מרוחב הפס של ה-HBM. זו התקרה המעשית עבור reduction ב-FP32 - קרוב מאוד ל-0.320 ms התיאורטיים. הקפיצות מ-18% ל-87% כולן נבעו מתיאום נכון של הthreads, לא משינוי כמות העבודה.</p>
+<h3 id="a-5-multi-block-pass-atomics">חלק A, שלב 5 - multi-block: pass שני מול atomics<a class="headerlink" href="#a-5-multi-block-pass-atomics" title="Permanent link">&para;</a></h3>
+<p>כל ה-kernels לעיל מייצרים <code>gridDim.x</code> סכומים חלקיים, אחד ל-block, כי אין סנכרון בין blocks (פרק 2). צריך לצמצם את המערך החלקי הזה לסקלר בודד. שתי דרכים סטנדרטיות:</p>
+<p><strong>דרך א - pass שני.</strong> קוראים ל-<code>reduce4</code> שוב על מערך הסכומים החלקיים. אם <code>gridDim.x</code> נשאר גדול, חוזרים על כך רקורסיבית עד שנשאר איבר אחד. פשוט, דטרמיניסטי, וללא תלות ב-atomics:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1">// pass 1: N -&gt; gridDim.x partials,   pass 2: gridDim.x -&gt; 1</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">reduce4</span><span class="o">&lt;&lt;&lt;</span><span class="n">grid</span><span class="p">,</span><span class="w"> </span><span class="n">block</span><span class="p">,</span><span class="w"> </span><span class="n">block</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">d_in</span><span class="p">,</span><span class="w">      </span><span class="n">d_partial</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">);</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="n">reduce4</span><span class="o">&lt;&lt;&lt;</span><span class="mi">1</span><span class="p">,</span><span class="w">    </span><span class="n">block</span><span class="p">,</span><span class="w"> </span><span class="n">block</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">d_partial</span><span class="p">,</span><span class="w"> </span><span class="n">d_out</span><span class="p">,</span><span class="w">     </span><span class="n">grid</span><span class="p">.</span><span class="n">x</span><span class="p">);</span>
+</code></pre></div>
+<p><strong>דרך ב - atomicAdd.</strong> במקום לכתוב סכום חלקי למערך, כל block מוסיף אטומית לסקלר יחיד:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="w">    </span><span class="c1">// at the end of reduce4, instead of out[blockIdx.x]:</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">tid</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">atomicAdd</span><span class="p">(</span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">);</span><span class="w">             </span><span class="c1">// out must be initialized to 0</span>
+</code></pre></div>
+<p>הפתרון ה-atomic חוסך kernel שני והוא מהיר כשמספר ה-blocks סביר, אבל שימו לב לשתי מלכודות: ‏(1) חובה לאתחל את <code>out</code> ל-0 לפני הlaunch (<code>cudaMemset</code>); ‏(2) <code>atomicAdd</code> על <code>float</code> איננו אסוציאטיבי בסדר קבוע, ולכן התוצאה עשויה להשתנות מעט בין הרצות בביט האחרון - עובדה שחשוב לזכור כשבודקים נכונות בסובלנות ולא בשוויון מדויק.</p>
+<p><strong>טבלת התוצאות של חלק A</strong> (‏<code>N = 2^28</code>, דוגמה מ-H100; ערכיכם ישתנו):</p>
+<table>
+<thead>
+<tr>
+<th>שלב</th>
+<th>kernel</th>
+<th>ms</th>
+<th>GB/s</th>
+<th>% HBM</th>
+<th>speedup</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>naive divergent</td>
+<td>1.7890</td>
+<td>600</td>
+<td>17.9%</td>
+<td>1.0x</td>
+</tr>
+<tr>
+<td>1</td>
+<td>non-divergent</td>
+<td>1.1300</td>
+<td>950</td>
+<td>28.4%</td>
+<td>1.6x</td>
+</tr>
+<tr>
+<td>2</td>
+<td>sequential addressing</td>
+<td>0.7670</td>
+<td>1400</td>
+<td>41.8%</td>
+<td>2.3x</td>
+</tr>
+<tr>
+<td>3</td>
+<td>first-add-on-load</td>
+<td>0.4470</td>
+<td>2402</td>
+<td>71.7%</td>
+<td>4.0x</td>
+</tr>
+<tr>
+<td>4</td>
+<td>warp-shuffle</td>
+<td>0.3700</td>
+<td>2902</td>
+<td>86.6%</td>
+<td>4.8x</td>
+</tr>
+</tbody>
+</table>
+<h3 id="b-prefix-sum-scan">חלק B - prefix sum / scan<a class="headerlink" href="#b-prefix-sum-scan" title="Permanent link">&para;</a></h3>
+<p>scan (סריקה / prefix sum) מחשב לכל איבר את סכום כל קודמיו. ב-<strong>inclusive scan</strong> האיבר ה-<code>i</code> מקבל את <code>x[0]+...+x[i]</code>. נממש את אלגוריתם <strong>Hillis-Steele</strong> בתוך block: ב-<code>log2(blockDim.x)</code> צעדים, בכל צעד כל thread מוסיף לעצמו את הערך במרחק <code>offset</code> אחורה, וה-<code>offset</code> מוכפל. שימו לב לתבנית double-buffering הזעירה: קוראים ל-<code>temp[tid-offset]</code> למשתנה, ‏<code>__syncthreads</code>, ורק אז כותבים - כדי למנוע read-after-write hazard בין הthreads על אותו מערך shared.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1">// inclusive scan of a single block; blockSums (optional) accumulates the sum of the whole block</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">scanBlock</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">blockSums</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span><span class="k">extern</span><span class="w"> </span><span class="n">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">temp</span><span class="p">[];</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">tid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">gid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">tid</span><span class="p">;</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">    </span><span class="n">temp</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">gid</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">in</span><span class="p">[</span><span class="n">gid</span><span class="p">]</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="w">    </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">offset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">offset</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">;</span><span class="w"> </span><span class="n">offset</span><span class="w"> </span><span class="o">&lt;&lt;=</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">add</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">tid</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">offset</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">temp</span><span class="p">[</span><span class="n">tid</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">offset</span><span class="p">]</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="w">        </span><span class="n">__syncthreads</span><span class="p">();</span><span class="w">                          </span><span class="c1">// everyone read before anyone writes</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="w">        </span><span class="n">temp</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">add</span><span class="p">;</span>
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="w">        </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">gid</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="n">out</span><span class="p">[</span><span class="n">gid</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">temp</span><span class="p">[</span><span class="n">tid</span><span class="p">];</span>
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">blockSums</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">tid</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w">       </span><span class="c1">// the full sum of the block</span>
+<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a><span class="w">        </span><span class="n">blockSums</span><span class="p">[</span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">temp</span><span class="p">[</span><span class="n">tid</span><span class="p">];</span>
+<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a><span class="p">}</span>
+</code></pre></div>
+<p>Hillis-Steele איננו work-efficient: הוא מבצע <code>O(n log n)</code> פעולות לעומת <code>O(n)</code> באלגוריתם Blelloch (סריקת up-sweep/down-sweep). עבור block בגודל 256-1024 הפשטות מנצחת, ולכן נשתמש בו; מי שרוצה יממש את Blelloch ה-work-efficient כבונוס וישווה.</p>
+<p><strong>הרכבה על-פני blocks.</strong> scan הוא גלובלי מטבעו - האיבר האחרון תלוי בכולם - ולכן block בודד לא מספיק. התבנית בת-שלושת-השלבים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>   1. scanBlock on each block separately -&gt; partial out + blockSums[b] = sum of block b
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>   2. exclusive scan on blockSums   -&gt; offsets[b] = sum of all blocks before b
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>   3. addition: every element in block b gets += offsets[b]
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1">// step 3: add to every element the offset of its block (block 0 gets nothing)</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">addOffsets</span><span class="p">(</span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">offsets</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">gid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">gid</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">)</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">        </span><span class="n">out</span><span class="p">[</span><span class="n">gid</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">offsets</span><span class="p">[</span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="p">];</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>קריטריון קבלה לחלק B:</strong> ‏(1) <code>scanBlock</code> בודד נכון מול ייחוס CPU (<code>std::partial_sum</code>) עבור <code>n &lt;= blockDim.x</code>, בסובלנות <code>rtol=1e-4</code>; ‏(2) ה-scan המורכב נכון עבור <code>n</code> גדול משתרע על-פני מספר blocks; ‏(3) בדקו את מקרה הקצה <code>n</code> שאינו כפולה של <code>blockDim.x</code>. דווחו גם את רוחב הפס של הצעד הראשון (scan קורא וכותב, ולכן <code>bytes = 2 * N * 4</code>).</p>
+<h3 id="c-1-stable-softmax">חלק C, שלב 1 - stable softmax<a class="headerlink" href="#c-1-stable-softmax" title="Permanent link">&para;</a></h3>
+<p>softmax הופך וקטור לוגיטים (logits) להתפלגות הסתברות: <code>softmax(x)_i = exp(x_i) / sum_j exp(x_j)</code>. המימוש הנאיבי <code>exp(x_i)</code> מתפוצץ: כבר ב-<code>x_i = 89</code> הערך <code>exp(x)</code> גולש מעבר לטווח של <code>float</code> ל-<code>inf</code>, וה-<code>inf/inf</code> נותן <code>NaN</code>. הפתרון הסטנדרטי הוא <strong>stable softmax</strong> - מחסירים את המקסימום של השורה לפני ה-<code>exp</code>. מתמטית זה זהה (המונה והמכנה מוכפלים ב-<code>exp(-m)</code>), אך מספרית כל הארגומנטים ל-<code>exp</code> הופכים ל-<code>&lt;= 0</code>, כך ש-<code>exp</code> בטווח <code>(0, 1]</code> ואף פעם לא גולש:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>   m       = max_j x_j
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>   softmax_i = exp(x_i - m) / sum_j exp(x_j - m)
+</code></pre></div>
+<p>נעבד שורה אחת לכל block, בשלושה מעברים: max, סכום-exp, נרמול. את ה-<code>exp</code> נחשב עם <code>__expf</code> - הגרסה ה-intrinsic הרצה על ה-<strong>SFU</strong> (Special Function Unit, יחידת הפונקציות המיוחדות של ה-SM), מהירה בהרבה מ-<code>expf</code> המדויקת, במחיר ~2 ULP דיוק - מקובל לחלוטין ל-softmax:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">softmaxRows</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">rows</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">cols</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">    </span><span class="k">extern</span><span class="w"> </span><span class="n">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">sh</span><span class="p">[];</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">tid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in</span><span class="w">  </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="p">)</span><span class="n">row</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">cols</span><span class="p">;</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="w">    </span><span class="kt">float</span><span class="o">*</span><span class="w">       </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">out</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="p">)</span><span class="n">row</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">cols</span><span class="p">;</span>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a><span class="w">    </span><span class="c1">// pass 1: max of the row (grid-stride over the columns, then reduce in shared)</span>
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">localMax</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="n">INFINITY</span><span class="p">;</span>
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tid</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">cols</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">)</span>
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="w">        </span><span class="n">localMax</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fmaxf</span><span class="p">(</span><span class="n">localMax</span><span class="p">,</span><span class="w"> </span><span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">]);</span>
+<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a><span class="w">    </span><span class="n">sh</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">localMax</span><span class="p">;</span>
+<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a><span class="w">    </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">&gt;&gt;=</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">tid</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="n">sh</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fmaxf</span><span class="p">(</span><span class="n">sh</span><span class="p">[</span><span class="n">tid</span><span class="p">],</span><span class="w"> </span><span class="n">sh</span><span class="p">[</span><span class="n">tid</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">s</span><span class="p">]);</span>
+<a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a><span class="w">        </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-19-18" name="__codelineno-19-18" href="#__codelineno-19-18"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sh</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+<a id="__codelineno-19-19" name="__codelineno-19-19" href="#__codelineno-19-19"></a><span class="w">    </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-19-20" name="__codelineno-19-20" href="#__codelineno-19-20"></a>
+<a id="__codelineno-19-21" name="__codelineno-19-21" href="#__codelineno-19-21"></a><span class="w">    </span><span class="c1">// pass 2: sum of exp(x-m), the same reduction pattern</span>
+<a id="__codelineno-19-22" name="__codelineno-19-22" href="#__codelineno-19-22"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">localSum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-19-23" name="__codelineno-19-23" href="#__codelineno-19-23"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tid</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">cols</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">)</span>
+<a id="__codelineno-19-24" name="__codelineno-19-24" href="#__codelineno-19-24"></a><span class="w">        </span><span class="n">localSum</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">__expf</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">m</span><span class="p">);</span><span class="w">            </span><span class="c1">// SFU: fast exp</span>
+<a id="__codelineno-19-25" name="__codelineno-19-25" href="#__codelineno-19-25"></a><span class="w">    </span><span class="n">sh</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">localSum</span><span class="p">;</span>
+<a id="__codelineno-19-26" name="__codelineno-19-26" href="#__codelineno-19-26"></a><span class="w">    </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-19-27" name="__codelineno-19-27" href="#__codelineno-19-27"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">&gt;&gt;=</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-19-28" name="__codelineno-19-28" href="#__codelineno-19-28"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">tid</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="n">sh</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">sh</span><span class="p">[</span><span class="n">tid</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">s</span><span class="p">];</span>
+<a id="__codelineno-19-29" name="__codelineno-19-29" href="#__codelineno-19-29"></a><span class="w">        </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-19-30" name="__codelineno-19-30" href="#__codelineno-19-30"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-19-31" name="__codelineno-19-31" href="#__codelineno-19-31"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">invDenom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0f</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">sh</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+<a id="__codelineno-19-32" name="__codelineno-19-32" href="#__codelineno-19-32"></a>
+<a id="__codelineno-19-33" name="__codelineno-19-33" href="#__codelineno-19-33"></a><span class="w">    </span><span class="c1">// pass 3: normalize and write (coalesced)</span>
+<a id="__codelineno-19-34" name="__codelineno-19-34" href="#__codelineno-19-34"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tid</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">cols</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">)</span>
+<a id="__codelineno-19-35" name="__codelineno-19-35" href="#__codelineno-19-35"></a><span class="w">        </span><span class="n">y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">__expf</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">m</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">invDenom</span><span class="p">;</span>
+<a id="__codelineno-19-36" name="__codelineno-19-36" href="#__codelineno-19-36"></a><span class="p">}</span>
+</code></pre></div>
+<p>הגישות <code>x[j]</code> עם <code>j = tid, tid+blockDim, ...</code> מאוחדות (coalesced) לכל warp. שני הצמצומים בתוך השורה משתמשים בדיוק בתבנית sequential-addressing מחלק A - שם לב איך primitive אחד (reduction) הופך לאבן-בניין בתוך אחר.</p>
+<p><strong>קריטריון קבלה:</strong> הפלט נכון מול ייחוס CPU (stable) בסובלנות <code>rtol=1e-4</code>; כל שורה מסתכמת ל-1.0 (בדקו <code>|sum - 1| &lt; 1e-4</code>); הריצו גם קלט עם ערכים גדולים (למשל <code>x</code> בטווח <code>[80, 100]</code>) ווודאו שאין <code>NaN</code> - מבחן שהגרסה הנאיבית בלי חיסור ה-max נכשלת בו.</p>
+<h3 id="c-2-online-streaming-softmax-flashattention">חלק C, שלב 2 - online / streaming softmax (FlashAttention)<a class="headerlink" href="#c-2-online-streaming-softmax-flashattention" title="Permanent link">&para;</a></h3>
+<p>ה-stable softmax דורש <strong>שלושה מעברים</strong> על השורה: אחד למצוא את המקסימום, שני לסכום ה-exp, שלישי לנרמל. ב-attention השורה היא ציון-הדמיון של token אחד מול כל השאר, והיא עלולה להיות ארוכה מאוד (הקשר של עשרות אלפי tokens). שלושה מעברים פירושם להחזיק את כל השורה בזיכרון, או לקרוא אותה שלוש פעמים מ-HBM - בדיוק מה ש-FlashAttention בא לחסוך. הפתרון הוא <strong>online softmax</strong>: לחשב max וסכום ב<strong>מעבר יחיד</strong>, תוך שמירת "מקסימום רץ" (running max) ו-"סכום רץ" (running sum), ותיקון הסכום בכל פעם שמתגלה מקסימום חדש.</p>
+<p>התובנה: אם ראינו עד כה מקסימום <code>m</code> וסכום <code>l = sum exp(x - m)</code>, ומגיע איבר חדש <code>x_new</code>, המקסימום מתעדכן ל-<code>m' = max(m, x_new)</code>. אבל <code>l</code> חושב ביחס ל-<code>m</code> הישן, ולכן צריך לכייל אותו בגורם <code>exp(m - m')</code> לפני שמוסיפים את התרומה החדשה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>   m&#39;  = max(m, x_new)
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>   l&#39;  = l * exp(m - m&#39;) + exp(x_new - m&#39;)
+</code></pre></div>
+<p>הביטוי הזה זהה מתמטית לחלוטין לחישוב הרגיל, אבל דורש רק מעבר אחד. הנה המעבר היחיד לכל thread, ואחריו מיזוג (merge) של החלקיים בין הthreads - כי פעולת ה-merge הזו היא אסוציאטיבית וקומוטטיבית, בדיוק כמו חיבור, ולכן משתלבת בעץ הצמצום המוכר:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1">// (m, l) partial for each thread over its subset of columns, single pass</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="k">struct</span><span class="w"> </span><span class="nc">ml</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">l</span><span class="p">;</span><span class="w"> </span><span class="p">};</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="n">__device__</span><span class="w"> </span><span class="n">ml</span><span class="w"> </span><span class="n">combine</span><span class="p">(</span><span class="n">ml</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">ml</span><span class="w"> </span><span class="n">b</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">              </span><span class="c1">// associative merge of two partials</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fmaxf</span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">m</span><span class="p">);</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">l</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="p">.</span><span class="n">l</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">__expf</span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="n">m</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">m</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">l</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">__expf</span><span class="p">(</span><span class="n">b</span><span class="p">.</span><span class="n">m</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">m</span><span class="p">);</span>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">l</span><span class="p">};</span>
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="p">}</span>
+<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a>
+<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">softmaxOnline</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">rows</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">cols</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="w">    </span><span class="k">extern</span><span class="w"> </span><span class="n">__shared__</span><span class="w"> </span><span class="n">ml</span><span class="w"> </span><span class="n">shml</span><span class="p">[];</span>
+<a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">tid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in</span><span class="w">  </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="p">)</span><span class="n">row</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">cols</span><span class="p">;</span>
+<a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a><span class="w">    </span><span class="kt">float</span><span class="o">*</span><span class="w">       </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">out</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="p">)</span><span class="n">row</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">cols</span><span class="p">;</span>
+<a id="__codelineno-21-15" name="__codelineno-21-15" href="#__codelineno-21-15"></a>
+<a id="__codelineno-21-16" name="__codelineno-21-16" href="#__codelineno-21-16"></a><span class="w">    </span><span class="c1">// single pass: running max + running sum over the thread&#39;s columns</span>
+<a id="__codelineno-21-17" name="__codelineno-21-17" href="#__codelineno-21-17"></a><span class="w">    </span><span class="n">ml</span><span class="w"> </span><span class="n">acc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="o">-</span><span class="n">INFINITY</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0f</span><span class="w"> </span><span class="p">};</span>
+<a id="__codelineno-21-18" name="__codelineno-21-18" href="#__codelineno-21-18"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tid</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">cols</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-21-19" name="__codelineno-21-19" href="#__codelineno-21-19"></a><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">xj</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
+<a id="__codelineno-21-20" name="__codelineno-21-20" href="#__codelineno-21-20"></a><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">mNew</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fmaxf</span><span class="p">(</span><span class="n">acc</span><span class="p">.</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">xj</span><span class="p">);</span>
+<a id="__codelineno-21-21" name="__codelineno-21-21" href="#__codelineno-21-21"></a><span class="w">        </span><span class="n">acc</span><span class="p">.</span><span class="n">l</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">acc</span><span class="p">.</span><span class="n">l</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">__expf</span><span class="p">(</span><span class="n">acc</span><span class="p">.</span><span class="n">m</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">mNew</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">__expf</span><span class="p">(</span><span class="n">xj</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">mNew</span><span class="p">);</span>
+<a id="__codelineno-21-22" name="__codelineno-21-22" href="#__codelineno-21-22"></a><span class="w">        </span><span class="n">acc</span><span class="p">.</span><span class="n">m</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mNew</span><span class="p">;</span>
+<a id="__codelineno-21-23" name="__codelineno-21-23" href="#__codelineno-21-23"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-21-24" name="__codelineno-21-24" href="#__codelineno-21-24"></a><span class="w">    </span><span class="n">shml</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">acc</span><span class="p">;</span>
+<a id="__codelineno-21-25" name="__codelineno-21-25" href="#__codelineno-21-25"></a><span class="w">    </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-21-26" name="__codelineno-21-26" href="#__codelineno-21-26"></a>
+<a id="__codelineno-21-27" name="__codelineno-21-27" href="#__codelineno-21-27"></a><span class="w">    </span><span class="c1">// reduction with the merge operator (the same sequential-addressing tree from part A)</span>
+<a id="__codelineno-21-28" name="__codelineno-21-28" href="#__codelineno-21-28"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">&gt;&gt;=</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-21-29" name="__codelineno-21-29" href="#__codelineno-21-29"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">tid</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="n">shml</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">combine</span><span class="p">(</span><span class="n">shml</span><span class="p">[</span><span class="n">tid</span><span class="p">],</span><span class="w"> </span><span class="n">shml</span><span class="p">[</span><span class="n">tid</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">s</span><span class="p">]);</span>
+<a id="__codelineno-21-30" name="__codelineno-21-30" href="#__codelineno-21-30"></a><span class="w">        </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-21-31" name="__codelineno-21-31" href="#__codelineno-21-31"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-21-32" name="__codelineno-21-32" href="#__codelineno-21-32"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">shml</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">invDenom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0f</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">shml</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">l</span><span class="p">;</span>
+<a id="__codelineno-21-33" name="__codelineno-21-33" href="#__codelineno-21-33"></a>
+<a id="__codelineno-21-34" name="__codelineno-21-34" href="#__codelineno-21-34"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tid</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">cols</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="w">  </span><span class="c1">// final write pass</span>
+<a id="__codelineno-21-35" name="__codelineno-21-35" href="#__codelineno-21-35"></a><span class="w">        </span><span class="n">y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">__expf</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">m</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">invDenom</span><span class="p">;</span>
+<a id="__codelineno-21-36" name="__codelineno-21-36" href="#__codelineno-21-36"></a><span class="p">}</span>
+</code></pre></div>
+<p>מדוע זה משנה ל-attention. ב-FlashAttention לא מחזיקים את מטריצת ה-attention המלאה (בגודל <code>seq x seq</code>) בזיכרון כלל; מעבדים אותה בtiles (tiles), וכל tile מעדכן את ה-<code>(m, l)</code> הרצים ואת מצבור הפלט בגורם התיקון <code>exp(m - m')</code>. כך הזיכרון יורד מ-<code>O(seq^2)</code> ל-<code>O(seq)</code>, וזו הסיבה שאפשר להריץ attention על הקשרים ארוכים. ה-primitive של online softmax שבניתם כאן הוא בדיוק הליבה המתמטית של אותו kernel; מה שמוסיף FlashAttention הוא שילובו עם ה-GEMM של <code>Q*K^T</code> ושל <code>*V</code> באותו מעבר, ועל Hopper גם <code>wgmma</code> ו-warpgroups (פרק 2.4). המעבר השלישי (הכתיבה) עדיין קורא את <code>x</code> פעם נוספת; ב-FlashAttention אמיתי גם הוא נמזג פנימה, אך לצורך הפרויקט שני-מעברים-לוגית (חישוב + כתיבה) מספיק כדי להדגים את הרעיון.</p>
+<p><strong>קריטריון קבלה לחלק C:</strong> ‏(1) <code>softmaxOnline</code> נותן בדיוק אותו פלט כמו <code>softmaxRows</code> (<code>rtol=1e-4</code>); ‏(2) מדדו את שני ה-kernels והשוו - ה-online מבצע מעבר קריאה אחד פחות על השורה; ‏(3) הסבירו בפסקה מדוע ה-merge אסוציאטיבי (ולכן חוקי בעץ צמצום ובכל סדר של tiles).</p>
+<h3 id="-acceptance-criteria">קריטריוני קבלה - acceptance criteria<a class="headerlink" href="#-acceptance-criteria" title="Permanent link">&para;</a></h3>
+<p>הפרויקט מושלם כאשר כל השורות מתקיימות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>   [ ] A: reduce0..reduce4 return the correct sum against the CPU (rtol=1e-4)
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>   [ ] A: ms / GB/s / %HBM table complete for the five stages, N=2^28
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>   [ ] A: reduce4 reaches &gt;= 80% of the HBM bandwidth
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>   [ ] A: multi-block implemented both ways (second pass + atomicAdd), out initialized to 0
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>   [ ] B: a single scanBlock correct against partial_sum; the composed scan correct for N spanning many blocks
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>   [ ] B: the edge case N not a multiple of blockDim is handled
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>   [ ] C: softmaxRows correct (rtol=1e-4), every row sums to 1, no NaN on large input
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>   [ ] C: softmaxOnline identical to softmaxRows, in a single compute pass
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>   [ ] all CUDA calls wrapped in CUDA_CHECK; an unverified kernel does not report
+</code></pre></div>
+<p>הערה שחוזרת מ-9.3: <strong>אף פעם אל תדווחו GB/s של kernel שלא עבר את בודק הנכונות.</strong> ב-reduction קל במיוחד "להאיץ" תוך שבירה שקטה - <code>__syncthreads</code> חסר בין הצעדים יאיץ מעט ויחזיר סכום שגוי ולא-דטרמיניסטי. הריצו את הבודק אחרי כל שינוי.</p>
+<h3 id="-what-comes-next">סיכום ולאן ממשיכים - what comes next<a class="headerlink" href="#-what-comes-next" title="Permanent link">&para;</a></h3>
+<p>הפרויקט הזה סוגר את המעגל של הקורס יחד עם GEMM (9.3): שם הבעיה הייתה compute-bound וטיפסנו לכיוון ה-Tensor Cores; כאן הבעיה memory-bound וטיפסנו לכיוון רוחב הפס של ה-HBM. את מה שלמדנו בפרקים 2, 3 ו-8 ראינו כאן משלם ביצועים מדיד:</p>
+<ul>
+<li><strong>reduction:</strong> חמישה שלבים לקחו אותנו מ-18% ל-87% מרוחב הפס, וכל קפיצה הייתה תיאום, לא חישוב - הסרת divergence (8.3), הסרת bank conflicts (8.4), ניצול threads בטלים כבר בטעינה, ו-warp primitives (<code>__shfl_down_sync</code>) שמוחקים barriers ו-shared memory ב-warp האחרון.</li>
+<li><strong>scan:</strong> primitive גלובלי שבנוי משלוש שכבות - Hillis-Steele בתוך block, סריקה על סכומי ה-blocks, והוספה - שממחיש למה חוסר-סנכרון בין blocks (פרק 2) מכתיב ארכיטקטורה רב-שלבית.</li>
+<li><strong>softmax:</strong> מ-stable (חיסור max נגד גלישה, <code>exp</code> על ה-SFU) אל online/streaming - הליבה המתמטית של FlashAttention, שבזכות ה-running max וה-running sum האסוציאטיביים מוריד את זיכרון ה-attention מ-<code>O(seq^2)</code> ל-<code>O(seq)</code>.</li>
+</ul>
+<p>הצעד הבא הטבעי הוא לחבר את שני הפרויקטים: GEMM ‏+ online softmax ‏= attention. עם ה-primitives של 9.3 ו-9.4 ביד, ועם warpgroups ו-<code>wgmma</code> מפרק 2.4 ו-CUTLASS/CuTe מפרק 6, יש לכם את כל אבני-הבניין להבין - ואף לכתוב גרסה מצומצמת של - kernel FlashAttention אמיתי.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

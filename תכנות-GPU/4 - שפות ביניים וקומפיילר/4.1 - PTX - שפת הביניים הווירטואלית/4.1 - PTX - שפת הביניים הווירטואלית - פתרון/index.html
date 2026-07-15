@@ -1,0 +1,2791 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="הערה: ה-PTX שלהלן הופק מ-H100 עם sm90a וגרסת CUDA מסוימת. שמות ה-registers, סדר ההוראות והתוויות (labels כמו $LBB02) עשויים להשתנות מעט בין גרסאות...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        <link rel="prev" href="../4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="next" href="../4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>4.1 - PTX - שפת הביניים הווירטואלית - פתרון - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "4.1 - PTX - \u05e9\u05e4\u05ea \u05d4\u05d1\u05d9\u05e0\u05d9\u05d9\u05dd \u05d4\u05d5\u05d5\u05d9\u05e8\u05d8\u05d5\u05d0\u05dc\u05d9\u05ea - \u05e4\u05ea\u05e8\u05d5\u05df",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="4.1 - PTX - שפת הביניים הווירטואלית - פתרון - עמית טק" />
+<meta property="og:description" content="הערה: ה-PTX שלהלן הופק מ-H100 עם sm90a וגרסת CUDA מסוימת. שמות ה-registers, סדר ההוראות והתוויות (labels כמו $LBB02) עשויים להשתנות מעט בין גרסאות..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="4.1 - PTX - שפת הביניים הווירטואלית - פתרון - עמית טק" />
+<meta property="twitter:description" content="הערה: ה-PTX שלהלן הופק מ-H100 עם sm90a וגרסת CUDA מסוימת. שמות ה-registers, סדר ההוראות והתוויות (labels כמו $LBB02) עשויים להשתנות מעט בין גרסאות..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-ptx-" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              4.1 - PTX - שפת הביניים הווירטואלית - פתרון
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_6" id="__nav_7_3_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    4   שפות ביניים וקומפיילר
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_6_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_6_1" id="__nav_7_3_6_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4.1   PTX   שפת הביניים הווירטואלית
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_6_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    4.1   PTX   שפת הביניים הווירטואלית
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4.1 - PTX - שפת הביניים הווירטואלית - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4.1 - PTX - שפת הביניים הווירטואלית - פתרון
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4.1 - PTX - שפת הביניים הווירטואלית - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-ptx-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון - PTX - שפת הביניים הווירטואלית
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="פתרון - PTX - שפת הביניים הווירטואלית">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-ptx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 1 - הפקת PTX וקריאת שלוש המשפחות
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-ptx-cuda-c" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 2 - מיפוי PTX לשורות ה-CUDA C++
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-ptx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 3 - שינוי הקוד וצפייה בשינוי ה-PTX
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-inline-ptx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 4 - כתיבת inline PTX משלכם
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-ptx-isa-version-target" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 5 - PTX ISA version מול target
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-ptx-sass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 6 (בונוס) - תאימות-קדימה: PTX מנצח SASS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4.1 - PTX - שפת הביניים הווירטואלית - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../4.2%20-%20SASS%20-%20%D7%94%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%20%D7%A9%D7%9C%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/4.2%20-%20SASS%20-%20%D7%94%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%20%D7%A9%D7%9C%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4.2   SASS   האסמבלי של החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../4.3%20-%20nvcc%2C%20nvrtc%20%D7%95%D7%94%D7%94%D7%99%D7%93%D7%95%D7%A8/4.3%20-%20nvcc%2C%20nvrtc%20%D7%95%D7%94%D7%94%D7%99%D7%93%D7%95%D7%A8%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4.3   nvcc, nvrtc וההידור
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../4.4%20-%20%D7%9B%D7%9C%D7%99%20%D7%91%D7%99%D7%A0%D7%90%D7%A8%D7%99%20%D7%9C%D7%A0%D7%99%D7%AA%D7%95%D7%97%20artifacts/4.4%20-%20%D7%9B%D7%9C%D7%99%20%D7%91%D7%99%D7%A0%D7%90%D7%A8%D7%99%20%D7%9C%D7%A0%D7%99%D7%AA%D7%95%D7%97%20artifacts%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4.4   כלי בינארי לניתוח artifacts
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-ptx-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון - PTX - שפת הביניים הווירטואלית
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="פתרון - PTX - שפת הביניים הווירטואלית">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-ptx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 1 - הפקת PTX וקריאת שלוש המשפחות
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-ptx-cuda-c" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 2 - מיפוי PTX לשורות ה-CUDA C++
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-ptx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 3 - שינוי הקוד וצפייה בשינוי ה-PTX
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-inline-ptx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 4 - כתיבת inline PTX משלכם
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-ptx-isa-version-target" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 5 - PTX ISA version מול target
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-ptx-sass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 6 (בונוס) - תאימות-קדימה: PTX מנצח SASS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    4   שפות ביניים וקומפיילר
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    4.1   PTX   שפת הביניים הווירטואלית
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>4.1 - PTX - שפת הביניים הווירטואלית - פתרון</h1>
+
+<h2 id="-ptx-">פתרון - PTX - שפת הביניים הווירטואלית<a class="headerlink" href="#-ptx-" title="Permanent link">&para;</a></h2>
+<p>הערה: ה-PTX שלהלן הופק מ-H100 עם <code>sm_90a</code> וגרסת CUDA מסוימת. שמות ה-registers, סדר ההוראות והתוויות (labels כמו <code>$L__BB0_2</code>) עשויים להשתנות מעט בין גרסאות compiler - מה שקבוע הוא ה<strong>דפוס</strong>: הצהרות <code>.reg</code>, ה-<code>mad</code> לאינדקס, ה-<code>setp</code>/<code>bra</code> ל-<code>if</code>, ה-<code>fma</code> לחישוב, וה-<code>ld/st.global</code> לגישות הזיכרון. הפעילו אצלכם וראו את המספרים שלכם.</p>
+<h3 id="1-ptx">פתרון תרגיל 1 - הפקת PTX וקריאת שלוש המשפחות<a class="headerlink" href="#1-ptx" title="Permanent link">&para;</a></h3>
+<p>הפקה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>nvcc<span class="w"> </span>-arch<span class="o">=</span>sm_90a<span class="w"> </span>-ptx<span class="w"> </span>square.cu<span class="w"> </span>-o<span class="w"> </span>square.ptx
+</code></pre></div>
+<p>בראש הקובץ יופיעו ההנחיות, ובגוף ה-kernel יופיעו ארבע הצהרות <code>.reg</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>.reg .pred  %p&lt;2&gt;;   // one predicate register (%p1) for the if condition
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>.reg .f32   %f&lt;3&gt;;   // two float registers:  %f1 = in[i],  %f2 = the result
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>.reg .b32   %r&lt;6&gt;;   // five 32-bit registers: indices and n
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>.reg .b64   %rd&lt;7&gt;;  // six 64-bit registers: pointers and addresses
+</code></pre></div>
+<p><strong>(2)</strong> הוצהרו ארבע משפחות: <code>.pred</code> (בוליאני לתנאי), <code>.f32</code> (נקודה צפה), <code>.b32</code> (מספרים שלמים / bit-buckets בני 32) ו-<code>.b64</code> (מצביעים וכתובות בני 64). הסימון <code>%f&lt;3&gt;</code> פירושו משפחת שמות בגודל 3: <code>%f0</code>, <code>%f1</code>, <code>%f2</code>.</p>
+<p><strong>(3)</strong> ה-<code>fma</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>fma.rn.f32 %f2, %f1, %f1, 0f3FC00000;
+</code></pre></div>
+<p>הקבוע הוא <code>0f3FC00000</code>, שהוא 1.5 בעשרוני (ייצוג ביטים של IEEE 754 float). הסיומת <code>rn</code> היא round-to-nearest-even - מצב העיגול של ברירת המחדל ב-IEEE 754.</p>
+<p><strong>(4)</strong> שלוש ה-<code>mov</code> נמצאות מיד לפני חישוב האינדקס:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>mov.u32 %r3, %ntid.x;     // blockDim.x
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>mov.u32 %r4, %ctaid.x;    // blockIdx.x
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>mov.u32 %r5, %tid.x;      // threadIdx.x
+</code></pre></div>
+<p><strong>למה זה עבד:</strong> הצהרת <code>.reg</code> היא ההכרזה על ה-registers הווירטואליים שה-kernel צורך, מקובצת לפי סוג. הcompiler בחר float ל-<code>in[i]</code> ולתוצאה, שלמים ל-n ולאינדקסים, ו-64 סיביות לכתובות (על <code>.address_size 64</code>), ו-predicate בודד לתנאי.</p>
+<p><strong>איך להכליל:</strong> תמיד קראו קודם את בלוק ה-<code>.reg</code> - הוא "תקציב" ה-registers הווירטואלי של ה-kernel, ומכתיב מיד אילו סוגי נתונים בשימוש. משפחת <code>.pred</code> מסגירה תנאים; <code>.b64</code> מרובה מסגירה עבודת מצביעים כבדה.</p>
+<h3 id="2-ptx-cuda-c">פתרון תרגיל 2 - מיפוי PTX לשורות ה-CUDA C++<a class="headerlink" href="#2-ptx-cuda-c" title="Permanent link">&para;</a></h3>
+<p>המיפוי המלא:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>mov.u32     %r3, %ntid.x;              \
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>mov.u32     %r4, %ctaid.x;              &gt;  int i = blockIdx.x*blockDim.x + threadIdx.x;
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>mov.u32     %r5, %tid.x;                |
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>mad.lo.s32  %r1, %r4, %r3, %r5;        /
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>setp.ge.s32 %p1, %r1, %r2;             \  if (i &lt; n)   [inverted to  i &gt;= n  -&gt;  skip]
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>@%p1 bra    $L__BB0_2;                 /
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>ld.global.f32 %f1, [%rd5];               //  read in[i]
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>fma.rn.f32    %f2, %f1, %f1, 0f3FC00000; //  in[i]*in[i] + 1.5f
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>st.global.f32 [%rd6], %f2;               //  out[i] = ...
+</code></pre></div>
+<p><strong>(1)</strong> שלוש ה-<code>mov</code> בשילוב <code>mad.lo.s32 %r1, %r4, %r3, %r5</code> הם <code>i = blockIdx.x * blockDim.x + threadIdx.x</code>. ההוראה <code>mad</code> (multiply-add) מבצעת <code>%r4 * %r3 + %r5</code> בהוראה אחת.</p>
+<p><strong>(2)</strong> <code>setp.ge.s32 %p1, %r1, %r2</code> מחשב את הפרדיקט <code>i &gt;= n</code>, ו-<code>@%p1 bra $L__BB0_2</code> קופץ לסוף אם הוא אמת. הcompiler הפך את <code>i &lt; n</code> לתנאי ההפוך <code>i &gt;= n</code> כדי ש<strong>כישלון</strong> התנאי יגרום לקפיצה מעל גוף ה-<code>if</code> - זה הדפוס הסטנדרטי של קומפילציית <code>if</code> המגוננת.</p>
+<p><strong>(3)</strong> <code>ld.global.f32 %f1, [%rd5]</code> מממשת את הקריאה <code>in[i]</code>; <code>st.global.f32 [%rd6], %f2</code> מממשת את הכתיבה <code>out[i] = ...</code>.</p>
+<p><strong>(4)</strong> שתי גישות ל-global memory (<code>ld</code> אחת + <code>st</code> אחת) מול פעולה אריתמטית אחת (<code>fma</code>). היחס הנמוך - פחות מפעולה אחת לכל גישת זיכרון - הוא חתימה מובהקת של kernel memory-bound: הזמן נשלט על ידי תעבורת ה-DRAM, לא על ידי החישוב.</p>
+<p><strong>למה זה עבד:</strong> PTX הוא מספיק קרוב לקוד המקור כדי שכל מבנה שפה גבוהה (חישוב אינדקס, <code>if</code>, קריאה/כתיבה) ממופה לקבוצת הוראות מזוהה. הצירוף <code>setp</code> + <code>@predicate bra</code> הוא תמיד תרגום של הסתעפות.</p>
+<p><strong>איך להכליל:</strong> כדי לקרוא PTX של kernel זר, אתרו קודם את ה-<code>ld.param</code> (הארגומנטים), אז את ה-<code>mov</code> מה-registers המובנים (חישוב אינדקס), אז את ה-<code>setp</code>/<code>bra</code> (בקרת זרימה), ולבסוף את ה-<code>ld/st.global</code> (ה-I/O). מה שנשאר באמצע הוא החישוב.</p>
+<h3 id="3-ptx">פתרון תרגיל 3 - שינוי הקוד וצפייה בשינוי ה-PTX<a class="headerlink" href="#3-ptx" title="Permanent link">&para;</a></h3>
+<p><strong>(1)</strong> עם <code>+ 3.0f</code> הקבוע ב-<code>fma</code> משתנה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>fma.rn.f32 %f2, %f1, %f1, 0f40400000;   // 0f40400000 = 3.0f
+</code></pre></div>
+<p><strong>(2)</strong> עם <code>in[i] * 2.0f</code> בלבד, אין מה לצבור, ולכן הcompiler פולט כפל ולא fma:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>mul.f32 %f2, %f1, 0f40000000;   // 0f40000000 = 2.0f
+</code></pre></div>
+<p><strong>(3)</strong> עם <code>in[i]*in[i] + in[i]</code>, כל שלושת האופרנדים הם registers - אין ליטרל <code>0f...</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>fma.rn.f32 %f2, %f1, %f1, %f1;
+</code></pre></div>
+<p><strong>(4)</strong> לולאת <code>for</code> קטנה מוסיפה register של predicate ומבנה קפיצה. בערך:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>.reg .pred %p&lt;3&gt;;
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>...
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>$L__BB0_3:
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    ld.global.f32 %f4, [%rd7];
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    add.f32       %f5, %f5, %f4;      // acc += in[i+k]
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    add.s64       %rd7, %rd7, 4;
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    add.s32       %r7, %r7, 1;
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    setp.lt.s32   %p2, %r7, 4;        // k &lt; 4 ?
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    @%p2 bra      $L__BB0_3;          // loop back
+</code></pre></div>
+<p>(בפועל הcompiler עשוי לפרוש - unroll - לולאה קצרה וקבועה כזו, ואז לא תראו <code>bra</code> בכלל אלא ארבע <code>add.f32</code> רצופות. גם זה תשובה נכונה, וזו הזדמנות טובה לראות loop unrolling ב-PTX.)</p>
+<p><strong>למה זה עבד:</strong> הcompiler בוחר את ההוראה המדויקת לפי הצורה האלגברית: <code>a*b+c</code> הוא <code>fma</code>, <code>a*b</code> לבדו הוא <code>mul</code>, ואופרנד קבוע נכנס כליטרל <code>0f...</code> בעוד אופרנד משתנה נכנס כ-register. לולאה מולידה <code>setp</code>+<code>bra</code>, אלא אם היא קצרה וקבועה ואז היא נפרשת.</p>
+<p><strong>איך להכליל:</strong> זו הדרך הזולה ללמוד מה הcompiler עושה: שנו שורה אחת, הפיקו PTX, השוו. כך רואים מתי <code>fma</code> נוצרת, מתי הcompiler מקבע קבועים (constant folding), ומתי הוא פורש לולאות - בלי לנחש.</p>
+<h3 id="4-inline-ptx">פתרון תרגיל 4 - כתיבת inline PTX משלכם<a class="headerlink" href="#4-inline-ptx" title="Permanent link">&para;</a></h3>
+<p>הקוד המלא:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdio&gt;</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdlib&gt;</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="cp">#define CUDA_CHECK(call)                                                   \</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="cp">    do {                                                                   \</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="cp">        cudaError_t err_ = (call);                                         \</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="cp">        if (err_ != cudaSuccess) {                                         \</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="cp">            fprintf(stderr, &quot;CUDA error %s at %s:%d\n&quot;,                    \</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="cp">                    cudaGetErrorString(err_), __FILE__, __LINE__);         \</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="cp">            exit(EXIT_FAILURE);                                            \</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="cp">        }                                                                  \</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="cp">    } while (0)</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="n">__device__</span><span class="w"> </span><span class="n">__forceinline__</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="n">lane_id</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="n">id</span><span class="p">;</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="w">    </span><span class="k">asm</span><span class="w"> </span><span class="k">volatile</span><span class="p">(</span><span class="s">&quot;mov.u32 %0, %%laneid;&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;=r&quot;</span><span class="p">(</span><span class="n">id</span><span class="p">));</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">id</span><span class="p">;</span>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="p">}</span>
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>
+<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">lanes</span><span class="p">(</span><span class="kt">unsigned</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a><span class="w">    </span><span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lane_id</span><span class="p">();</span>
+<a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a><span class="p">}</span>
+<a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a>
+<a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a><span class="kt">int</span><span class="w"> </span><span class="n">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">64</span><span class="p">;</span>
+<a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="o">*</span><span class="n">d_out</span><span class="p">,</span><span class="w"> </span><span class="n">h_out</span><span class="p">[</span><span class="mi">64</span><span class="p">];</span>
+<a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMalloc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">d_out</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="kt">unsigned</span><span class="p">)));</span>
+<a id="__codelineno-9-29" name="__codelineno-9-29" href="#__codelineno-9-29"></a><span class="w">    </span><span class="n">lanes</span><span class="o">&lt;&lt;&lt;</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">d_out</span><span class="p">);</span><span class="w">                </span><span class="c1">// a single block, 64 threads = 2 warps</span>
+<a id="__codelineno-9-30" name="__codelineno-9-30" href="#__codelineno-9-30"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaGetLastError</span><span class="p">());</span>
+<a id="__codelineno-9-31" name="__codelineno-9-31" href="#__codelineno-9-31"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">h_out</span><span class="p">,</span><span class="w"> </span><span class="n">d_out</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="kt">unsigned</span><span class="p">),</span>
+<a id="__codelineno-9-32" name="__codelineno-9-32" href="#__codelineno-9-32"></a><span class="w">                          </span><span class="n">cudaMemcpyDeviceToHost</span><span class="p">));</span>
+<a id="__codelineno-9-33" name="__codelineno-9-33" href="#__codelineno-9-33"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span>
+<a id="__codelineno-9-34" name="__codelineno-9-34" href="#__codelineno-9-34"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;thread %2d -&gt; laneid %2u</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">h_out</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<a id="__codelineno-9-35" name="__codelineno-9-35" href="#__codelineno-9-35"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaFree</span><span class="p">(</span><span class="n">d_out</span><span class="p">));</span>
+<a id="__codelineno-9-36" name="__codelineno-9-36" href="#__codelineno-9-36"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-9-37" name="__codelineno-9-37" href="#__codelineno-9-37"></a><span class="p">}</span>
+</code></pre></div>
+<p>הcompilation והרצה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>nvcc<span class="w"> </span>-arch<span class="o">=</span>sm_90a<span class="w"> </span>-o<span class="w"> </span>lanes<span class="w"> </span>lanes.cu
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>./lanes
+</code></pre></div>
+<p>הפלט (מקוצר):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>thread  0 -&gt; laneid  0
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>thread  1 -&gt; laneid  1
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>...
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>thread 31 -&gt; laneid 31
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>thread 32 -&gt; laneid  0
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>thread 33 -&gt; laneid  1
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>...
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>thread 63 -&gt; laneid 31
+</code></pre></div>
+<p><strong>(3)</strong> ה-laneid מתאפס כל 32 כי הוא המיקום של הthread <strong>בתוך ה-warp</strong> שלו, וב-warp יש בדיוק 32 threads. בבלוק חד-ממדי הוא שווה ל-<code>threadIdx.x % 32</code>: הthreads 0-31 הם warp 0 (laneid 0..31), threads 32-63 הם warp 1 (laneid 0..31 שוב).</p>
+<p><strong>(4)</strong> ה-<code>popcount</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">__device__</span><span class="w"> </span><span class="n">__forceinline__</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">popcount</span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">r</span><span class="p">;</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span><span class="k">asm</span><span class="p">(</span><span class="s">&quot;popc.b32 %0, %1;&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;=r&quot;</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;r&quot;</span><span class="p">(</span><span class="n">x</span><span class="p">));</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">r</span><span class="p">;</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="p">}</span>
+</code></pre></div>
+<p>עבור <code>popcount(threadIdx.x)</code>: הthread 7 (בינארי <code>111</code>) מחזיר 3, הthread 8 (<code>1000</code>) מחזיר 1, הthread 31 (<code>11111</code>) מחזיר 5.</p>
+<p><strong>למה זה עבד:</strong> בלוק ה-<code>asm volatile</code> מזריק את הוראת ה-PTX <code>mov.u32 %0, %%laneid</code> היישר לזרם ההוראות של ה-kernel. ה-<code>%%</code> מגן על סימן האחוז כדי שהcompiler לא יפרש אותו כ-placeholder, ו-<code>"=r"</code> מקשר את register הפלט למשתנה <code>id</code>. <code>volatile</code> הכרחי כאן: בלעדיו הcompiler עלול היה לחשב את הקריאה פעם אחת ולשכפל, כי הוא לא "יודע" ש-<code>%laneid</code> שונה בין threads.</p>
+<p><strong>איך להכליל:</strong> התבנית <code>asm volatile("&lt;PTX&gt;" : "=r"(out) : "r"(in));</code> היא השלד לכל inline PTX. השתמשו ב-<code>volatile</code> לכל דבר עם תופעות לוואי או ערך תלוי-הקשר (registers מיוחדים, גישות זיכרון), וּותרו עליו רק לפעולות טהורות כמו <code>popc</code>. את התכונות המתקדמות באמת (<code>wgmma</code>, <code>tma</code>) מזריקים באותה תבנית בדיוק, רק עם הוראות ארוכות ומורכבות הרבה יותר.</p>
+<h3 id="5-ptx-isa-version-target">פתרון תרגיל 5 - PTX ISA version מול target<a class="headerlink" href="#5-ptx-isa-version-target" title="Permanent link">&para;</a></h3>
+<p><strong>(1)</strong> שורת ה-<code>.target</code> משתנה בין שתי ההפקות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>// square_90.ptx
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>.target sm_90a
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>// square_80.ptx
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>.target sm_80
+</code></pre></div>
+<p><strong>(2)</strong> שורת ה-<code>.version</code> <strong>זהה</strong> בשני הקבצים (למשל <code>.version 8.3</code>), כי היא מייצגת את גרסת ה-PTX ISA של הcompiler שהפיק את הקובץ - כלומר את גרסת ה-CUDA Toolkit המותקנת - ולא את הכרטיס. אותו nvcc פולט אותו <code>.version</code> לכל טרגט.</p>
+<p><strong>(3)</strong> ההנחיה <code>.target</code> היא זו שקובעת על אילו GPU פיזיים אפשר להריץ: היא ה-compute capability המינימלית. GPU בעל compute capability זהה או גבוה יותר יוכל להריץ (דרך JIT); נמוך יותר - לא.</p>
+<p><strong>למה זה עבד:</strong> אלה שני צירים בלתי-תלויים. <code>.version</code> הוא "באיזו שפה" (איזו גרסת PTX ISA), ותלוי בcompiler. <code>.target</code> הוא "לאיזו חומרה", ותלוי בדגל <code>-arch</code>. אפשר לכתוב PTX חדש (<code>.version</code> גבוה) שמכוון לחומרה ישנה (<code>.target sm_70</code>), ולהפך.</p>
+<p><strong>איך להכליל:</strong> כשמנתחים PTX זר, <code>.target</code> אומר לכם את רצפת התאימות של הקוד, ו-<code>.version</code> אומר לכם עם איזו ערכת כלים הוא נבנה (שימושי לאבחון "PTX חדש מדי לדרייבר ישן", שגיאה אמיתית שנתקלים בה כשהדרייבר מיושן מכדי ל-JIT את גרסת ה-PTX).</p>
+<h3 id="6-ptx-sass">פתרון תרגיל 6 (בונוס) - תאימות-קדימה: PTX מנצח SASS<a class="headerlink" href="#6-ptx-sass" title="Permanent link">&para;</a></h3>
+<p><strong>(1)-(2)</strong> הטמעת SASS של Ampere בלבד, והרצה על Hopper:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>nvcc<span class="w"> </span>-gencode<span class="w"> </span><span class="nv">arch</span><span class="o">=</span>compute_80,code<span class="o">=</span>sm_80<span class="w"> </span>-o<span class="w"> </span>sq_sass<span class="w"> </span>square.cu
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>./sq_sass
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>CUDA error no kernel image is available for execution on the device at square.cu:NN
+</code></pre></div>
+<p>SASS של <code>sm_80</code> הוא קוד מכונה של Ampere, ואינו רץ על ה-SM של Hopper. המאקרו <code>CUDA_CHECK</code> תופס את השגיאה <code>no kernel image is available for execution on the device</code> (קוד <code>cudaErrorNoKernelImageForDevice</code>).</p>
+<p><strong>(3)-(4)</strong> הטמעת PTX של Ampere:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>nvcc<span class="w"> </span>-gencode<span class="w"> </span><span class="nv">arch</span><span class="o">=</span>compute_80,code<span class="o">=</span>compute_80<span class="w"> </span>-o<span class="w"> </span>sq_ptx<span class="w"> </span>square.cu
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>./sq_ptx
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>(ran successfully, no error)
+</code></pre></div>
+<p>הקובץ מכיל PTX של <code>compute_80</code>, שהוא נייד. כשה-runtime מנסה לטעון את ה-kernel ולא מוצא SASS מתאים ל-Hopper, ה-hardware driver (nvidia.ko דרך <code>libcuda.so</code>) מבצע ל-PTX compilation בזמן ריצה (JIT) ל-SASS של <code>sm_90</code>, וה-kernel רץ. ההרצה הראשונה עלולה להיות מעט אטית יותר בגלל זמן ה-JIT (שממוטמן אחר כך).</p>
+<p><strong>למה זה עבד:</strong> זהו מנגנון התאימות-קדימה במלוא הדרו. SASS מקובע לדור שעבורו הודר; PTX הוא IR נייד שה-driver מתרגם לדור בפועל בזמן ריצה. השלב המדויק שבו PTX הופך ל-SASS של Hopper הוא ה-JIT ב-hardware driver בזמן טעינת ה-module - <strong>לא</strong> ב-nvcc בזמן הבנייה, ו<strong>לא</strong> ב-<code>ptxas</code> (שרץ רק כשמבקשים <code>code=sm_XX</code>).</p>
+<p><strong>איך להכליל:</strong> לעמידות, הטמיעו תמיד גם PTX וגם SASS: <code>-gencode arch=compute_90,code=sm_90</code> ל-SASS מהיר על החומרה הידועה, ועוד <code>-gencode arch=compute_90,code=compute_90</code> ל-PTX כרשת ביטחון לחומרה עתידית. הקיצור <code>-arch=sm_90</code> לבדו כבר מטמיע גם SASS של sm_90 וגם PTX של compute_90, ולכן הוא תואם-קדימה דרך JIT. כדי להטמיע SASS בלבד (בלי תאימות-קדימה) יש לבקש זאת במפורש עם <code>-gencode arch=compute_90,code=sm_90</code> - נוח לפיתוח, מסוכן לשחרור.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,2956 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בפרק 7 בנינו את התיאוריה של הביצועים: מודל ה-Roofline, ההבחנה בין compute-bound לmemory-bound, וה-arithmetic intensity. בשיעור 7.4 סגרנו את המשולש עם...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../../7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.4%20-%20Overhead%2C%20latency%20hiding%20%D7%95%D7%97%D7%95%D7%A7%20Little/7.4%20-%20Overhead%2C%20latency%20hiding%20%D7%95%D7%97%D7%95%D7%A7%20Little%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>8.1 - Occupancy ומצבי warp - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "8.1 - Occupancy \u05d5\u05de\u05e6\u05d1\u05d9 warp - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="8.1 - Occupancy ומצבי warp - הרצאה - עמית טק" />
+<meta property="og:description" content="בפרק 7 בנינו את התיאוריה של הביצועים: מודל ה-Roofline, ההבחנה בין compute-bound לmemory-bound, וה-arithmetic intensity. בשיעור 7.4 סגרנו את המשולש עם..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="8.1 - Occupancy ומצבי warp - הרצאה - עמית טק" />
+<meta property="twitter:description" content="בפרק 7 בנינו את התיאוריה של הביצועים: מודל ה-Roofline, ההבחנה בין compute-bound לmemory-bound, וה-arithmetic intensity. בשיעור 7.4 סגרנו את המשולש עם..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-warp-warp-execution-state" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              8.1 - Occupancy ומצבי warp - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_10" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_10" id="__nav_7_3_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_10_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    8   מדדים ואופטימיזציה
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_10_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_10_1" id="__nav_7_3_10_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.1   Occupancy ומצבי warp
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_10_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_10_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    8.1   Occupancy ומצבי warp
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.1 - Occupancy ומצבי warp - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.1 - Occupancy ומצבי warp - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-warp-warp-execution-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ארבעת מצבי ה-warp - Warp Execution State
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-active-cycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        המחזור הפעיל - Active Cycle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-occupancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תפוסה - Occupancy: תיאורטי מול נמדד
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-h100" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הדוגמה המלאה - חישוב תפוסה על H100
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-api-occupancy-calculator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חישוב התפוסה ב-API - Occupancy Calculator
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        יותר תפוסה הוא לא תמיד טוב יותר
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-ncu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איפה כל זה מופיע ב-ncu
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.1 - Occupancy ומצבי warp - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.1 - Occupancy ומצבי warp - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency/8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.2   ניצולת   SM, pipe ו issue efficiency
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls/8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.3   Warp divergence ו scoreboard stalls
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.4%20-%20Coalescing%20%D7%95-bank%20conflicts/8.4%20-%20Coalescing%20%D7%95-bank%20conflicts%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.4   Coalescing ו bank conflicts
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D/8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.5   Register pressure ואיזון משאבים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-warp-warp-execution-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ארבעת מצבי ה-warp - Warp Execution State
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-active-cycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        המחזור הפעיל - Active Cycle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-occupancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תפוסה - Occupancy: תיאורטי מול נמדד
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-h100" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הדוגמה המלאה - חישוב תפוסה על H100
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-api-occupancy-calculator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חישוב התפוסה ב-API - Occupancy Calculator
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        יותר תפוסה הוא לא תמיד טוב יותר
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-ncu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איפה כל זה מופיע ב-ncu
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    8   מדדים ואופטימיזציה
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    8.1   Occupancy ומצבי warp
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>8.1 - Occupancy ומצבי warp - הרצאה</h1>
+
+<p>בפרק 7 בנינו את התיאוריה של הביצועים: מודל ה-Roofline, ההבחנה בין compute-bound לmemory-bound, וה-arithmetic intensity. בשיעור 7.4 סגרנו את המשולש עם הoverhead וחוק Little, וראינו את השורה התחתונה: כדי להסתיר latency צריך <strong>מספיק warps תושבים</strong> על ה-SM, ושרשרת load אופיינית של כ-416 מחזורים דורשת בערך 13 warps כדי להיעלם לגמרי. אבל השארנו שאלה פתוחה: מאיפה מגיעים ה-warps האלה, כמה מהם באמת יושבים על ה-SM שלי בזמן ריצה, ומה מגביל את המספר? הפרק הזה - הפרק הראשון של האופטימיזציה בפועל - פותח בדיוק שם. נלמד את ארבעת המצבים שבהם warp יכול להימצא בכל מחזור-שעון (פעיל, כשיר, תקוע, נבחר), נגדיר מהו <strong>מחזור פעיל</strong> (active cycle), ונגיע ל-<strong>occupancy</strong> (תפוסה) - היחס בין ה-warps הפעילים למקסימום האפשרי. נחשב occupancy תיאורטי ביד על דוגמת H100 מלאה, נראה כיצד לחזות אותו בקוד עם ה-Occupancy API, ונאמת אותו ב-ncu. והכי חשוב - נפרק את המיתוס הגדול של הפרק: <strong>occupancy גבוה יותר הוא לא תמיד טוב יותר</strong>. חוק Little אמר כמה warps <em>צריך</em>; כאן נראה שמעבר לזה, occupancy נוסף לא רק שלא קונה כלום - הוא לפעמים מזיק, ושה-GEMM המהיר בעולם על Hopper רץ ב-occupancy חד-ספרתי.</p>
+<h2 id="-warp-warp-execution-state">ארבעת מצבי ה-warp - Warp Execution State<a class="headerlink" href="#-warp-warp-execution-state" title="Permanent link">&para;</a></h2>
+<p>ה-glossary מתאר את מצב ה-warps שמריצים kernel בעזרת ארבעה שמות-תואר, וההערה הקריטית הראשונה היא שהם <strong>לא בלעדיים</strong> (non-exclusive): warp יכול להיות פעיל וגם תקוע בו-זמנית, פעיל וגם כשיר, וכן הלאה. אלה לא ארבעה תאים נפרדים אלא ארבע תכונות שמתארות, מחזור אחר מחזור, מאילו warps ה-warp scheduler יכול לבחור להנפיק פקודה. נעבור עליהם אחד-אחד.</p>
+<p><strong>פעיל - active.</strong> warp נחשב פעיל מהרגע שה-threads שלו מתחילים לרוץ ועד הרגע שכל ה-threads בו יצאו מה-kernel. במילים אחרות, active פירושו <strong>תושב (resident) על ה-SM עם משאבים מוקצים</strong> - אוגרים בקובץ-האוגרים, מקום ב-shared memory - מרגע הlaunch ועד הסיום. אוסף ה-warps הפעילים הוא <strong>המאגר</strong> שממנו ה-scheduler בוחר מועמדים בכל מחזור. הדקות המכרעת: <strong>warp פעיל לא בהכרח מבצע פקודות.</strong> הוא יכול להיות פעיל ותקוע ובטל בו-זמנית. ב-H100 (compute capability 9.0) המקסימום הוא <strong>64 warps פעילים ל-SM = 2048 threads ל-SM</strong> (64 x 32).</p>
+<p><strong>כשיר - eligible.</strong> warp כשיר הוא warp פעיל <strong>שמוכן להנפיק את הפקודה הבאה שלו</strong>. זו קבוצת המועמדים המיידיים של ה-scheduler. כדי להיות כשיר, כל <strong>ארבעת</strong> התנאים הבאים חייבים להתקיים יחד:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>   warp eligible  &lt;=&gt;  all four hold:
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>   1. the next instruction has already been fetched
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>   2. the required execution unit is free (Tensor Core / CUDA Core / LSU)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>   3. all instruction dependencies are resolved (source registers ready)
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>   4. no sync barrier is blocking progress
+</code></pre></div>
+<p>אם ולו תנאי אחד לא מתקיים - ה-warp לא כשיר, כלומר הוא <strong>תקוע</strong>.</p>
+<p><strong>תקוע - stalled.</strong> warp תקוע הוא warp פעיל <strong>שלא יכול להנפיק את הפקודה הבאה שלו</strong> בגלל תלות שלא נפתרה או התנגשות משאבים. תקוע הוא בעצם המשלים של כשיר בתוך קבוצת הפעילים. שלוש הסיבות:</p>
+<ul>
+<li><strong>תלות ביצוע (execution dependency)</strong> - ממתין לתוצאה של פקודה אריתמטית קודמת.</li>
+<li><strong>תלות זיכרון (memory dependency)</strong> - ממתין לתוצאה של פעולת זיכרון קודמת.</li>
+<li><strong>התנגשות צנרת (pipeline conflict)</strong> - יחידת הביצוע הדרושה כבר תפוסה על-ידי warp אחר.</li>
+</ul>
+<p>החומרה עוקבת אחרי תלויות בעזרת שני סוגי <strong>scoreboard</strong>: ה-<strong>short scoreboard</strong> לתוצאות מ-shared memory ומאריתמטיקה, וה-<strong>long scoreboard</strong> לתוצאות מהזיכרון הגלובלי (GPU RAM). הסטטיסטיקות האלה יופיעו לנו ב-ncu כ-<code>Stall Short Scoreboard</code> ו-<code>Stall Long Scoreboard</code>, ונחזור אליהן בסוף השיעור. וכאן המקום למחיקת התפיסה השגויה החשובה ביותר בכל השיעור: <strong>warps תקועים אינם דבר רע.</strong> להפך - אוסף גדול של warps תקועים בו-זמנית הוא בדיוק מה שדרוש כדי <strong>להסתיר latency</strong> של פעולות ארוכות כמו load מהזיכרון או פקודת <code>HMMA</code> של ה-Tensor Core, שרצה עשרות מחזורים. ה-warp התקוע של warp אחד הוא בדיוק החור שעבודה של warp אחר ממלאת. זו הנקודה שקישרנו אליה כל שיעור 7.4.</p>
+<p><strong>נבחר - selected.</strong> warp נבחר הוא warp כשיר <strong>שה-scheduler בחר להנפיק לו פקודה במחזור הנוכחי</strong>. התהליך, בכל מחזור: ה-warp scheduler מסתכל על מאגר ה-warps ה<strong>כשירים</strong>, בוחר <strong>אחד</strong> אם יש כאלה, ומנפיק לו פקודה. מכאן מדד חשוב - <strong>issue efficiency</strong> (יעילות ההנפקה): החלק מתוך ה<strong>מחזורים הפעילים</strong> שבהם warp נבחר ופקודה הונפקה.</p>
+<p>הנה כל התמונה כרשת של חריצים (slots) על פני מחזורים. כל scheduler מנפיק לכל היותר warp אחד למחזור:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>                cycle n    n+1    n+2    n+3    n+4
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>   warp 0       stalled    eligible selected stalled  stalled   (active the whole time)
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>   warp 1       selected   stalled  stalled  eligible selected
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>   warp 2       eligible   selected stalled  stalled  eligible
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>   warp 3       stalled    stalled  eligible selected stalled
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>                  │          │      │
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>                  │          │      └── warp 0 selected: eligible -&gt; got an instruction
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>                  │          └── only warp 1,3 eligible; warp 2 selected
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>                  └── all four active, but only 1,2 eligible; warp 1 selected
+</code></pre></div>
+<p>שימו לב לזרימה: כל הארבעה <strong>פעילים</strong> בכל מחזור (הם תושבים), אבל רק חלק מהם <strong>כשירים</strong> בכל מחזור נתון, ורק <strong>אחד</strong> נבחר לכל scheduler. מעבר המצבים הטבעי: ה-threads מתחילים -&gt; ה-warp נעשה <strong>פעיל</strong> -&gt; אם ארבעת התנאים מתקיימים הוא <strong>כשיר</strong>, אחרת <strong>תקוע</strong> -&gt; ה-scheduler בוחר warp כשיר אחד, שהופך ל<strong>נבחר</strong> -&gt; הפקודה מונפקת -&gt; בפקודה הבאה ה-warp עלול שוב להיתקע על תלות חדשה. כל זה קורה בזמן שה-warp נשאר <strong>פעיל</strong> עד ש-threads שלו יוצאים מה-kernel.</p>
+<h2 id="-active-cycle">המחזור הפעיל - Active Cycle<a class="headerlink" href="#-active-cycle" title="Permanent link">&para;</a></h2>
+<p>לפני ה-occupancy צריך מונח ביניים קטן אבל קריטי: <strong>מחזור פעיל</strong>. ה-glossary מגדיר בפשטות: מחזור פעיל הוא מחזור-שעון שבו ל-<strong>SM יש לפחות warp פעיל אחד תושב</strong>. ה-warp התושב יכול להיות באותו מחזור כשיר <strong>או</strong> תקוע - כך או כך המחזור נספר כפעיל.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>   active cycle  ?  at least one warp resident on the SM
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>                  ├── yes, and at least one eligible  -&gt; active cycle
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>                  ├── yes, but all are stalled          -&gt; active cycle (!)
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>                  └── no, no warp is resident            -&gt; inactive cycle (excluded)
+</code></pre></div>
+<p>הדקות שה-glossary מדגיש: מחזור פעיל סופר <strong>כל</strong> מחזור שבו לפחות warp אחד תושב, <strong>בלי קשר לשאלה אם הוא תקוע</strong> בהמתנה לתלות. כלומר מחזורים תקועים עדיין נספרים כמחזורים פעילים - "פעיל" עוסק ב<strong>תושבוּת</strong>, לא בהנפקה בפועל. אל תבלבלו "מחזור פעיל" עם "מחזור שבו הונפקה פקודה". ההבחנה הזו היא הלב של ההבדל בין תפוסה תיאורטית לנמדדת שנראה מיד: ה-<strong>occupancy הנמדד ממוצע על פני מחזורים פעילים</strong>. אם ה-SM עמד ריק לגמרי בחצי מזמן ה-kernel (בין גלים של blocks), אותם מחזורים ריקים בכלל לא נכנסים למכנה של ה-occupancy הנמדד - ולכן occupancy נמדד גבוה לא מבטיח שה-SM עבד לאורך כל הזמן.</p>
+<h2 id="-occupancy">תפוסה - Occupancy: תיאורטי מול נמדד<a class="headerlink" href="#-occupancy" title="Permanent link">&para;</a></h2>
+<p>עכשיו ההגדרה המרכזית. <strong>occupancy הוא היחס בין מספר ה-warps הפעילים למספר המרבי של warps פעילים על הdevice.</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>   occupancy  =  active warps  /  max active warps
+</code></pre></div>
+<p>ב-H100, המכנה הוא 64. אם על ה-SM שלכם יושבים 32 warps פעילים, ה-occupancy הוא <code>32/64 = 50%</code>. פשוט. אבל יש <strong>שתי מדידות שונות</strong> של אותו יחס, וההבחנה ביניהן קריטית:</p>
+<ul>
+<li><strong>תפוסה תיאורטית (theoretical occupancy)</strong> - החסם העליון ל-occupancy, הנגזר <strong>מתצורת הlaunch ומיכולות הdevice</strong>. זהו תקרה סטטית: בהינתן כמה אוגרים ו-shared memory כל block צורך, וכמה threads יש ב-block, החומרה יכולה להכניס לכל היותר כך-וכך warps ל-SM. מחושב לפני הריצה, ללא הרצה בכלל.</li>
+<li><strong>תפוסה נמדדת (achieved occupancy)</strong> - ה-occupancy ה<strong>אמיתי</strong> במהלך הריצה, ממוצע <strong>על פני המחזורים הפעילים</strong>. זה מה שבאמת קרה - נמדד על-ידי מונים בחומרה.</li>
+</ul>
+<p>התפוסה הנמדדת כמעט תמיד <strong>נמוכה</strong> מהתיאורטית, ומכמה סיבות: זנב לא-מאוזן של blocks בסוף ה-kernel (כשה-blocks האחרונים מסיימים בקצב שונה), חוסר-איזון בין ה-SMs, ומחזורים שבהם פחות warps תושבים בפועל. הפער בין השתיים הוא מדד אבחוני בפני עצמו: תפוסה תיאורטית גבוהה אבל נמדדת נמוכה מרמזת על בעיית איזון או על גל-זנב (tail effect) - למשל grid קטן מדי שלא ממלא את כל 132 ה-SMs של ה-H100.</p>
+<h2 id="-h100">הדוגמה המלאה - חישוב תפוסה על H100<a class="headerlink" href="#-h100" title="Permanent link">&para;</a></h2>
+<p>נעשה עכשיו את החישוב במלואו, ביד, על מגבלות ה-H100 האמיתיות. זו הדוגמה שכדאי לזכור. מגבלות המשאבים של SM בודד ב-H100:</p>
+<table>
+<thead>
+<tr>
+<th>משאב</th>
+<th>מגבלה ל-SM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>warps פעילים מקסימלי</td>
+<td>64</td>
+</tr>
+<tr>
+<td>thread blocks מקסימלי</td>
+<td>32</td>
+</tr>
+<tr>
+<td>אוגרים (קובץ-האוגרים)</td>
+<td>65,536 אוגרי 32-ביט</td>
+</tr>
+<tr>
+<td>shared memory</td>
+<td>228 KB</td>
+</tr>
+</tbody>
+</table>
+<p>וה-kernel שנשיק, עם פרמטרי הlaunch הבאים:</p>
+<ul>
+<li>מספר ה-threads ל-block: <strong>32</strong> (כלומר <code>32/32 = 1 warp ל-block</code>)</li>
+<li>אוגרים ל-thread: <strong>8</strong></li>
+<li>כמות shared memory ל-block: <strong>12 KB</strong></li>
+</ul>
+<p>הרעיון: כל אחד מהמשאבים מגביל בעצמו כמה blocks נכנסים ל-SM, ואנחנו לוקחים את ה<strong>מינימום</strong> - המשאב שנגמר ראשון הוא צוואר-הבקבוק. נחשב ארבע מגבלות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>   (1) register limit:
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>       registers per block = 32 threads x 8 registers = 256 registers
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>       blocks = 65,536 / 256 = 256 blocks
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>   (2) shared memory limit:
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>       blocks = 228 KB / 12 KB = 19 blocks
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>   (3) hardware limit (blocks per SM):
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>       blocks = 32
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>   (4) warp limit:
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>       warps per block = 1;  64 / 1 = 64 blocks
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>   bottleneck = min(256, 19, 32, 64) = 19 blocks
+</code></pre></div>
+<p>הצוואר הוא <strong>shared memory</strong>: היא נגמרת ב-19 blocks, הרבה לפני שאזל קובץ-האוגרים (שהיה מרשה 256) או מגבלת החומרה (32). עם block אחד = warp אחד, זה נותן <strong>19 warps פעילים</strong> מתוך מקסימום 64:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>   theoretical occupancy = 19 warps / 64 warps = 0.297 ≈ 30%
+</code></pre></div>
+<p>ה-kernel הזה <strong>shared-memory-bound</strong>, ומקורק ל-occupancy תיאורטי של כ-30%. שימו לב מה זה אומר: אם היינו רוצים occupancy גבוה יותר, מגדיל האוגרים בכלל לא יעזור (הם לא הצוואר) - צריך להוריד את ה-12 KB ל-block. לו היינו מורידים ל-6 KB, המגבלה הייתה <code>228/6 = 38</code>, וזה כבר נחסם על-ידי מגבלת החומרה <code>min(38, 32) = 32</code> blocks = 32 warps = 50% occupancy. זהו כל האופי של אופטימיזציית occupancy: מזהים את המשאב-המגביל ומשחררים אותו - לא נוגעים בשאר.</p>
+<p>הנוסחה הכללית שכדאי לחקוק:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>   max blocks per SM = min( blocks by registers,
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>                            blocks by shared memory,
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>                            max blocks in hardware,
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>                            blocks by warp limit )
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>   theoretical occupancy = (max blocks x warps-per-block) / max-warps-per-SM
+</code></pre></div>
+<p>הערה על דיוק: החומרה מקצה אוגרים ו-shared memory ב<strong>גרנולריות</strong> מסוימת (למשל shared memory ב-Hopper מוקצה ביחידות של 128 בייט, ויש כמות shared memory שמורה לדרייבר). לכן ה-API הרשמי עשוי לפעמים להחזיר 18 במקום 19. החשבון ידני מעגל את הפרטים האלה; ה-API הוא הפוסק המדויק. את שניהם נראה עכשיו.</p>
+<h2 id="-api-occupancy-calculator">חישוב התפוסה ב-API - Occupancy Calculator<a class="headerlink" href="#-api-occupancy-calculator" title="Permanent link">&para;</a></h2>
+<p>לא צריך לעשות את החשבון הזה ביד בכל פעם. ה-CUDA Runtime מגלם אותו בשתי פונקציות מרכזיות שמתחשבות בכל הגרנולריות והמגבלות של ה-compute capability שלכם:</p>
+<ul>
+<li><code>cudaOccupancyMaxActiveBlocksPerMultiprocessor</code> - "בהינתן ה-kernel הזה, גודל block זה, וכמות ה-shared memory הדינמית הזו, כמה blocks ייכנסו ל-SM?"</li>
+<li><code>cudaOccupancyMaxPotentialBlockSize</code> - "איזה גודל block <strong>ימקסם</strong> את ה-occupancy עבור ה-kernel הזה?" - נותן heuristic מוכן לבחירת block size.</li>
+</ul>
+<p>הנה תוכנית מלאה שמחשבת occupancy תיאורטי עבור kernel, ומדפיסה גם את גודל ה-block המומלץ:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdio&gt;</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdlib&gt;</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cuda_runtime.h&gt;</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="cp">#define CUDA_CHECK(call)                                                      \</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="cp">    do {                                                                      \</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="cp">        cudaError_t err_ = (call);                                            \</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="cp">        if (err_ != cudaSuccess) {                                            \</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="cp">            fprintf(stderr, &quot;CUDA error at %s:%d\n  &#39;%s&#39;\n  -&gt; %s\n&quot;,         \</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="cp">                    __FILE__, __LINE__, #call, cudaGetErrorString(err_));     \</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="cp">            exit(EXIT_FAILURE);                                               \</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="cp">        }                                                                     \</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="cp">    } while (0)</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="c1">// example kernel: 12 KB static shared memory (= 3072 floats)</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">myKernel</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="w">    </span><span class="n">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">tile</span><span class="p">[</span><span class="mi">3072</span><span class="p">];</span><span class="w">         </span><span class="c1">// 12 KB</span>
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="w">        </span><span class="n">tile</span><span class="p">[</span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">3072</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in</span><span class="p">[</span><span class="n">t</span><span class="p">];</span>
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="w">        </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="w">        </span><span class="n">out</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tile</span><span class="p">[</span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">3072</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">2.0f</span><span class="p">;</span>
+<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="p">}</span>
+<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a>
+<a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a><span class="kt">int</span><span class="w"> </span><span class="n">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">dev</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a><span class="w">    </span><span class="n">cudaDeviceProp</span><span class="w"> </span><span class="n">prop</span><span class="p">;</span>
+<a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaGetDeviceProperties</span><span class="p">(</span><span class="o">&amp;</span><span class="n">prop</span><span class="p">,</span><span class="w"> </span><span class="n">dev</span><span class="p">));</span>
+<a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a>
+<a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">blockSize</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="mi">32</span><span class="p">;</span>
+<a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a><span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">dynSmem</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w">                  </span><span class="c1">// no dynamic shared memory here</span>
+<a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a>
+<a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">blocksPerSM</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-7-35" name="__codelineno-7-35" href="#__codelineno-7-35"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaOccupancyMaxActiveBlocksPerMultiprocessor</span><span class="p">(</span>
+<a id="__codelineno-7-36" name="__codelineno-7-36" href="#__codelineno-7-36"></a><span class="w">        </span><span class="o">&amp;</span><span class="n">blocksPerSM</span><span class="p">,</span><span class="w"> </span><span class="n">myKernel</span><span class="p">,</span><span class="w"> </span><span class="n">blockSize</span><span class="p">,</span><span class="w"> </span><span class="n">dynSmem</span><span class="p">));</span>
+<a id="__codelineno-7-37" name="__codelineno-7-37" href="#__codelineno-7-37"></a>
+<a id="__codelineno-7-38" name="__codelineno-7-38" href="#__codelineno-7-38"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">activeWarps</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">blocksPerSM</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">blockSize</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">prop</span><span class="p">.</span><span class="n">warpSize</span><span class="p">);</span>
+<a id="__codelineno-7-39" name="__codelineno-7-39" href="#__codelineno-7-39"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">maxWarps</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="n">prop</span><span class="p">.</span><span class="n">maxThreadsPerMultiProcessor</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">prop</span><span class="p">.</span><span class="n">warpSize</span><span class="p">;</span>
+<a id="__codelineno-7-40" name="__codelineno-7-40" href="#__codelineno-7-40"></a><span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">occ</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">double</span><span class="p">)</span><span class="n">activeWarps</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">maxWarps</span><span class="p">;</span>
+<a id="__codelineno-7-41" name="__codelineno-7-41" href="#__codelineno-7-41"></a>
+<a id="__codelineno-7-42" name="__codelineno-7-42" href="#__codelineno-7-42"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;device            : %s (CC %d.%d)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">prop</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">prop</span><span class="p">.</span><span class="n">major</span><span class="p">,</span><span class="w"> </span><span class="n">prop</span><span class="p">.</span><span class="n">minor</span><span class="p">);</span>
+<a id="__codelineno-7-43" name="__codelineno-7-43" href="#__codelineno-7-43"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;blocks per SM     : %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">blocksPerSM</span><span class="p">);</span>
+<a id="__codelineno-7-44" name="__codelineno-7-44" href="#__codelineno-7-44"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;active warps / SM : %d  (max %d)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">activeWarps</span><span class="p">,</span><span class="w"> </span><span class="n">maxWarps</span><span class="p">);</span>
+<a id="__codelineno-7-45" name="__codelineno-7-45" href="#__codelineno-7-45"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;theoretical occ.  : %.1f%%</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">occ</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">100.0</span><span class="p">);</span>
+<a id="__codelineno-7-46" name="__codelineno-7-46" href="#__codelineno-7-46"></a>
+<a id="__codelineno-7-47" name="__codelineno-7-47" href="#__codelineno-7-47"></a><span class="w">    </span><span class="c1">// which block size maximizes occupancy?</span>
+<a id="__codelineno-7-48" name="__codelineno-7-48" href="#__codelineno-7-48"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">minGrid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">bestBlock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-7-49" name="__codelineno-7-49" href="#__codelineno-7-49"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaOccupancyMaxPotentialBlockSize</span><span class="p">(</span>
+<a id="__codelineno-7-50" name="__codelineno-7-50" href="#__codelineno-7-50"></a><span class="w">        </span><span class="o">&amp;</span><span class="n">minGrid</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">bestBlock</span><span class="p">,</span><span class="w"> </span><span class="n">myKernel</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">));</span>
+<a id="__codelineno-7-51" name="__codelineno-7-51" href="#__codelineno-7-51"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;suggested block   : %d threads (minGrid %d)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">bestBlock</span><span class="p">,</span><span class="w"> </span><span class="n">minGrid</span><span class="p">);</span>
+<a id="__codelineno-7-52" name="__codelineno-7-52" href="#__codelineno-7-52"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-7-53" name="__codelineno-7-53" href="#__codelineno-7-53"></a><span class="p">}</span>
+</code></pre></div>
+<p>קומפילציה והרצה על H100:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>nvcc<span class="w"> </span>-O2<span class="w"> </span>-arch<span class="o">=</span>sm_90a<span class="w"> </span>-o<span class="w"> </span>occ<span class="w"> </span>occ.cu<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./occ
+</code></pre></div>
+<p>פלט צפוי (H100 SXM, CUDA 12):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>device            : NVIDIA H100 80GB HBM3 (CC 9.0)
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>blocks per SM     : 19
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>active warps / SM : 19  (max 64)
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>theoretical occ.  : 29.7%
+</code></pre></div>
+<p>וה-API מאשש את החשבון הידני: <strong>19 blocks, 19 warps, כ-30% occupancy</strong>, shared-memory-bound. שימו לב שה-<code>myKernel</code> כאן צורך 12 KB shared memory כ-<code>tile</code> סטטי, בדיוק כמו בדוגמה. מספר האוגרים בפועל תלוי בגוף ה-kernel ובאופטימיזציות ה-ptxas; כדי לראות אותו הריצו <code>nvcc --ptxas-options=-v</code> (יידפיס <code>Used N registers</code>), וכדי לכפות תקרת אוגרים השתמשו ב-<code>__launch_bounds__</code> או ב-<code>-maxrregcount</code>. אם תרצו לשנות את ה-occupancy, שחקו עם <code>blockSize</code> וב-<code>dynSmem</code> וראו את <code>blocksPerSM</code> זז.</p>
+<h2 id="_1">יותר תפוסה הוא לא תמיד טוב יותר<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>וכאן מגיעה הנקודה החשובה ביותר בכל השיעור, זו שמפרידה בין מי שקרא spec למי שמבין ביצועים. האינטואיציה הנאיבית אומרת: occupancy גבוה = הרבה warps = הרבה מקביליות = מהיר יותר, אז נמקסם occupancy. <strong>זה שגוי.</strong> ה-glossary אומר זאת מפורשות: <strong>ברגע שה-occupancy מספיק להסתרת latency, הגדלה נוספת שלו עלולה דווקא לפגוע בביצועים.</strong></p>
+<p>הסיבה נעוצה בחשבון המשאבים שהרגע עשינו, רק במהופך. המשאבים על ה-SM <strong>קבועים</strong>: 65,536 אוגרים ו-228 KB shared memory, לחלוקה בין כל ה-warps התושבים. אם תדחסו יותר warps ל-SM (occupancy גבוה), כל thread מקבל <strong>פחות</strong> אוגרים ו<strong>פחות</strong> shared memory:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>   64 warps x 32 threads = 2048 threads on the SM
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>   65,536 registers / 2048 threads = 32 registers per thread   (at 100% occupancy)
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>   versus:
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>   16 warps x 32 = 512 threads
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>   65,536 / 512 = 128 registers per thread                     (at 25% occupancy)
+</code></pre></div>
+<p>ב-100% occupancy כל thread מוגבל ל-32 אוגרים. אם ה-kernel שלכם צריך 80 אוגרים כדי להחזיק את הנתונים החמים שלו באוגרים, דחיסה ל-32 תכריח <strong>גלישת אוגרים (register spilling)</strong> אל ה-local memory (שהוא בעצם זיכרון גלובלי איטי) - וזה יהרוס את הביצועים הרבה יותר משכל ה-warps הנוספים הרוויחו. אותו סיפור עם shared memory: occupancy גבוה מכריח פחות shared memory ל-block, מה שמגביל את גודל ה-tile ב-GEMM או בקונבולוציה.</p>
+<p>חוק Little נותן את הסף התחתון: ראינו ש-13 warps (כ-20% occupancy) מסתירים שרשרת load אופיינית, וש-~24-30 warps מסתירים עומס מעורב. <strong>מעל הסף הזה, occupancy נוסף לא קונה הסתרת latency נוספת</strong> - כל ה-latency כבר מוסתר - אבל הוא כן גובה את המחיר של פחות אוגרים ל-thread. זה בדיוק "אזור התשואה השלילית".</p>
+<p>הדוגמה הנגדית המדהימה שה-glossary נותן: <strong>kernels של GEMM בעל-ביצועים על ארכיטקטורות Hopper ו-Blackwell רצים לעיתים קרובות ב-occupancy חד-ספרתי</strong> (אחוזים בודדים). איך ייתכן? כי הם לא צריכים הרבה warps כדי <strong>לרווות את ה-Tensor Cores</strong>. זכרו את יחס ה-100:1 בין רוחב-הפס של ה-Tensor Core ל-CUDA Core (שיעור 7.3): מספר קטן של warps שמזין את ה-Tensor Cores ב-<code>wgmma</code>/<code>HMMA</code> ברצף מספיק כדי להחזיק אותם רוויים לגמרי. ה-kernels האלה משתמשים ב<strong>מעט</strong> warps אבל נותנים לכל אחד <strong>הרבה</strong> אוגרים ו-shared memory ענק (tiles גדולים, double-buffering, warp-specialization עם warps של producer ו-consumer). אילו הם היו רודפים אחרי occupancy גבוה, הם היו נאלצים לצמצם את ה-tiles ואת האוגרים - וההאצה הייתה <strong>צונחת</strong>.</p>
+<p>המסקנה הפילוסופית, בלשון ה-glossary: <strong>occupancy מודד איזה חלק ממשימותיו המקביליות המרביות ה-GPU מטפל בו-זמנית, וזה אינו כשלעצמו יעד אופטימיזציה</strong> ברוב ה-kernels. במקום זה, מייעלים את המשאב שהוא באמת הצוואר:</p>
+<ul>
+<li>ל-<strong>kernel compute-bound</strong> -&gt; ממקסמים את ניצול צנרות החישוב (pipe / Tensor Core utilization).</li>
+<li>ל-<strong>kernel memory-bound</strong> -&gt; ממקסמים את ניצול רוחב-הפס של הזיכרון.</li>
+</ul>
+<p>ה-occupancy הוא <strong>אמצעי</strong> להסתרת latency מספקת, לא <strong>מטרה</strong>. הוא רלוונטי רק כדי לוודא שיש מספיק warps כדי לספק את חוק Little - וברגע שהגעתם לסף, מפסיקים להסתכל עליו ועוברים לצוואר האמיתי.</p>
+<h2 id="-ncu">איפה כל זה מופיע ב-ncu<a class="headerlink" href="#-ncu" title="Permanent link">&para;</a></h2>
+<p>כל המונחים של השיעור הם בדיוק מה שתראו כשתריצו את NSight Compute על kernel. נריץ:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>ncu<span class="w"> </span>--set<span class="w"> </span>full<span class="w"> </span>-k<span class="w"> </span>myKernel<span class="w"> </span>-c<span class="w"> </span><span class="m">1</span><span class="w"> </span>./occ_demo
+</code></pre></div>
+<p>שלוש הסקציות הרלוונטיות. ראשית, סקציית ה-<strong>Occupancy</strong> - זו מאשרת את החשבון הידני שלנו, כולל שורת ה-<strong>block limit</strong> לכל משאב, כך שרואים מיד מי הצוואר:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>  Section: Occupancy
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>  ------------------------------- ----------- ------------
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>  Block Limit SM                        block           32
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>  Block Limit Registers                 block          256
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>  Block Limit Shared Mem                block           19   &lt;- bottleneck
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>  Block Limit Warps                     block           64
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>  Theoretical Active Warps per SM        warp           19
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>  Theoretical Occupancy                     %        29.69
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>  Achieved Occupancy                        %        27.84
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>  Achieved Active Warps Per SM           warp        17.82
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>  ------------------------------- ----------- ------------
+</code></pre></div>
+<p>שימו לב: <code>Block Limit Shared Mem = 19</code> הוא הנמוך מכולם, בדיוק המשאב-המגביל שחישבנו. ה-<code>Theoretical Occupancy</code> הוא 29.69% (= 19/64), וה-<code>Achieved</code> מעט נמוך יותר (27.84%) - בגלל אפקטי זנב ואיזון, בדיוק כפי שאמרנו. שנית, סקציית ה-<strong>Scheduler Statistics</strong> מראה את מצבי ה-warp הממוצעים לכל scheduler למחזור:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>  Section: Scheduler Statistics
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>  ---------------------------- ----------- ------------
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>  Active Warps Per Scheduler         warp         4.46
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>  Eligible Warps Per Scheduler       warp         0.61
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>  Issued Warp Per Scheduler          warp         0.27
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>  No Eligible                           %        73.10   &lt;- warp scheduler starving
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>  One or More Eligible                  %        26.90
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>  ---------------------------- ----------- ------------
+</code></pre></div>
+<p>זו קריאה ישירה של המצבים: בממוצע יש <code>4.46</code> warps <strong>פעילים</strong> לכל scheduler (19 warps חלקי 4 schedulers ≈ 4.75, קרוב), אבל רק <code>0.61</code> <strong>כשירים</strong>, ורק <code>0.27</code> <strong>נבחרים</strong> למחזור. ה-<code>No Eligible = 73%</code> הוא הדגל האדום: ב-73% מהמחזורים ל-scheduler אין אף warp כשיר להנפיק - הוא <strong>רעב</strong>. עם 19 warps בלבד, אין מספיק מלאי כדי להסתיר את ה-latency. שלישית, סקציית ה-<strong>Warp State Statistics</strong> מספרת <strong>למה</strong> ה-warps תקועים - כאן נכנסות סיבות ה-stall שהזכרנו:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>  Section: Warp State Statistics
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>  ------------------------------------- ----------- ------------
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>  Warp Cycles Per Issued Instruction         cycle        16.55
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>  Stall Long Scoreboard                      cycle        11.90   &lt;- waiting for a global load
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>  Stall Short Scoreboard                     cycle         1.40
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>  Stall Wait                                 cycle         1.80
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>  ------------------------------------- ----------- ------------
+</code></pre></div>
+<p>ה-<code>Stall Long Scoreboard</code> הדומיננטי אומר שרוב ה-warps תקועים בהמתנה ל-load מהזיכרון הגלובלי (ה-long scoreboard מהסעיף הראשון). האבחון המלא: תפוסה נמוכה (30%), scheduler רעב (73% No Eligible), והתקיעות היא latency של זיכרון גלובלי. הפתרון כאן דווקא <strong>כן</strong> יהיה להעלות occupancy - אבל רק כי אנחנו מתחת לסף של חוק Little, לא כמטרה בפני עצמה. כפי שנראה בשיעורים 8.2 ו-8.5, המדדים האלה הם המצפן שמכוון אותנו למשאב הנכון לתקן.</p>
+<h2 id="_2">סיכום<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<ul>
+<li>מצב ה-warp מתואר בארבעה שמות-תואר <strong>לא-בלעדיים</strong>: <strong>פעיל</strong> (תושב מרגע הlaunch עד שכל ה-threads יצאו), <strong>כשיר</strong> (פעיל וגם מוכן להנפיק - ארבעה תנאים: פקודה נשלפה, יחידה פנויה, תלויות נפתרו, אין barrier), <strong>תקוע</strong> (פעיל אך לא יכול להנפיק - תלות ביצוע/זיכרון/צנרת), ו<strong>נבחר</strong> (הכשיר שה-scheduler הנפיק לו במחזור זה).</li>
+<li>ה-warps התקועים הם דבר <strong>טוב</strong>, לא רע: אוסף warps תקועים בו-זמנית הוא בדיוק מה שמסתיר את ה-latency של loads ושל פקודות Tensor Core ארוכות; החומרה עוקבת אחרי התקיעות עם short scoreboard (shared/אריתמטיקה) ו-long scoreboard (זיכרון גלובלי).</li>
+<li>מחזור פעיל הוא מחזור שבו יש לפחות warp אחד תושב על ה-SM - <strong>גם אם הוא תקוע</strong>; "פעיל" עוסק בתושבוּת ולא בהנפקה, וה-occupancy הנמדד ממוצע על פני המחזורים הפעילים בלבד.</li>
+<li>ה-occupancy = warps פעילים / מקסימום warps פעילים; יש <strong>תיאורטי</strong> (חסם עליון מתצורת הlaunch וממגבלות הdevice, מחושב לפני הריצה) ו<strong>נמדד</strong> (מה שקרה בפועל, ממוצע על מחזורים פעילים, כמעט תמיד נמוך מהתיאורטי).</li>
+<li>בדוגמת ה-H100 (64 warps, 32 blocks, 65,536 אוגרים, 228 KB smem ל-SM) עם kernel של 32 threads/block, 8 אוגרים/thread ו-12 KB smem/block: מגבלות ה-blocks הן אוגרים 256, smem 19, חומרה 32 -&gt; <code>min = 19</code> -&gt; smem-bound -&gt; תפוסה ~30%.</li>
+<li>לוקחים את ה<strong>מינימום</strong> על פני מגבלות האוגרים, ה-shared memory, מגבלת החומרה ומגבלת ה-warps; המשאב שנגמר ראשון הוא הצוואר, ורק אותו משחררים - לא נוגעים בשאר.</li>
+<li>ה-Occupancy API מחשב את זה מדויק: <code>cudaOccupancyMaxActiveBlocksPerMultiprocessor</code> נותן blocks ל-SM (ומשם occupancy), ו-<code>cudaOccupancyMaxPotentialBlockSize</code> מציע block size ממקסם-occupancy; החישוב הידני עשוי לסטות ב-block אחד בגלל גרנולריות הקצאה ו-smem שמור.</li>
+<li><strong>ה-occupancy גבוה יותר הוא לא תמיד טוב יותר</strong>: המשאבים ל-SM קבועים, אז יותר warps = פחות אוגרים/smem ל-thread, מה שעלול לגרום ל-register spilling; ברגע שיש מספיק warps להסתרת latency (חוק Little), occupancy נוסף לא קונה כלום ולעיתים מזיק.</li>
+<li>חישובי GEMM מהירים על Hopper/Blackwell רצים ב-occupancy <strong>חד-ספרתי</strong> כי מעט warps מספיקים לרווֹת את ה-Tensor Cores (יחס 100:1 מול CUDA Cores); הם מעדיפים tiles גדולים ואוגרים רבים ל-thread על פני occupancy גבוה.</li>
+<li>ה-occupancy הוא <strong>אמצעי</strong> להסתרת latency מספקת, לא <strong>מטרה</strong>: ל-kernel compute-bound ממקסמים ניצול צנרות החישוב, ל-kernel memory-bound ממקסמים ניצול רוחב-הפס - ואת ה-occupancy מסתכלים רק כדי לוודא שעברנו את סף חוק Little.</li>
+<li>ב-ncu כל זה נמדד: סקציית Occupancy מראה את ה-block limit לכל משאב ואת התיאורטי מול הנמדד, Scheduler Statistics מראה warps פעילים/כשירים/נבחרים ו-<code>No Eligible</code>, ו-Warp State Statistics מראה את סיבות ה-stall (למשל <code>Stall Long Scoreboard</code>).</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

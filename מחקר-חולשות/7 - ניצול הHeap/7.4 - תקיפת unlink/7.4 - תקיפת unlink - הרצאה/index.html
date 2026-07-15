@@ -1,0 +1,3152 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בפרקים הקודמים ראינו איך ה-tcache וה-fastbins מחזיקים chunks משוחררים ברשימות מקושרות חד-כיווניות, ואיך שליטה בשדה fd נותנת לנו הקצאה שרירותית. עכשיו נעלה...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.4%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%AA%20unlink/7.4%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%AA%20unlink%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning/7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../7.4%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%AA%20unlink%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>7.4 - תקיפת unlink - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "7.4 - \u05ea\u05e7\u05d9\u05e4\u05ea unlink - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.4%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%AA%20unlink/7.4%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%AA%20unlink%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="7.4 - תקיפת unlink - הרצאה - עמית טק" />
+<meta property="og:description" content="בפרקים הקודמים ראינו איך ה-tcache וה-fastbins מחזיקים chunks משוחררים ברשימות מקושרות חד-כיווניות, ואיך שליטה בשדה fd נותנת לנו הקצאה שרירותית. עכשיו נעלה..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.4%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%AA%20unlink/7.4%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%AA%20unlink%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.4%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%AA%20unlink/7.4%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%AA%20unlink%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="7.4 - תקיפת unlink - הרצאה - עמית טק" />
+<meta property="twitter:description" content="בפרקים הקודמים ראינו איך ה-tcache וה-fastbins מחזיקים chunks משוחררים ברשימות מקושרות חד-כיווניות, ואיך שליטה בשדה fd נותנת לנו הקצאה שרירותית. עכשיו נעלה..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.4%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%AA%20unlink/7.4%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%AA%20unlink%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-chunks-doubly-linked-list" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              7.4 - תקיפת unlink - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר חולשות
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%95%D7%AA%D7%A9%D7%AA%D7%99%D7%AA/0.1%20-%20%D7%9E%D7%94%20%D7%96%D7%94%20%D7%9E%D7%97%D7%A7%D7%A8%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/0.1%20-%20%D7%9E%D7%94%20%D7%96%D7%94%20%D7%9E%D7%97%D7%A7%D7%A8%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה ותשתית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%A4%D7%A9%D7%95%D7%98%D7%95%D7%AA%20%D7%95%D7%91%D7%90%D7%92%D7%99%D7%9D%20%D7%9C%D7%95%D7%92%D7%99%D7%99%D7%9D/1.1%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%95%D7%90%D7%A8%D7%92%D7%95%D7%9E%D7%A0%D7%98%D7%99%D7%9D/1.1%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%95%D7%90%D7%A8%D7%92%D7%95%D7%9E%D7%A0%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   חולשות פשוטות ובאגים לוגיים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%92%D7%9C%D7%99%D7%A9%D7%AA%20%D7%97%D7%95%D7%A6%D7%A5%20%D7%A2%D7%9C%20%D7%94%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA/2.1%20-%20%D7%90%D7%A0%D7%98%D7%95%D7%9E%D7%99%D7%94%20%D7%A9%D7%9C%20%D7%92%D7%9C%D7%99%D7%A9%D7%94%20%D7%95%D7%A9%D7%9C%D7%99%D7%98%D7%94%20%D7%91RIP/2.1%20-%20%D7%90%D7%A0%D7%98%D7%95%D7%9E%D7%99%D7%94%20%D7%A9%D7%9C%20%D7%92%D7%9C%D7%99%D7%A9%D7%94%20%D7%95%D7%A9%D7%9C%D7%99%D7%98%D7%94%20%D7%91RIP%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   גלישת חוצץ על המחסנית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20Shellcode/3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99/3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   Shellcode
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A2%D7%A7%D7%99%D7%A4%D7%AA%20NX%20%D7%95ROP%20%D7%91%D7%A1%D7%99%D7%A1%D7%99/4.1%20-%20GOT%20%D7%95PLT%20%D7%9C%D7%A2%D7%95%D7%9E%D7%A7/4.1%20-%20GOT%20%D7%95PLT%20%D7%9C%D7%A2%D7%95%D7%9E%D7%A7%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   עקיפת NX וROP בסיסי
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%9E%D7%97%D7%A8%D7%95%D7%96%D7%AA%20%D7%A4%D7%95%D7%A8%D7%9E%D7%98/5.1%20-%20%D7%99%D7%A1%D7%95%D7%93%D7%95%D7%AA%20format%20string/5.1%20-%20%D7%99%D7%A1%D7%95%D7%93%D7%95%D7%AA%20format%20string%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   חולשות מחרוזת פורמט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20ROP%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/6.1%20-%20stack%20pivoting/6.1%20-%20stack%20pivoting%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ROP מתקדם
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2_9" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2_9" id="__nav_7_2_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   ניצול הHeap
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_2_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    7   ניצול הHeap
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc/7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.1   פנימיות המקצה של glibc
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.2%20-%20%D7%A9%D7%99%D7%9E%D7%95%D7%A9%20%D7%9C%D7%90%D7%97%D7%A8%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8/7.2%20-%20%D7%A9%D7%99%D7%9E%D7%95%D7%A9%20%D7%9C%D7%90%D7%97%D7%A8%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.2   שימוש לאחר שחרור
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning/7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.3   שחרור כפול וtcache poisoning
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2_9_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2_9_4" id="__nav_7_2_9_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.4   תקיפת unlink
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_2_9_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2_9_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    7.4   תקיפת unlink
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.4 - תקיפת unlink - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.4 - תקיפת unlink - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-chunks-doubly-linked-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        רשימה דו-כיוונית של chunks - doubly linked list
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unlink-the-unlink-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה עושה unlink - the unlink operation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-write-primitive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פרימיטיב הכתיבה - the write primitive
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unlink-classic-unlink-attack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        התקפת unlink הקלאסית - classic unlink attack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-unlink-safe-unlink" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חיזוק ה-unlink הבטוח - safe unlink
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-safe-unlink-defeating-safe-unlink" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        עקיפת ה-safe unlink - defeating safe unlink
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unlink-pwnablekr-the-challenge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אתגר unlink ב-pwnable.kr - the challenge
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="אתגר unlink ב-pwnable.kr - the challenge">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-protections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ההגנות - protections
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-the-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        התוכנית - the plan
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unlink-when-unlink-still-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מתי unlink רלוונטי היום - when unlink still matters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../7.4%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%AA%20unlink%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.4 - תקיפת unlink - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../7.4%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%AA%20unlink%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.4 - תקיפת unlink - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.5%20-%20%D7%92%D7%9C%D7%99%D7%A9%D7%AA%20heap%20%D7%95%D7%98%D7%9B%D7%A0%D7%99%D7%A7%D7%95%D7%AA%20House%20of/7.5%20-%20%D7%92%D7%9C%D7%99%D7%A9%D7%AA%20heap%20%D7%95%D7%98%D7%9B%D7%A0%D7%99%D7%A7%D7%95%D7%AA%20House%20of%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.5   גלישת heap וטכניקות House of
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.6%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%95%D7%AA%20tcache%20%D7%95fastbin%20%D7%9E%D7%95%D7%93%D7%A8%D7%A0%D7%99%D7%95%D7%AA/7.6%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%95%D7%AA%20tcache%20%D7%95fastbin%20%D7%9E%D7%95%D7%93%D7%A8%D7%A0%D7%99%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.6   תקיפות tcache וfastbin מודרניות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.7%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20heap%20%D7%9E%D7%9C%D7%90/7.7%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20heap%20%D7%9E%D7%9C%D7%90%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.7   פרויקט ניצול heap מלא
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C/8.1%20-%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%90%D7%A8%D7%95%D7%96%D7%99%D7%9D%20%D7%95-UPX/8.1%20-%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%90%D7%A8%D7%95%D7%96%D7%99%D7%9D%20%D7%95-UPX%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   הנדסה הפוכה לניצול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%95%D7%90%D7%AA%D7%92%D7%A8%D7%99%D7%9D%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%99%D7%9D/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   ניצול קרנל ואתגרים מתקדמים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../10%20-%20%D7%9E%D7%A6%D7%99%D7%90%D7%AA%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%90%D7%9E%D7%99%D7%AA%D7%99%D7%95%D7%AA/10.1%20-%20%D7%A1%D7%A7%D7%99%D7%A8%D7%AA%20%D7%A7%D7%95%D7%93%20%D7%9E%D7%A7%D7%95%D7%A8/10.1%20-%20%D7%A1%D7%A7%D7%99%D7%A8%D7%AA%20%D7%A7%D7%95%D7%93%20%D7%9E%D7%A7%D7%95%D7%A8%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10   מציאת חולשות אמיתיות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-chunks-doubly-linked-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        רשימה דו-כיוונית של chunks - doubly linked list
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unlink-the-unlink-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה עושה unlink - the unlink operation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-write-primitive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פרימיטיב הכתיבה - the write primitive
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unlink-classic-unlink-attack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        התקפת unlink הקלאסית - classic unlink attack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-unlink-safe-unlink" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חיזוק ה-unlink הבטוח - safe unlink
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-safe-unlink-defeating-safe-unlink" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        עקיפת ה-safe unlink - defeating safe unlink
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unlink-pwnablekr-the-challenge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אתגר unlink ב-pwnable.kr - the challenge
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="אתגר unlink ב-pwnable.kr - the challenge">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-protections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ההגנות - protections
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-the-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        התוכנית - the plan
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unlink-when-unlink-still-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מתי unlink רלוונטי היום - when unlink still matters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר חולשות
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc/7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    7   ניצול הHeap
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    7.4   תקיפת unlink
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>7.4 - תקיפת unlink - הרצאה</h1>
+
+<p>בפרקים הקודמים ראינו איך ה-tcache וה-fastbins מחזיקים chunks משוחררים ברשימות מקושרות חד-כיווניות, ואיך שליטה בשדה <code>fd</code> נותנת לנו הקצאה שרירותית. עכשיו נעלה מדרגה ונדבר על ה-bins הגדולים יותר, שבהם ה-chunks חיים ברשימה <strong>דו-כיוונית</strong> עם שני מצביעים, <code>fd</code> ו-<code>bk</code>. כשמנהל הזיכרון מוציא chunk מרשימה כזו הוא קורא לפעולה בשם unlink, ואם נזייף את שני המצביעים נקבל פרימיטיב כתיבה חזק במיוחד. זו אחת ההתקפות הקלאסיות והמלמדות ביותר על ה-heap, והיא גם הסיבה ההיסטורית שבגללה glibc הוסיפה את מנגנוני ההגנה שנלמד עליהם כאן.</p>
+<h2 id="-chunks-doubly-linked-list">רשימה דו-כיוונית של chunks - doubly linked list<a class="headerlink" href="#-chunks-doubly-linked-list" title="Permanent link">&para;</a></h2>
+<p>ב-unsorted bin, ב-small bins וב-large bins, כל chunk משוחרר מחזיק שני מצביעים בתחילת אזור הנתונים שלו:</p>
+<ul>
+<li>השדה <code>fd</code> (forward) מצביע ל-chunk הבא ברשימה.</li>
+<li>השדה <code>bk</code> (back) מצביע ל-chunk הקודם ברשימה.</li>
+</ul>
+<p>זכרו את מבנה ה-chunk מפרק 7.1. בבנייה של 64 ביט השדות יושבים כך:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>address of the chunk (mchunkptr)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>+0x00 | prev_size |
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>+0x08 | size      |
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>+0x10 | fd        |  &lt;-- pointer to the next chunk in the list
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>+0x18 | bk        |  &lt;-- pointer to the previous chunk in the list
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>+0x20 | ...data    |
+</code></pre></div>
+<p>הכתובת שהמשתמש מקבל מ-<code>malloc</code> (ה-<code>mem</code>) היא <code>chunk + 0x10</code>, כלומר בדיוק המקום שבו יושב <code>fd</code>. כשה-chunk בשימוש, הבתים האלה הם הנתונים של המשתמש. כשהוא משוחרר ונכנס ל-bin, אותם בתים הופכים למצביעי הרשימה. זו בדיוק ההבלעה (overlap) בין נתונים למטא-דאטה שאנחנו הולכים לexploit.</p>
+<p>רשימה של שלושה chunks נראית כך:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>   +--------+       +--------+       +--------+
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>   |   A    |&lt;--bk--|   B    |&lt;--bk--|   C    |
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>   |     fd |--fd--&gt;|     fd |--fd--&gt;|        |
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>   +--------+       +--------+       +--------+
+</code></pre></div>
+<p>כלומר <code>B-&gt;fd == C</code>, <code>B-&gt;bk == A</code>, וכן הלאה.</p>
+<h2 id="unlink-the-unlink-operation">מה עושה unlink - the unlink operation<a class="headerlink" href="#unlink-the-unlink-operation" title="Permanent link">&para;</a></h2>
+<p>כשמנהל הזיכרון רוצה להוציא chunk (נסמן אותו <code>P</code>) מאמצע הרשימה, הוא צריך "לתפור" מחדש את השכנים שלו כך שיצביעו זה אל זה ויקפצו מעל <code>P</code>. זה בדיוק מה שהמאקרו ההיסטורי <code>unlink</code> עשה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="cp">#define unlink(P, BK, FD) {            \</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="cp">    FD = P-&gt;fd;                        \</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="cp">    BK = P-&gt;bk;                        \</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="cp">    FD-&gt;bk = BK;   </span><span class="cm">/* P-&gt;fd-&gt;bk = P-&gt;bk */</span><span class="cp"> \</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="cp">    BK-&gt;fd = FD;   </span><span class="cm">/* P-&gt;bk-&gt;fd = P-&gt;fd */</span><span class="cp"> \</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="cp">}</span>
+</code></pre></div>
+<p>במילים פשוטות: השכן הבא (<code>FD</code>) יקבל את השכן הקודם (<code>BK</code>) בתור ה-<code>bk</code> שלו, והשכן הקודם יקבל את השכן הבא בתור ה-<code>fd</code> שלו. אחרי הפעולה <code>P</code> כבר לא ברשימה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>before unlink(B):               after unlink(B):
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  A &lt;-&gt; B &lt;-&gt; C                  A &lt;-------&gt; C
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>                                   (B bypassed)
+</code></pre></div>
+<p>עד כאן הכל תמים. אבל שימו לב מה קורה ברמת הזיכרון. הפעולה <code>FD-&gt;bk = BK</code> היא בעצם <strong>כתיבה לכתובת שנגזרת מ-<code>P-&gt;fd</code></strong>. אם אנחנו שולטים בתוכן של <code>P</code> (למשל דרך overflow heap שדרסה את ה-chunk הזה), אנחנו שולטים ב-<code>fd</code> וב-<code>bk</code> שלו, ולכן שולטים גם <strong>לאן</strong> נכתב וגם <strong>מה</strong> נכתב.</p>
+<h2 id="-the-write-primitive">פרימיטיב הכתיבה - the write primitive<a class="headerlink" href="#-the-write-primitive" title="Permanent link">&para;</a></h2>
+<p>בואו נפרק את שתי הכתיבות לפי היסטים. נסמן ב-<code>OFF_FD</code> את ההיסט של <code>fd</code> בתוך ה-chunk וב-<code>OFF_BK</code> את ההיסט של <code>bk</code>. שתי הכתיבות הן:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>write 1:  *(FD + OFF_BK) = BK
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>write 2:  *(BK + OFF_FD) = FD
+</code></pre></div>
+<p>כאשר <code>FD</code> ו-<code>BK</code> הם הערכים שאנחנו הזרקנו ל-<code>P-&gt;fd</code> ו-<code>P-&gt;bk</code>. נניח שאנחנו רוצים לכתוב ערך <code>V</code> לכתובת יעד <code>T</code>. נבחר:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>FD = T - OFF_BK      -&gt;  write 1 becomes:  *(T) = V
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>BK = V               -&gt;
+</code></pre></div>
+<p>וקיבלנו כתיבה שרירותית: <code>*(T) = V</code>. יש רק תופעת לוואי אחת, כתיבה 2, שמבצעת <code>*(V + OFF_FD) = FD = T - OFF_BK</code>. כלומר גם הכתובת <code>V</code> עצמה נדרסת.</p>
+<p>הנה הטריק והמלכוד באותה נשימה: כדי שההתקפה לא תקרוס, <strong>כתובת הלוואי <code>V</code> חייבת להצביע לזיכרון בר-כתיבה</strong>. אם ננסה לכתוב ל-<code>T</code> ערך <code>V</code> שהוא כתובת קוד (למשל כתובת של פונקציה בקטע <code>.text</code>), תופעת הלוואי תנסה לכתוב ל-<code>.text</code>, שהוא לקריאה בלבד, ונקבל <code>SIGSEGV</code>. זו נקודה קריטית שנחזור אליה כשנבנה את ה-exploit: עם unlink לא כותבים כתובת קוד ישירות אל מצביע הרצה. כותבים <strong>מצביע לזיכרון בר-כתיבה</strong> שאנחנו שולטים בו, ומשם מנתבים את הזרימה.</p>
+<h2 id="unlink-classic-unlink-attack">התקפת unlink הקלאסית - classic unlink attack<a class="headerlink" href="#unlink-classic-unlink-attack" title="Permanent link">&para;</a></h2>
+<p>ההתקפה ההיסטורית (מימי dlmalloc, סוף שנות ה-90) עבדה כך: תוכנית מחזיקה <strong>מצביע גלובלי</strong> <code>g</code> שמצביע ל-chunk, ובאיזשהו שלב היא משחררת אותו וקוראת ל-unlink. אם התוקף דרס את המטא-דאטה של אותו chunk (למשל דרך heap overflow), הוא זייף את <code>fd</code> ו-<code>bk</code>, וקיבל את הכתיבה <code>*(T) = V</code> שראינו למעלה. מכאן דרסו כתובת ב-GOT, מצביע פונקציה, או return address על המחסנית, וחטפו את זרימת הבקרה.</p>
+<p>חשבו על זה: פרימיטיב שמאפשר "כתוב ערך כלשהו לכתובת כלשהי" הוא בעצם ניצחון. כל מה שנשאר הוא לבחור מטרה טובה. לכן ההתקפה הזו הייתה כל כך מסוכנת, ולכן glibc נאלצה להגן על ה-unlink.</p>
+<h2 id="-unlink-safe-unlink">חיזוק ה-unlink הבטוח - safe unlink<a class="headerlink" href="#-unlink-safe-unlink" title="Permanent link">&para;</a></h2>
+<p>כדי לחסום את ההתקפה, glibc עטפה את המאקרו בבדיקות שפירותן שלמות (consistency) של הרשימה הדו-כיוונית. הרעיון פשוט ויפה: אם <code>B</code> באמת נמצא ברשימה תקינה בין <code>A</code> ל-<code>C</code>, אז חייב להתקיים ש-<code>B-&gt;fd-&gt;bk == B</code> וגם <code>B-&gt;bk-&gt;fd == B</code>. כלומר, השכן הבא צריך להצביע חזרה אל <code>B</code> דרך ה-<code>bk</code> שלו, והשכן הקודם צריך להצביע חזרה אל <code>B</code> דרך ה-<code>fd</code> שלו. הנה המאקרו המחוזק:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="cp">#define unlink(AV, P, BK, FD) {                                       \</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="cp">    FD = P-&gt;fd;                                                       \</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="cp">    BK = P-&gt;bk;                                                       \</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="cp">    if (__builtin_expect (FD-&gt;bk != P || BK-&gt;fd != P, 0))            \</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="cp">        malloc_printerr (&quot;corrupted double-linked list&quot;);            \</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="cp">    else {                                                            \</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="cp">        FD-&gt;bk = BK;                                                  \</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="cp">        BK-&gt;fd = FD;                                                  \</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="cp">        </span><span class="cm">/* ... in newer versions also a size check against prev_size ... */</span><span class="cp">       \</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="cp">    }                                                                 \</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="cp">}</span>
+</code></pre></div>
+<p>הבדיקה <code>FD-&gt;bk != P || BK-&gt;fd != P</code> היא לב העניין. אם התוקף מזייף את <code>fd</code> ו-<code>bk</code> כדי לכתוב <code>*(T) = V</code>, אזי <code>FD</code> ו-<code>BK</code> מצביעים למקומות שרירותיים, ואין שום סיבה ש-<code>FD-&gt;bk</code> יהיה שווה ל-<code>P</code>. הבדיקה נכשלת, וההקצאה מפילה את התוכנית עם <code>corrupted double-linked list</code>. בגרסאות מודרניות נוספה גם בדיקה ש-<code>chunksize(P)</code> תואם ל-<code>prev_size</code> של ה-chunk העוקב, שסותמת עוד וקטורים.</p>
+<p>השורה התחתונה: <strong>unlink קלאסי מת מול glibc מודרנית</strong>. וזו בדיוק הסיבה שנולדו טכניקות ה-House of (House of Force, House of Spirit, House of Einherjar ועוד) שנלמד בפרק הבא - הן דרכים לתקוף את ה-allocator בלי להיכשל בבדיקות האלה.</p>
+<h2 id="-safe-unlink-defeating-safe-unlink">עקיפת ה-safe unlink - defeating safe unlink<a class="headerlink" href="#-safe-unlink-defeating-safe-unlink" title="Permanent link">&para;</a></h2>
+<p>הבדיקה נראית הרמטית, אבל יש לה חור מפורסם. מה אם נצליח לגרום ל-<code>FD-&gt;bk</code> ול-<code>BK-&gt;fd</code> <strong>באמת</strong> להצביע חזרה אל <code>P</code>? זה אפשרי כשקיים מצביע גלובלי <code>g</code> שמחזיק את הכתובת של <code>P</code> (מצב נפוץ מאוד: תוכניות שומרות טבלת מצביעים ל-chunks שהקצו). נשתמש ב-<code>g</code> בתור ה"עוגן".</p>
+<p>בבנייה של 64 ביט, <code>fd</code> יושב בהיסט <code>0x10</code> ו-<code>bk</code> בהיסט <code>0x18</code> בתוך ה-chunk. נזייף בתוך <code>P</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>P-&gt;fd = &amp;g - 0x18      (denote FD = &amp;g - 0x18)
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>P-&gt;bk = &amp;g - 0x10      (denote BK = &amp;g - 0x10)
+</code></pre></div>
+<p>עכשיו נבדוק את התנאים של safe unlink:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>FD-&gt;bk = *(FD + 0x18) = *(&amp;g - 0x18 + 0x18) = *(&amp;g) = g = P   -&gt;  passes!
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>BK-&gt;fd = *(BK + 0x10) = *(&amp;g - 0x10 + 0x10) = *(&amp;g) = g = P   -&gt;  passes!
+</code></pre></div>
+<p>שתי הבדיקות עוברות, כי שתיהן קוראות בסוף את <code>g</code>, ו-<code>g</code> באמת שווה ל-<code>P</code>. עכשיו unlink מבצע את הכתיבות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>FD-&gt;bk = BK   -&gt;  *(&amp;g) = &amp;g - 0x10
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>BK-&gt;fd = FD   -&gt;  *(&amp;g) = &amp;g - 0x18
+</code></pre></div>
+<p>התוצאה הסופית: <code>g = &amp;g - 0x18</code>. במקום להצביע ל-chunk, המצביע הגלובלי מצביע עכשיו <strong>0x18 בתים לפני עצמו</strong>. זה נראה תמים, אבל זה זהב: ברגע שהתוכנית תכתוב דרך <code>g</code> (למשל <code>g-&gt;buf</code> בפעולת "עריכה" רגילה), היא תכתוב לכתובת שאנחנו שולטים בה, וכוללת את <code>g</code> עצמו ואת השכנים שלו. מכאן אפשר להפוך את <code>g</code> למצביע לכל כתובת שנרצה, וקיבלנו כתיבה שרירותית מלאה. זה נקרא לפעמים unsafe unlink, וזו אבן הבניין של exploit heap מודרני רבים.</p>
+<p>הרעיון החשוב להפנים: ההגנה בודקת עקביות מבנית, לא כוונה. אם נדאג שהמבנה ייראה עקבי (בעזרת מצביע שאנחנו יודעים את מיקומו), הבדיקה עוברת והפרימיטיב חוזר לחיים.</p>
+<h2 id="unlink-pwnablekr-the-challenge">אתגר unlink ב-pwnable.kr - the challenge<a class="headerlink" href="#unlink-pwnablekr-the-challenge" title="Permanent link">&para;</a></h2>
+<p>אחרי כל התיאוריה, בואו נראה את הפרימיטיב במצב הכי נקי שלו. האתגר <code>unlink</code> ב-pwnable.kr (בקטגוריית Rookiss) הוא בינארי של 32 ביט שממש כתוב כדי ללמד את ההתקפה הזו. היופי בו: הוא <strong>לא</strong> משתמש ב-unlink של glibc, אלא בפונקציה משלו בלי שום בדיקת בטיחות. אז אין לנו safe unlink להילחם בו, רק הפרימיטיב במלוא עוצמתו.</p>
+<p>הנה המקור (unlink.c):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdlib.h&gt;</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;string.h&gt;</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">tagOBJ</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">tagOBJ</span><span class="o">*</span><span class="w"> </span><span class="n">fd</span><span class="p">;</span><span class="w">      </span><span class="c1">// offset 0</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">tagOBJ</span><span class="o">*</span><span class="w"> </span><span class="n">bk</span><span class="p">;</span><span class="w">      </span><span class="c1">// offset 4</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">buf</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span><span class="w">            </span><span class="c1">// offset 8</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="p">}</span><span class="w"> </span><span class="n">OBJ</span><span class="p">;</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="kt">void</span><span class="w"> </span><span class="nf">shell</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">    </span><span class="n">system</span><span class="p">(</span><span class="s">&quot;/bin/sh&quot;</span><span class="p">);</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="p">}</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="kt">void</span><span class="w"> </span><span class="nf">unlink</span><span class="p">(</span><span class="n">OBJ</span><span class="o">*</span><span class="w"> </span><span class="n">P</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="w">    </span><span class="n">OBJ</span><span class="o">*</span><span class="w"> </span><span class="n">BK</span><span class="p">;</span>
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="w">    </span><span class="n">OBJ</span><span class="o">*</span><span class="w"> </span><span class="n">FD</span><span class="p">;</span>
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="w">    </span><span class="n">BK</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">P</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">;</span>
+<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a><span class="w">    </span><span class="n">FD</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">P</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
+<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a><span class="w">    </span><span class="n">FD</span><span class="o">-&gt;</span><span class="n">bk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BK</span><span class="p">;</span><span class="w">   </span><span class="c1">// *(FD + 4) = BK</span>
+<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span class="w">    </span><span class="n">BK</span><span class="o">-&gt;</span><span class="n">fd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FD</span><span class="p">;</span><span class="w">   </span><span class="c1">// *(BK + 0) = FD</span>
+<a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a><span class="p">}</span>
+<a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a>
+<a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a><span class="w">    </span><span class="n">malloc</span><span class="p">(</span><span class="mi">1024</span><span class="p">);</span>
+<a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a><span class="w">    </span><span class="n">OBJ</span><span class="o">*</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">OBJ</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">OBJ</span><span class="p">));</span>
+<a id="__codelineno-10-27" name="__codelineno-10-27" href="#__codelineno-10-27"></a><span class="w">    </span><span class="n">OBJ</span><span class="o">*</span><span class="w"> </span><span class="n">B</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">OBJ</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">OBJ</span><span class="p">));</span>
+<a id="__codelineno-10-28" name="__codelineno-10-28" href="#__codelineno-10-28"></a><span class="w">    </span><span class="n">OBJ</span><span class="o">*</span><span class="w"> </span><span class="n">C</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">OBJ</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">OBJ</span><span class="p">));</span>
+<a id="__codelineno-10-29" name="__codelineno-10-29" href="#__codelineno-10-29"></a>
+<a id="__codelineno-10-30" name="__codelineno-10-30" href="#__codelineno-10-30"></a><span class="w">    </span><span class="c1">// doubly linked list: A &lt;-&gt; B &lt;-&gt; C</span>
+<a id="__codelineno-10-31" name="__codelineno-10-31" href="#__codelineno-10-31"></a><span class="w">    </span><span class="n">A</span><span class="o">-&gt;</span><span class="n">fd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">B</span><span class="p">;</span>
+<a id="__codelineno-10-32" name="__codelineno-10-32" href="#__codelineno-10-32"></a><span class="w">    </span><span class="n">B</span><span class="o">-&gt;</span><span class="n">bk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">A</span><span class="p">;</span>
+<a id="__codelineno-10-33" name="__codelineno-10-33" href="#__codelineno-10-33"></a><span class="w">    </span><span class="n">B</span><span class="o">-&gt;</span><span class="n">fd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">C</span><span class="p">;</span>
+<a id="__codelineno-10-34" name="__codelineno-10-34" href="#__codelineno-10-34"></a><span class="w">    </span><span class="n">C</span><span class="o">-&gt;</span><span class="n">bk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">B</span><span class="p">;</span>
+<a id="__codelineno-10-35" name="__codelineno-10-35" href="#__codelineno-10-35"></a>
+<a id="__codelineno-10-36" name="__codelineno-10-36" href="#__codelineno-10-36"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;here is stack address leak: %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">A</span><span class="p">);</span>
+<a id="__codelineno-10-37" name="__codelineno-10-37" href="#__codelineno-10-37"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;here is heap address leak: %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">A</span><span class="p">);</span>
+<a id="__codelineno-10-38" name="__codelineno-10-38" href="#__codelineno-10-38"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;now that you have leaks, get shell!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-10-39" name="__codelineno-10-39" href="#__codelineno-10-39"></a>
+<a id="__codelineno-10-40" name="__codelineno-10-40" href="#__codelineno-10-40"></a><span class="w">    </span><span class="c1">// heap overflow!</span>
+<a id="__codelineno-10-41" name="__codelineno-10-41" href="#__codelineno-10-41"></a><span class="w">    </span><span class="n">gets</span><span class="p">(</span><span class="n">A</span><span class="o">-&gt;</span><span class="n">buf</span><span class="p">);</span>
+<a id="__codelineno-10-42" name="__codelineno-10-42" href="#__codelineno-10-42"></a>
+<a id="__codelineno-10-43" name="__codelineno-10-43" href="#__codelineno-10-43"></a><span class="w">    </span><span class="c1">// exploit the unlink!</span>
+<a id="__codelineno-10-44" name="__codelineno-10-44" href="#__codelineno-10-44"></a><span class="w">    </span><span class="n">unlink</span><span class="p">(</span><span class="n">B</span><span class="p">);</span>
+<a id="__codelineno-10-45" name="__codelineno-10-45" href="#__codelineno-10-45"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-10-46" name="__codelineno-10-46" href="#__codelineno-10-46"></a><span class="p">}</span>
+</code></pre></div>
+<p>בואו נקרא אותו כמו חוקרים. יש כאן ארבעה דברים חשובים:</p>
+<ul>
+<li>הפונקציה <code>unlink</code> היא בדיוק המאקרו הקלאסי, בלי בדיקות: <code>*(FD+4) = BK</code> ואז <code>*(BK) = FD</code>. במבנה הזה <code>fd</code> בהיסט 0 ו-<code>bk</code> בהיסט 4.</li>
+<li>התוכנית <strong>נותנת לנו שתי leaks בחינם</strong>: <code>&amp;A</code> (כתובת על המחסנית, כי <code>A</code> הוא משתנה מקומי) ו-<code>A</code> (כתובת ב-heap, ה-chunk הראשון). כלומר גם ASLR של המחסנית וגם של ה-heap כבר לא בעיה.</li>
+<li>הקריאה <code>gets(A-&gt;buf)</code> היא overflow heap קלאסית. <code>gets</code> לא מגבילה אורך, אז מהכתובת <code>A-&gt;buf</code> והלאה אנחנו כותבים כמה שנרצה, ובפרט אפשר לדרוס את <code>fd</code> ו-<code>bk</code> של <code>B</code>.</li>
+<li>קיימת פונקציה <code>shell()</code> שקוראת ל-<code>system("/bin/sh")</code>. זה היעד שלנו: לגרום לתוכנית לקפוץ אליה.</li>
+</ul>
+<h3 id="-protections">ההגנות - protections<a class="headerlink" href="#-protections" title="Permanent link">&para;</a></h3>
+<p>הבינארי הזה הוא 32 ביט, בלי PIE, בלי canary, עם NX דלוק. נאמת את זה תמיד עם <code>checksec</code> (נעשה את זה בתרגול), אבל המשמעות המעשית:</p>
+<ul>
+<li>אין canary, אז דריסת מצביעים על המחסנית לא נתפסת.</li>
+<li>אין PIE, אז הכתובת של <code>shell()</code> קבועה וידועה מראש (<code>objdump -d ./unlink | grep shell</code>).</li>
+<li>מנגנון ה-NX דלוק, אבל לא אכפת לנו: אנחנו לא מריצים shellcode, אלא קופצים לפונקציה <code>shell()</code> שכבר קיימת.</li>
+</ul>
+<h3 id="-the-plan">התוכנית - the plan<a class="headerlink" href="#-the-plan" title="Permanent link">&para;</a></h3>
+<p>אנחנו רוצים בסוף להגיע ל-<code>shell()</code>. ראינו שאסור לכתוב את הכתובת של <code>shell</code> ישירות למצביע הרצה, כי תופעת הלוואי של unlink תקרוס על <code>.text</code>. אז נשתמש בטריק ה-leave;ret הקלאסי:</p>
+<ol>
+<li>נזייף את <code>B-&gt;fd</code> ואת <code>B-&gt;bk</code> כך שה-unlink יכתוב <strong>מצביע ל-heap</strong> (זיכרון בר-כתיבה) אל תוך ה-<code>saved ebp</code> של הפריים על המחסנית. אין קריסה כי גם היעד וגם ערך הלוואי הם בזיכרון בר-כתיבה.</li>
+<li>באזור ה-heap שאליו הצבענו, נכין "פריים מזויף" שמכיל את הכתובת של <code>shell()</code> במקום הנכון.</li>
+<li>כשהפונקציה תסיים ותבצע <code>leave; ret</code>, ה-<code>esp</code> יקפוץ לפריים המזויף שלנו וה-<code>ret</code> יקרא ממנו את הכתובת של <code>shell()</code>. שתי פעולות <code>leave; ret</code> רצופות (של <code>unlink</code> ואז של <code>main</code>) הן שמאפשרות את ה-pivot מ-EBP מזויף ל-EIP מבוקר.</li>
+</ol>
+<p>את החישוב המדויק של ההיסטים - המרחק מ-<code>A-&gt;buf</code> ל-<code>B-&gt;fd</code>, ואיזה <code>saved ebp</code> לדרוס - נעשה צעד-צעד בתרגול ובפתרון, כולל הפקודות ב-gdb שמודדות אותם. כאן העיקר להבין את הרעיון: <strong>מזייפים מטא-דאטה, מפעילים unlink, מקבלים כתיבה, וממנפים אותה ל-pivot אל shell</strong>.</p>
+<h2 id="unlink-when-unlink-still-matters">מתי unlink רלוונטי היום - when unlink still matters<a class="headerlink" href="#unlink-when-unlink-still-matters" title="Permanent link">&para;</a></h2>
+<p>אפשר לחשוב שאם glibc חסמה את unlink, הנושא היסטורי בלבד. זה לא נכון משתי סיבות. ראשית, מלא תוכנות ממשות ("אמיתיות") מממשות רשימות דו-כיווניות משלהן (allocators פנימיים, מבני נתונים בkernel, מנועי דפדפן), ושם אין את הבדיקות של glibc - הפרימיטיב חי וקיים בדיוק כמו באתגר. שנית, גם מול glibc, עקיפת safe unlink עם מצביע עוגן היא טכניקה נפוצה עד היום. אז הבנה עמוקה של unlink היא כלי עבודה, לא שיעור בהיסטוריה.</p>
+<h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>ב-bins הגדולים של glibc chunks חיים ברשימה דו-כיוונית עם <code>fd</code> ו-<code>bk</code>, ופעולת unlink תופרת מחדש את השכנים כשמוציאים chunk.</li>
+<li>שליטה ב-<code>fd</code> וב-<code>bk</code> של chunk (דרך גלישת heap או UAF) הופכת את unlink לפרימיטיב כתיבה: <code>*(T) = V</code> עבור <code>T</code> ו-<code>V</code> שנבחר, עם תופעת לוואי שדורסת את <code>V</code> - ולכן <code>V</code> חייב להצביע לזיכרון בר-כתיבה.</li>
+<li>אסור לכתוב כתובת קוד ישירות למצביע הרצה עם unlink - כותבים מצביע לזיכרון בר-כתיבה ומנתבים משם (טריק ה-leave;ret).</li>
+<li>חיזוק ה-safe unlink מוסיף את הבדיקות <code>FD-&gt;bk == P</code> ו-<code>BK-&gt;fd == P</code> (וגם בדיקת גודל), וזה מה שהרג את ההתקפה הקלאסית ונתן דחיפה לטכניקות ה-House of.</li>
+<li>אפשר לעקוף safe unlink כשקיים מצביע גלובלי <code>g</code> אל ה-chunk: מזייפים <code>fd = &amp;g - 0x18</code> ו-<code>bk = &amp;g - 0x10</code> כך שהבדיקות עוברות, והתוצאה היא <code>g = &amp;g - 0x18</code> - מצביע שאנחנו שולטים בו.</li>
+<li>אתגר unlink ב-pwnable.kr מדגים את הפרימיטיב במצב טהור: unlink ידני בלי בדיקות, שתי leaks בחינם, וoverflow heap דרך <code>gets</code>, שאותם נexploit כדי לקפוץ ל-<code>shell()</code>.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

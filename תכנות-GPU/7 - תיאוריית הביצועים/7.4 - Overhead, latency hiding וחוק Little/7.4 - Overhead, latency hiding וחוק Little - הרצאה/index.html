@@ -1,0 +1,2861 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בשלושת השיעורים הקודמים של הפרק בנינו את התמונה הגדולה של ניתוח ביצועים. בשיעור 7.1 הגדרנו צוואר-בקבוק (bottleneck) ואת מודל ה-Roofline, בשיעור 7.2 הפרדנו...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.4%20-%20Overhead%2C%20latency%20hiding%20%D7%95%D7%97%D7%95%D7%A7%20Little/7.4%20-%20Overhead%2C%20latency%20hiding%20%D7%95%D7%97%D7%95%D7%A7%20Little%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../7.3%20-%20%D7%A8%D7%95%D7%97%D7%91%D7%99%20%D7%A4%D7%A1%20%D7%95-peak%20rate/7.3%20-%20%D7%A8%D7%95%D7%97%D7%91%D7%99%20%D7%A4%D7%A1%20%D7%95-peak%20rate%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../7.4%20-%20Overhead%2C%20latency%20hiding%20%D7%95%D7%97%D7%95%D7%A7%20Little%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>7.4 - Overhead, latency hiding וחוק Little - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "7.4 - Overhead, latency hiding \u05d5\u05d7\u05d5\u05e7 Little - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.4%20-%20Overhead%2C%20latency%20hiding%20%D7%95%D7%97%D7%95%D7%A7%20Little/7.4%20-%20Overhead%2C%20latency%20hiding%20%D7%95%D7%97%D7%95%D7%A7%20Little%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="7.4 - Overhead, latency hiding וחוק Little - הרצאה - עמית טק" />
+<meta property="og:description" content="בשלושת השיעורים הקודמים של הפרק בנינו את התמונה הגדולה של ניתוח ביצועים. בשיעור 7.1 הגדרנו צוואר-בקבוק (bottleneck) ואת מודל ה-Roofline, בשיעור 7.2 הפרדנו..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.4%20-%20Overhead%2C%20latency%20hiding%20%D7%95%D7%97%D7%95%D7%A7%20Little/7.4%20-%20Overhead%2C%20latency%20hiding%20%D7%95%D7%97%D7%95%D7%A7%20Little%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.4%20-%20Overhead%2C%20latency%20hiding%20%D7%95%D7%97%D7%95%D7%A7%20Little/7.4%20-%20Overhead%2C%20latency%20hiding%20%D7%95%D7%97%D7%95%D7%A7%20Little%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="7.4 - Overhead, latency hiding וחוק Little - הרצאה - עמית טק" />
+<meta property="twitter:description" content="בשלושת השיעורים הקודמים של הפרק בנינו את התמונה הגדולה של ניתוח ביצועים. בשיעור 7.1 הגדרנו צוואר-בקבוק (bottleneck) ואת מודל ה-Roofline, בשיעור 7.2 הפרדנו..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.4%20-%20Overhead%2C%20latency%20hiding%20%D7%95%D7%97%D7%95%D7%A7%20Little/7.4%20-%20Overhead%2C%20latency%20hiding%20%D7%95%D7%97%D7%95%D7%A7%20Little%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-overhead" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              7.4 - Overhead, latency hiding וחוק Little - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_9" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_9" id="__nav_7_3_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    7   תיאוריית הביצועים
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.1   צווארי בקבוק ומודל Roofline
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.2%20-%20Compute-bound%2C%20memory-bound%20%D7%95-arithmetic%20intensity/7.2%20-%20Compute-bound%2C%20memory-bound%20%D7%95-arithmetic%20intensity%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.2   Compute bound, memory bound ו arithmetic intensity
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.3%20-%20%D7%A8%D7%95%D7%97%D7%91%D7%99%20%D7%A4%D7%A1%20%D7%95-peak%20rate/7.3%20-%20%D7%A8%D7%95%D7%97%D7%91%D7%99%20%D7%A4%D7%A1%20%D7%95-peak%20rate%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.3   רוחבי פס ו peak rate
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_9_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_9_4" id="__nav_7_3_9_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.4   Overhead, latency hiding וחוק Little
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_9_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_9_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    7.4   Overhead, latency hiding וחוק Little
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.4 - Overhead, latency hiding וחוק Little - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.4 - Overhead, latency hiding וחוק Little - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-overhead" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        התקורה - הצוואר השלישי - overhead
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-host-overhead" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תקורת המארח - host overhead
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-communication-overhead" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תקורת תקשורת - communication overhead
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#latency-latency-hiding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הסתרת latency - latency hiding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#little-littles-law" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חוק Little - Little's Law
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-latency-warps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מ-latency ל-מספר warps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#volkov-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        התוצאה של Volkov - זיכרון מול אריתמטיקה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-overhead-bound-compute-bound-memory-bound" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אבחון - overhead-bound מול compute-bound מול memory-bound
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-occupancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הגשר ל-occupancy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../7.4%20-%20Overhead%2C%20latency%20hiding%20%D7%95%D7%97%D7%95%D7%A7%20Little%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.4 - Overhead, latency hiding וחוק Little - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../7.4%20-%20Overhead%2C%20latency%20hiding%20%D7%95%D7%97%D7%95%D7%A7%20Little%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.4 - Overhead, latency hiding וחוק Little - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-overhead" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        התקורה - הצוואר השלישי - overhead
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-host-overhead" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תקורת המארח - host overhead
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-communication-overhead" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תקורת תקשורת - communication overhead
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#latency-latency-hiding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הסתרת latency - latency hiding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#little-littles-law" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חוק Little - Little's Law
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-latency-warps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מ-latency ל-מספר warps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#volkov-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        התוצאה של Volkov - זיכרון מול אריתמטיקה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-overhead-bound-compute-bound-memory-bound" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אבחון - overhead-bound מול compute-bound מול memory-bound
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-occupancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הגשר ל-occupancy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    7   תיאוריית הביצועים
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    7.4   Overhead, latency hiding וחוק Little
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>7.4 - Overhead, latency hiding וחוק Little - הרצאה</h1>
+
+<p>בשלושת השיעורים הקודמים של הפרק בנינו את התמונה הגדולה של ניתוח ביצועים. בשיעור 7.1 הגדרנו צוואר-בקבוק (bottleneck) ואת מודל ה-Roofline, בשיעור 7.2 הפרדנו בין kernel חסום-חישוב (compute-bound) לבין kernel חסום-זיכרון (memory-bound), ובשיעור 7.3 מדדנו את ה-arithmetic intensity (עצימות אריתמטית) שקובעת באיזה צד של נקודת-הרכס אנחנו יושבים. אבל שמנו לב לפרט מטריד: kernels אמיתיים כמעט אף פעם לא נוגעים בגג. הם יושבים מתחתיו, ומודל ה-Roofline - שמצייר רק רוחבי-פס ותפוקות - לא מסביר למה. הסיבה היא הקטגוריה השלישית של העבודה, זו שלא מופיעה על ה-Roofline כלל: תקורה (overhead). בשיעור הזה נשלים את המשולש. נגדיר תקורה כזמן שבו ה-GPU יושב בטל וממתין לעבודה, נבדיל אותה חדות מצוואר-בקבוק (שבו הוא עובד במלוא הכוח), ונכיר את שתי מקורות התקורה העיקריים - תקורת המארח (host, ה-CPU) ותקורת התקשורת. משם נעבור לצד השני של המטבע: הסתרת latency (latency hiding), המנגנון שבזכותו ה-GPU שומר על תפוקה גבוהה למרות ש-latency של פעולה בודדת ארוך מאוד, ולבסוף לחוק Little (Little's Law) - הנוסחה הכמותית שאומרת לנו בדיוק כמה מקביליות צריך כדי להסתיר את ה-latency הזה. חוק Little הוא היסוד התיאורטי ל-occupancy (תפוסה), שנקדיש לו את פרק 8 כולו.</p>
+<h2 id="-overhead">התקורה - הצוואר השלישי - overhead<a class="headerlink" href="#-overhead" title="Permanent link">&para;</a></h2>
+<p>ה-glossary מגדיר overhead במשפט אחד חד: <strong>הoverhead היא הזמן שמושקע בלי שנעשית עבודה שימושית.</strong> זו ההגדרה, וכל השאר נגזר ממנה. שימו לב להבחנה שהיא יוצרת מול שני הצווארים שכבר הכרנו. כש-kernel compute-bound, ה-GPU עובד <strong>במלוא המהירות</strong> - יחידות ה-CUDA Core וה-Tensor Core רוויות, פשוט אין להן יותר מה לתת. כש-kernel memory-bound, מערכת הזיכרון רוויה - ה-HBM מזרים בייטים בקצב המרבי שלו. בשני המקרים המשאב המגביל <strong>עובד קשה</strong>. הoverhead היא ההפך הגמור: ה-GPU <strong>יושב בטל</strong>, ממתין לקבל עבודה או ממתין לתלות שתיפתר. לא עבודה איטית - היעדר עבודה.</p>
+<p>זו בדיוק הסיבה שoverhead איננה מופיעה על ה-Roofline. ה-Roofline מציב שני גגות - רוחב-פס אריתמטי ורוחב-פס של הזיכרון - שניהם <strong>קצבים</strong> (throughput). הoverhead איננה קצב; היא <strong>latency</strong> של המתנה. שני צירי ה-Roofline (ops/byte ו-ops/s) פשוט לא יכולים לבטא אותה. לכן kernel חסום-תקורה (overhead-bound) יושב עמוק מתחת לשני הגגות: הוא לא נכשל כי החומרה איטית, אלא כי החומרה מבזבזת זמן בהמתנה. הדוגמה הקנונית של ה-glossary לעומס overhead-bound היא <strong>פעולות על מערכים קטנים</strong> - kernel שרץ מיקרו-שניות בודדות על הdevice, אבל עלה להost מיקרו-שניות בודדות רק כדי לdispatch אותו.</p>
+<p>נחלק את העבודה של כל kernel לשלוש קטגוריות (הפירוק המיוחס להרצאה של Horace He):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>   All kernel work breaks down into:
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>   ┌──────────────┬──────────────────────────────────────────┐
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>   │ Compute      │ floating-point operations on CUDA / Tensor Cores │ -&gt; compute-bound
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>   ├──────────────┼──────────────────────────────────────────┤
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>   │ Memory       │ moving data through the memory hierarchy   │ -&gt; memory-bound
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>   ├──────────────┼──────────────────────────────────────────┤
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>   │ Overhead     │ &quot;everything else&quot; - idle time, waiting, bookkeeping │ -&gt; overhead-bound
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>   └──────────────┴──────────────────────────────────────────┘
+</code></pre></div>
+<p>שלוש קטגוריות העבודה ממפות אחת-לאחת לשלושת סוגי הצווארים. את השניים הראשונים כיסינו בפרק. עכשיו התור של השלישי.</p>
+<h2 id="-host-overhead">תקורת המארח - host overhead<a class="headerlink" href="#-host-overhead" title="Permanent link">&para;</a></h2>
+<p>מקור הoverhead הראשון והנפוץ ביותר הוא <strong>host overhead</strong>: הזמן שה-CPU מבזבז כדי לגרום ל-GPU לעבוד. ה-glossary נותן את המספר המכונן: <strong>בערך 10 מיקרו-שניות של זמן CPU לכל launch kernel.</strong> כשאתם כותבים <code>myKernel&lt;&lt;&lt;grid, block&gt;&gt;&gt;(args)</code>, ה-<code>&lt;&lt;&lt; &gt;&gt;&gt;</code> הוא סוכר תחבירי שמתורגם לרצף קריאות אל ה-Runtime API (בעיקר <code>cudaLaunchKernel</code>, כפי שראינו בפרק 5). הרצף הזה עושה עבודת CPU אמיתית: אריזת הארגומנטים למערך, העתקת תצורת הlaunch (grid, block, shared memory, stream), ופנייה לדרייבר שכותב פקודה לתור החומרה. כל זה עולה בסדר גודל של יחידות מיקרו-שניות - גם אם ה-kernel עצמו רץ על הdevice במיקרו-שנייה אחת.</p>
+<p>וכשמעורב framework כמו PyTorch או TensorFlow, התמונה מחמירה: לפני הlaunch עצמה, ה-framework מבצע <strong>קבלת החלטות</strong> - איזה kernel לבחור, איזה dispatch לגזרת הטיפוס והצורה, בדיקות אוטו-גראד - וזה מוסיף <strong>מיקרו-שניות רבות</strong> נוספות על גבי ה-10 של ה-API. הoverhead של השכבה הפייתונית לבדה עלולה להיות גדולה מזמן הlaunch של CUDA.</p>
+<p>כל עוד ה-kernels גדולים - רצים מילישניות שלמות - הoverhead זניחה. הבעיה מתלקחת כשה-kernels <strong>קטנים ורבים</strong>. נעשה חשבון על צעד decode יחיד של מודל שפה בסגנון Transformer, בן 32 שכבות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>   per layer, roughly: QKV projection, RoPE, attention, output
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>   projection, two GEMMs for the MLP, two normalizations, and more
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>   -&gt;  roughly 15 kernels per layer
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>   32 layers x ~15 kernels   ≈   480 launches per token
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>   480 launches x ~5 microseconds ≈   2.4 milliseconds of CPU overhead alone
+</code></pre></div>
+<p>אם יעד ה-latency הוא 10 מילישניות לטוקן, אז 2.4 מילישניות נשרפים בoverhead לפני שה-GPU חישב ביט אחד - כמעט רבע מהתקציב. וגרוע מכך: אם ה-kernels קצרים מהזמן שלוקח להost לdispatch את הבא בתור, ה-GPU <strong>מורעב</strong> (starved) - מסיים את ה-kernel הנוכחי ויושב בטל בזמן שה-CPU עדיין טורח על הlaunch הבאה. זהו בדיוק המצב הoverhead-bound: לא חישוב איטי ולא זיכרון איטי, אלא host שלא מספיק להזין את הdevice.</p>
+<p><strong>כיצד מקטינים host overhead.</strong> האסטרטגיה הכללית אחת: לשלם את מחיר הlaunch <strong>פחות פעמים</strong>, על עבודה <strong>גדולה יותר</strong>. ארבע הגרסאות המעשיות:</p>
+<ul>
+<li><strong>גרפים - CUDA Graphs.</strong> לוכדים DAG שלם של launches ומגישים אותו בקריאת host אחת שאפשר להריץ מחדש (replay) בזול. זו התרופה הישירה, והקדשנו לה את שיעור 5.5. במקום 480 launches לטוקן - <code>cudaGraphLaunch</code> אחד.</li>
+<li><strong>מיזוג - fusion.</strong> מאחדים כמה פעולות ל-kernel אחד (למשל bias + activation + dropout ל-kernel יחיד). פחות kernels = פחות launches = פחות overhead, וגם פחות תעבורת זיכרון (שיעור 7.3).</li>
+<li><strong>קיבוץ - batching.</strong> משגרים kernel אחד שמעבד batch גדול במקום הרבה kernels קטנים. אותו מספר launches פורש על יותר עבודה - הoverhead לlaunch נשארת אבל חלקה היחסי בזמן צונח.</li>
+<li><strong>פחות launches, גדולות יותר.</strong> העיקרון שמאחד את כולן: כל טריק שמוריד את מספר הlaunches או מגדיל את העבודה לכל launch מקטין את חלק הoverhead.</li>
+</ul>
+<h2 id="-communication-overhead">תקורת תקשורת - communication overhead<a class="headerlink" href="#-communication-overhead" title="Permanent link">&para;</a></h2>
+<p>מקור הoverhead השני הוא <strong>תקשורת</strong>: זמן ההשהיה בהזזת נתונים בין CPU ל-GPU, או בין GPU ל-GPU. כשמעתיקים נתונים על-פני ה-PCIe בין הhost להdevice, או על-פני NVLink בין שני GPUs, אנחנו מוציאים זמן על תנועת נתונים, לא על חישוב. ה-glossary נותן מסגור מדויק ורב-עוצמה לזה: <strong>כשרוחב-הפס של התקשורת מגביל את הביצועים, יש להתייחס לזה כאל צורה של חסימת-זיכרון (memory-boundedness) על-פני מערכת מבוזרת.</strong> במילים אחרות, אותו ניתוח Roofline שלמדנו למערכת בודדת חל גם על אשכול (cluster) שלם: ה"זיכרון" הוא הצומת המרוחק, ורוחב-הפס של הרשת (NVLink, InfiniBand) הוא הגג המשופע.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>   the &quot;bandwidth&quot; hierarchy - from fastest to slowest:
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>   register file  &lt;-&gt; SM         : ~tens of TB/s     (inside the SM)
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>   HBM3           &lt;-&gt; SM         : ~3.35 TB/s        (H100, global memory)
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>   NVLink         GPU &lt;-&gt; GPU    : ~hundreds of GB/s  (within a node)
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>   PCIe Gen5      CPU &lt;-&gt; GPU    : ~64 GB/s           (host-device)
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>   InfiniBand     node &lt;-&gt; node  : ~tens of GB/s      (between machines)
+</code></pre></div>
+<p>ככל שיורדים בהיררכיה רוחב-הפס צונח בסדרי גודל. לכן העברה של tensor על-פני PCIe או על-פני הרשת עלולה בקלות להפוך לצוואר-הבקבוק של אימון או inference מבוזר - וזו הסיבה שספריות כמו NCCL מתאמצות כל-כך לחפוף תקשורת עם חישוב. התרופות דומות לhost overhead בעיקרון: <strong>פחות העברות, גדולות יותר</strong> (איחוד הודעות קטנות לגדולה), חפיפה של תקשורת עם חישוב (streams, שיעור 5.3), והשארת נתונים על הdevice ככל האפשר במקום הלוך-ושוב אל הhost.</p>
+<h2 id="latency-latency-hiding">הסתרת latency - latency hiding<a class="headerlink" href="#latency-latency-hiding" title="Permanent link">&para;</a></h2>
+<p>עד כאן דיברנו על overhead שנוצרת מחוץ ל-GPU (הhost, הרשת). אבל יש latency גם <strong>בתוך</strong> ה-GPU: פקודת load מהזיכרון הגלובלי לוקחת מאות מחזורי-שעון, ואפילו פקודות אריתמטיות לוקחות כמה מחזורים. אם ה-GPU היה עוצר ומחכה לכל load, הוא היה בטל רוב הזמן. הפתרון הוא <strong>הסתרת latency</strong>: אסטרטגיה למסך פעולות ארוכות-latency על-ידי הרצת רבות מהן במקביל. זהו הרעיון המכונן של ארכיטקטורת ה-GPU, ובו נגענו כבר בשיעור 1.4 כשהכרנו את ה-warp scheduler.</p>
+<p>התובנה המרכזית, שה-glossary מנסח בחדות: <strong>warps, לא threads, הם יחידת ההנפקה של פקודות.</strong> ("Threads are not the unit of instruction issuance, warps are.") ה-warp scheduler שומר על מאגר גדול של warps תושבים (resident) על ה-SM, ובכל מחזור בוחר warp אחד <strong>כשיר</strong> (eligible) ומנפיק לו פקודה. כשה-warp הזה נתקע (stalled) בהמתנה ל-load, המתזמן פשוט מנפיק מ-warp כשיר <strong>אחר</strong>. מיתוג ההקשר הזה כמעט חינמי - מצב האוגרים של כל warp נשאר תושב בקובץ-האוגרים של ה-SM, ולכן החלפת warp עולה בערך מחזור-שעון אחד (זה בדיוק המספר שראינו ל-H100 בשיעור 1.2). בזמן שה-load של warp אחד "בטיסה", המתזמן ממלא את החורים בעבודה של warps אחרים. ה-latency של ה-load הבודד נשאר ארוך - אבל הוא <strong>מוסתר</strong> מאחורי עבודה מועילה.</p>
+<p>יש עוד ממד להסתרה: <strong>warps שונים יכולים לתפוס pipes שונים בו-זמנית.</strong> ב-H100 יש בכל SM ארבעה warp schedulers, וכל אחד שולט על pipelines שונות: Tensor Core, CUDA Core (FP32/INT32), ו-LSU (load/store unit). בזמן ש-warp אחד מריץ כפל-מטריצות על ה-Tensor Cores, warp שני מריץ אריתמטיקה על ה-CUDA Cores, ו-warp שלישי מושך נתונים דרך ה-LSU - כל השלושה חופפים ומסתירים זה את ה-latency של זה. זו הקבלה ל-SMT (Simultaneous Multi-Threading) של מעבדים, רק בקנה-מידה גדול בהרבה: במקום 2 threads לליבה, עשרות warps ל-SM.</p>
+<p>נראה זאת על SASS קונקרטי - שרשרת תלויה של פקודות (כל אחת תלויה בתוצאה של קודמתה), עם ה-latency האופייני של כל פקודה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nf">LDG.E.SYS</span><span class="w"> </span><span class="no">R1</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="no">R0</span><span class="p">]</span><span class="w">        </span><span class="c1">// load from global memory, ~400 cycles</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nf">IMUL</span><span class="w">      </span><span class="no">R2</span><span class="p">,</span><span class="w"> </span><span class="no">R1</span><span class="p">,</span><span class="w"> </span><span class="mi">0xBEEF</span><span class="w">  </span><span class="c1">// integer multiply, ~6 cycles   (depends on R1)</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nf">IADD</span><span class="w">      </span><span class="no">R4</span><span class="p">,</span><span class="w"> </span><span class="no">R2</span><span class="p">,</span><span class="w"> </span><span class="mi">0xAFFE</span><span class="w">  </span><span class="c1">// integer add, ~4 cycles   (depends on R2)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="nf">IMUL</span><span class="w">      </span><span class="no">R6</span><span class="p">,</span><span class="w"> </span><span class="no">R4</span><span class="p">,</span><span class="w"> </span><span class="mi">0x1337</span><span class="w">  </span><span class="c1">// integer multiply, ~6 cycles   (depends on R4)</span>
+</code></pre></div>
+<p>מכיוון שכל פקודה תלויה בקודמתה, warp <strong>בודד</strong> חייב לעצור לאורך כל שרשרת ה-latency: <code>400 + 6 + 4 + 6 = 416</code> מחזורים שבהם הוא לא יכול להתקדם. אם רק ה-warp הזה רץ על ה-SM, יחידות הביצוע יושבות בטל 416 מחזורים - בזבוז מוחלט. הדרך היחידה למלא את החור היא <strong>warps רבים ובלתי-תלויים</strong>: בעוד ה-warp הראשון תקוע על ה-load, warps אחרים מנפיקים את הפקודות שלהם. כמה warps צריך בדיוק? לזה בדיוק נועד חוק Little.</p>
+<h2 id="little-littles-law">חוק Little - Little's Law<a class="headerlink" href="#little-littles-law" title="Permanent link">&para;</a></h2>
+<p>חוק Little הוא, בלשון ה-glossary, "החשוב שבחוקים הבסיסיים" של ניתוח מערכות כמותי. הוא קובע את <strong>כמות המקביליות הדרושה כדי להסתיר latency במלואו באמצעות throughput.</strong> הנוסחה פשוטה להפליא:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>   concurrency (ops)  =  latency (s)  x  throughput (ops/s)
+</code></pre></div>
+<p>שלושת המרכיבים:</p>
+<ul>
+<li><strong>מקביליות - concurrency</strong> - מספר הפעולות שחייבות להיות "בטיסה" (in flight) בו-זמנית.</li>
+<li><strong>השהיה - latency</strong> - זמן ההשהיה של פעולה בודדת, בשניות (או במחזורים).</li>
+<li><strong>תפוקה - throughput</strong> - מספר הפעולות שמושלמות בשנייה (הקצב שאתם רוצים לקיים).</li>
+</ul>
+<p>זו בדיוק צורת ההנדסה-מערכתית של תוצאת התורים הקלאסית <code>L = λW</code>: ה-concurrency הוא <code>L</code> (מספר הפריטים במערכת), ה-throughput הוא <code>λ</code> (קצב ההגעה), וה-latency הוא <code>W</code> (זמן השהייה). האינטואיציה: אם כל פעולה שוהה <code>W</code> שניות, ואתם רוצים להשלים <code>λ</code> פעולות בשנייה, אז בכל רגע נתון יש <code>λ·W</code> פעולות "תלויות באוויר" בו-זמנית. אם אין לכם מספיק פעולות בטיסה - הpipe מתרוקן וה-throughput צונח מתחת ל-λ.</p>
+<p>נציב את המספרים של ה-glossary. נניח שאנחנו רוצים לקיים throughput של <strong>פקודה אחת למחזור</strong>, וה-latency של גישה לזיכרון הוא <strong>400 מחזורים</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>   concurrency = latency x throughput
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>               = 400 cycles x 1 operation/cycle
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>               = 400 operations in flight
+</code></pre></div>
+<p>צריך 400 פעולות זיכרון בטיסה בו-זמנית כדי לשמור על יחידת הביצוע עסוקה כל מחזור. עכשיו נניח שהחומרה מהירה יותר ומסוגלת ל-<strong>10 פקודות למחזור</strong> (אותו latency של 400):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>   concurrency = 400 cycles x 10 operations/cycle
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>               = 4,000 operations in flight
+</code></pre></div>
+<p>זו התובנה החדה של חוק Little: <strong>throughput גבוה יותר דורש מקביליות גבוהה יותר, באופן פרופורציוני, כדי להישאר מוסתר-latency.</strong> ככל שהחומרה מהירה יותר, כך צריך יותר עבודה מקבילה "באוויר" רק כדי להזין אותה. זה מסביר מדוע GPUs, שהם מכונות throughput קיצוניות, זקוקים לכל-כך הרבה threads: לא כי כל thread מהיר, אלא כי צריך המון מהם בטיסה כדי להסתיר את ה-latency ולשמור על הקצב.</p>
+<h2 id="-latency-warps">מ-latency ל-מספר warps<a class="headerlink" href="#-latency-warps" title="Permanent link">&para;</a></h2>
+<p>חוק Little נותן concurrency במונחי "פעולות". אבל ראינו שיחידת ההנפקה היא ה-warp, לא ה-thread הבודד. אז נמיר: ה-warp מנפיק פקודה עבור 32 threads יחד, ולכן כדי לתרגם "פעולות בטיסה" ל"מספר warps", מחלקים ברוחב ה-warp - 32. נחזור לשרשרת ה-416 המחזורים מהסעיף הקודם. כלל-האצבע של ה-glossary:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>   warps to hide  ≈  latency (cycles) / warp width
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>                 =  416 / 32
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>                 ≈  13 warps
+</code></pre></div>
+<p>צריך בערך <strong>13 warps</strong> בלתי-תלויים שרצים במקביל כדי להסתיר לגמרי את שרשרת ה-416 מחזורים. הרעיון: כשה-warp הראשון תקוע על ה-load שלו, 12 ה-warps האחרים מנפיקים את הפקודות שלהם ומכסים את החור, כך שבכל מחזור לפחות warp אחד כשיר להנפיק. שימו לב שהמספר הזה עקבי עם דוגמת חוק Little: <code>400</code> פעולות-thread בטיסה חלקי <code>32</code> threads ל-warp נותן <code>~12.5 ≈ 13</code> warps. שתי הזוויות - הפעולות בטיסה ומספר ה-warps - הן אותו חשבון בדיוק, רק ביחידות שונות.</p>
+<p>והנה החיבור ל-occupancy, שנקדיש לו את פרק 8: 13 warps מתוך המקסימום של 64 warps ל-SM ב-H100 הם occupancy של בערך <code>13/64 ≈ 20%</code>. כלומר, כבר ב-occupancy צנוע של כ-20% אנחנו מסתירים במלואה שרשרת load אופיינית. זו נקודה קריטית שנחזור אליה: <strong>לא תמיד צריך occupancy גבוה</strong> - צריך רק <strong>מספיק</strong> כדי להסתיר את ה-latency שבפועל. מעבר לזה, occupancy נוסף לא קונה כלום (ולפעמים אף מזיק, כי הוא מקטין את מספר האוגרים ל-thread). את הדקות הזו נפרוט בשיעור 8.1.</p>
+<p>מלכודת נפוצה: החישוב <code>latency / 32</code> מניח ששרשרת התלות מכריחה כל warp להחזיק פקודה אחת בטיסה בכל רגע. אם הקוד שלכם דווקא <strong>חושף מקביליות ברמת הפקודה</strong> (ILP) - למשל כמה loads בלתי-תלויים ברצף באותו warp - אז warp בודד יכול להחזיק כמה פעולות בטיסה, וצריך פחות warps כדי להגיע לאותו concurrency. ILP ו-occupancy הם שני מנופים חלופיים לאותו יעד: להחזיק מספיק פעולות בטיסה.</p>
+<h2 id="volkov-">התוצאה של Volkov - זיכרון מול אריתמטיקה<a class="headerlink" href="#volkov-" title="Permanent link">&para;</a></h2>
+<p>עכשיו לתוצאה הכי לא-אינטואיטיבית, וגם היפה ביותר, בכל השיעור. ה-glossary מפנה לסעיף 4.3 בתזה של Vasily Volkov, שמדד ניסויית כמה warps צריך כדי להסתיר latency. הציפייה הטבעית: latency של זיכרון ארוך <strong>בהרבה</strong> מ-latency אריתמטי (מאות מחזורים מול יחידות בודדות), אז ודאי שצריך הרבה יותר warps כדי להסתיר זיכרון. התוצאה הפתיעה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>   to hide pure arithmetic latency    :  ~24 warps
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>   to hide pure memory latency        :  ~30 warps
+</code></pre></div>
+<p>כמעט אותו מספר. איך ייתכן, אם ה-latency של הזיכרון גדול פי כמה? התשובה היא בדיוק חוק Little: <code>concurrency = latency x throughput</code>, ושני הגורמים מתקזזים.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>   arithmetic:  low latency    x  high throughput  =  moderate concurrency
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>   memory:      high latency   x  low throughput   =  moderate concurrency
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>                    │                   │
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>                    └── several times larger   └── several times smaller  -&gt;  the product is similar
+</code></pre></div>
+<p>לאריתמטיקה יש <strong>latency נמוך אבל throughput גבוה</strong> (ה-CUDA Cores/Tensor Cores מסוגלים להמון פעולות למחזור, כפי שראינו ב-arithmetic bandwidth). לזיכרון יש <strong>latency גבוה אבל throughput נמוך</strong> (רוחב-הפס של ה-HBM נמוך בהרבה מרוחב-הפס האריתמטי - זה בדיוק ה"קיר הזיכרון" מ-7.1, והיחס Tensor Core:CUDA Core של בערך 100:1). בחוק Little, ה-concurrency הוא ה<strong>מכפלה</strong> של השניים. הזיכרון מפצה את ה-latency הגדול שלו ב-throughput קטן, והאריתמטיקה מפצה את ה-throughput הגדול שלה ב-latency קטן - והמכפלות יוצאות דומות. לכן מספר ה-warps הדרוש להסתרה דומה.</p>
+<p>זו לא מקריות - זו תכונה <strong>שימושית</strong> של מכונת latency-hiding. מכיוון שאותו מספר warps מסתיר גם latency אריתמטי וגם latency של זיכרון, אותה תצורת occupancy מסתירה עומס <strong>מעורב</strong> של אריתמטיקה וזיכרון - שזה בדיוק מה שרוב ה-kernels האמיתיים עושים. ה-GPU מתוכנן כך שהמאזן הזה יעבוד עבורכם.</p>
+<h2 id="-overhead-bound-compute-bound-memory-bound">אבחון - overhead-bound מול compute-bound מול memory-bound<a class="headerlink" href="#-overhead-bound-compute-bound-memory-bound" title="Permanent link">&para;</a></h2>
+<p>לפני שנסגור, נחבר את שלוש קטגוריות הצוואר לכדי טבלת-אבחון מעשית. כשאתם ניגשים ל-kernel איטי, השאלה הראשונה היא "באיזה צוואר אני". שלושת הסימנים המבחינים:</p>
+<table>
+<thead>
+<tr>
+<th>מאפיין</th>
+<th>compute-bound</th>
+<th>memory-bound</th>
+<th>overhead-bound</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>מה המשאב המגביל</td>
+<td>רוחב-פס אריתמטי</td>
+<td>רוחב-פס הזיכרון</td>
+<td>latency / המתנה</td>
+</tr>
+<tr>
+<td>מצב יחידות הביצוע</td>
+<td>רוויות, עובדות מלא</td>
+<td>ממתינות לזיכרון</td>
+<td><strong>בטלות</strong>, אין עבודה</td>
+</tr>
+<tr>
+<td>מופיע על ה-Roofline</td>
+<td>כן (מתחת לגג האופקי)</td>
+<td>כן (מתחת לגג המשופע)</td>
+<td><strong>לא</strong> (Roofline לא רואה latency)</td>
+</tr>
+<tr>
+<td>מדד ncu מרכזי</td>
+<td>Compute (SM) Throughput גבוה</td>
+<td>Memory Throughput גבוה</td>
+<td><strong>שניהם נמוכים</strong></td>
+</tr>
+<tr>
+<td>מה מזיז את המחט</td>
+<td>Tensor Cores, precision נמוך</td>
+<td>coalescing, reuse, קיטול</td>
+<td>גרפים, מיזוג, קיבוץ, occupancy</td>
+</tr>
+<tr>
+<td>דוגמה</td>
+<td>GEMM גדול</td>
+<td>כפל וקטור-וקטור</td>
+<td>פעולות על מערכים קטנים</td>
+</tr>
+</tbody>
+</table>
+<p>השורה שמסגירה overhead-boundedness: <strong>גם ה-Compute Throughput וגם ה-Memory Throughput נמוכים בו-זמנית.</strong> אם שני המדדים למטה, החומרה לא עובדת קשה על שום דבר - היא בטלה. זה בדיוק ההפך משני הצווארים האחרים, שבהם לפחות משאב אחד רווי. בדיוק כפי שראינו, ה-Roofline לא יעזור לכם כאן - הוא מראה רק כמה קרובים לגג, וכשאתם overhead-bound אתם רחוקים משני הגגות בגלל סיבה שהוא לא מודד.</p>
+<p>נחבר את זה למספרים הקונקרטיים של ה-H100 ולחוק Little. ל-H100 יש 132 SMs, ובכל SM ארבעה warp schedulers שכל אחד מנפיק עד פקודה אחת למחזור:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>   maximum issue rate, H100 @ 1.98 GHz:
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>   132 SMs x 4 schedulers x 1 instruction/cycle x 1.98e9 cycles/second
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>       ≈  1.05 x 10^12 instructions/second   (roughly a trillion instructions per second)
+</code></pre></div>
+<p>זהו throughput אדיר, ולפי חוק Little הוא בדיוק מה שמכריח מקביליות עצומה: כדי להזין קצב הנפקה כזה למרות latency של מאות מחזורים, צריך עשרות אלפי threads בטיסה בו-זמנית על פני כל ה-GPU. ברמת ה-SM הבודד: 4 schedulers שמנפיקים למרות latency של ~400 מחזורים דורשים בערך <code>4 x 400 = 1600</code> פעולות-thread בטיסה, שהן <code>1600/32 = 50</code> warps - קרוב מאוד למקסימום של 64 warps ל-SM. זו הסיבה ש-H100 תוכנן עם 64 warps תושבים ל-SM מלכתחילה: המספר נגזר ישירות מחוק Little, כדי שיהיה מספיק חומר להסתיר את ה-latency ולהזין את קצב ההנפקה.</p>
+<h2 id="-occupancy">הגשר ל-occupancy<a class="headerlink" href="#-occupancy" title="Permanent link">&para;</a></h2>
+<p>נחבר את הכל לפני שנסכם. הoverhead היא הצוואר השלישי - ה-GPU בטל, ממתין לעבודה. חלק מה-latency שגורם לבטלה הזו מגיע מבחוץ (הhost, הרשת), ואת זה מתקנים עם גרפים, מיזוג וקיבוץ. אבל חלק גדול מה-latency הוא פנימי - loads מהזיכרון, שרשראות תלות - ואת זה מסתירים עם <strong>מקביליות</strong>. חוק Little הוא הכלי שמכמת בדיוק כמה מקביליות צריך: <code>concurrency = latency x throughput</code>, ובמונחי warps, <code>בערך latency/32</code>. אם יש לכם מספיק warps תושבים - ה-latency מוסתר וה-throughput נשמר. אם אין מספיק - ה-warp scheduler נשאר בלי warp כשיר להנפיק, יחידות הביצוע יושבות בטל, וה-latency הפנימי מתגלה כoverhead גלויה שמורידה אתכם מתחת ל-Roofline.</p>
+<p>וכאן בדיוק מתחיל פרק 8. השאלה "כמה warps תושבים יש לי בפועל על ה-SM" היא בדיוק ההגדרה של <strong>occupancy</strong>, וכמה משאבים (אוגרים, shared memory) כל block צורך קובע כמה warps נכנסים. חוק Little אומר <strong>כמה warps צריך</strong>; occupancy אומר <strong>כמה warps יש</strong>. בשיעור 8.1 נחשב occupancy תיאורטי מתצורת הlaunch ומגבלות ה-H100, ונראה מדוע - כפי שכבר רמזנו - יותר occupancy הוא לא תמיד טוב יותר: צריך רק <strong>מספיק</strong> כדי לספק את חוק Little, לא יותר.</p>
+<h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>תקורה (overhead) היא הזמן שבו ה-GPU יושב בטל וממתין לעבודה, בניגוד לצוואר-בקבוק (compute-bound או memory-bound) שבו המשאב המגביל עובד במלוא הכוח; זו הקטגוריה השלישית של העבודה (Compute / Memory / Overhead).</li>
+<li>הoverhead איננה מופיעה על ה-Roofline, כי ה-Roofline מצייר רק רוחבי-פס ותפוקות ולא latency של המתנה; לכן kernel overhead-bound יושב עמוק מתחת לשני הגגות.</li>
+<li>הhost overhead היא בערך 10 מיקרו-שניות לכל launch kernel (וה-framework מוסיף עוד מיקרו-שניות רבות של dispatch); היא הופכת דומיננטית כשמשגרים הרבה kernels קטנים, כמו כ-480 launches לטוקן ב-decode של LLM.</li>
+<li>מקטינים host overhead על-ידי פחות launches גדולות יותר: גרפי CUDA (שיעור 5.5), מיזוג (fusion), וקיבוץ (batching).</li>
+<li>הoverhead תקשורת (CPU-GPU על PCIe, GPU-GPU על NVLink) היא צורה של memory-boundedness על-פני מערכת מבוזרת: אותו ניתוח Roofline חל, כשרוחב-פס הרשת הוא הגג המשופע.</li>
+<li>הסתרת latency (latency hiding) שומרת על throughput גבוה למרות latency ארוך של פעולה בודדת, על-ידי שזירת warps רבים: כש-warp נתקע, ה-scheduler מנפיק מ-warp כשיר אחר, ומיתוג ה-warp עולה בערך מחזור אחד; warps, לא threads, הם יחידת ההנפקה.</li>
+<li>קבוצות warps שונות יכולות לתפוס pipes שונים בו-זמנית (Tensor Core, CUDA Core, LSU), כך שכל אחד מסתיר את ה-latency של האחרים - הקבלה ל-SMT בקנה-מידה גדול.</li>
+<li>חוק Little קובע <code>concurrency = latency x throughput</code>: latency של 400 מחזורים ב-throughput של פקודה למחזור דורש 400 פעולות בטיסה; ב-10 פקודות למחזור - 4,000. throughput גבוה יותר דורש מקביליות גבוהה יותר באופן פרופורציוני.</li>
+<li>ממירים latency למספר warps בחלוקה ברוחב ה-warp: שרשרת תלויה של 416 מחזורים דורשת בערך <code>416/32 ≈ 13</code> warps להסתרה מלאה (occupancy של כ-20% ב-H100); ILP הוא מנוף חלופי שמפחית את מספר ה-warps הדרוש.</li>
+<li>תוצאת Volkov: צריך בערך 30 warps להסתיר latency של זיכרון מול בערך 24 להסתיר latency אריתמטי - דומה, למרות ש-latency הזיכרון גדול בהרבה, כי לזיכרון latency גבוה אך throughput נמוך ולאריתמטיקה להפך, והמכפלה (concurrency) יוצאת דומה.</li>
+<li>חוק Little הוא היסוד התיאורטי ל-occupancy: הוא אומר כמה warps צריך כדי להסתיר את ה-latency; פרק 8 יראה כמה warps תושבים יש בפועל, ומדוע צריך רק מספיק ולא יותר.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

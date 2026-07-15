@@ -1,0 +1,3067 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="זהו פרויקט הגמר (capstone) של הקורס - הוא מגלם בקוד אחד את כל מה שלמדנו. בפרויקט 3.5 טיפסנו את שלושת השלבים הראשונים של סולם ה-GEMM: naive, ואז coalesced...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.3%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%99%D7%AA%20GEMM%20%D7%A6%D7%A2%D7%93%20%D7%90%D7%97%D7%A8%20%D7%A6%D7%A2%D7%93/9.3%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%99%D7%AA%20GEMM%20%D7%A6%D7%A2%D7%93%20%D7%90%D7%97%D7%A8%20%D7%A6%D7%A2%D7%93%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/">
+      
+      
+        <link rel="prev" href="../../9.2%20-%20%D7%9E%D7%AA%D7%95%D7%93%D7%95%D7%9C%D7%95%D7%92%D7%99%D7%99%D7%AA%20%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94%20%D7%9E%D7%A7%D7%A6%D7%94%20%D7%9C%D7%A7%D7%A6%D7%94/9.2%20-%20%D7%9E%D7%AA%D7%95%D7%93%D7%95%D7%9C%D7%95%D7%92%D7%99%D7%99%D7%AA%20%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94%20%D7%9E%D7%A7%D7%A6%D7%94%20%D7%9C%D7%A7%D7%A6%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="next" href="../../9.4%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20reduction%2C%20scan%20%D7%95-softmax/9.4%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20reduction%2C%20scan%20%D7%95-softmax%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>9.3 - פרויקט - אופטימיזציית GEMM צעד אחר צעד - פרויקט - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "9.3 - \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8 - \u05d0\u05d5\u05e4\u05d8\u05d9\u05de\u05d9\u05d6\u05e6\u05d9\u05d9\u05ea GEMM \u05e6\u05e2\u05d3 \u05d0\u05d7\u05e8 \u05e6\u05e2\u05d3 - \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.3%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%99%D7%AA%20GEMM%20%D7%A6%D7%A2%D7%93%20%D7%90%D7%97%D7%A8%20%D7%A6%D7%A2%D7%93/9.3%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%99%D7%AA%20GEMM%20%D7%A6%D7%A2%D7%93%20%D7%90%D7%97%D7%A8%20%D7%A6%D7%A2%D7%93%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="9.3 - פרויקט - אופטימיזציית GEMM צעד אחר צעד - פרויקט - עמית טק" />
+<meta property="og:description" content="זהו פרויקט הגמר (capstone) של הקורס - הוא מגלם בקוד אחד את כל מה שלמדנו. בפרויקט 3.5 טיפסנו את שלושת השלבים הראשונים של סולם ה-GEMM: naive, ואז coalesced..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.3%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%99%D7%AA%20GEMM%20%D7%A6%D7%A2%D7%93%20%D7%90%D7%97%D7%A8%20%D7%A6%D7%A2%D7%93/9.3%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%99%D7%AA%20GEMM%20%D7%A6%D7%A2%D7%93%20%D7%90%D7%97%D7%A8%20%D7%A6%D7%A2%D7%93%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.3%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%99%D7%AA%20GEMM%20%D7%A6%D7%A2%D7%93%20%D7%90%D7%97%D7%A8%20%D7%A6%D7%A2%D7%93/9.3%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%99%D7%AA%20GEMM%20%D7%A6%D7%A2%D7%93%20%D7%90%D7%97%D7%A8%20%D7%A6%D7%A2%D7%93%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="9.3 - פרויקט - אופטימיזציית GEMM צעד אחר צעד - פרויקט - עמית טק" />
+<meta property="twitter:description" content="זהו פרויקט הגמר (capstone) של הקורס - הוא מגלם בקוד אחד את כל מה שלמדנו. בפרויקט 3.5 טיפסנו את שלושת השלבים הראשונים של סולם ה-GEMM: naive, ואז coalesced..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.3%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%99%D7%AA%20GEMM%20%D7%A6%D7%A2%D7%93%20%D7%90%D7%97%D7%A8%20%D7%A6%D7%A2%D7%93/9.3%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%99%D7%AA%20GEMM%20%D7%A6%D7%A2%D7%93%20%D7%90%D7%97%D7%A8%20%D7%A6%D7%A2%D7%93%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-gemm" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              9.3 - פרויקט - אופטימיזציית GEMM צעד אחר צעד - פרויקט
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_11" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_11" id="__nav_7_3_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_11_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    9   פרופיילינג ופרויקטים
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9.1   פרופיילינג   Nsight Systems ו Nsight Compute
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../9.2%20-%20%D7%9E%D7%AA%D7%95%D7%93%D7%95%D7%9C%D7%95%D7%92%D7%99%D7%99%D7%AA%20%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94%20%D7%9E%D7%A7%D7%A6%D7%94%20%D7%9C%D7%A7%D7%A6%D7%94/9.2%20-%20%D7%9E%D7%AA%D7%95%D7%93%D7%95%D7%9C%D7%95%D7%92%D7%99%D7%99%D7%AA%20%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94%20%D7%9E%D7%A7%D7%A6%D7%94%20%D7%9C%D7%A7%D7%A6%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9.2   מתודולוגיית אופטימיזציה מקצה לקצה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_11_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_11_3" id="__nav_7_3_11_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9.3   פרויקט   אופטימיזציית GEMM צעד אחר צעד
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_11_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_11_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    9.3   פרויקט   אופטימיזציית GEMM צעד אחר צעד
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9.3 - פרויקט - אופטימיזציית GEMM צעד אחר צעד - פרויקט
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9.3 - פרויקט - אופטימיזציית GEMM צעד אחר צעד - פרויקט
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-gemm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פרויקט - אופטימיזציית GEMM צעד אחר צעד
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="פרויקט - אופטימיזציית GEMM צעד אחר צעד">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-the-full-gemm-ladder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מפת הסולם המלא - the full GEMM ladder
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-scaffolding-and-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        התשתית והמדדים - scaffolding and metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1-3-ncu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלבים 1-3 - סיכום מהיר עם ncu
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-register-tiling-1d-blocktiling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 4א - register tiling חד-ממדי - 1D blocktiling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-register-tiling-2d-blocktiling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 4ב - register tiling דו-ממדי - 2D blocktiling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-tensor-cores-the-wmma-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 5 - שבירת התקרה עם Tensor Cores - the wmma API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-tensor-cores-cublasgemmex" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        התקרה של ה-Tensor Cores - cublasGemmEx
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-the-full-results-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        טבלת התוצאות המלאה - the full results table
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-acceptance-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קריטריוני קבלה - acceptance criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-what-comes-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        לאן ממשיכים - what comes next
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../9.4%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20reduction%2C%20scan%20%D7%95-softmax/9.4%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20reduction%2C%20scan%20%D7%95-softmax%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9.4   פרויקט   reduction, scan ו softmax
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-gemm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פרויקט - אופטימיזציית GEMM צעד אחר צעד
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="פרויקט - אופטימיזציית GEMM צעד אחר צעד">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-the-full-gemm-ladder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מפת הסולם המלא - the full GEMM ladder
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-scaffolding-and-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        התשתית והמדדים - scaffolding and metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1-3-ncu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלבים 1-3 - סיכום מהיר עם ncu
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-register-tiling-1d-blocktiling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 4א - register tiling חד-ממדי - 1D blocktiling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-register-tiling-2d-blocktiling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 4ב - register tiling דו-ממדי - 2D blocktiling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-tensor-cores-the-wmma-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 5 - שבירת התקרה עם Tensor Cores - the wmma API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-tensor-cores-cublasgemmex" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        התקרה של ה-Tensor Cores - cublasGemmEx
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-the-full-results-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        טבלת התוצאות המלאה - the full results table
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-acceptance-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קריטריוני קבלה - acceptance criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-what-comes-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        לאן ממשיכים - what comes next
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    9   פרופיילינג ופרויקטים
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    9.3   פרויקט   אופטימיזציית GEMM צעד אחר צעד
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>9.3 - פרויקט - אופטימיזציית GEMM צעד אחר צעד - פרויקט</h1>
+
+<h2 id="-gemm">פרויקט - אופטימיזציית GEMM צעד אחר צעד<a class="headerlink" href="#-gemm" title="Permanent link">&para;</a></h2>
+<p>זהו פרויקט הגמר (capstone) של הקורס - הוא מגלם בקוד אחד את כל מה שלמדנו. בפרויקט 3.5 טיפסנו את שלושת השלבים הראשונים של סולם ה-GEMM: naive, ואז coalesced (איחוד גישות), ואז tiled עם shared memory (זיכרון משותף), והגענו לכ-26% מה-peak של ה-H100 ל-FP32, מול cuBLAS שיושבת על 86%. מאז למדנו את התיאוריה שמסבירה למה כל קפיצה קרתה: מודל ה-Roofline והנקודה שבה עוברים מ-memory-bound ל-compute-bound (פרק 7), את ה-occupancy, ה-pipe utilization וה-register pressure (פרק 8), ואת ה-Tensor Cores (ליבות טנזור) שבהן מרוכז רוב רוחב הפס האריתמטי של החומרה המודרנית (פרק 6). ובשיעור 9.1 קיבלנו את הכלי שסוגר את הלולאה: <strong>NSight Compute (ncu)</strong>, פרופיילר ברמת ה-kernel שאומר לנו, אחרי כל שלב, מהו צוואר הבקבוק הבא. הפעם נבנה את הסולם <strong>המלא</strong> - נמשיך מ-tiled אל register tiling (חד-ממדי ואז דו-ממדי), ולבסוף אל Tensor Cores - וכל צעד יונע לא מ"אינטואיציה" אלא ממדידה קונקרטית ב-ncu שמצביעה על צוואר הבקבוק. המטרה: להגיע ל-70% ומעלה מה-peak של CUDA Cores עם kernel שכתבנו בעצמנו, ואז לשבור את התקרה הזו לגמרי במעבר ל-Tensor Cores.</p>
+<h3 id="-the-full-gemm-ladder">מפת הסולם המלא - the full GEMM ladder<a class="headerlink" href="#-the-full-gemm-ladder" title="Permanent link">&para;</a></h3>
+<p>הפרויקט הוא סולם של גרסאות kernel, כשכל שלב מתקן את צוואר הבקבוק שה-ncu חשף בשלב הקודם. השלושה הראשונים הם סיכום מהיר של 3.5; השלושה האחרונים הם הלב של הפרויקט הזה.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>   stage kernel               what it fixes              justification tool (ncu)  target %peak (FP32)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>   ────────────────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>   1     naive                baseline                    -                          ~3%
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>   2     coalesced            thread-&gt;data mapping         sectors/request drops 32-&gt;4  ~10%
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>   3     tiled (shared)       reuse through shared          DRAM throughput drops        ~26%
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>   4a    1D blocktiling       each thread computes an output column   shared throughput / AI      ~48%
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>   4b    2D blocktiling       each thread computes an 8x8 tile      FMA pipe util, registers    ~70%
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>   ────────────────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>   ceiling  cuBLAS SGEMM (FP32)  reference ceiling          -                           ~86%
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>   ────────────────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>   5     wmma (FP16/TC)       move to Tensor Cores         tensor pipe util            (peak different!)
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>   ceiling  cublasGemmEx (FP16)  tensor reference ceiling   -                           (peak different!)
+</code></pre></div>
+<p>מטריצות ההרצה ריבועיות <code>N x N</code> מסוג <code>float</code> (FP32), עם <code>N = 4096</code> כברירת מחדל למדידה. שימו לב ש-<code>4096</code> מתחלק ב-<code>64</code>, ב-<code>128</code> וב-<code>8</code> - כל גדלי הtiles בפרויקט - כך שנוכל להשמיט בדיקות גבול בתוך ה-kernels המתקדמים ולהתמקד באלגוריתם. ה-GPU הרץ לדוגמה הוא H100 (SXM), כרגיל.</p>
+<h3 id="-scaffolding-and-metrics">התשתית והמדדים - scaffolding and metrics<a class="headerlink" href="#-scaffolding-and-metrics" title="Permanent link">&para;</a></h3>
+<p>נמשיך מאותה תשתית של 3.5: מקרו ה-<code>CUDA_CHECK</code>, מימוש ייחוס על ה-CPU שצובר ב-<code>double</code>, בודק נכונות עם סובלנות יחסית, ומד-זמן מבוסס <code>cudaEvent</code> עם warmup. לא נחזור על כל הקוד כאן (הוא ב-3.5); נזכיר רק את מחשבון המדדים, ונרחיב אותו כדי שיתמוך גם ב-peak של ה-Tensor Cores שנצטרך בשלב 5.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">// the two theoretical peaks of H100 (SXM), in GFLOP/s:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">H100_FP32_PEAK_GFLOPS</span><span class="w">   </span><span class="o">=</span><span class="w">  </span><span class="mf">66900.0</span><span class="p">;</span><span class="w">   </span><span class="c1">// CUDA Cores, FP32 (FFMA)</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">H100_FP16_TC_PEAK_GFLOPS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">989000.0</span><span class="p">;</span><span class="w">  </span><span class="c1">// Tensor Cores, FP16 dense</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1">// reports N, time, GFLOP/s and percent of a given peak. peak differs for CUDA Cores vs Tensor Cores.</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="kt">void</span><span class="w"> </span><span class="nf">report</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">N</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">ms</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">peak_gflops</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">flops</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="kt">double</span><span class="p">)</span><span class="n">N</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="kt">double</span><span class="p">)</span><span class="n">N</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="kt">double</span><span class="p">)</span><span class="n">N</span><span class="p">;</span><span class="w">   </span><span class="c1">// 2*N^3</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">gflops</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">flops</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">ms</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1000.0</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="p">;</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">pct</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="mf">100.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">gflops</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">peak_gflops</span><span class="p">;</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;  %-18s N=%d  %8.3f ms  %10.1f GFLOP/s  %6.2f%% peak</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">           </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">,</span><span class="w"> </span><span class="n">ms</span><span class="p">,</span><span class="w"> </span><span class="n">gflops</span><span class="p">,</span><span class="w"> </span><span class="n">pct</span><span class="p">);</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="p">}</span>
+</code></pre></div>
+<p>שני ה-peaks הם עוגני ההשוואה. את שלבים 1 עד 4 נמדוד מול <code>H100_FP32_PEAK_GFLOPS</code> (הגזירה: <code>132 SM x 128 CUDA Core x 2 FLOP/FFMA x 1.98 GHz ≈ 66.9 TFLOPS</code>, ראו 3.5). את שלב 5 נמדוד מול <code>H100_FP16_TC_PEAK_GFLOPS</code> (רוחב הפס האריתמטי הצפוף של ה-Tensor Cores ל-FP16, כ-989 TFLOPS), <strong>כי אלו יחידות חישוב אחרות עם roofline אחר לגמרי</strong> - כפי שהדגיש פרק 7, קו-הגג נגזר פעם אחת לכל תת-מערכת. השוואת kernel של Tensor Core מול ה-peak של CUDA Cores היא טעות מושגית.</p>
+<p>כמות העבודה קבועה בכל השלבים: <code>2 * 4096^3 ≈ 137.44 GFLOP</code>. מה שמשתנה הוא רק המהירות. וכלל הברזל של הפרויקט חוזר: <strong>אף פעם אל תדווחו GFLOP/s של kernel שלא עבר את בודק הנכונות.</strong></p>
+<p><strong>הלולאה שמניעה את הפרויקט.</strong> בניגוד ל-3.5, שבו ה"אינטואיציה" הובילה, כאן כל מעבר בין שלבים חייב לעבור דרך שלושת הצעדים של תורת האילוצים (פרק 7.1): מוצאים את צוואר הבקבוק ב-ncu, מרימים אותו, ובודקים ב-ncu מהו הצוואר החדש. זו הסיבה שכל שלב למטה נגמר ב"מה ncu אומר עכשיו".</p>
+<h3 id="1-3-ncu">שלבים 1-3 - סיכום מהיר עם ncu<a class="headerlink" href="#1-3-ncu" title="Permanent link">&para;</a></h3>
+<p>את שלושת השלבים הראשונים בניתם ב-3.5. כאן נריץ אותם שוב, אבל הפעם <strong>תחת הפרופיילר</strong>, כדי לראות את הראיות המספריות לצוואר הבקבוק - זה מה שהופך את הסולם ממקרי למונחה-מדידה.</p>
+<p><strong>שלב 1 - naive.</strong> כל thread מחשב איבר פלט אחד; המיפוי השגוי <code>threadIdx.x -&gt; row</code> יוצר גישות לא-מאוחדות. בסיס ההשוואה, ~3% מה-peak.</p>
+<p><strong>שלב 2 - coalesced.</strong> מחליפים כך ש-<code>threadIdx.x -&gt; col</code>; threads סמוכים ב-warp קוראים כתובות רצופות. ההצדקה ב-ncu אינה "הרגשה" אלא מטריקה יחידה וחד-משמעית - מספר ה-sectors לכל בקשת load מ-global memory:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>ncu<span class="w"> </span>-k<span class="w"> </span>mmNaive<span class="w"> </span>--launch-skip<span class="w"> </span><span class="m">1</span><span class="w"> </span>--launch-count<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--metrics<span class="w"> </span>l1tex__average_t_sectors_per_request_pipe_lsu_mem_global_op_ld.ratio<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>./gemm
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>ncu<span class="w"> </span>-k<span class="w"> </span>mmCoalesced<span class="w"> </span>--launch-skip<span class="w"> </span><span class="m">1</span><span class="w"> </span>--launch-count<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span>--metrics<span class="w"> </span>l1tex__average_t_sectors_per_request_pipe_lsu_mem_global_op_ld.ratio<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span>./gemm
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>  mmNaive:      l1tex__average_t_sectors_per_request_..._ld.ratio  ≈ 32.0
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  mmCoalesced:  l1tex__average_t_sectors_per_request_..._ld.ratio  ≈  4.0
+</code></pre></div>
+<p>זו הראיה: warp של 32 threads שקורא 32 floats רצופים נוגע בדיוק ב-<code>128 בתים = 4 sectors</code> של 32 בתים - היחס האידיאלי <code>4.0</code>. ב-naive, כל אחד מ-32 הthreads נוגע ב-sector אחר, ומקבלים <code>32.0</code> - פי 8 תעבורה מבוזבזת. ה-ncu אף מדפיס בקטע "Memory Workload Analysis" אזהרה מפורשת בשם "Uncoalesced Global Accesses".</p>
+<p><strong>שלב 3 - tiled (shared memory).</strong> מבצעים staging של tiles <code>A</code> ו-<code>B</code> ל-shared memory (ראו קוד מלא ב-3.5, <code>TILE=32</code>), וכל איבר משמש ב-<code>TILE</code> פעולות FMA לפני שנזרק. ההצדקה ב-ncu היא נפילת התעבורה ל-DRAM, שנמדדת ב"GPU Speed Of Light" כאחוז מרוחב הפס:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>ncu<span class="w"> </span>-k<span class="w"> </span><span class="s2">&quot;mmCoalesced|mmTiled&quot;</span><span class="w"> </span>--launch-skip<span class="w"> </span><span class="m">1</span><span class="w"> </span>--launch-count<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--metrics<span class="w"> </span>sm__throughput.avg.pct_of_peak_sustained_elapsed,<span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>dram__throughput.avg.pct_of_peak_sustained_elapsed<span class="w"> </span>./gemm
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>                sm__throughput(%)   dram__throughput(%)
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  mmCoalesced        ~18%                 ~85%       &lt;- memory-bound: DRAM saturated, SM starved
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  mmTiled            ~40%                 ~30%       &lt;- we moved the bottleneck from DRAM to the SM
+</code></pre></div>
+<p>התמונה ברורה: coalesced הוא memory-bound (ה-DRAM ב-85%, ה-SM מורעב), ואילו tiled מזיז את הצוואר - עכשיו ה-DRAM נושם וה-SM עסוק יותר. אבל 40% ניצול SM עדיין רחוק מרווי. מדוע? ה-kernel מבזבז זמן על <code>__syncthreads</code> ועל תעבורת shared memory יחסית לחישוב, כי <strong>כל thread מחשב עדיין רק איבר פלט אחד</strong>. זה בדיוק מה ששלב 4 מתקן.</p>
+<p>התוצאות עד כאן (H100, <code>N=4096</code>, לדוגמה):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>  naive              N=4096    68.000 ms      2021.2 GFLOP/s    3.02% peak
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  coalesced          N=4096    20.000 ms      6872.0 GFLOP/s   10.27% peak
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>  tiled              N=4096     8.000 ms     17180.0 GFLOP/s   25.68% peak
+</code></pre></div>
+<h3 id="4-register-tiling-1d-blocktiling">שלב 4א - register tiling חד-ממדי - 1D blocktiling<a class="headerlink" href="#4-register-tiling-1d-blocktiling" title="Permanent link">&para;</a></h3>
+<p>הרעיון המרכזי: עד עכשיו כל thread חישב איבר פלט אחד, ולכן קרא מ-shared memory שני ערכים (<code>As</code> ו-<code>Bs</code>) לכל FMA. אם thread יחשב <strong>עמודה שלמה</strong> של <code>TM</code> איברי פלט, הוא יכול לטעון ערך אחד של <code>B</code> מ-shared memory ל-register, ולהשתמש בו מול <code>TM</code> ערכים שונים של <code>A</code> - כלומר <code>TM</code> פעולות FMA לכל load מ-shared memory. חתכנו את תעבורת ה-shared memory פי <code>TM</code>, בדיוק כמו ש-shared memory חתכה את תעבורת ה-global memory פי <code>TILE</code>. זו אותה מנטרה של פרק 7: להעלות arithmetic intensity (arithmetic intensity) על ידי ניצול-חוזר, שלב אחד עמוק יותר בהיררכיית הזיכרון.</p>
+<p>הפרמטרים: הtile block בגודל <code>BM x BN = 64 x 64</code>, מימד פנימי <code>BK = 8</code>, וכל thread מחשב <code>TM = 8</code> איברים. מספר הthreads ל-block הוא <code>(BM * BN) / TM = 64 * 64 / 8 = 512</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="cp">#define BM 64</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="cp">#define BN 64</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="cp">#define BK 8</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="cp">#define TM 8</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1">// assumes N divides evenly by BM, BN, BK (true for N=4096). no boundary checks.</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">mm1DBlocktiling</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">A</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">B</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">C</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">N</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">    </span><span class="n">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">As</span><span class="p">[</span><span class="n">BK</span><span class="p">][</span><span class="n">BM</span><span class="p">];</span><span class="w">    </span><span class="c1">// tile A stored transposed (transposed): As[k][m]</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">    </span><span class="n">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">Bs</span><span class="p">[</span><span class="n">BK</span><span class="p">][</span><span class="n">BN</span><span class="p">];</span><span class="w">    </span><span class="c1">// tile B: Bs[k][n]</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">blockRow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">blockCol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">    </span><span class="c1">// thread position within the 64x64 output tile:</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">threadCol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">BN</span><span class="p">;</span><span class="w">   </span><span class="c1">// 0..63  -&gt; output column</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">threadRow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">BN</span><span class="p">;</span><span class="w">   </span><span class="c1">// 0..7   -&gt; group of TM rows</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="w">    </span><span class="c1">// indices for cooperative loading (all 512 threads load a tile together):</span>
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">innerRowA</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">BK</span><span class="p">,</span><span class="w"> </span><span class="n">innerColA</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">BK</span><span class="p">;</span><span class="w">  </span><span class="c1">// 64x8</span>
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">innerRowB</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">BN</span><span class="p">,</span><span class="w"> </span><span class="n">innerColB</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">BN</span><span class="p">;</span><span class="w">  </span><span class="c1">//  8x64</span>
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">Aptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">blockRow</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">BM</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="p">;</span><span class="w">              </span><span class="c1">// head of A&#39;s row panel</span>
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">Bptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">B</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">blockCol</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">BN</span><span class="p">;</span><span class="w">                  </span><span class="c1">// head of B&#39;s column panel</span>
+<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="w">    </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">Cptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">C</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">blockRow</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">BM</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">blockCol</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">BN</span><span class="p">;</span>
+<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a>
+<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">threadResults</span><span class="p">[</span><span class="n">TM</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mf">0.0f</span><span class="p">};</span><span class="w">                       </span><span class="c1">// TM accumulators in registers</span>
+<a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a>
+<a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">bk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">bk</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="p">;</span><span class="w"> </span><span class="n">bk</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">BK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a><span class="w">        </span><span class="c1">// loading the tiles into shared memory (A is stored transposed so later access is efficient):</span>
+<a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a><span class="w">        </span><span class="n">As</span><span class="p">[</span><span class="n">innerColA</span><span class="p">][</span><span class="n">innerRowA</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Aptr</span><span class="p">[</span><span class="n">innerRowA</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">innerColA</span><span class="p">];</span>
+<a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a><span class="w">        </span><span class="n">Bs</span><span class="p">[</span><span class="n">innerRowB</span><span class="p">][</span><span class="n">innerColB</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Bptr</span><span class="p">[</span><span class="n">innerRowB</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">innerColB</span><span class="p">];</span>
+<a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a><span class="w">        </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a>
+<a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a><span class="w">        </span><span class="n">Aptr</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">BK</span><span class="p">;</span><span class="w">                                         </span><span class="c1">// advance to the next K tile</span>
+<a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a><span class="w">        </span><span class="n">Bptr</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">BK</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="p">;</span>
+<a id="__codelineno-7-35" name="__codelineno-7-35" href="#__codelineno-7-35"></a>
+<a id="__codelineno-7-36" name="__codelineno-7-36" href="#__codelineno-7-36"></a><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">BK</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-7-37" name="__codelineno-7-37" href="#__codelineno-7-37"></a><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">Btmp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Bs</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">threadCol</span><span class="p">];</span><span class="w">                  </span><span class="c1">// one load from shared...</span>
+<a id="__codelineno-7-38" name="__codelineno-7-38" href="#__codelineno-7-38"></a><span class="w">            </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">TM</span><span class="p">;</span><span class="w"> </span><span class="n">m</span><span class="o">++</span><span class="p">)</span><span class="w">                    </span><span class="c1">// ...for TM FMA operations</span>
+<a id="__codelineno-7-39" name="__codelineno-7-39" href="#__codelineno-7-39"></a><span class="w">                </span><span class="n">threadResults</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">As</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">threadRow</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">TM</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">m</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">Btmp</span><span class="p">;</span>
+<a id="__codelineno-7-40" name="__codelineno-7-40" href="#__codelineno-7-40"></a><span class="w">        </span><span class="p">}</span>
+<a id="__codelineno-7-41" name="__codelineno-7-41" href="#__codelineno-7-41"></a><span class="w">        </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-7-42" name="__codelineno-7-42" href="#__codelineno-7-42"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-7-43" name="__codelineno-7-43" href="#__codelineno-7-43"></a>
+<a id="__codelineno-7-44" name="__codelineno-7-44" href="#__codelineno-7-44"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">TM</span><span class="p">;</span><span class="w"> </span><span class="n">m</span><span class="o">++</span><span class="p">)</span>
+<a id="__codelineno-7-45" name="__codelineno-7-45" href="#__codelineno-7-45"></a><span class="w">        </span><span class="n">Cptr</span><span class="p">[(</span><span class="n">threadRow</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">TM</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">m</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadCol</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadResults</span><span class="p">[</span><span class="n">m</span><span class="p">];</span>
+<a id="__codelineno-7-46" name="__codelineno-7-46" href="#__codelineno-7-46"></a><span class="p">}</span>
+</code></pre></div>
+<p>הlaunch:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">dim3</span><span class="w"> </span><span class="nf">block</span><span class="p">(</span><span class="mi">512</span><span class="p">);</span><span class="w">                                            </span><span class="c1">// (BM*BN)/TM = 512 threads</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">dim3</span><span class="w"> </span><span class="nf">grid</span><span class="p">(</span><span class="n">N</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">BN</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">BM</span><span class="p">);</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="k">auto</span><span class="w"> </span><span class="n">launch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="o">&amp;</span><span class="p">]{</span><span class="w"> </span><span class="n">mm1DBlocktiling</span><span class="o">&lt;&lt;&lt;</span><span class="n">grid</span><span class="p">,</span><span class="w"> </span><span class="n">block</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">dA</span><span class="p">,</span><span class="w"> </span><span class="n">dB</span><span class="p">,</span><span class="w"> </span><span class="n">dC</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">);</span><span class="w"> </span><span class="p">};</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="kt">float</span><span class="w"> </span><span class="n">ms</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">timeKernel</span><span class="p">(</span><span class="n">launch</span><span class="p">);</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="n">report</span><span class="p">(</span><span class="s">&quot;1D blocktiling&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">,</span><span class="w"> </span><span class="n">ms</span><span class="p">,</span><span class="w"> </span><span class="n">H100_FP32_PEAK_GFLOPS</span><span class="p">);</span>
+</code></pre></div>
+<p><strong>החשבון של הarithmetic intensity.</strong> בגרסת ה-tiled, הלולאה הפנימית הריצה FMA אחד לכל שני loads מ-shared memory. עכשיו, בלולאה הפנימית, טוענים <code>Btmp</code> פעם אחת ומריצים איתו <code>TM = 8</code> פעולות FMA (מול <code>TM</code> ערכי <code>As</code> שכבר ב-shared). היחס FMA-ל-load מ-shared זינק פי 8. פחות לחץ על ה-shared memory משמעו שה-warp scheduler מוצא יותר עבודה אריתמטית מוכנה בין הגישות, וה-FMA pipe מתמלא.</p>
+<p><strong>קריטריון קבלה לשלב 4א:</strong> <code>checkResult</code> (עם <code>rtol=1e-3</code>) עובר, וה-GFLOP/s לפחות מכפיל את שלב ה-tiled. מה ncu אומר עכשיו:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>  mmTiled           sm__throughput ~40%    shared throughput ~65%   FMA pipe ~35%
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>  mm1DBlocktiling   sm__throughput ~62%    shared throughput ~45%   FMA pipe ~55%
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>  1D blocktiling     N=4096     4.300 ms     31963.0 GFLOP/s   47.78% peak
+</code></pre></div>
+<p>הגענו ל-48% - כמעט פי 2 מ-tiled. אבל ה-FMA pipe עדיין ב-55% בלבד, וה-shared memory throughput עדיין גבוה יחסית. הצוואר הבא: אפשר להעלות את הarithmetic intensity שלב נוסף, ולנצל-חוזר ערכים <strong>בשני הצירים</strong> בבת אחת. זה שלב 4ב.</p>
+<h3 id="4-register-tiling-2d-blocktiling">שלב 4ב - register tiling דו-ממדי - 2D blocktiling<a class="headerlink" href="#4-register-tiling-2d-blocktiling" title="Permanent link">&para;</a></h3>
+<p>בשלב 4א thread ניצל-חוזר ערך של <code>B</code> מול <code>TM</code> ערכי <code>A</code>. עכשיו נעשה זאת סימטרית: כל thread יחשב <strong>tile פלט מלא</strong> של <code>TM x TN = 8 x 8 = 64</code> איברים. לכל צעד <code>k</code>, ה-thread טוען <code>TM</code> ערכי <code>A</code> ו-<code>TN</code> ערכי <code>B</code> ל-registers, ומ-<code>TM + TN = 16</code> loads מ-shared memory הוא מפיק <code>TM * TN = 64</code> פעולות FMA. יחס של 4 FMA לכל load מ-shared - שוב קפיצה בarithmetic intensity. זו הצורה שבה kernels אמיתיים (וגם cuBLAS) בנויים ביסודם.</p>
+<p>הפרמטרים: <code>BM x BN = 128 x 128</code>, <code>BK = 8</code>, <code>TM = TN = 8</code>. מספר הthreads ל-block הוא <code>(BM * BN) / (TM * TN) = 128 * 128 / 64 = 256</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="cp">#define BM 128</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="cp">#define BN 128</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="cp">#define BK 8</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="cp">#define TM 8</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="cp">#define TN 8</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">mm2DBlocktiling</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">A</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">B</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">C</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">N</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="w">    </span><span class="n">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">As</span><span class="p">[</span><span class="n">BK</span><span class="p">][</span><span class="n">BM</span><span class="p">];</span><span class="w">    </span><span class="c1">// A transposed: As[k][m]</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="w">    </span><span class="n">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">Bs</span><span class="p">[</span><span class="n">BK</span><span class="p">][</span><span class="n">BN</span><span class="p">];</span><span class="w">    </span><span class="c1">// Bs[k][n]</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">blockRow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">blockCol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">numThreads</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">BM</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">BN</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">TM</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">TN</span><span class="p">);</span><span class="w">          </span><span class="c1">// 256</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="w">    </span><span class="c1">// thread position in the 16x16 grid of thread-tiles:</span>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">threadCol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="p">(</span><span class="n">BN</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">TN</span><span class="p">);</span><span class="w">         </span><span class="c1">// 0..15</span>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">threadRow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">BN</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">TN</span><span class="p">);</span><span class="w">         </span><span class="c1">// 0..15</span>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="w">    </span><span class="c1">// loading indices + strides (256 threads load 128x8 and 8x128 in several passes):</span>
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">innerRowA</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">BK</span><span class="p">,</span><span class="w"> </span><span class="n">innerColA</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">BK</span><span class="p">;</span>
+<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">strideA</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">numThreads</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">BK</span><span class="p">;</span><span class="w">                 </span><span class="c1">// 32 rows per pass</span>
+<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">innerRowB</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">BN</span><span class="p">,</span><span class="w"> </span><span class="n">innerColB</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">BN</span><span class="p">;</span>
+<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">strideB</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">numThreads</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">BN</span><span class="p">;</span><span class="w">                 </span><span class="c1">// 2 rows per pass</span>
+<a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a>
+<a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">Aptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">blockRow</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">BM</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="p">;</span>
+<a id="__codelineno-11-25" name="__codelineno-11-25" href="#__codelineno-11-25"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">Bptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">B</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">blockCol</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">BN</span><span class="p">;</span>
+<a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a><span class="w">    </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">Cptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">C</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">blockRow</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">BM</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">blockCol</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">BN</span><span class="p">;</span>
+<a id="__codelineno-11-27" name="__codelineno-11-27" href="#__codelineno-11-27"></a>
+<a id="__codelineno-11-28" name="__codelineno-11-28" href="#__codelineno-11-28"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">threadResults</span><span class="p">[</span><span class="n">TM</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">TN</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mf">0.0f</span><span class="p">};</span><span class="w">                 </span><span class="c1">// 64 accumulators in registers</span>
+<a id="__codelineno-11-29" name="__codelineno-11-29" href="#__codelineno-11-29"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">regM</span><span class="p">[</span><span class="n">TM</span><span class="p">],</span><span class="w"> </span><span class="n">regN</span><span class="p">[</span><span class="n">TN</span><span class="p">];</span><span class="w">                              </span><span class="c1">// register cache for step k</span>
+<a id="__codelineno-11-30" name="__codelineno-11-30" href="#__codelineno-11-30"></a>
+<a id="__codelineno-11-31" name="__codelineno-11-31" href="#__codelineno-11-31"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">bk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">bk</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="p">;</span><span class="w"> </span><span class="n">bk</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">BK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-32" name="__codelineno-11-32" href="#__codelineno-11-32"></a><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">off</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">off</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">BM</span><span class="p">;</span><span class="w"> </span><span class="n">off</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">strideA</span><span class="p">)</span><span class="w">        </span><span class="c1">// loading tile A (transposed)</span>
+<a id="__codelineno-11-33" name="__codelineno-11-33" href="#__codelineno-11-33"></a><span class="w">            </span><span class="n">As</span><span class="p">[</span><span class="n">innerColA</span><span class="p">][</span><span class="n">innerRowA</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">off</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Aptr</span><span class="p">[(</span><span class="n">innerRowA</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">off</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">innerColA</span><span class="p">];</span>
+<a id="__codelineno-11-34" name="__codelineno-11-34" href="#__codelineno-11-34"></a><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">off</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">off</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">BK</span><span class="p">;</span><span class="w"> </span><span class="n">off</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">strideB</span><span class="p">)</span><span class="w">        </span><span class="c1">// loading tile B</span>
+<a id="__codelineno-11-35" name="__codelineno-11-35" href="#__codelineno-11-35"></a><span class="w">            </span><span class="n">Bs</span><span class="p">[</span><span class="n">innerRowB</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">off</span><span class="p">][</span><span class="n">innerColB</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Bptr</span><span class="p">[(</span><span class="n">innerRowB</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">off</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">innerColB</span><span class="p">];</span>
+<a id="__codelineno-11-36" name="__codelineno-11-36" href="#__codelineno-11-36"></a><span class="w">        </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-11-37" name="__codelineno-11-37" href="#__codelineno-11-37"></a>
+<a id="__codelineno-11-38" name="__codelineno-11-38" href="#__codelineno-11-38"></a><span class="w">        </span><span class="n">Aptr</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">BK</span><span class="p">;</span>
+<a id="__codelineno-11-39" name="__codelineno-11-39" href="#__codelineno-11-39"></a><span class="w">        </span><span class="n">Bptr</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">BK</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="p">;</span>
+<a id="__codelineno-11-40" name="__codelineno-11-40" href="#__codelineno-11-40"></a>
+<a id="__codelineno-11-41" name="__codelineno-11-41" href="#__codelineno-11-41"></a><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">BK</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-42" name="__codelineno-11-42" href="#__codelineno-11-42"></a><span class="w">            </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">TM</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="n">regM</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">As</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">threadRow</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">TM</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">i</span><span class="p">];</span>
+<a id="__codelineno-11-43" name="__codelineno-11-43" href="#__codelineno-11-43"></a><span class="w">            </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">TN</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="n">regN</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Bs</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">threadCol</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">TN</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">i</span><span class="p">];</span>
+<a id="__codelineno-11-44" name="__codelineno-11-44" href="#__codelineno-11-44"></a><span class="w">            </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">TM</span><span class="p">;</span><span class="w"> </span><span class="n">m</span><span class="o">++</span><span class="p">)</span><span class="w">                   </span><span class="c1">// 8x8 outer product</span>
+<a id="__codelineno-11-45" name="__codelineno-11-45" href="#__codelineno-11-45"></a><span class="w">                </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">TN</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="o">++</span><span class="p">)</span>
+<a id="__codelineno-11-46" name="__codelineno-11-46" href="#__codelineno-11-46"></a><span class="w">                    </span><span class="n">threadResults</span><span class="p">[</span><span class="n">m</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">TN</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">regM</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">regN</span><span class="p">[</span><span class="n">n</span><span class="p">];</span>
+<a id="__codelineno-11-47" name="__codelineno-11-47" href="#__codelineno-11-47"></a><span class="w">        </span><span class="p">}</span>
+<a id="__codelineno-11-48" name="__codelineno-11-48" href="#__codelineno-11-48"></a><span class="w">        </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-11-49" name="__codelineno-11-49" href="#__codelineno-11-49"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-11-50" name="__codelineno-11-50" href="#__codelineno-11-50"></a>
+<a id="__codelineno-11-51" name="__codelineno-11-51" href="#__codelineno-11-51"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">TM</span><span class="p">;</span><span class="w"> </span><span class="n">m</span><span class="o">++</span><span class="p">)</span>
+<a id="__codelineno-11-52" name="__codelineno-11-52" href="#__codelineno-11-52"></a><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">TN</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="o">++</span><span class="p">)</span>
+<a id="__codelineno-11-53" name="__codelineno-11-53" href="#__codelineno-11-53"></a><span class="w">            </span><span class="n">Cptr</span><span class="p">[(</span><span class="n">threadRow</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">TM</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">m</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadCol</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">TN</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadResults</span><span class="p">[</span><span class="n">m</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">TN</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n</span><span class="p">];</span>
+<a id="__codelineno-11-54" name="__codelineno-11-54" href="#__codelineno-11-54"></a><span class="p">}</span>
+</code></pre></div>
+<p>הlaunch:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">dim3</span><span class="w"> </span><span class="nf">block</span><span class="p">(</span><span class="mi">256</span><span class="p">);</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">dim3</span><span class="w"> </span><span class="nf">grid</span><span class="p">(</span><span class="n">N</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">BN</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">BM</span><span class="p">);</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="k">auto</span><span class="w"> </span><span class="n">launch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="o">&amp;</span><span class="p">]{</span><span class="w"> </span><span class="n">mm2DBlocktiling</span><span class="o">&lt;&lt;&lt;</span><span class="n">grid</span><span class="p">,</span><span class="w"> </span><span class="n">block</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">dA</span><span class="p">,</span><span class="w"> </span><span class="n">dB</span><span class="p">,</span><span class="w"> </span><span class="n">dC</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">);</span><span class="w"> </span><span class="p">};</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="kt">float</span><span class="w"> </span><span class="n">ms</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">timeKernel</span><span class="p">(</span><span class="n">launch</span><span class="p">);</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="n">report</span><span class="p">(</span><span class="s">&quot;2D blocktiling&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">,</span><span class="w"> </span><span class="n">ms</span><span class="p">,</span><span class="w"> </span><span class="n">H100_FP32_PEAK_GFLOPS</span><span class="p">);</span>
+</code></pre></div>
+<p><strong>כאן register pressure הופך למרכזי - קישור ישיר ל-8.5.</strong> ספרו את ה-registers שהצהרנו במפורש: <code>threadResults[64] + regM[8] + regN[8] = 80</code> floats, ומעליהם אינדקסים ומצביעים. נאמת את המספר האמיתי מהcompiler:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>nvcc<span class="w"> </span>-O3<span class="w"> </span>-arch<span class="o">=</span>sm_90a<span class="w"> </span>-Xptxas<span class="w"> </span>-v<span class="w"> </span>-lcublas<span class="w"> </span>-o<span class="w"> </span>gemm<span class="w"> </span>gemm.cu
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>  ptxas info : Used 88 registers, used 0 stack, ... for mm2DBlocktiling
+</code></pre></div>
+<p>זהו התרחיש הקלאסי של פרק 8.5. עם 88 registers ל-thread ו-256 threads ל-block, ה-block דורש <code>88 * 256 = 22528</code> registers, וקובץ האוגרים של ה-SM ב-H100 מכיל <code>65536</code> registers - כלומר לכל היותר <code>65536 / 22528 = 2</code> blocks בו-זמנית, <code>512</code> threads = 16 warps, שהם רק <code>512 / 2048 = 25%</code> occupancy. <strong>ובכל זאת זה מהיר יותר.</strong> זה בדיוק הלקח של 8.5: occupancy נמוך אינו רע כשה-kernel compute-bound עם ILP (instruction-level parallelism) גבוה - 64 פעולות FMA בלתי-תלויות בלולאה הפנימית ממלאות את ה-FMA pipe גם עם מעט warps. מה שכן חייבים לוודא הוא ש<strong>אין register spilling</strong>: אם <code>ptxas</code> היה מדפיס <code>spill stores</code>, היינו מגבילים עם <code>__launch_bounds__</code> או <code>-maxrregcount</code>, כפי שראינו ב-8.5, ובוחנים אם ה-tradeoff משתלם.</p>
+<p><strong>קריטריון קבלה לשלב 4ב:</strong> <code>checkResult</code> עובר, וה-kernel מגיע ל-<strong>לפחות 80% מהביצועים של cuBLAS</strong> (<code>זמן_cuBLAS / זמן_2D &gt;= 0.8</code>). מה ncu אומר:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>  mm2DBlocktiling   sm__throughput ~85%   FMA pipe ~80%   achieved occupancy ~25%   spills 0
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>  2D blocktiling     N=4096     2.900 ms     47393.0 GFLOP/s   70.83% peak
+</code></pre></div>
+<p>71% מה-peak, ו-<code>47393 / 57267 ≈ 83%</code> מ-cuBLAS - עברנו את סף הקבלה. ה-FMA pipe ב-80%, ה-occupancy נמוך ולא אכפת לנו. הגענו קרוב לתקרה של CUDA Cores. הצוואר החדש שה-ncu מראה הוא <strong>ה-FMA pipe עצמו</strong> - יחידות ה-FP32 רוויות. אין דרך להאיץ הלאה בלי לשנות יחידת חישוב. וזו בדיוק הנקודה שבה נכנסים ה-Tensor Cores.</p>
+<h3 id="5-tensor-cores-the-wmma-api">שלב 5 - שבירת התקרה עם Tensor Cores - the wmma API<a class="headerlink" href="#5-tensor-cores-the-wmma-api" title="Permanent link">&para;</a></h3>
+<p>הגענו לגבול הפיזי של ה-CUDA Cores. כפי שהדגיש הגלוסארי לאורך כל הקורס: ה-matmul המהירים ביותר אינם רצים על CUDA Cores אלא על <strong>Tensor Cores</strong>, שרוחב הפס האריתמטי שלהן גבוה בסדר גודל. ל-H100 יש 4 Tensor Cores לכל SM (אחד לכל warp scheduler), וה-peak הצפוף שלהן ל-FP16 הוא כ-<code>989 TFLOPS</code> - פי כ-15 מ-<code>66.9 TFLOPS</code> של ה-FP32. המחיר: ה-Tensor Cores מבצעות <strong>רק</strong> כפל-מטריצות על tiles קטנים בדיוק כפול קבוע, והקלט הוא בדרך כלל בדיוק נמוך יותר (FP16 / BF16 / TF32) עם צבירה ב-FP32.</p>
+<p>הדרך הנקייה לתכנת אותן ישירות ב-CUDA C++ היא ה-API בשם <strong>wmma</strong> (Warp Matrix Multiply-Accumulate), מתוך <code>&lt;mma.h&gt;</code>. היחידה כאן היא ה-<strong>warp</strong>, לא ה-thread הבודד: warp שלם משתף פעולה על tile פלט של <code>16 x 16</code>, והנתונים חיים ב-<code>fragment</code> שמפוזר על פני 32 הthreads. זו בדיוק החריגה שהגלוסארי ציין בהיררכיית הזיכרון - עבור כפל-מטריצות ב-Tensor Core, ה-registers <strong>משותפים בין threads ה-warp</strong> ואינם עוד private לחלוטין ל-thread.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;mma.h&gt;</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">nvcuda</span><span class="p">;</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="c1">// valid fragment sizes for FP16 on H100: 16 x 16 x 16</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">WM</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="n">WN</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="n">WK</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">16</span><span class="p">;</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="c1">// A, B in FP16 input; accumulation and output in FP32. row-major.</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">mmWMMA</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">half</span><span class="o">*</span><span class="w"> </span><span class="n">A</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">half</span><span class="o">*</span><span class="w"> </span><span class="n">B</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">C</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">N</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="w">    </span><span class="c1">// each warp computes one 16x16 output tile:</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">warpM</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">blockIdx</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">warpN</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">warpSize</span><span class="p">;</span>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="w">    </span><span class="n">wmma</span><span class="o">::</span><span class="n">fragment</span><span class="o">&lt;</span><span class="n">wmma</span><span class="o">::</span><span class="n">matrix_a</span><span class="p">,</span><span class="w"> </span><span class="n">WM</span><span class="p">,</span><span class="w"> </span><span class="n">WN</span><span class="p">,</span><span class="w"> </span><span class="n">WK</span><span class="p">,</span><span class="w"> </span><span class="n">half</span><span class="p">,</span><span class="w"> </span><span class="n">wmma</span><span class="o">::</span><span class="n">row_major</span><span class="o">&gt;</span><span class="w"> </span><span class="n">aFrag</span><span class="p">;</span>
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a><span class="w">    </span><span class="n">wmma</span><span class="o">::</span><span class="n">fragment</span><span class="o">&lt;</span><span class="n">wmma</span><span class="o">::</span><span class="n">matrix_b</span><span class="p">,</span><span class="w"> </span><span class="n">WM</span><span class="p">,</span><span class="w"> </span><span class="n">WN</span><span class="p">,</span><span class="w"> </span><span class="n">WK</span><span class="p">,</span><span class="w"> </span><span class="n">half</span><span class="p">,</span><span class="w"> </span><span class="n">wmma</span><span class="o">::</span><span class="n">row_major</span><span class="o">&gt;</span><span class="w"> </span><span class="n">bFrag</span><span class="p">;</span>
+<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a><span class="w">    </span><span class="n">wmma</span><span class="o">::</span><span class="n">fragment</span><span class="o">&lt;</span><span class="n">wmma</span><span class="o">::</span><span class="n">accumulator</span><span class="p">,</span><span class="w"> </span><span class="n">WM</span><span class="p">,</span><span class="w"> </span><span class="n">WN</span><span class="p">,</span><span class="w"> </span><span class="n">WK</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">&gt;</span><span class="w">             </span><span class="n">cFrag</span><span class="p">;</span>
+<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a><span class="w">    </span><span class="n">wmma</span><span class="o">::</span><span class="n">fill_fragment</span><span class="p">(</span><span class="n">cFrag</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">);</span>
+<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>
+<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">WK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">                   </span><span class="c1">// accumulating along the K axis in tiles of 16</span>
+<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a><span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">aRow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">warpM</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">WM</span><span class="p">,</span><span class="w"> </span><span class="n">aCol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">k</span><span class="p">;</span>
+<a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a><span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">bRow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">k</span><span class="p">,</span><span class="w">          </span><span class="n">bCol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">warpN</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">WN</span><span class="p">;</span>
+<a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a><span class="w">        </span><span class="n">wmma</span><span class="o">::</span><span class="n">load_matrix_sync</span><span class="p">(</span><span class="n">aFrag</span><span class="p">,</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">aRow</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">aCol</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">);</span><span class="w">   </span><span class="c1">// stride = N</span>
+<a id="__codelineno-17-22" name="__codelineno-17-22" href="#__codelineno-17-22"></a><span class="w">        </span><span class="n">wmma</span><span class="o">::</span><span class="n">load_matrix_sync</span><span class="p">(</span><span class="n">bFrag</span><span class="p">,</span><span class="w"> </span><span class="n">B</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">bRow</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">bCol</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">);</span>
+<a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a><span class="w">        </span><span class="n">wmma</span><span class="o">::</span><span class="n">mma_sync</span><span class="p">(</span><span class="n">cFrag</span><span class="p">,</span><span class="w"> </span><span class="n">aFrag</span><span class="p">,</span><span class="w"> </span><span class="n">bFrag</span><span class="p">,</span><span class="w"> </span><span class="n">cFrag</span><span class="p">);</span><span class="w">             </span><span class="c1">// D = A*B + C</span>
+<a id="__codelineno-17-24" name="__codelineno-17-24" href="#__codelineno-17-24"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-17-25" name="__codelineno-17-25" href="#__codelineno-17-25"></a>
+<a id="__codelineno-17-26" name="__codelineno-17-26" href="#__codelineno-17-26"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">cRow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">warpM</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">WM</span><span class="p">,</span><span class="w"> </span><span class="n">cCol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">warpN</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">WN</span><span class="p">;</span>
+<a id="__codelineno-17-27" name="__codelineno-17-27" href="#__codelineno-17-27"></a><span class="w">    </span><span class="n">wmma</span><span class="o">::</span><span class="n">store_matrix_sync</span><span class="p">(</span><span class="n">C</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">cRow</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">cCol</span><span class="p">,</span><span class="w"> </span><span class="n">cFrag</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">,</span><span class="w"> </span><span class="n">wmma</span><span class="o">::</span><span class="n">mem_row_major</span><span class="p">);</span>
+<a id="__codelineno-17-28" name="__codelineno-17-28" href="#__codelineno-17-28"></a><span class="p">}</span>
+</code></pre></div>
+<p>הlaunch - חשוב לזכור שהיחידה היא warp, ולכן ציר ה-<code>x</code> מחולק ב-<code>warpSize</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="n">dim3</span><span class="w"> </span><span class="nf">block</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">);</span><span class="w">                                    </span><span class="c1">// 128*4 = 512 threads = 16 warps</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="kt">int</span><span class="w"> </span><span class="n">warpsX</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">block</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">32</span><span class="p">;</span><span class="w">                             </span><span class="c1">// 4 warps along x</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="n">dim3</span><span class="w"> </span><span class="n">grid</span><span class="p">((</span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">WM</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">warpsX</span><span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">WM</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">warpsX</span><span class="p">),</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">          </span><span class="p">(</span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">WN</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">block</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">WN</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">block</span><span class="p">.</span><span class="n">y</span><span class="p">));</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="k">auto</span><span class="w"> </span><span class="n">launch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="o">&amp;</span><span class="p">]{</span><span class="w"> </span><span class="n">mmWMMA</span><span class="o">&lt;&lt;&lt;</span><span class="n">grid</span><span class="p">,</span><span class="w"> </span><span class="n">block</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">dA_h</span><span class="p">,</span><span class="w"> </span><span class="n">dB_h</span><span class="p">,</span><span class="w"> </span><span class="n">dC</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">);</span><span class="w"> </span><span class="p">};</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="kt">float</span><span class="w"> </span><span class="n">ms</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">timeKernel</span><span class="p">(</span><span class="n">launch</span><span class="p">);</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="n">report</span><span class="p">(</span><span class="s">&quot;wmma (FP16/TC)&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">,</span><span class="w"> </span><span class="n">ms</span><span class="p">,</span><span class="w"> </span><span class="n">H100_FP16_TC_PEAK_GFLOPS</span><span class="p">);</span><span class="w">   </span><span class="c1">// Tensor Cores peak!</span>
+</code></pre></div>
+<p><strong>סובלנות הנכונות משתנה - וזו נקודה חינוכית.</strong> הקלט עובר עיגול ל-FP16 (כ-3 ספרות עשרוניות מובהקות), ולכן התוצאה תסטה מהייחוס ב-FP32 הרבה יותר מ-<code>1e-3</code>. זה אינו באג - זו הגדרת ה"נכונות עד מספר ביטים" שפרק 7 פתח בה: ב-GPU נכונות מוגדרת עד דיוק מסוים. השוו מול הייחוס עם <code>rtol</code> של כ-<code>2e-2</code>, והבינו שאתם באמת מחשבים בדיוק נמוך יותר תמורת מהירות. אם צריך דיוק FP32 בלי לוותר על Tensor Cores, המסלול הוא <strong>TF32</strong> (19 ביט: 10 ביטי מנטיסה כמו FP16, אבל עם טווח האקספוננט המלא של FP32, ולכן עמיד בהרבה מ-FP16 לגלישה/תת-גלישה לאורך ציר K).</p>
+<p><strong>קריטריון קבלה לשלב 5:</strong> <code>checkResult</code> עובר עם הסובלנות המורחבת, וה-GFLOP/s <strong>עובר בבירור את התקרה של CUDA Cores</strong> (<code>66.9 TFLOPS</code>). מה ncu אומר - עכשיו מסתכלים על ה-tensor pipe, לא ה-FMA pipe:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>ncu<span class="w"> </span>-k<span class="w"> </span>mmWMMA<span class="w"> </span>--launch-skip<span class="w"> </span><span class="m">1</span><span class="w"> </span>--launch-count<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">  </span>--metrics<span class="w"> </span>sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active<span class="w"> </span>./gemm
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>  wmma (FP16/TC)     N=4096     0.720 ms    190889.0 GFLOP/s   19.30% (tensor peak)
+</code></pre></div>
+<p><code>190.9 TFLOPS</code> - <strong>פי 2.85 מהתקרה המלאה של כל ה-CUDA Cores</strong>, למרות שזה רק 19% מה-peak של ה-Tensor Cores. הפער נובע מכך ש-wmma נאיבי הוא memory-bound מחדש (קורא FP16 ישירות מ-global memory בלי staging של shared memory ובלי double-buffering). זה הצעד הבא ב"סולם של הסולם", ובדיוק מה שספריות בשלות עושות. נשווה לתקרה המקצועית.</p>
+<h3 id="-tensor-cores-cublasgemmex">התקרה של ה-Tensor Cores - cublasGemmEx<a class="headerlink" href="#-tensor-cores-cublasgemmex" title="Permanent link">&para;</a></h3>
+<p>כמו שב-FP32 השווינו ל-<code>cublasSgemm</code>, כאן משווים ל-<code>cublasGemmEx</code>, שבוחרת kernel של Tensor Core מכוונן ידנית. זו ה-API הכללית של cuBLAS שבה מציינים במפורש את טיפוסי הקלט/פלט ואת מנוע החישוב. מלכוד ה-column-major זהה ל-3.5 - מחליפים את סדר <code>A</code> ו-<code>B</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cublas_v2.h&gt;</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">alpha</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">,</span><span class="w"> </span><span class="n">beta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span><span class="w">                 </span><span class="c1">// alpha/beta in FP32 (compute type)</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="k">auto</span><span class="w"> </span><span class="n">launch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="o">&amp;</span><span class="p">]{</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="w">    </span><span class="n">cublasGemmEx</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span><span class="w"> </span><span class="n">CUBLAS_OP_N</span><span class="p">,</span><span class="w"> </span><span class="n">CUBLAS_OP_N</span><span class="p">,</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="w">                 </span><span class="n">N</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">alpha</span><span class="p">,</span>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="w">                 </span><span class="n">dB_h</span><span class="p">,</span><span class="w"> </span><span class="n">CUDA_R_16F</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">,</span><span class="w">                  </span><span class="c1">// cuBLAS&#39;s &quot;A&quot; = our B (FP16)</span>
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="w">                 </span><span class="n">dA_h</span><span class="p">,</span><span class="w"> </span><span class="n">CUDA_R_16F</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">,</span><span class="w">                  </span><span class="c1">// cuBLAS&#39;s &quot;B&quot; = our A (FP16)</span>
+<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a><span class="w">                 </span><span class="o">&amp;</span><span class="n">beta</span><span class="p">,</span>
+<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a><span class="w">                 </span><span class="n">dC</span><span class="p">,</span><span class="w">   </span><span class="n">CUDA_R_32F</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">,</span><span class="w">                  </span><span class="c1">// FP32 output</span>
+<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="w">                 </span><span class="n">CUBLAS_COMPUTE_32F</span><span class="p">,</span><span class="w">                   </span><span class="c1">// accumulation in FP32</span>
+<a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a><span class="w">                 </span><span class="n">CUBLAS_GEMM_DEFAULT_TENSOR_OP</span><span class="p">);</span><span class="w">       </span><span class="c1">// requires Tensor Cores</span>
+<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a><span class="p">};</span>
+<a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a><span class="kt">float</span><span class="w"> </span><span class="n">ms</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">timeKernel</span><span class="p">(</span><span class="n">launch</span><span class="p">);</span>
+<a id="__codelineno-21-15" name="__codelineno-21-15" href="#__codelineno-21-15"></a><span class="n">report</span><span class="p">(</span><span class="s">&quot;cublasGemmEx (TC)&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">,</span><span class="w"> </span><span class="n">ms</span><span class="p">,</span><span class="w"> </span><span class="n">H100_FP16_TC_PEAK_GFLOPS</span><span class="p">);</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>  cublasGemmEx (TC)  N=4096     0.300 ms    458133.0 GFLOP/s   46.33% (tensor peak)
+</code></pre></div>
+<p><code>458 TFLOPS</code>, 46% מה-peak של ה-Tensor Cores, ופי כ-6.85 מהתקרה המלאה של CUDA Cores. הפער בין ה-wmma הנאיבי שלנו (19%) לבין cuBLAS (46%) הוא בדיוק אותו סוג פער שראינו ב-FP32: staging חכם דרך shared memory, double-buffering, ו-swizzling של הtiles כדי למנוע bank conflicts. מי שרוצה לסגור אותו לא כותב wmma ידני אלא עובר ל-<strong>CUTLASS</strong> או ל-<strong>CuTe DSL</strong> (פרק 6) - ספריות התבניות שנבנו בדיוק כדי לתכנת Tensor Cores קרוב ל-peak, וש-cuBLAS עצמה בנויה על רעיונותיהן.</p>
+<h3 id="-the-full-results-table">טבלת התוצאות המלאה - the full results table<a class="headerlink" href="#-the-full-results-table" title="Permanent link">&para;</a></h3>
+<p>הדליוורבל המרכזי. שתי טבלאות, כי יש שתי תקרות (שני roofline-ים). מלאו מהמדידות שלכם; הערכים כאן הם דוגמה מ-H100 עם <code>N = 4096</code>.</p>
+<p>טבלה 1 - סולם ה-CUDA Cores (מול <code>66,900 GFLOP/s</code>):</p>
+<table>
+<thead>
+<tr>
+<th>N</th>
+<th>kernel</th>
+<th>ms</th>
+<th>GFLOP/s</th>
+<th>% FP32 peak</th>
+<th>speedup מול naive</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4096</td>
+<td>naive</td>
+<td>68.000</td>
+<td>2021</td>
+<td>3.0%</td>
+<td>1.0x</td>
+</tr>
+<tr>
+<td>4096</td>
+<td>coalesced</td>
+<td>20.000</td>
+<td>6872</td>
+<td>10.3%</td>
+<td>3.4x</td>
+</tr>
+<tr>
+<td>4096</td>
+<td>tiled (shared)</td>
+<td>8.000</td>
+<td>17180</td>
+<td>25.7%</td>
+<td>8.5x</td>
+</tr>
+<tr>
+<td>4096</td>
+<td>1D blocktiling</td>
+<td>4.300</td>
+<td>31963</td>
+<td>47.8%</td>
+<td>15.8x</td>
+</tr>
+<tr>
+<td>4096</td>
+<td>2D blocktiling</td>
+<td>2.900</td>
+<td>47393</td>
+<td>70.8%</td>
+<td>23.4x</td>
+</tr>
+<tr>
+<td>4096</td>
+<td>cuBLAS SGEMM</td>
+<td>2.400</td>
+<td>57267</td>
+<td>85.6%</td>
+<td>28.3x</td>
+</tr>
+</tbody>
+</table>
+<p>טבלה 2 - סולם ה-Tensor Cores (מול <code>989,000 GFLOP/s</code>, קלט FP16):</p>
+<table>
+<thead>
+<tr>
+<th>N</th>
+<th>kernel</th>
+<th>ms</th>
+<th>GFLOP/s</th>
+<th>% TC peak</th>
+<th>פי-כמה מתקרת FP32</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4096</td>
+<td>wmma (FP16)</td>
+<td>0.720</td>
+<td>190889</td>
+<td>19.3%</td>
+<td>2.85x</td>
+</tr>
+<tr>
+<td>4096</td>
+<td>cublasGemmEx (FP16)</td>
+<td>0.300</td>
+<td>458133</td>
+<td>46.3%</td>
+<td>6.85x</td>
+</tr>
+</tbody>
+</table>
+<p>לצד הטבלאות, כתבו פסקת הסבר לכל מעבר, כשהמשפט המחייב הוא <strong>המטריקה מ-ncu שהצדיקה את הצעד</strong>:</p>
+<ul>
+<li><strong>coalesced -&gt; tiled:</strong> ה-DRAM היה ב-85% (memory-bound); shared memory חתך את התעבורה ל-global memory, וה-DRAM ירד ל-30%.</li>
+<li><strong>tiled -&gt; 1D:</strong> ה-shared throughput היה הצוואר; ניצול-חוזר של ערך <code>B</code> מול <code>TM</code> ערכי <code>A</code> חתך את תעבורת ה-shared פי <code>TM</code>, וה-FMA pipe עלה מ-35% ל-55%.</li>
+<li><strong>1D -&gt; 2D:</strong> ניצול-חוזר דו-צירי הביא 64 FMA ל-16 loads מ-shared; ה-FMA pipe הגיע ל-80% - יחידות ה-FP32 רוויות, למרות occupancy של 25% (ILP מפצה, כפי ש-8.5 חוזה).</li>
+<li><strong>2D -&gt; Tensor Cores:</strong> ה-FMA pipe היה במקסימום; אין דרך למעלה בלי יחידת חישוב אחרת. המעבר ל-Tensor Cores שבר את תקרת ה-CUDA Cores כולה, במחיר ירידה בדיוק ל-FP16.</li>
+</ul>
+<h3 id="-acceptance-criteria">קריטריוני קבלה - acceptance criteria<a class="headerlink" href="#-acceptance-criteria" title="Permanent link">&para;</a></h3>
+<p>הפרויקט מושלם כשכל השורות מתקיימות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>   [ ] all stages 1-4 pass checkResult (rtol=1e-3) against the reference; stage 5 passes with rtol=2e-2
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>   [ ] table 1 (CUDA Cores) complete for all 5 kernels + cuBLAS: N, ms, GFLOP/s, %peak, speedup
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>   [ ] table 2 (Tensor Cores) complete for wmma and cublasGemmEx, against the correct peak (989 TFLOPS)
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>   [ ] stage 2: ncu shows sectors/request dropping from ~32 (naive) to ~4 (coalesced)
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>   [ ] stage 3: ncu shows dram__throughput dropping from ~85% to ~30%
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>   [ ] stage 4b: 2D blocktiling reaches &gt;=80% of cuBLAS (cuBLAS_time/2D_time &gt;= 0.8)
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>   [ ] stage 4b: registers/thread reported from -Xptxas -v and spills=0 confirmed
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>   [ ] stage 5: wmma clearly beats 66.9 TFLOPS (the CUDA Cores ceiling)
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a>   [ ] explanation paragraph for each transition, where the justification is a concrete ncu metric (not &quot;a feeling&quot;)
+<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a>   [ ] all CUDA/cuBLAS calls wrapped in CUDA_CHECK
+</code></pre></div>
+<p>פקודות הפרופיילינג המרכזיות שתריצו (מ-9.1), ריכוז:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># build with a registers report:</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>nvcc<span class="w"> </span>-O3<span class="w"> </span>-arch<span class="o">=</span>sm_90a<span class="w"> </span>-Xptxas<span class="w"> </span>-v<span class="w"> </span>-lcublas<span class="w"> </span>-o<span class="w"> </span>gemm<span class="w"> </span>gemm.cu
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="c1"># automatic roofline for all kernels (ncu identifies where each one sits under the roof):</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>ncu<span class="w"> </span>--set<span class="w"> </span>roofline<span class="w"> </span>-o<span class="w"> </span>gemm_roofline<span class="w"> </span>./gemm
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span class="c1"># full report for manual bottleneck analysis (skip the warmup with launch-skip):</span>
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>ncu<span class="w"> </span>--set<span class="w"> </span>full<span class="w"> </span>--launch-skip<span class="w"> </span><span class="m">1</span><span class="w"> </span>--launch-count<span class="w"> </span><span class="m">1</span><span class="w"> </span>-o<span class="w"> </span>gemm_full<span class="w"> </span>./gemm
+<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>
+<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a><span class="c1"># focused metrics for the transition between two specific stages:</span>
+<a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a>ncu<span class="w"> </span>-k<span class="w"> </span><span class="s2">&quot;mm1DBlocktiling|mm2DBlocktiling&quot;</span><span class="w"> </span>--launch-skip<span class="w"> </span><span class="m">1</span><span class="w"> </span>--launch-count<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a><span class="w">  </span>--metrics<span class="w"> </span>sm__pipe_fma_cycles_active.avg.pct_of_peak_sustained_active,<span class="se">\</span>
+<a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a>sm__warps_active.avg.pct_of_peak_sustained_active,<span class="se">\</span>
+<a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a>launch__registers_per_thread<span class="w"> </span>./gemm
+</code></pre></div>
+<p>הערה מסכמת על נכונות מול מהירות: זכרו ש-<code>__syncthreads</code> חסר, בדיקת גבול שגויה, או stride לא נכון ל-<code>load_matrix_sync</code> ייצרו kernel מהיר ושגוי. הריצו <code>checkResult</code> אחרי <strong>כל</strong> שינוי, ואל תרשמו לעולם מספר ביצועים של kernel שלא אימת נכונות - זה הכלל הראשון של הפרויקט, והוא נשאר הכלל הראשון גם עכשיו כשאנחנו נוגעים ב-Tensor Cores.</p>
+<h3 id="-what-comes-next">לאן ממשיכים - what comes next<a class="headerlink" href="#-what-comes-next" title="Permanent link">&para;</a></h3>
+<p>בפרויקט אחד עברנו מ-3% מה-peak ועד לשבירת תקרת ה-CUDA Cores כולה: פי 23 מ-naive עם kernel שכתבנו בעצמנו (2D blocktiling, 71% מה-peak), ואז פי 2.85 נוספים מעבר לתקרה הזו במעבר ל-Tensor Cores. וכל צעד לא היה ניחוש - הוא הונע ממטריקה ב-ncu שהצביעה על צוואר הבקבוק הבא, בדיוק כמו שתורת האילוצים מלמדת. זה הלב של הקורס כולו: ה-kernel, ה-warp, ה-coalescing, ה-shared memory, ה-registers, ה-occupancy, ה-arithmetic intensity, וה-Tensor Cores אינם מושגים נפרדים - הם מדרגות בסולם אחד, וכל אחת שווה קפיצת ביצועים מדידה.</p>
+<p>מכאן שני כיוונים להעמקה. הראשון, <strong>לסגור את הפער ב-Tensor Cores</strong>: לעטוף את ה-wmma ב-staging של shared memory ו-double-buffering, ואז לעבור ל-CUTLASS או ל-CuTe DSL (פרק 6), שם ה-layouts וה-atoms מאפשרים להתקרב ל-peak האמיתי בלי לכתוב SASS ביד. השני, <strong>להכליל את הסולם למקרים אמיתיים</strong>: מטריצות לא-ריבועיות, <code>N</code> שאינו מתחלק בtiles (החזרת בדיקות הגבול), fusion של epilogue (הוספת bias והפעלת ReLU בתוך אותו kernel כדי לחסוך מעבר ל-global memory), ובחינה כיצד המסקנות משתנות על A100 (Ampere) מול B200 (Blackwell), שבהם ה-ridge point וה-peaks שונים. בכל אחד מהכיוונים, המתודולוגיה נשארת זהה: למדוד, למצוא את הצוואר, להרים אותו, ולחזור.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,2925 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בפרקים 0 עד 5 בנינו GPU מתוך אבני הבניין: הבנו את ה-SM (מעבד רב-זרמי - Streaming Multiprocessor) ואת ליבות ה-CUDA וה-Tensor (שיעורים 1.3, 1.5), כתבנו...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../../5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.5%20-%20CUDA%20Graphs%20%D7%9C%D7%A6%D7%9E%D7%A6%D7%95%D7%9D%20overhead/5.5%20-%20CUDA%20Graphs%20%D7%9C%D7%A6%D7%9E%D7%A6%D7%95%D7%9D%20overhead%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>6.1 - cuBLAS - אלגברה לינארית מואצת - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "6.1 - cuBLAS - \u05d0\u05dc\u05d2\u05d1\u05e8\u05d4 \u05dc\u05d9\u05e0\u05d0\u05e8\u05d9\u05ea \u05de\u05d5\u05d0\u05e6\u05ea - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="6.1 - cuBLAS - אלגברה לינארית מואצת - הרצאה - עמית טק" />
+<meta property="og:description" content="בפרקים 0 עד 5 בנינו GPU מתוך אבני הבניין: הבנו את ה-SM (מעבד רב-זרמי - Streaming Multiprocessor) ואת ליבות ה-CUDA וה-Tensor (שיעורים 1.3, 1.5), כתבנו..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="6.1 - cuBLAS - אלגברה לינארית מואצת - הרצאה - עמית טק" />
+<meta property="twitter:description" content="בפרקים 0 עד 5 בנינו GPU מתוך אבני הבניין: הבנו את ה-SM (מעבד רב-זרמי - Streaming Multiprocessor) ואת ליבות ה-CUDA וה-Tensor (שיעורים 1.3, 1.5), כתבנו..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cublas-cuda-basic-linear-algebra-subroutines" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              6.1 - cuBLAS - אלגברה לינארית מואצת - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_8" id="__nav_7_3_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    6   ספריות ביצועים
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_8_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_8_1" id="__nav_7_3_8_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.1   cuBLAS   אלגברה לינארית מואצת
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_8_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_8_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    6.1   cuBLAS   אלגברה לינארית מואצת
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.1 - cuBLAS - אלגברה לינארית מואצת - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.1 - cuBLAS - אלגברה לינארית מואצת - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#cublas-cuda-basic-linear-algebra-subroutines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מהי cuBLAS - CUDA Basic Linear Algebra Subroutines
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-setup-handle-streams" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        התקנה וחיווט - setup, handle ו-streams
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gemm-cublassgemm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פונקציית GEMM - cublasSgemm
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-column-major-row-major" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        המלכוד מספר 1 - column-major מול row-major
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="המלכוד מספר 1 - column-major מול row-major">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-transpose-row-major" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תעלול ה-transpose - להאכיל row-major בלי להעביר
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הוכחה מספרית קטנה
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-tensor-cores-cublasgemmex" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דיוק מעורב ו-Tensor Cores - cublasGemmEx
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-cublas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תקרת הייחוס - cuBLAS מול הקרנל שלנו
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cublas-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מתי לא cuBLAS - הגבולות של הקופסה השחורה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.1 - cuBLAS - אלגברה לינארית מואצת - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.1 - cuBLAS - אלגברה לינארית מואצת - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.2%20-%20cuDNN%20-%20primitives%20%D7%9C%D7%A8%D7%A9%D7%AA%D7%95%D7%AA%20%D7%A2%D7%9E%D7%95%D7%A7%D7%95%D7%AA/6.2%20-%20cuDNN%20-%20primitives%20%D7%9C%D7%A8%D7%A9%D7%AA%D7%95%D7%AA%20%D7%A2%D7%9E%D7%95%D7%A7%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.2   cuDNN   primitives לרשתות עמוקות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.3%20-%20CUTLASS%20-%20%D7%91%D7%A0%D7%99%D7%99%D7%AA%20GEMM%20%D7%91%D7%AA%D7%91%D7%A0%D7%99%D7%95%D7%AA/6.3%20-%20CUTLASS%20-%20%D7%91%D7%A0%D7%99%D7%99%D7%AA%20GEMM%20%D7%91%D7%AA%D7%91%D7%A0%D7%99%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.3   CUTLASS   בניית GEMM בתבניות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.4%20-%20CuTe%20%D7%95-CuTe%20DSL%20-%20layouts%20%D7%95-tiles/6.4%20-%20CuTe%20%D7%95-CuTe%20DSL%20-%20layouts%20%D7%95-tiles%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.4   CuTe ו CuTe DSL   layouts ו tiles
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#cublas-cuda-basic-linear-algebra-subroutines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מהי cuBLAS - CUDA Basic Linear Algebra Subroutines
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-setup-handle-streams" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        התקנה וחיווט - setup, handle ו-streams
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gemm-cublassgemm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פונקציית GEMM - cublasSgemm
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-column-major-row-major" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        המלכוד מספר 1 - column-major מול row-major
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="המלכוד מספר 1 - column-major מול row-major">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-transpose-row-major" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תעלול ה-transpose - להאכיל row-major בלי להעביר
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הוכחה מספרית קטנה
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-tensor-cores-cublasgemmex" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דיוק מעורב ו-Tensor Cores - cublasGemmEx
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-cublas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תקרת הייחוס - cuBLAS מול הקרנל שלנו
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cublas-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מתי לא cuBLAS - הגבולות של הקופסה השחורה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    6   ספריות ביצועים
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    6.1   cuBLAS   אלגברה לינארית מואצת
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>6.1 - cuBLAS - אלגברה לינארית מואצת - הרצאה</h1>
+
+<p>בפרקים 0 עד 5 בנינו GPU מתוך אבני הבניין: הבנו את ה-SM (מעבד רב-זרמי - Streaming Multiprocessor) ואת ליבות ה-CUDA וה-Tensor (שיעורים 1.3, 1.5), כתבנו kernels משלנו וטיפסנו בפרויקט 3.5 מ-matmul naive של 3% מה-peak עד shared-memory tiling של 26%, ואפילו שם ראינו את התקרה המקצועית - cuBLAS - חולפת על פנינו פי 3.3 ומגיעה ל-86% מה-peak של FP32. בפרק הזה אנחנו עוברים לצד השני של המתרס: במקום לכתוב kernels, אנחנו <strong>קוראים</strong> ל-kernels שכתבו המומחים של NVIDIA. cuBLAS היא הספרייה שיושבת מתחת ל-PyTorch, ל-TensorFlow ולכל חישוב אלגברה לינארית צפוף על GPU, והיא נקודת ההשוואה ("reference ceiling") של כל פרויקט GEMM בקורס. בשיעור הזה נלמד להשתמש בה נכון: נתקין ונחווט, נבין את מנגנון בחירת ה-kernel האטום שלה, נכתוב <code>cublasSgemm</code> ל-FP32, נתמודד עם המלכוד מספר 1 של כל מי שנגע ב-cuBLAS - הפריסה ה-column-major מול row-major של C - ולבסוף נדליק את ה-Tensor Cores דרך <code>cublasGemmEx</code> ונמדוד את הזינוק ל-TF32 ול-FP16. את איך ה-Tensor Cores עובדות בפנים כבר יודעים מ-1.5; כאן לומדים איך לקרוא להן במשפט קוד אחד.</p>
+<h2 id="cublas-cuda-basic-linear-algebra-subroutines">מהי cuBLAS - CUDA Basic Linear Algebra Subroutines<a class="headerlink" href="#cublas-cuda-basic-linear-algebra-subroutines" title="Permanent link">&para;</a></h2>
+<p>ראשי התיבות cuBLAS הם CUDA Basic Linear Algebra Subroutines - מימוש ה-GPU של NVIDIA לתקן הוותיק BLAS (ספריית תת-שגרות אלגברה לינארית בסיסית, בת עשרות שנים מעולם ה-Fortran המדעי). הרעיון פשוט: במקום שכל מפתח יכתוב ויכוונן ביד את פעולות הליבה של אלגברה לינארית - כפל מטריצה-וקטור, כפל מטריצה-מטריצה, פתרון מערכות - cuBLAS מספקת "kernels מכוונים היטב לפעולות אלגברה לינארית נפוצות", מוכנים לקריאה.</p>
+<p>התקן BLAS מחולק לשלוש רמות, וכדאי להכיר אותן כי הן חוזרות בשמות הפונקציות:</p>
+<table>
+<thead>
+<tr>
+<th>רמה</th>
+<th>פעולה אופיינית</th>
+<th>Arithmetic Intensity</th>
+<th>דוגמה</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BLAS-1</td>
+<td>וקטור-וקטור</td>
+<td>נמוכה (memory-bound)</td>
+<td><code>axpy</code>: <code>y = a*x + y</code></td>
+</tr>
+<tr>
+<td>BLAS-2</td>
+<td>מטריצה-וקטור</td>
+<td>נמוכה-בינונית</td>
+<td><code>gemv</code>: <code>y = A*x</code></td>
+</tr>
+<tr>
+<td>BLAS-3</td>
+<td>מטריצה-מטריצה</td>
+<td>גבוהה (compute-bound)</td>
+<td><code>gemm</code>: <code>C = A*B</code></td>
+</tr>
+</tbody>
+</table>
+<p>הכוכב של cuBLAS, ומוקד השיעור הזה, הוא <strong>GEMM - GEneral Matrix Multiply</strong> ברמת BLAS-3. זו הפעולה <code>C = alpha * A*B + beta * C</code>, ליבו של כל שכבה צפופה (dense / linear layer) ברשת נוירונים, וגם הפעולה שהarithmetic intensity הגבוהה שלה מאפשרת לרווֹת (saturate) את החומרה - בדיוק מה שראינו בפרויקט 3.5.</p>
+<p><strong>כיצד cuBLAS עובדת בפנים - בחירת kernel אטומה.</strong> נקודה מהותית שקובעת את כל אופן העבודה מולה: cuBLAS <strong>אינה</strong> kernel אחד. היא מכילה, כלשון ה-glossary, "מערך רחב של kernels, כל אחד מכוונן במיוחד לטיפוסי נתונים ספציפיים (למשל FP32, FP16), לגדלי מטריצות, ולדורות ארכיטקטורת ה-SM". לפעולה לוגית אחת (GEMM) יש עשרות מימושים קונקרטיים. בזמן ריצה cuBLAS משתמשת ב<strong>היוריסטיקות פנימיות (לא ידועות)</strong> כדי לבחור את ה-kernel המהיר ביותר ואת פרמטרי הlaunch האופטימליים עבור הבעיה שלכם. אתם <strong>לא</strong> בוחרים את ה-kernel - הספרייה בוחרת. זו "קופסה שחורה" (black box) כפי שתיארנו כבר ב-1.5: יעילה מאוד, אבל סגורה. אם תרצו לבנות GEMM מותאם בעצמכם, תרדו ל-CUTLASS ול-CuTe (שיעורים 6.3 ו-6.4); כאן אנחנו צרכנים.</p>
+<p><strong>המקום באקוסיסטם.</strong> cuBLAS היא "היסוד לרוב החישוב הנומרי בעל הביצועים הגבוהים על GPU של NVIDIA", ובפרט היא המנוע שמאיץ את פעולות הליבה של PyTorch. חלוקת העבודה עם אחותה cuDNN (שנפגוש בשיעור הבא): cuBLAS מטפלת באלגברה לינארית כללית/צפופה - הכפלים שבשכבות הצפופות - בעוד cuDNN מתמחה בפרימיטיבים של רשתות נוירונים (קונבולוציה, נורמליזציה, attention).</p>
+<h2 id="-setup-handle-streams">התקנה וחיווט - setup, handle ו-streams<a class="headerlink" href="#-setup-handle-streams" title="Permanent link">&para;</a></h2>
+<p>cuBLAS מגיעה כחלק מ-CUDA Toolkit, כך שאין מה להתקין בנפרד. שני דברים בלבד דרושים בקוד:</p>
+<ul>
+<li><strong>כותרת:</strong> <code>#include &lt;cublas_v2.h&gt;</code>. הסיומת <code>_v2</code> היא ה-API המודרני; אל תשתמשו ב-<code>cublas.h</code> הישן. הכותרת מגדירה את הטיפוסים והפונקציות שבהם נשתמש.</li>
+<li><strong>חיווט (linking):</strong> בעת הcompilation עם <code>nvcc</code> חובה לקשר לספרייה עם הדגל <code>-lcublas</code>.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>nvcc<span class="w"> </span>-O2<span class="w"> </span>-arch<span class="o">=</span>sm_90a<span class="w"> </span>gemm.cu<span class="w"> </span>-o<span class="w"> </span>gemm<span class="w"> </span>-lcublas
+</code></pre></div>
+<p>עמוד השדרה של כל תוכנית cuBLAS הוא ה-<strong>handle</strong> (ידית) - אובייקט אטום מסוג <code>cublasHandle_t</code> שמחזיק את ההקשר (context) של הספרייה: הcaches הפנימיים, בחירות תצורה, וה-stream הפעיל. יוצרים אותו פעם אחת בתחילת התוכנית ומשמידים אותו בסוף:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">cublasHandle_t</span><span class="w"> </span><span class="n">handle</span><span class="p">;</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">CUBLAS_CHECK</span><span class="p">(</span><span class="n">cublasCreate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">handle</span><span class="p">));</span><span class="w">   </span><span class="c1">// create once</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1">// ... all GEMM calls ...</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">CUBLAS_CHECK</span><span class="p">(</span><span class="n">cublasDestroy</span><span class="p">(</span><span class="n">handle</span><span class="p">));</span><span class="w">   </span><span class="c1">// release at the end</span>
+</code></pre></div>
+<p><strong>בדיקת שגיאות.</strong> בדיוק כפי שעטפנו כל קריאת Runtime API ב-<code>CUDA_CHECK</code> (שיעור 5.3), נעטוף כל קריאת cuBLAS ב-<code>CUBLAS_CHECK</code>. הפונקציות של cuBLAS אינן מחזירות <code>cudaError_t</code> אלא <code>cublasStatus_t</code> נפרד, ולכן צריך מאקרו משלו. מ-CUDA 11.4 קיימת <code>cublasGetStatusString</code> שממירה קוד סטטוס למחרוזת קריאה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="cp">#define CUBLAS_CHECK(call)                                                    \</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="cp">    do {                                                                      \</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="cp">        cublasStatus_t st_ = (call);                                          \</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="cp">        if (st_ != CUBLAS_STATUS_SUCCESS) {                                   \</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="cp">            fprintf(stderr, &quot;cuBLAS error at %s:%d\n  &#39;%s&#39;\n  -&gt; %s\n&quot;,        \</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="cp">                    __FILE__, __LINE__, #call, cublasGetStatusString(st_));   \</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="cp">            exit(EXIT_FAILURE);                                               \</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="cp">        }                                                                     \</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="cp">    } while (0)</span>
+</code></pre></div>
+<p><strong>streams.</strong> כברירת מחדל cuBLAS רצה על ה-default stream. כדי לשלב GEMM בpipeline מקבילה (כמו זו שבנינו ב-5.3) קושרים את ה-handle ל-stream משלכם. כל הקריאות שאחרי כן יורצו על אותו stream:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">cudaStream_t</span><span class="w"> </span><span class="n">stream</span><span class="p">;</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaStreamCreate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">stream</span><span class="p">));</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">CUBLAS_CHECK</span><span class="p">(</span><span class="n">cublasSetStream</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span><span class="w"> </span><span class="n">stream</span><span class="p">));</span><span class="w">   </span><span class="c1">// every GEMM from here on runs on this stream</span>
+</code></pre></div>
+<p>הערה למי שאין GPU מקומי: cuBLAS זמינה גם ב-Google Colab (T4 חינם) ובכל VM ענן עם GPU של NVIDIA. החליפו את <code>sm_90a</code> (H100) ב-<code>sm_75</code> על T4 או <code>sm_80</code> על A100.</p>
+<h2 id="gemm-cublassgemm">פונקציית GEMM - cublasSgemm<a class="headerlink" href="#gemm-cublassgemm" title="Permanent link">&para;</a></h2>
+<p>הפונקציה הראשונה שנכתוב היא <code>cublasSgemm</code> - ה-<strong>S</strong> היא Single precision (FP32). כל משפחת ה-GEMM ב-cuBLAS עוקבת אחר אותה מוסכמת שמות: האות הראשונה היא הדיוק (<code>S</code>=FP32, <code>D</code>=FP64, <code>H</code>=FP16, <code>C</code>/<code>Z</code>=מרוכב), והשאר <code>gemm</code>. החתימה מממשת את הפעולה המלאה של BLAS-3:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>   C  =  alpha * op(A) * op(B)  +  beta * C
+</code></pre></div>
+<p>כאשר <code>op(X)</code> הוא <code>X</code> או <code>X^T</code> (transpose) לפי דגל, ו-<code>alpha</code>, <code>beta</code> הם סקלרים (שימו לב: מצביעים אליהם, לא ערכים). החתימה המלאה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">cublasSgemm</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">            </span><span class="n">transa</span><span class="p">,</span><span class="w"> </span><span class="n">transb</span><span class="p">,</span><span class="w">       </span><span class="c1">// whether to transpose A, B</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">            </span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">k</span><span class="p">,</span><span class="w">              </span><span class="c1">// problem dimensions: C is m x n, summed over k</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">            </span><span class="o">&amp;</span><span class="n">alpha</span><span class="p">,</span><span class="w">               </span><span class="c1">// pointer to scalar</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">            </span><span class="n">A</span><span class="p">,</span><span class="w"> </span><span class="n">lda</span><span class="p">,</span><span class="w">               </span><span class="c1">// matrix A and its leading dimension</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">            </span><span class="n">B</span><span class="p">,</span><span class="w"> </span><span class="n">ldb</span><span class="p">,</span><span class="w">               </span><span class="c1">// matrix B and its leading dimension</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">            </span><span class="o">&amp;</span><span class="n">beta</span><span class="p">,</span><span class="w">                </span><span class="c1">// pointer to scalar</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">            </span><span class="n">C</span><span class="p">,</span><span class="w"> </span><span class="n">ldc</span><span class="p">);</span><span class="w">              </span><span class="c1">// matrix C and its leading dimension</span>
+</code></pre></div>
+<p>שלושה פרטים שקל לפספס ומפילים מתחילים:</p>
+<ul>
+<li><strong>הסקלרים הם מצביעים.</strong> <code>&amp;alpha</code> ו-<code>&amp;beta</code> הם <code>const float*</code>, לא <code>float</code>. כברירת מחדל הם נקראים מהhost (host pointer mode). לכפל טהור <code>C = A*B</code> נציב <code>alpha = 1.0f</code>, <code>beta = 0.0f</code>.</li>
+<li><strong><code>beta</code> דורס או צובר.</strong> עם <code>beta = 0</code> המטריצה <code>C</code> נכתבת מאפס (וגם לא נקראת - כך שאין צורך לאתחל אותה). עם <code>beta = 1</code> מתקבל <code>C += A*B</code>, שימושי לצבירה.</li>
+<li><strong>הכל על ה-device.</strong> המצביעים <code>A</code>, <code>B</code>, <code>C</code> הם כתובות ב-global memory (זיכרון גלובלי) - תוצרי <code>cudaMalloc</code>, לא מצביעי host. cuBLAS אינה מעתיקה עבורכם; העתקת הקלט והפלט ב-<code>cudaMemcpy</code> באחריותכם.</li>
+</ul>
+<p>מה שנשאר להסביר, וזה החלק הקשה, הוא מה בדיוק הם <code>m, n, k</code>, ה-<code>transa/transb</code>, ומעל הכל ה-<code>lda/ldb/ldc</code> - שלושתם נגזרים מהמלכוד הגדול של הפריסה בזיכרון. לשם אנחנו הולכים עכשיו.</p>
+<h2 id="1-column-major-row-major">המלכוד מספר 1 - column-major מול row-major<a class="headerlink" href="#1-column-major-row-major" title="Permanent link">&para;</a></h2>
+<p>זהו, כלשון ה-glossary, "מקור השגיאות הנפוץ ביותר בשימוש ב-cuBLAS": פריסת הנתונים בזיכרון. cuBLAS, בירושה מ-Fortran ומ-BLAS הקלאסי, מצפה למטריצות בסדר <strong>column-major (עמודה-ראשית)</strong> - העמודות רצופות בזיכרון. C, C++ ו-NumPy (ברירת המחדל) הם <strong>row-major (שורה-ראשית)</strong> - השורות רצופות. זהו בדיוק ההפך.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>   logical matrix         row-major (C/C++)         column-major (cuBLAS/Fortran)
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>   ┌         ┐
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>   │ 1  2  3 │           memory:                    memory:
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>   │ 4  5  6 │           1 2 3 4 5 6                 1 4 2 5 3 6
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>   └         ┘           (row after row)             (column after column)
+</code></pre></div>
+<p><strong>leading dimension.</strong> לצד כל מטריצה מעבירים ל-cuBLAS פרמטר <code>ld</code> (leading dimension) - <strong>הצעד (stride) בזיכרון בין שתי עמודות עוקבות</strong>, כלומר מספר השורות של המטריצה כפי ש-cuBLAS רואה אותה (column-major). ה-<code>ld</code> מאפשר לעבוד על תת-מטריצה מתוך הקצאה גדולה יותר: אם המטריצה תופסת את כל הרוחב, <code>ld</code> שווה למספר השורות; אם היא חלון בתוך מערך רחב יותר, <code>ld</code> הוא רוחב המערך המלא. <code>ld</code> שגוי הוא באג קלאסי, ונחזור אליו.</p>
+<h3 id="-transpose-row-major">תעלול ה-transpose - להאכיל row-major בלי להעביר<a class="headerlink" href="#-transpose-row-major" title="Permanent link">&para;</a></h3>
+<p>לפני שנרים ידיים ונעתיק (transpose) את המטריצות פיזית, יש זהות אלגברית שחוסכת את כל תנועת הנתונים. היא נשענת על עובדה אחת יפהפייה:</p>
+<p><strong>מטריצה row-major זהה סיבית-לסיבית ל-transpose שלה שנקראת column-major.</strong> הביטו בדוגמה למעלה: הזיכרון <code>1 2 3 4 5 6</code> הוא המטריצה <code>2x3</code> שלנו ב-row-major, אבל אם נקרא אותו column-major כמטריצה <code>3x2</code>, נקבל את העמודות <code>[1,2,3]</code> ו-<code>[4,5,6]</code> - שהן בדיוק <code>A^T</code>. אותם בתים בדיוק, פרשנות אחרת. אין העתקה, אין העברה, רק שינוי נקודת מבט.</p>
+<p>מכאן הזהות הבסיסית של אלגברה לינארית:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>   C = A * B      &lt;=&gt;      C^T = B^T * A^T
+</code></pre></div>
+<p>נחבר את השניים. יש לנו בזיכרון מטריצות row-major: <code>A</code> בגודל <code>M x K</code>, <code>B</code> בגודל <code>K x N</code>, ואנחנו רוצים <code>C = A*B</code> בגודל <code>M x N</code>, גם הוא row-major. הטריק:</p>
+<ol>
+<li>buffer של <code>A</code> (row-major, <code>M x K</code>) הוא, ב-column-major, המטריצה <code>A^T</code> בגודל <code>K x M</code>. באותו אופן <code>B</code> הוא <code>B^T</code> בגודל <code>N x K</code>, ו-<code>C</code> הוא <code>C^T</code> בגודל <code>N x M</code>.</li>
+<li>בעולם ה-column-major שבו cuBLAS חיה, נבקש ממנה לחשב את <code>C^T = B^T * A^T</code> - כלומר <strong>מעבירים את B ואת A בסדר הפוך</strong>, בלי אף transpose מפורש (<code>transa = transb = N</code>).</li>
+<li>cuBLAS כותבת ל-buffer של <code>C</code> את <code>C^T</code> ב-column-major, שהוא בדיוק <code>C</code> שלנו כשקוראים אותו חזרה row-major. קסם, בלי תנועת נתונים.</li>
+</ol>
+<p>הנה זה קונקרטית. cuBLAS מחשבת <code>result(m x n) = op(A_cublas)(m x k) * op(B_cublas)(k x n)</code>, ואנחנו רוצים ש-<code>result</code> יהיה <code>C^T</code> בגודל <code>N x M</code>. לכן <code>m = N</code>, <code>n = M</code>, <code>k = K</code>, האופרנד הראשון הוא ה-<code>B</code> שלנו והשני הוא ה-<code>A</code> שלנו:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">alpha</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">,</span><span class="w"> </span><span class="n">beta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="c1">// dA: row-major M x K,  dB: row-major K x N,  dC: row-major M x N (all on device)</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">CUBLAS_CHECK</span><span class="p">(</span><span class="n">cublasSgemm</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">        </span><span class="n">CUBLAS_OP_N</span><span class="p">,</span><span class="w"> </span><span class="n">CUBLAS_OP_N</span><span class="p">,</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">        </span><span class="n">N</span><span class="p">,</span><span class="w"> </span><span class="n">M</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">,</span><span class="w">          </span><span class="c1">// m=N, n=M, k=K   (computing C^T)</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">        </span><span class="o">&amp;</span><span class="n">alpha</span><span class="p">,</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">        </span><span class="n">dB</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">,</span><span class="w">            </span><span class="c1">// first operand = our B; ld = N (rows of B^T)</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">        </span><span class="n">dA</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">,</span><span class="w">            </span><span class="c1">// second operand = our A; ld = K (rows of A^T)</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">        </span><span class="o">&amp;</span><span class="n">beta</span><span class="p">,</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">        </span><span class="n">dC</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">));</span><span class="w">          </span><span class="c1">// output C^T; ld = N (rows of C^T)</span>
+</code></pre></div>
+<p>עבור המקרה הריבועי <code>M = K = N</code> (הנפוץ במדידות שלנו), כל שלושת ה-<code>ld</code> שווים ל-<code>N</code> וגם <code>m = n = k = N</code>. זה בדיוק הקוד ששילבנו בשלב 3 של פרויקט 3.5, ועכשיו אתם מבינים מדוע <code>dB</code> בא לפני <code>dA</code>.</p>
+<h3 id="_1">הוכחה מספרית קטנה<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h3>
+<p>בואו נאמת על מטריצות זעירות שאפשר לחשב ביד. <code>A</code> בגודל <code>2x3</code> ו-<code>B</code> בגודל <code>3x2</code>, שתיהן row-major:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>   A = ┌ 1 2 3 ┐   B = ┌  7  8 ┐        C = A*B = ┌  58   64 ┐
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>       └ 4 5 6 ┘       │  9 10 │                  └ 139  154 ┘
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>                       └ 11 12 ┘
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>   (A&#39;s buffer: 1 2 3 4 5 6 ; B&#39;s buffer: 7 8 9 10 11 12)
+</code></pre></div>
+<p>בעולם column-major: buffer של <code>B</code> נקרא כ-<code>B^T</code> בגודל <code>2x3</code>, buffer של <code>A</code> כ-<code>A^T</code> בגודל <code>3x2</code>. cuBLAS מחשבת <code>B^T * A^T</code> בגודל <code>2x2</code>, שהוא <code>C^T</code>, וכותבת ל-buffer של <code>C</code> את הרצף <code>58 64 139 154</code>. כשקוראים אותו חזרה row-major כמטריצה <code>2x2</code> מקבלים בדיוק את <code>C</code>, עם השורות <code>58 64</code> ו-<code>139 154</code>. שום transpose לא בוצע - רק החלפנו את סדר האופרנדים ובחרנו <code>ld</code> נכונים.</p>
+<p><strong>החלופה, כשבאמת רוצים transpose.</strong> אם מטריצה כן צריכה להיות מועברת לוגית, מעבירים <code>CUBLAS_OP_T</code> בדגל המתאים במקום <code>CUBLAS_OP_N</code>. אך שימו לב שזה שינוי לוגי בפעולה, לא פתרון לבעיית ה-row/column-major; לרוב תעדיפו את תעלול החלפת האופרנדים כי הוא חינמי לחלוטין.</p>
+<h2 id="-tensor-cores-cublasgemmex">דיוק מעורב ו-Tensor Cores - cublasGemmEx<a class="headerlink" href="#-tensor-cores-cublasgemmex" title="Permanent link">&para;</a></h2>
+<p>עד כה <code>cublasSgemm</code> רץ על ה-CUDA Cores ב-FP32 טהור, ולכן התקרה שלו היא ~66.9 TFLOPS של ה-H100 (חישבנו זאת ב-3.5). אבל מ-1.5 אנחנו יודעים שרוב עוצמת ה-H100 חבויה ב-<strong>Tensor Cores</strong> (ליבות טנזור), שתפוקתן גבוהה בסדר גודל. כדי לרתום אותן משתמשים ב-<strong><code>cublasGemmEx</code></strong> - גרסת GEMM גמישה שמפרידה בין טיפוס הנתונים בזיכרון לבין טיפוס החישוב (compute type).</p>
+<p>נזכיר את העיקרון מ-1.5: מכפילים בדיוק נמוך וזול, אבל צוברים בדיוק גבוה. cuBLAS חושפת זאת דרך שלושה פרמטרים חדשים - טיפוס לכל מטריצה (<code>cudaDataType</code>), טיפוס חישוב (<code>cublasComputeType_t</code>), ובחירת אלגוריתם. החתימה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">cublasGemmEx</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span><span class="w"> </span><span class="n">transa</span><span class="p">,</span><span class="w"> </span><span class="n">transb</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">k</span><span class="p">,</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">             </span><span class="o">&amp;</span><span class="n">alpha</span><span class="p">,</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">             </span><span class="n">A</span><span class="p">,</span><span class="w"> </span><span class="n">Atype</span><span class="p">,</span><span class="w"> </span><span class="n">lda</span><span class="p">,</span><span class="w">       </span><span class="c1">// data type for each operand separately</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">             </span><span class="n">B</span><span class="p">,</span><span class="w"> </span><span class="n">Btype</span><span class="p">,</span><span class="w"> </span><span class="n">ldb</span><span class="p">,</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">             </span><span class="o">&amp;</span><span class="n">beta</span><span class="p">,</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">             </span><span class="n">C</span><span class="p">,</span><span class="w"> </span><span class="n">Ctype</span><span class="p">,</span><span class="w"> </span><span class="n">ldc</span><span class="p">,</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">             </span><span class="n">computeType</span><span class="p">,</span><span class="w">          </span><span class="c1">// internal accumulation precision</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">             </span><span class="n">algo</span><span class="p">);</span><span class="w">                </span><span class="c1">// algorithm / kernel selection</span>
+</code></pre></div>
+<p><strong>מסלול TF32 - הכי קרוב לחינם.</strong> TF32 (TensorFloat-32) הוא הפורמט בן 19 הביט שראינו ב-1.5: מריצים קוד שנכתב ל-FP32, בלי לשנות את הנתונים בזיכרון (הם נשארים <code>float</code>), אך הכפל מתבצע על ה-Tensor Cores בדיוק חתוך. הקלט והפלט נשארים <code>CUDA_R_32F</code>, ורק טיפוס החישוב משתנה ל-<code>CUBLAS_COMPUTE_32F_FAST_TF32</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">CUBLAS_CHECK</span><span class="p">(</span><span class="n">cublasGemmEx</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">        </span><span class="n">CUBLAS_OP_N</span><span class="p">,</span><span class="w"> </span><span class="n">CUBLAS_OP_N</span><span class="p">,</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">        </span><span class="n">N</span><span class="p">,</span><span class="w"> </span><span class="n">M</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">alpha</span><span class="p">,</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">        </span><span class="n">dB</span><span class="p">,</span><span class="w"> </span><span class="n">CUDA_R_32F</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">,</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">        </span><span class="n">dA</span><span class="p">,</span><span class="w"> </span><span class="n">CUDA_R_32F</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">,</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">        </span><span class="o">&amp;</span><span class="n">beta</span><span class="p">,</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">        </span><span class="n">dC</span><span class="p">,</span><span class="w"> </span><span class="n">CUDA_R_32F</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">,</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="w">        </span><span class="n">CUBLAS_COMPUTE_32F_FAST_TF32</span><span class="p">,</span><span class="w">   </span><span class="c1">// &lt;-- turns on Tensor Cores in TF32</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="w">        </span><span class="n">CUBLAS_GEMM_DEFAULT</span><span class="p">));</span>
+</code></pre></div>
+<p>שימו לב לנקודה חשובה: <strong>cuBLAS אינה משתמשת ב-TF32 כברירת מחדל.</strong> <code>cublasSgemm</code> ו-<code>CUBLAS_COMPUTE_32F</code> נותנים FP32 מדויק על CUDA Cores. כדי לקבל את TF32 חייבים לבחור זאת מפורשות (דרך compute type זה, או לחלופין <code>cublasSetMathMode(handle, CUBLAS_TF32_TENSOR_OP_MATH)</code>). זו בחירה מודעת של דיוק מול מהירות.</p>
+<p><strong>מסלול FP16 - התפוקה המקסימלית של Tensor Cores.</strong> כאן הנתונים עצמם ב-half precision. הקלט <code>CUDA_R_16F</code> (טיפוס <code>__half</code>, מ-<code>&lt;cuda_fp16.h&gt;</code>), הצבירה עדיין ב-FP32 עם <code>CUBLAS_COMPUTE_32F</code> כדי שהשגיאה לא תתפוצץ לאורך <code>k</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1">// dAh, dBh, dCh are __half arrays on the device</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">CUBLAS_CHECK</span><span class="p">(</span><span class="n">cublasGemmEx</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">        </span><span class="n">CUBLAS_OP_N</span><span class="p">,</span><span class="w"> </span><span class="n">CUBLAS_OP_N</span><span class="p">,</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">        </span><span class="n">N</span><span class="p">,</span><span class="w"> </span><span class="n">M</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">alpha</span><span class="p">,</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">        </span><span class="n">dBh</span><span class="p">,</span><span class="w"> </span><span class="n">CUDA_R_16F</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">,</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">        </span><span class="n">dAh</span><span class="p">,</span><span class="w"> </span><span class="n">CUDA_R_16F</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">,</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">        </span><span class="o">&amp;</span><span class="n">beta</span><span class="p">,</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="w">        </span><span class="n">dCh</span><span class="p">,</span><span class="w"> </span><span class="n">CUDA_R_16F</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">,</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">        </span><span class="n">CUBLAS_COMPUTE_32F</span><span class="p">,</span><span class="w">             </span><span class="c1">// FP32 accumulation over FP16 input</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="w">        </span><span class="n">CUBLAS_GEMM_DEFAULT</span><span class="p">));</span>
+</code></pre></div>
+<p>מתחת למכסה, זו בדיוק ההוראה <code>HMMA</code> שפירקנו ב-1.5: קלט FP16, צבירה FP32. cuBLAS פשוט בוחרת עבורכם את ה-kernel שמנפיק אותה ומזין אליו את הtiles.</p>
+<h2 id="-cublas">תקרת הייחוס - cuBLAS מול הקרנל שלנו<a class="headerlink" href="#-cublas" title="Permanent link">&para;</a></h2>
+<p>עכשיו נחבר הכל למספרים. זכרו מ-3.5 שכפל שתי מטריצות <code>N x N</code> הוא <code>2*N^3</code> פעולות; עבור <code>N = 4096</code> זה <code>137.4 GFLOP</code> של עבודה. אותה עבודה בדיוק רצה בכל מסלול; מה שמשתנה הוא התקרה שאליה משווים ואיזה חומרה עובדת. הנה תקרות ה-H100 SXM (צפיפות מלאה, ללא sparsity):</p>
+<table>
+<thead>
+<tr>
+<th>מסלול</th>
+<th>חומרה</th>
+<th>דיוק חישוב</th>
+<th>peak (H100 SXM)</th>
+<th>יחס ל-FP32</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cublasSgemm</code></td>
+<td>CUDA Cores</td>
+<td>FP32</td>
+<td>~66.9 TFLOPS</td>
+<td>1x</td>
+</tr>
+<tr>
+<td><code>GemmEx</code> + <code>COMPUTE_32F_FAST_TF32</code></td>
+<td>Tensor Cores</td>
+<td>TF32</td>
+<td>~494.7 TFLOPS</td>
+<td>~7.4x</td>
+</tr>
+<tr>
+<td><code>GemmEx</code> + קלט FP16, <code>COMPUTE_32F</code></td>
+<td>Tensor Cores</td>
+<td>FP16</td>
+<td>~989.4 TFLOPS</td>
+<td>~14.8x</td>
+</tr>
+</tbody>
+</table>
+<p>כבר מהתקרות רואים למה המעבר ל-Tensor Cores הוא הקפיצה הגדולה בקורס: עצם החלפת compute type מזיזה את הגג פי כמעט 7.4 (TF32) או 14.8 (FP16). כמובן, אף מסלול לא נוגע בתקרה שלו - חלק מהזמן הולך על טעינת הtiles, וככל שהחישוב מהיר יותר כך המשקל היחסי של תנועת הזיכרון גדל (מודל ה-Roofline מ-3.x). מספרים מייצגים על H100 עבור <code>N = 4096</code>, כדוגמה בלבד:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>  path             time       throughput       % of that path&#39;s ceiling   speedup vs FP32
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>  ─────────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>  cublasSgemm      2.40 ms    57,300 GFLOP/s   ~86% of 66.9 TFLOPS        1.0x
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>  GemmEx TF32      0.43 ms   ~320,000 GFLOP/s  ~65% of 494.7 TFLOPS       ~5.6x
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>  GemmEx FP16      0.23 ms   ~600,000 GFLOP/s  ~61% of 989.4 TFLOPS       ~10.5x
+</code></pre></div>
+<p>והשוואה למה שכתבנו ביד ב-3.5: ה-kernel ה-tiled שלנו הגיע ל-17,180 GFLOP/s (26% מ-peak FP32). cuBLAS ב-FP32 מהיר ממנו פי 3.3, ו-cuBLAS ב-FP16 מהיר ממנו פי 35 בערך. זה בדיוק תפקידה של cuBLAS בקורס: היא ה"תקרת ייחוס" - המספר שאומר כמה "בשר" נשאר על העצם בכל אופטימיזציה שנכתוב בפרויקט 9.3.</p>
+<p><strong>מלכוד הדיוק בבדיקת נכונות.</strong> כשעוברים ל-TF32 ובעיקר ל-FP16, אסור להשוות לתוצאת CPU בסובלנות של FP32. הכפל ב-FP16 מאבד מנטיסה, והשגיאה היחסית המצטברת ב-GEMM גדולה בהרבה. סובלנות סבירה: <code>rtol</code> של כ-<code>1e-3</code> ל-FP32, <code>~1e-2</code> ל-TF32, ו-<code>~2e-2</code> ל-FP16. kernel שנכשל בבדיקה עם סובלנות FP32 אינו בהכרח שגוי - ייתכן שרק בחרתם דיוק נמוך יותר; התאימו את הסובלנות לדיוק שבחרתם.</p>
+<h2 id="cublas-">מתי לא cuBLAS - הגבולות של הקופסה השחורה<a class="headerlink" href="#cublas-" title="Permanent link">&para;</a></h2>
+<p>cuBLAS מצוינת בדיוק כשהבעיה שלכם היא GEMM (או פעולת BLAS) סטנדרטית בטיפוס ובצורה נפוצים. אבל האטימות שלה היא גם המגבלה שלה, וכדאי לדעת מתי לצאת ממנה:</p>
+<ul>
+<li><strong>בחירת ה-kernel אינה בשליטתכם.</strong> מכיוון שההיוריסטיקות סגורות, הביצועים יכולים להשתנות בין טיפוסי נתונים, צורות מטריצה ודורות GPU באופן שאינכם שולטים בו ישירות. עבור צורות "מוזרות" (מטריצות דקות מאוד, ממדים לא-סטנדרטיים) לפעמים ה-kernel שנבחר אינו האופטימלי.</li>
+<li><strong>אין fusion.</strong> cuBLAS מחשבת GEMM ותו לא. אם אתם רוצים לאחד (fuse) את ה-GEMM עם bias, אקטיבציה, או עם GEMM נוסף לתוך kernel יחיד כדי לחסוך כתיבות ל-global memory, cuBLAS לא תעשה זאת. לשם כך יורדים ל-CUTLASS (שיעור 6.3), שבנויה בדיוק סביב mainloop ו-epilogue הניתנים לאיחוד.</li>
+<li><strong>לצורך שליטה עדינה יותר יש <code>cublasLt</code>.</strong> ספריית ה-Lightweight של cuBLAS (<code>cublasLtMatmul</code>) חושפת יותר בקרה על אלגוריתם, פריסה ו-epilogue מוגבל. היא הגשר בין ה-API הפשוט כאן לבין הכתיבה-מאפס של CUTLASS.</li>
+</ul>
+<p>עבור רוב הצרכים, ולכל מי שרוצה "כפל מטריצות מהיר עכשיו", cuBLAS בקריאה אחת היא התשובה הנכונה - וזו בדיוק הסיבה ש-PyTorch נשענת עליה. את בניית ה-kernels מאפס, שם השליטה מלאה, נלמד בהמשך הפרק.</p>
+<h2 id="_2">סיכום<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<ul>
+<li>cuBLAS (CUDA Basic Linear Algebra Subroutines) היא מימוש ה-GPU של NVIDIA לתקן BLAS; היא היסוד לחישוב הנומרי הצפוף על GPU והמנוע שמתחת ל-PyTorch, ומחלקת עבודה עם cuDNN (כללי מול פרימיטיבים של רשתות).</li>
+<li>cuBLAS אינה kernel אחד אלא מאגר של עשרות kernels מכווננים לטיפוס נתונים, גודל מטריצה ודור SM; בזמן ריצה היוריסטיקות פנימיות (לא ידועות) בוחרות את ה-kernel - אתם צרכנים של "קופסה שחורה", לא מכווננים שלה.</li>
+<li>ההתקנה מינימלית: <code>#include &lt;cublas_v2.h&gt;</code>, קישור עם <code>-lcublas</code>, יצירת <code>cublasHandle_t</code> עם <code>cublasCreate</code>/<code>cublasDestroy</code>, וקישור אופציונלי ל-stream עם <code>cublasSetStream</code>; עוטפים כל קריאה ב-<code>CUBLAS_CHECK</code>.</li>
+<li><code>cublasSgemm</code> מחשבת <code>C = alpha*op(A)*op(B) + beta*C</code> ב-FP32; הסקלרים מועברים כמצביעים, <code>beta=0</code> דורס את C בלי לקרוא אותה, וכל המצביעים הם כתובות device.</li>
+<li>המלכוד מספר 1: cuBLAS היא column-major בעוד C/C++/NumPy הם row-major, וכל מטריצה דורשת leading dimension (הצעד בין עמודות); זהו מקור הבאגים הנפוץ ביותר.</li>
+<li>הזהות <code>C = A*B &lt;=&gt; C^T = B^T*A^T</code>, יחד עם העובדה ש-buffer row-major זהה ל-transpose שלו ב-column-major, מאפשרת להאכיל נתוני row-major ל-cuBLAS בלי כל העברה - פשוט מחליפים את סדר האופרנדים (dB לפני dA) ובוחרים ld נכונים.</li>
+<li><code>cublasGemmEx</code> מפרידה טיפוס נתונים מטיפוס חישוב ובכך פותחת את ה-Tensor Cores: <code>CUBLAS_COMPUTE_32F_FAST_TF32</code> מריץ קוד FP32 ב-TF32 כמעט בחינם, וקלט FP16 עם <code>CUBLAS_COMPUTE_32F</code> מגיע לתפוקת השיא; TF32 אינו ברירת מחדל וחייב בחירה מפורשת.</li>
+<li>על H100 SXM התקרות הן ~66.9 TFLOPS (FP32), ~494.7 TFLOPS (TF32) ו-~989.4 TFLOPS (FP16), כלומר המעבר ל-Tensor Cores מזיז את הגג פי 7.4 עד 14.8; ככל שהדיוק נמוך יותר, כך יש להרפות את סובלנות בדיקת הנכונות.</li>
+<li>cuBLAS היא תקרת הייחוס של פרויקטי ה-GEMM (3.5 ו-9.3); כשצריך fusion, צורות לא-סטנדרטיות או שליטה מלאה יורדים ל-cublasLt ולאחר מכן ל-CUTLASS/CuTe (שיעורים 6.3 ו-6.4).</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

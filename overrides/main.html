@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+  {% set desc = page.meta.description if page and page.meta and page.meta.description else config.site_description %}
+  {% set url = page.canonical_url if page else config.site_url %}
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="{{ config.site_author }}">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="{{ config.site_name }}">
+
+  {% set social_slug = (page.url | trim("/")) if (page and page.url) else "index" %}
+  {% set social_image = config.site_url ~ "assets/images/social/" ~ social_slug ~ ".png" %}
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "{{ config.site_url }}#organization",
+        "name": "{{ config.site_name }}",
+        "url": "{{ config.site_url }}",
+        "logo": "{{ config.site_url }}amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "{{ config.site_author }}"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "{{ config.site_url }}#website",
+        "name": "{{ config.site_name }}",
+        "url": "{{ config.site_url }}",
+        "description": "{{ config.site_description }}",
+        "inLanguage": "he",
+        "publisher": { "@id": "{{ config.site_url }}#organization" }
+      }
+      {%- if page and page.meta and page.meta.date %},
+      {
+        "@type": "Article",
+        "headline": {{ (page.meta.title if page.meta.title else page.title) | tojson }},
+        "description": {{ desc | tojson }},
+        "image": "{{ social_image }}",
+        "datePublished": "{{ page.meta.date }}",
+        {%- if page.meta.git_revision_date_localized_raw_iso_datetime %}
+        "dateModified": "{{ page.meta.git_revision_date_localized_raw_iso_datetime | replace(' ', 'T') }}Z",
+        {%- endif %}
+        "author": { "@type": "Person", "name": "{{ config.site_author }}" },
+        "publisher": { "@id": "{{ config.site_url }}#organization" },
+        "mainEntityOfPage": "{{ url }}",
+        "inLanguage": "he"
+      }
+      {%- endif %}
+      {%- if page and page.meta and page.meta.course %},
+      {
+        "@type": "Course",
+        "@id": "{{ url }}#course",
+        "name": {{ (page.meta.title if page.meta.title else page.title) | tojson }},
+        "description": {{ desc | tojson }},
+        "provider": {
+          "@type": "Organization",
+          "@id": "{{ config.site_url }}#organization",
+          "name": "{{ config.site_name }}"
+        },
+        "url": "{{ url }}",
+        "inLanguage": "he",
+        "isAccessibleForFree": true,
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "ILS",
+          "category": "free"
+        },
+        "hasCourseInstance": {
+          "@type": "CourseInstance",
+          "courseMode": "online"
+        }
+      }
+      {%- endif %}
+      {%- set linked_crumbs = page.ancestors | selectattr("url") | list if page and page.ancestors else [] %}
+      {%- if page and not page.is_homepage %},
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "{{ config.site_name }}",
+            "item": "{{ config.site_url }}"
+          }
+          {%- for crumb in linked_crumbs | reverse %},
+          {
+            "@type": "ListItem",
+            "position": {{ loop.index + 1 }},
+            "name": {{ crumb.title | tojson }},
+            "item": "{{ config.site_url }}{{ crumb.url }}"
+          }
+          {%- endfor %},
+          {
+            "@type": "ListItem",
+            "position": {{ (linked_crumbs | length) + 2 }},
+            "name": {{ (page.meta.title if page.meta.title else page.title) | tojson }},
+            "item": "{{ url }}"
+          }
+        ]
+      }
+      {%- endif %}
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+{% endblock %}

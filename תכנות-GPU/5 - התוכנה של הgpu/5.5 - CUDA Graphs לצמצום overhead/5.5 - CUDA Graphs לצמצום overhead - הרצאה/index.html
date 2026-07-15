@@ -1,0 +1,2935 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="לאורך פרק 5 מיפינו את מחסנית התוכנה בצד הhost (host, ה-CPU): את ה-CUDA Runtime API ואת הספרייה שמממשת אותו libcudart.so, את היחס בינו לבין ה-Driver API,...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.5%20-%20CUDA%20Graphs%20%D7%9C%D7%A6%D7%9E%D7%A6%D7%95%D7%9D%20overhead/5.5%20-%20CUDA%20Graphs%20%D7%9C%D7%A6%D7%9E%D7%A6%D7%95%D7%9D%20overhead%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../5.4%20-%20%D7%A0%D7%99%D7%98%D7%95%D7%A8%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C%20-%20NVML%20%D7%95-nvidia-smi/5.4%20-%20%D7%A0%D7%99%D7%98%D7%95%D7%A8%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C%20-%20NVML%20%D7%95-nvidia-smi%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../5.5%20-%20CUDA%20Graphs%20%D7%9C%D7%A6%D7%9E%D7%A6%D7%95%D7%9D%20overhead%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>5.5 - CUDA Graphs לצמצום overhead - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "5.5 - CUDA Graphs \u05dc\u05e6\u05de\u05e6\u05d5\u05dd overhead - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.5%20-%20CUDA%20Graphs%20%D7%9C%D7%A6%D7%9E%D7%A6%D7%95%D7%9D%20overhead/5.5%20-%20CUDA%20Graphs%20%D7%9C%D7%A6%D7%9E%D7%A6%D7%95%D7%9D%20overhead%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="5.5 - CUDA Graphs לצמצום overhead - הרצאה - עמית טק" />
+<meta property="og:description" content="לאורך פרק 5 מיפינו את מחסנית התוכנה בצד הhost (host, ה-CPU): את ה-CUDA Runtime API ואת הספרייה שמממשת אותו libcudart.so, את היחס בינו לבין ה-Driver API,..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.5%20-%20CUDA%20Graphs%20%D7%9C%D7%A6%D7%9E%D7%A6%D7%95%D7%9D%20overhead/5.5%20-%20CUDA%20Graphs%20%D7%9C%D7%A6%D7%9E%D7%A6%D7%95%D7%9D%20overhead%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.5%20-%20CUDA%20Graphs%20%D7%9C%D7%A6%D7%9E%D7%A6%D7%95%D7%9D%20overhead/5.5%20-%20CUDA%20Graphs%20%D7%9C%D7%A6%D7%9E%D7%A6%D7%95%D7%9D%20overhead%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="5.5 - CUDA Graphs לצמצום overhead - הרצאה - עמית טק" />
+<meta property="twitter:description" content="לאורך פרק 5 מיפינו את מחסנית התוכנה בצד הhost (host, ה-CPU): את ה-CUDA Runtime API ואת הספרייה שמממשת אותו libcudart.so, את היחס בינו לבין ה-Driver API,..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.5%20-%20CUDA%20Graphs%20%D7%9C%D7%A6%D7%9E%D7%A6%D7%95%D7%9D%20overhead/5.5%20-%20CUDA%20Graphs%20%D7%9C%D7%A6%D7%9E%D7%A6%D7%95%D7%9D%20overhead%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-overhead-launch-host-launch-overhead" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              5.5 - CUDA Graphs לצמצום overhead - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_7" id="__nav_7_3_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    5   התוכנה של הgpu
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.1   Driver API מול Runtime API
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../5.2%20-%20%D7%94%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%20-%20nvidia.ko%20%D7%95-libcuda/5.2%20-%20%D7%94%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%20-%20nvidia.ko%20%D7%95-libcuda%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.2   הדרייבר   nvidia.ko ו libcuda
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../5.3%20-%20Runtime%20API%2C%20streams%20%D7%95-events/5.3%20-%20Runtime%20API%2C%20streams%20%D7%95-events%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.3   Runtime API, streams ו events
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../5.4%20-%20%D7%A0%D7%99%D7%98%D7%95%D7%A8%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C%20-%20NVML%20%D7%95-nvidia-smi/5.4%20-%20%D7%A0%D7%99%D7%98%D7%95%D7%A8%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C%20-%20NVML%20%D7%95-nvidia-smi%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.4   ניטור וניהול   NVML ו nvidia smi
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_7_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_7_5" id="__nav_7_3_7_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.5   CUDA Graphs לצמצום overhead
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_7_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_7_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    5.5   CUDA Graphs לצמצום overhead
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.5 - CUDA Graphs לצמצום overhead - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.5 - CUDA Graphs לצמצום overhead - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-overhead-launch-host-launch-overhead" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הבעיה - overhead הlaunch של הhost - launch overhead
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda-cuda-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מהו גרף CUDA - CUDA Graph
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stream-stream-capture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        לכידת stream - stream capture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-manual-graph-construction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        בנייה ידנית של גרף - manual graph construction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overhead-anatomy-of-the-saving" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מדוע גרף מוזיל overhead - anatomy of the saving
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-baked-in-pointers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        המגבלה - מצביעים צרובים - baked-in pointers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-pytorch-torchcudagraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        גרפים ב-PyTorch - torch.cuda.graph
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../5.5%20-%20CUDA%20Graphs%20%D7%9C%D7%A6%D7%9E%D7%A6%D7%95%D7%9D%20overhead%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.5 - CUDA Graphs לצמצום overhead - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../5.5%20-%20CUDA%20Graphs%20%D7%9C%D7%A6%D7%9E%D7%A6%D7%95%D7%9D%20overhead%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.5 - CUDA Graphs לצמצום overhead - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-overhead-launch-host-launch-overhead" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הבעיה - overhead הlaunch של הhost - launch overhead
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda-cuda-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מהו גרף CUDA - CUDA Graph
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stream-stream-capture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        לכידת stream - stream capture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-manual-graph-construction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        בנייה ידנית של גרף - manual graph construction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overhead-anatomy-of-the-saving" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מדוע גרף מוזיל overhead - anatomy of the saving
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-baked-in-pointers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        המגבלה - מצביעים צרובים - baked-in pointers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-pytorch-torchcudagraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        גרפים ב-PyTorch - torch.cuda.graph
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    5   התוכנה של הgpu
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    5.5   CUDA Graphs לצמצום overhead
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>5.5 - CUDA Graphs לצמצום overhead - הרצאה</h1>
+
+<p>לאורך פרק 5 מיפינו את מחסנית התוכנה בצד הhost (host, ה-CPU): את ה-CUDA Runtime API ואת הספרייה שמממשת אותו <code>libcudart.so</code>, את היחס בינו לבין ה-Driver API, ובשיעור 5.3 את ה-streams (זרמים) - התורים המסודרים שמאפשרים לחפוף עבודה על ה-GPU. בכל השיעורים האלה הנחנו הנחה שקטה ולא מדויקת: שlaunch kernel היא זולה. היא איננה. כל launch בודדת עולה לhost בסדר גודל של מיקרו-שניות של עבודת CPU - זיהוי הפונקציה, אריזת הארגומנטים, הגדרת תצורת הlaunch והגשתה לדרייבר - ובעומסים שמשגרים מאות kernels בתוך מילישניות בודדות, כמו inference של מודל שפה בזמן-אמת (low-latency LLM inference), הoverhead הזו הופכת לנתח משמעותי מזמן הריצה הכולל. בשיעור הזה, שסוגר את פרק הhost, נכיר את הכלי שנועד בדיוק לבעיה הזו: גרף CUDA (CUDA Graph), מבנה שלוכד DAG שלם של launches ועבודה נלווית ומגיש אותו לdevice בפעולת host אחת, שאפשר להריץ מחדש (replay) שוב ושוב בזול. נראה את דפוס לכידת ה-stream (stream capture), נבנה גרף גם ידנית, נבין למה הוא מוזיל overhead, ונעמוד על המגבלה החדה שלו - המצביעים הצרובים בו. את התיקון הקונקרטי הזה נזכיר שוב כשנדבר על profiling בשיעור 7.4 ועל צנרת ה-inference בשיעור 9.2.</p>
+<h2 id="-overhead-launch-host-launch-overhead">הבעיה - overhead הlaunch של הhost - launch overhead<a class="headerlink" href="#-overhead-launch-host-launch-overhead" title="Permanent link">&para;</a></h2>
+<p>נתחיל מהמספר שמניע את כל השיעור. כשאתם כותבים <code>myKernel&lt;&lt;&lt;grid, block&gt;&gt;&gt;(args)</code>, ה-<code>&lt;&lt;&lt; &gt;&gt;&gt;</code> הוא סוכר תחבירי שה-nvcc מתרגם לרצף קריאות אל ה-Runtime API (בעיקר <code>cudaLaunchKernel</code>). הרצף הזה עושה עבודה אמיתית על ה-CPU: הוא אורז את הארגומנטים למערך, מעתיק את תצורת הlaunch (grid, block, shared memory, stream), פונה לדרייבר, והדרייבר מצדו כותב פקודה לתור החומרה. כל זה עולה בסדר גודל של <strong>3 עד 10 מיקרו-שניות</strong> של זמן CPU לlaunch בודדת, גם אם ה-kernel עצמו רץ על הdevice במיקרו-שנייה אחת.</p>
+<p>כל עוד ה-kernels גדולים - רצים מילישניות שלמות - הoverhead הזו זניחה. הבעיה מתלקחת כשה-kernels קטנים ורבים. נעשה חשבון על צעד decode יחיד של מודל שפה בסגנון Transformer:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>   Transformer decode step (one token), a 32-layer model:
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>   per layer, roughly: QKV projection, RoPE, attention,
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>   output projection, two MLP GEMMs, two normalizations,
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>   and additional elements  -&gt;  roughly 12-16 kernels per layer
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>   32 layers x ~15 kernels  ≈  480 launches per token
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>   480 launches x 5 microseconds  ≈  2.4 milliseconds of CPU overhead alone
+</code></pre></div>
+<p>אם יעד ה-latency שלכם הוא, נניח, 10 מילישניות לטוקן, אז 2.4 מילישניות של launch overhead הן כ-24% מהתקציב - נשרפים עוד לפני שה-GPU חישב ביט אחד. גרוע מכך: אם ה-kernels קצרים מהזמן שלוקח לhost לשגר את הבא בתור, ה-GPU <strong>מורעב (starved)</strong> - הוא מסיים את ה-kernel הנוכחי ויושב בטל בזמן שה-CPU עדיין טורח על הlaunch הבאה. במצב כזה התוכנית שלכם overhead-bound: לא compute-bound ולא memory-bound, אלא חסומה ביכולת של הhost להזין את הdevice בעבודה. הגדלת ה-batch או שיפור ה-kernel לא יעזרו; הצוואר הוא ה-CPU.</p>
+<p><strong>מדוע streams לבדם לא פותרים את זה.</strong> בשיעור 5.3 ראינו ש-streams מאפשרים חפיפה, ואפשר לחשוב שהם הפתרון. הם לא. streams מסירים את overhead ה<strong>סנכרון</strong> (הhost לא צריך לחכות לסיום), אבל הם לא מסירים את overhead ה<strong>launch</strong> - הhost עדיין חייב להנפיק כל אחת מ-480 הlaunches בנפרד, אחת-אחת, ולשלם את המיקרו-שניות שלה. ה-stream קובע את הסדר; הוא לא מקבץ את ההגשה. בדיוק את הקיבוץ הזה גרף CUDA מספק.</p>
+<h2 id="cuda-cuda-graph">מהו גרף CUDA - CUDA Graph<a class="headerlink" href="#cuda-cuda-graph" title="Permanent link">&para;</a></h2>
+<p>גרף CUDA הוא, בלשון ה-glossary, "גרף של kernel launches ועבודה אחרת שהhost יכול להגיש לdevice בבת אחת". במקום שהhost ינפיק מאות launches בזו אחר זו, אנחנו מתארים את כל גרף העבודה <strong>פעם אחת</strong>, ואז מגישים ומריצים אותו מחדש כיחידה אחת. המבנה הוא DAG (Directed Acyclic Graph, גרף מכוון חסר-מעגלים): הצמתים (nodes) הם פעולות - kernel launch, העתקת זיכרון, memset, ואפילו גרף-בן - והקשתות (edges) הן תלויות: קשת מ-A ל-B אומרת ש-B לא יתחיל לפני ש-A הסתיים.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>   The conceptual difference:
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>   Regular (per-launch):         Graph (submitted at once):
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>   host: launch K0  ─┐            host: launch(graphExec) ─┐
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>   host: launch K1  ─┤ each one            (one call)       │
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>   host: launch K2  ─┤ costs                                │
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>   host: launch K3  ─┤ ~5us                 K0 ─► K1 ─► K2 ─► K3
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>   host: launch K4  ─┘ to host             (the driver runs the whole DAG)
+</code></pre></div>
+<p>חשוב להבחין בין שלושה שלבים בחיי גרף, כי כל אחד משלם overhead שונה:</p>
+<ul>
+<li><strong>תיאור (definition)</strong> - בונים את הטופולוגיה: אילו צמתים, ואילו תלויות ביניהם. זה נעשה פעם אחת. אפשר לבנות אותה בלכידת stream (הדרך הנפוצה) או ידנית (צומת-צומת).</li>
+<li><strong>הגשם למכונה (instantiation)</strong> - <code>cudaGraphInstantiate</code> הופך את הגרף הטופולוגי לגרף <strong>בר-הרצה</strong> (<code>cudaGraphExec_t</code>). זה השלב היקר - הדרייבר מאמת את ה-DAG, ממפה משאבים ומכין את כל מבני הפקודות מראש. גם הוא נעשה, בדרך כלל, פעם אחת.</li>
+<li><strong>הרצה (launch / replay)</strong> - <code>cudaGraphLaunch</code> מגיש את הגרף בר-ההרצה לdevice. זו הפעולה שחוזרת שוב ושוב, וזו שהיא <strong>זולה</strong>: קריאת host אחת שמשגרת את כל ה-DAG.</li>
+</ul>
+<p>הרווח כולו נובע מכך שאת העבודה היקרה - זיהוי, תצורה, אימות, מיפוי - עושים פעם אחת ב-instantiation, ומשלמים אותה מופחתת (amortized) על פני אלפי הרצות. ההרצה עצמה כמעט לא עולה לhost.</p>
+<h2 id="stream-stream-capture">לכידת stream - stream capture<a class="headerlink" href="#stream-stream-capture" title="Permanent link">&para;</a></h2>
+<p>הדרך הנפוצה והקלה ביותר לבנות גרף היא <strong>לכידת stream</strong>: אנחנו לא בונים צמתים ביד, אלא מנפיקים את העבודה כרגיל על stream, ומבקשים מ-CUDA להקליט את מה שהנפקנו לתוך גרף במקום להריץ אותו. ה-glossary מציג את השלד המדויק:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">cudaStreamBeginCapture</span><span class="p">(</span><span class="n">stream</span><span class="p">);</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">kernelGemm</span><span class="o">&lt;&lt;&lt;</span><span class="p">{</span><span class="mi">32</span><span class="p">,</span><span class="mi">20</span><span class="p">},</span><span class="mi">64</span><span class="p">,</span><span class="mi">19200</span><span class="p">,</span><span class="n">stream</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p">);</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">kernelEpilogue</span><span class="o">&lt;&lt;&lt;</span><span class="p">{</span><span class="mi">256</span><span class="p">,</span><span class="mi">2</span><span class="p">},{</span><span class="mi">8</span><span class="p">,</span><span class="mi">32</span><span class="p">},</span><span class="mi">0</span><span class="p">,</span><span class="n">stream</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p">);</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">cudaStreamEndCapture</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">graph</span><span class="p">);</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">cudaGraphInstantiate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">graphExec</span><span class="p">,</span><span class="w"> </span><span class="n">graph</span><span class="p">,</span><span class="w"> </span><span class="n">flags</span><span class="p">);</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="n">cudaGraphLaunch</span><span class="p">(</span><span class="n">graphExec</span><span class="p">,</span><span class="w"> </span><span class="n">stream</span><span class="p">);</span>
+</code></pre></div>
+<p>שימו לב לתצורות הlaunch הקונקרטיות שנלכדות: <code>kernelGemm&lt;&lt;&lt;{32,20},64,19200,stream&gt;&gt;&gt;</code> הוא grid דו-ממדי של {32,20} בלוקים, block של 64 threads, ו-19200 בתים של shared memory דינמי; <code>kernelEpilogue&lt;&lt;&lt;{256,2},{8,32},0,stream&gt;&gt;&gt;</code> הוא grid {256,2}, block דו-ממדי {8,32}, ואפס shared memory דינמי. הפרמטר הרביעי בכל launch הוא ה-<code>stream</code> - וזה קריטי: <strong>הלכידה עובדת דרך ה-stream</strong>. בין <code>cudaStreamBeginCapture</code> ל-<code>cudaStreamEndCapture</code>, הlaunches <strong>לא רצות</strong> - הן מוקלטות כצמתים בגרף, והתלויות ביניהן נגזרות אוטומטית מהסדר וממבנה ה-stream.</p>
+<p>בואו נכתוב תוכנית מלאה ובת-הרצה שמדגימה את המחזור המלא, כולל מקרו הבדיקה <code>CUDA_CHECK</code> שראינו לאורך הקורס והרצה חוזרת בלולאה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdio&gt;</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdlib&gt;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cuda_runtime.h&gt;</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="cp">#define CUDA_CHECK(call)                                                      \</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="cp">    do {                                                                      \</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="cp">        cudaError_t err_ = (call);                                            \</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="cp">        if (err_ != cudaSuccess) {                                            \</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="cp">            fprintf(stderr, &quot;CUDA error at %s:%d\n  &#39;%s&#39;\n  -&gt; %s\n&quot;,         \</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="cp">                    __FILE__, __LINE__, #call, cudaGetErrorString(err_));     \</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="cp">            exit(EXIT_FAILURE);                                               \</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="cp">        }                                                                     \</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="cp">    } while (0)</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">tiny</span><span class="p">(</span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">d</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w">   </span><span class="c1">// deliberately tiny kernel</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="kt">int</span><span class="w"> </span><span class="n">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">    </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">d</span><span class="p">;</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMalloc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">)));</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMemset</span><span class="p">(</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">)));</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="w">    </span><span class="n">cudaStream_t</span><span class="w"> </span><span class="n">stream</span><span class="p">;</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaStreamCreate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">stream</span><span class="p">));</span>
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">512</span><span class="p">;</span><span class="w">                 </span><span class="c1">// 512 small launches in a dependent chain</span>
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="w">    </span><span class="n">cudaGraph_t</span><span class="w">     </span><span class="n">graph</span><span class="p">;</span>
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="w">    </span><span class="n">cudaGraphExec_t</span><span class="w"> </span><span class="n">graphExec</span><span class="p">;</span>
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a>
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a><span class="w">    </span><span class="c1">// 1. capture: issue on a non-default stream, doesn&#39;t run - it&#39;s recorded</span>
+<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaStreamBeginCapture</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span><span class="w"> </span><span class="n">cudaStreamCaptureModeGlobal</span><span class="p">));</span>
+<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span>
+<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a><span class="w">        </span><span class="n">tiny</span><span class="o">&lt;&lt;&lt;</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">stream</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">d</span><span class="p">);</span>
+<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaStreamEndCapture</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">graph</span><span class="p">));</span>
+<a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a>
+<a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a><span class="w">    </span><span class="c1">// 2. instantiation: the expensive step, once</span>
+<a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaGraphInstantiate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">graphExec</span><span class="p">,</span><span class="w"> </span><span class="n">graph</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">));</span>
+<a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a>
+<a id="__codelineno-3-38" name="__codelineno-3-38" href="#__codelineno-3-38"></a><span class="w">    </span><span class="c1">// 3. repeated launch: cheap, one host call for all 512 launches</span>
+<a id="__codelineno-3-39" name="__codelineno-3-39" href="#__codelineno-3-39"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">iter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">iter</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">1000</span><span class="p">;</span><span class="w"> </span><span class="n">iter</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-40" name="__codelineno-3-40" href="#__codelineno-3-40"></a><span class="w">        </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaGraphLaunch</span><span class="p">(</span><span class="n">graphExec</span><span class="p">,</span><span class="w"> </span><span class="n">stream</span><span class="p">));</span>
+<a id="__codelineno-3-41" name="__codelineno-3-41" href="#__codelineno-3-41"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-3-42" name="__codelineno-3-42" href="#__codelineno-3-42"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaStreamSynchronize</span><span class="p">(</span><span class="n">stream</span><span class="p">));</span>
+<a id="__codelineno-3-43" name="__codelineno-3-43" href="#__codelineno-3-43"></a>
+<a id="__codelineno-3-44" name="__codelineno-3-44" href="#__codelineno-3-44"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-3-45" name="__codelineno-3-45" href="#__codelineno-3-45"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">host</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">),</span><span class="w"> </span><span class="n">cudaMemcpyDeviceToHost</span><span class="p">));</span>
+<a id="__codelineno-3-46" name="__codelineno-3-46" href="#__codelineno-3-46"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;d[0] = %.1f (expected %d)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">host</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="p">);</span><span class="w">   </span><span class="c1">// 512000</span>
+<a id="__codelineno-3-47" name="__codelineno-3-47" href="#__codelineno-3-47"></a>
+<a id="__codelineno-3-48" name="__codelineno-3-48" href="#__codelineno-3-48"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaGraphExecDestroy</span><span class="p">(</span><span class="n">graphExec</span><span class="p">));</span>
+<a id="__codelineno-3-49" name="__codelineno-3-49" href="#__codelineno-3-49"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaGraphDestroy</span><span class="p">(</span><span class="n">graph</span><span class="p">));</span>
+<a id="__codelineno-3-50" name="__codelineno-3-50" href="#__codelineno-3-50"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaStreamDestroy</span><span class="p">(</span><span class="n">stream</span><span class="p">));</span>
+<a id="__codelineno-3-51" name="__codelineno-3-51" href="#__codelineno-3-51"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaFree</span><span class="p">(</span><span class="n">d</span><span class="p">));</span>
+<a id="__codelineno-3-52" name="__codelineno-3-52" href="#__codelineno-3-52"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-3-53" name="__codelineno-3-53" href="#__codelineno-3-53"></a><span class="p">}</span>
+</code></pre></div>
+<p>כמה דקויות ומלכודות שחייבים להכיר בלכידה:</p>
+<ul>
+<li><strong>חובה stream לא-default.</strong> אי אפשר ללכוד על ה-legacy default stream (stream 0). לכידה דורשת stream מפורש (שנוצר ב-<code>cudaStreamCreate</code>) או את ה-per-thread default stream. זו אותה הסיבה מ-5.3 שבה נמנענו מה-default stream לחפיפה.</li>
+<li><strong>מצב הלכידה (capture mode).</strong> ל-<code>cudaStreamBeginCapture</code> יש פרמטר מצב. <code>cudaStreamCaptureModeGlobal</code> הוא הברירה הבטוחה; <code>ThreadLocal</code> ו-<code>Relaxed</code> משנים כמה בקפדנות CUDA אוסר פעולות "מסוכנות" מ-threads אחרים בזמן הלכידה.</li>
+<li><strong>אסור לסנכרן בתוך לכידה.</strong> כל פעולה שחוסמת את הhost או שואלת סטטוס - <code>cudaMemcpy</code> חוסמת, <code>cudaDeviceSynchronize</code>, <code>cudaStreamSynchronize</code>, <code>cudaMalloc</code> רגיל - <strong>פוסלת</strong> את הלכידה ומחזירה שגיאה. בתוך הלכידה משתמשים רק בגרסאות ה-async (למשל <code>cudaMemcpyAsync</code>), וכל ההקצאות צריכות להיעשות <strong>לפני</strong> הלכידה (או עם <code>cudaMallocAsync</code>, שנלכד כצומת זיכרון).</li>
+<li><strong>תמיד להריץ warm-up.</strong> ה-instantiation הראשון וה-JIT של PTX ל-SASS (ראו שיעור 4.3) עולים overhead חד-פעמית. מדדו את ה-replay אחרי הרצת חימום, בדיוק כמו שעשינו עם kernels ב-5.3.</li>
+</ul>
+<h2 id="-manual-graph-construction">בנייה ידנית של גרף - manual graph construction<a class="headerlink" href="#-manual-graph-construction" title="Permanent link">&para;</a></h2>
+<p>לכידת stream נוחה, אבל לפעמים רוצים שליטה מפורשת בטופולוגיה - למשל לבנות תלויות שלא נובעות מסדר ה-stream, או לייצר את הגרף פרוגרמטית. אז בונים את הגרף <strong>צומת-צומת</strong>. הרעיון: יוצרים גרף ריק ב-<code>cudaGraphCreate</code>, מוסיפים צמתים כשלכל צומת מעבירים במפורש את מערך התלויות שלו, ואז מגישים למכונה כרגיל.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">cudaGraph_t</span><span class="w"> </span><span class="n">graph</span><span class="p">;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaGraphCreate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">graph</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">));</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1">// kernel node parameters</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">cudaKernelNodeParams</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{};</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">p</span><span class="p">.</span><span class="n">func</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">tiny</span><span class="p">;</span><span class="w">         </span><span class="c1">// pointer to the kernel function</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">p</span><span class="p">.</span><span class="n">gridDim</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="n">dim3</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="n">p</span><span class="p">.</span><span class="n">blockDim</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="n">dim3</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="n">p</span><span class="p">.</span><span class="n">sharedMemBytes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="kt">void</span><span class="o">*</span><span class="w"> </span><span class="n">args</span><span class="p">[]</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="o">&amp;</span><span class="n">d</span><span class="w"> </span><span class="p">};</span><span class="w">               </span><span class="c1">// array of pointers to the arguments</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="n">p</span><span class="p">.</span><span class="n">kernelParams</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">args</span><span class="p">;</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="n">p</span><span class="p">.</span><span class="n">extra</span><span class="w">          </span><span class="o">=</span><span class="w"> </span><span class="nb">nullptr</span><span class="p">;</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="c1">// node A - no dependencies (source)</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="n">cudaGraphNode_t</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaGraphAddKernelNode</span><span class="p">(</span><span class="o">&amp;</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">graph</span><span class="p">,</span><span class="w"> </span><span class="nb">nullptr</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">p</span><span class="p">));</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="c1">// node B - depends on A (pass A as a dependency)</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="n">cudaGraphNode_t</span><span class="w"> </span><span class="n">b</span><span class="p">;</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="n">cudaGraphNode_t</span><span class="w"> </span><span class="n">depsB</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="p">};</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaGraphAddKernelNode</span><span class="p">(</span><span class="o">&amp;</span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">graph</span><span class="p">,</span><span class="w"> </span><span class="n">depsB</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">p</span><span class="p">));</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="n">cudaGraphExec_t</span><span class="w"> </span><span class="n">graphExec</span><span class="p">;</span>
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaGraphInstantiate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">graphExec</span><span class="p">,</span><span class="w"> </span><span class="n">graph</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">));</span>
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaGraphLaunch</span><span class="p">(</span><span class="n">graphExec</span><span class="p">,</span><span class="w"> </span><span class="n">stream</span><span class="p">));</span>
+</code></pre></div>
+<p>לצד <code>cudaGraphAddKernelNode</code> קיימות <code>cudaGraphAddMemcpyNode</code>, <code>cudaGraphAddMemsetNode</code>, <code>cudaGraphAddHostNode</code> (להרצת callback על ה-CPU כחלק מהגרף) ו-<code>cudaGraphAddChildGraphNode</code> (הטמעת תת-גרף). את התלויות אפשר גם להוסיף בדיעבד עם <code>cudaGraphAddDependencies</code>. בפועל, רוב הקוד משתמש בלכידת stream כי היא קצרה בהרבה ופחות שברירית; הבנייה הידנית שמורה למקרים שדורשים שליטה מדויקת או ייצור דינמי של הטופולוגיה. חשוב להכיר את שתי הדרכים, אבל להעדיף לכידה.</p>
+<h2 id="overhead-anatomy-of-the-saving">מדוע גרף מוזיל overhead - anatomy of the saving<a class="headerlink" href="#overhead-anatomy-of-the-saving" title="Permanent link">&para;</a></h2>
+<p>נחזור למספרים ונבין מה בדיוק נחסך. בגרסה הרגילה, הhost משלם עבור כל אחת מ-N הlaunches את מלוא המחיר: אריזת ארגומנטים, תצורה, פנייה לדרייבר. בגרסת הגרף, את כל העבודה הזו עשינו <strong>פעם אחת</strong> ב-instantiation; ה-<code>cudaGraphLaunch</code> רק אומר לדרייבר "הרץ את ה-DAG שכבר הכנת", וזו קריאה בעלות של launch בודדת בערך, ללא תלות ב-N. נשווה:</p>
+<table>
+<thead>
+<tr>
+<th>מדד</th>
+<th>לולאת launches (per-launch)</th>
+<th>גרף (replay)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>עלות host לכל הרצה</td>
+<td><code>N x ~5us</code></td>
+<td><code>~2us</code> (קבוע, לא תלוי ב-N)</td>
+</tr>
+<tr>
+<td>מתי משלמים על תצורה/אימות</td>
+<td>בכל launch, כל פעם</td>
+<td>פעם אחת ב-instantiate</td>
+</tr>
+<tr>
+<td>רגישות למספר ה-kernels</td>
+<td>לינארית ב-N</td>
+<td>כמעט אפס</td>
+</tr>
+<tr>
+<td>מה מגביל בסוף</td>
+<td>overhead הhost (אם kernels קטנים)</td>
+<td>זמן ההרצה על הdevice</td>
+</tr>
+</tbody>
+</table>
+<p>חשבון ממודל ל-N=512 kernels זעירים, ~5 מיקרו-שניות overhead לlaunch:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>   per-launch:  512 x 5us  =  2560 us  =  2.56 ms  (host overhead per run)
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>   graph replay:               ~2us    +  device run time
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>   If the 512 kernels run on the device in ~0.6 ms total (in a dependent chain),
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>   then: per-launch ≈ 2.56 ms   (host-bound, the GPU is starved)
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>         graph      ≈ 0.60 ms   (device-bound, the CPU is almost uninvolved)
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>         speedup    ≈ 4.3x
+</code></pre></div>
+<p>שימו לב לתובנה החדה: <strong>הגרף לא מאיץ את ה-kernels.</strong> ה-512 launches עדיין רצות על הdevice באותו זמן בדיוק (בשרשרת תלויה, בזו אחר זו). מה שהגרף עושה הוא להסיר את overhead הhost, ובכך להוריד את הרצפה מ-<code>max(host_overhead, device_time)</code> ל-<code>device_time</code> בלבד. לכן הרווח הגדול ביותר מגיע כשהיינו <strong>overhead-bound</strong> מלכתחילה: הרבה kernels קטנים. אם ה-kernels גדולים וזמן הdevice שולט, הגרף כמעט לא יעזור - הoverhead ממילא הייתה זניחה. זו בדיוק הסיבה שה-glossary מצביע על inference של LLM בזמן-אמת כמקרה הקנוני: שם, במיוחד ב-batch קטן, ה-kernels קצרים והoverhead שולטת.</p>
+<h2 id="-baked-in-pointers">המגבלה - מצביעים צרובים - baked-in pointers<a class="headerlink" href="#-baked-in-pointers" title="Permanent link">&para;</a></h2>
+<p>לגרף CUDA יש מגבלה אחת חדה שחובה להבין, וה-glossary מדגיש אותה: <strong>ה-kernels וה-I/O שלהם מזוהים לפי מצביעי זיכרון גולמיים.</strong> כשלכדנו את <code>tiny&lt;&lt;&lt;...&gt;&gt;&gt;(d)</code>, הכתובת הקונקרטית של <code>d</code> - נניח <code>0x564603AFCC00</code> - נצרבה לתוך הגרף בר-ההרצה כארגומנט. הגרף לא זוכר "המשתנה <code>d</code>"; הוא זוכר את המספר <code>0x564603AFCC00</code>. מכאן נובעות שתי מסקנות מעשיות:</p>
+<ul>
+<li><strong>הגרף אינו ניתן לשמירה או להעברה (not serializable / not portable).</strong> אי אפשר לכתוב <code>graphExec</code> לדיסק ולטעון אותו בתהליך אחר, כי הכתובות הצרובות לא יהיו תקפות במרחב הכתובות החדש. הדרך היחידה "להעביר" גרף היא checkpoint ו-restore מלאים של כל זיכרון הhost והdevice, כך שהכתובות הצרובות יישארו תקפות - פתרון כבד שכמעט לא משמש בפועל.</li>
+<li><strong>חובה יציבות ההקצאות (stable allocations).</strong> ה-buffers שהגרף נוגע בהם חייבים להישאר מוקצים <strong>באותן כתובות</strong> לאורך כל ההרצות החוזרות. אם תשחררו buffer ותקצו אותו מחדש, ה-allocator עלול להחזיר כתובת אחרת - והגרף ימשיך לכתוב לכתובת הישנה, שכעת חופשית או שייכת למשהו אחר. זהו use-after-free קלאסי, שקט וקטלני.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>   The scenario that breaks a graph:
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>   cudaMalloc(&amp;d, ...)  -&gt;  d = 0x...CC00   (captured into the graph)
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>   ... instantiate, a few valid replays ...
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>   cudaFree(d)                               (the address was freed)
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>   cudaMalloc(&amp;d2, ...) -&gt;  d2 = 0x...E100   (a new address!)
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>   cudaGraphLaunch(...)                       (still writes to 0x...CC00 - bug)
+</code></pre></div>
+<p>לכן הכלל: <strong>הקצו את ה-buffers פעם אחת, לכדו את הגרף, ואל תשחררו/תקצו מחדש כל עוד הגרף בשימוש.</strong> אם הטופולוגיה נשארת אבל רק המצביעים או הפרמטרים משתנים, אין צורך ללכוד מחדש מאפס - <code>cudaGraphExecUpdate</code> מעדכן את הפרמטרים של גרף בר-הרצה קיים בזול, כל עוד המבנה זהה. זה מאפשר, למשל, להחליף את ה-buffer של הקלט בין הרצה להרצה בלי לשלם שוב על instantiation. זו הדרך הנכונה לטפל בשינוי מצביעים, במקום לשחרר ולהקצות.</p>
+<h2 id="-pytorch-torchcudagraph">גרפים ב-PyTorch - torch.cuda.graph<a class="headerlink" href="#-pytorch-torchcudagraph" title="Permanent link">&para;</a></h2>
+<p>כמעט אף אחד לא כותב את קריאות ה-<code>cudaStreamBeginCapture</code> ידנית בעבודת deep learning; משתמשים בעטיפה שה-glossary מציין - מנהל ההקשר (context manager) <code>torch.cuda.graph</code>. הוא לוכד את פעולות ה-CUDA ש-PyTorch מנפיק בתוך הבלוק, ובונה מהן גרף בר-הרצה. הדפוס הקנוני ל-inference, שמכבד את כל המגבלות שראינו (יציבות מצביעים, warm-up, stream נפרד):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">model</span> <span class="o">=</span> <span class="n">build_model</span><span class="p">()</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1"># 1. static buffers - fixed addresses the graph will bake in. Do not replace them!</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="n">static_input</span>  <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="n">hidden</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="n">static_output</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="c1"># 2. warm-up on a side stream (required: run a few iterations before capture)</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="n">s</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">Stream</span><span class="p">()</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="n">s</span><span class="o">.</span><span class="n">wait_stream</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">current_stream</span><span class="p">())</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>        <span class="n">static_output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">static_input</span><span class="p">)</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">current_stream</span><span class="p">()</span><span class="o">.</span><span class="n">wait_stream</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="c1"># 3. capture: the whole block becomes a runnable graph</span>
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="n">g</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">CUDAGraph</span><span class="p">()</span>
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">graph</span><span class="p">(</span><span class="n">g</span><span class="p">):</span>
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>    <span class="n">static_output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">static_input</span><span class="p">)</span>
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="c1"># 4. repeated run per token/request</span>
+<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="k">def</span><span class="w"> </span><span class="nf">infer</span><span class="p">(</span><span class="n">new_input</span><span class="p">):</span>
+<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a>    <span class="n">static_input</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">new_input</span><span class="p">)</span>   <span class="c1"># write into the same buffer (same address)</span>
+<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a>    <span class="n">g</span><span class="o">.</span><span class="n">replay</span><span class="p">()</span>                       <span class="c1"># one launch for the whole forward pass</span>
+<a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a>    <span class="k">return</span> <span class="n">static_output</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>     <span class="c1"># copy out before the next step overwrites it</span>
+</code></pre></div>
+<p>הנקודה המרכזית שמחברת הכל: <code>static_input</code> ו-<code>static_output</code> הם <strong>buffers קבועים</strong>. אנחנו לא יוצרים tensor חדש בכל צעד (זה יקצה כתובת חדשה ויפר את הגרף); במקום זאת אנחנו <strong>כותבים לתוך</strong> ה-buffer הקבוע עם <code>copy_</code>, מריצים <code>g.replay()</code>, ומעתיקים את התוצאה החוצה. זו בדיוק אותה מגבלת "יציבות ההקצאות" מהסעיף הקודם, מתורגמת לעולם ה-tensors. עבור מקרים פשוטים, <code>torch.cuda.make_graphed_callables</code> עוטף פונקציה או מודול ומחזיר גרסה מגורפת אוטומטית. בצעד decode של LLM, שבו אותו forward pass של השכבות רץ שוב ושוב לכל טוקן עם אותם משקלים ואותם buffers, גרף CUDA הוא כמעט מובן מאליו - וזה מה שנפרוט לפרטים בשיעור 9.2.</p>
+<h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>כל kernel launch בודדת עולה לhost בסדר גודל של 3-10 מיקרו-שניות של עבודת CPU (אריזת ארגומנטים, תצורה, פנייה לדרייבר), גם כשה-kernel עצמו רץ במיקרו-שנייה על הdevice.</li>
+<li>כשמשגרים מאות kernels קטנים בתוך מילישניות - כמו בצעד decode של LLM, שיכול להגיע לכ-480 launches לטוקן - הoverhead המצטברת הופכת את התוכנית לoverhead-bound וה-GPU מורעב.</li>
+<li>streams לבדם לא פותרים את זה: הם מסירים overhead סנכרון אבל לא launch overhead, כי הhost עדיין מנפיק כל launch בנפרד.</li>
+<li>גרף CUDA לוכד DAG של launches ועבודה נלווית ומגיש אותו בפעולת host אחת שאפשר להריץ מחדש בזול; חיי הגרף הם תיאור, instantiation (השלב היקר, פעם אחת), ו-replay (זול, חוזר).</li>
+<li>לכידת stream (<code>cudaStreamBeginCapture</code> -&gt; הנפקת ה-kernels על stream -&gt; <code>cudaStreamEndCapture</code> -&gt; <code>cudaGraphInstantiate</code> -&gt; <code>cudaGraphLaunch</code> בלולאה) היא הדרך הנפוצה; היא דורשת stream לא-default, אוסרת פעולות סנכרון בתוך הלכידה, והlaunches מוקלטות ולא רצות.</li>
+<li>אפשר גם לבנות גרף ידנית צומת-צומת עם <code>cudaGraphCreate</code> ו-<code>cudaGraphAddKernelNode</code> תוך העברת מערכי תלויות מפורשים, אבל בפועל מעדיפים לכידה.</li>
+<li>הגרף לא מאיץ את ה-kernels - הוא מסיר את overhead הhost בלבד, ולכן הרווח הגדול ביותר מגיע דווקא כשהיינו overhead-bound מלכתחילה (הרבה kernels קטנים).</li>
+<li>מגבלה חדה: ה-kernels וה-I/O שלהם צרובים בגרף לפי מצביעי זיכרון גולמיים, ולכן גרף אינו ניתן לשמירה או להעברה ומחייב יציבות מוחלטת של ההקצאות; שחרור והקצאה מחדש של buffer הופכים את הגרף ל-use-after-free.</li>
+<li>כשרק הפרמטרים משתנים והטופולוגיה נשארת, <code>cudaGraphExecUpdate</code> מעדכן גרף בר-הרצה קיים בזול במקום ללכוד מחדש.</li>
+<li>ב-PyTorch, מנהל ההקשר <code>torch.cuda.graph</code> עוטף את כל המנגנון; משתמשים ב-buffers סטטיים קבועים, כותבים אליהם ב-<code>copy_</code> ומריצים <code>replay()</code>, וזה הכלי הטבעי לצעד inference חוזר של LLM.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

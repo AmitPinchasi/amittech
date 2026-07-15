@@ -1,0 +1,2950 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בשיעור 2.3 כתבנו את כפל המטריצות (matmul) הנאיבי וגילינו אמת מרה: ה-kernel רץ, נותן תוצאה נכונה, ובכל זאת מנצל שבריר זעום מכוח ה-GPU. הסיבה, כפי שראינו,...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.3%20-%20Shared%20memory%20%D7%95-tiling/3.3%20-%20Shared%20memory%20%D7%95-tiling%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../3.2%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%9E%D7%94%D7%9E%D7%90%D7%A8%D7%97/3.2%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%9E%D7%94%D7%9E%D7%90%D7%A8%D7%97%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../3.3%20-%20Shared%20memory%20%D7%95-tiling%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>3.3 - Shared memory ו-tiling - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "3.3 - Shared memory \u05d5-tiling - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.3%20-%20Shared%20memory%20%D7%95-tiling/3.3%20-%20Shared%20memory%20%D7%95-tiling%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="3.3 - Shared memory ו-tiling - הרצאה - עמית טק" />
+<meta property="og:description" content="בשיעור 2.3 כתבנו את כפל המטריצות (matmul) הנאיבי וגילינו אמת מרה: ה-kernel רץ, נותן תוצאה נכונה, ובכל זאת מנצל שבריר זעום מכוח ה-GPU. הסיבה, כפי שראינו,..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.3%20-%20Shared%20memory%20%D7%95-tiling/3.3%20-%20Shared%20memory%20%D7%95-tiling%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.3%20-%20Shared%20memory%20%D7%95-tiling/3.3%20-%20Shared%20memory%20%D7%95-tiling%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="3.3 - Shared memory ו-tiling - הרצאה - עמית טק" />
+<meta property="twitter:description" content="בשיעור 2.3 כתבנו את כפל המטריצות (matmul) הנאיבי וגילינו אמת מרה: ה-kernel רץ, נותן תוצאה נכונה, ובכל זאת מנצל שבריר זעום מכוח ה-GPU. הסיבה, כפי שראינו,..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.3%20-%20Shared%20memory%20%D7%95-tiling/3.3%20-%20Shared%20memory%20%D7%95-tiling%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-matmul-gpu-the-memory-wall" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              3.3 - Shared memory ו-tiling - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_5" id="__nav_7_3_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    3   זיכרון וניהול
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.1   היררכיית הזיכרון הלוגית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../3.2%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%9E%D7%94%D7%9E%D7%90%D7%A8%D7%97/3.2%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%9E%D7%94%D7%9E%D7%90%D7%A8%D7%97%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.2   ניהול זיכרון מהמארח
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_5_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_5_3" id="__nav_7_3_5_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.3   Shared memory ו tiling
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_5_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_5_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    3.3   Shared memory ו tiling
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.3 - Shared memory ו-tiling - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.3 - Shared memory ו-tiling - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-matmul-gpu-the-memory-wall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        למה ה-matmul הנאיבי מבזבז את ה-GPU - the memory wall
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-shared" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הכרזת זיכרון משותף - shared
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-staging-load-sync-compute-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תבנית ה-staging - load, sync, compute, sync
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-matmul-tiling-the-tiled-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ה-matmul עם tiling - the tiled kernel
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-two-barrier-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        למה שני מחסומים - the two-barrier rule
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-occupancy-interaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אינטראקציה עם התפוסה - occupancy interaction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-bank-conflicts-preview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הצצה להתנגשויות בנקים - bank conflicts preview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../3.3%20-%20Shared%20memory%20%D7%95-tiling%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.3 - Shared memory ו-tiling - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../3.3%20-%20Shared%20memory%20%D7%95-tiling%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.3 - Shared memory ו-tiling - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../3.4%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%A7%D7%91%D7%95%D7%A2%20%D7%95%D7%98%D7%A7%D7%A1%D7%98%D7%95%D7%A8%D7%94/3.4%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%A7%D7%91%D7%95%D7%A2%20%D7%95%D7%98%D7%A7%D7%A1%D7%98%D7%95%D7%A8%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.4   זיכרון קבוע וטקסטורה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../3.5%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20%D7%9B%D7%A4%D7%9C%20%D7%9E%D7%98%D7%A8%D7%99%D7%A6%D7%95%D7%AA%20tiled/3.5%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20%D7%9B%D7%A4%D7%9C%20%D7%9E%D7%98%D7%A8%D7%99%D7%A6%D7%95%D7%AA%20tiled%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.5   פרויקט   כפל מטריצות tiled
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-matmul-gpu-the-memory-wall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        למה ה-matmul הנאיבי מבזבז את ה-GPU - the memory wall
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-shared" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הכרזת זיכרון משותף - shared
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-staging-load-sync-compute-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תבנית ה-staging - load, sync, compute, sync
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-matmul-tiling-the-tiled-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ה-matmul עם tiling - the tiled kernel
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-two-barrier-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        למה שני מחסומים - the two-barrier rule
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-occupancy-interaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אינטראקציה עם התפוסה - occupancy interaction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-bank-conflicts-preview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הצצה להתנגשויות בנקים - bank conflicts preview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    3   זיכרון וניהול
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    3.3   Shared memory ו tiling
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>3.3 - Shared memory ו-tiling - הרצאה</h1>
+
+<p>בשיעור 2.3 כתבנו את כפל המטריצות (matmul) הנאיבי וגילינו אמת מרה: ה-kernel רץ, נותן תוצאה נכונה, ובכל זאת מנצל שבריר זעום מכוח ה-GPU. הסיבה, כפי שראינו, היא שהוא memory-bound - הוא מבצע בערך פעולת נקודה-צפה אחת (FLOP) לכל קריאה מ-global memory (זיכרון גלובלי), ורוחב הפס האריתמטי של ה-CUDA Cores גבוה בהרבה מרוחב הפס אל ה-HBM3. בפרק 3 עד כה מיפינו את היררכיית הזיכרון: ראינו שבין ה-registers הפרטיים לכל thread לבין ה-global memory הענק והאיטי יושבת שכבת ביניים - shared memory (זיכרון משותף), מהירה מאוד ומשותפת לכל ה-threads שב-block. השיעור הזה הוא לב האופטימיזציה של הקורס כולו: נלמד את טכניקת ה-tiling (חלוקה-לtiles), התבנית שממנפת את ה-shared memory כדי להפוך את ה-matmul הנאיבי מ-kernel זוחל ל-kernel מהיר, ונקפיץ את arithmetic intensity מ-1 לערך של עשרות. בדרך נבין למה נחוצים בדיוק שני מחסומי <code>__syncthreads()</code>, איך ה-shared memory שאנחנו צורכים מגביל את ה-occupancy (תפוסה), ונציץ בהתנגשויות הבנקים (bank conflicts) שאורבות מתחת לפני השטח.</p>
+<h2 id="-matmul-gpu-the-memory-wall">למה ה-matmul הנאיבי מבזבז את ה-GPU - the memory wall<a class="headerlink" href="#-matmul-gpu-the-memory-wall" title="Permanent link">&para;</a></h2>
+<p>נזכיר את ה-kernel הנאיבי מ-2.3, בדיוק כפי שהופיע ב-glossary:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">mm</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">A</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">B</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">C</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">N</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">row</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">            </span><span class="n">sum</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">A</span><span class="p">[</span><span class="n">row</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">k</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">B</span><span class="p">[</span><span class="n">k</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">col</span><span class="p">];</span><span class="w">   </span><span class="c1">// two global reads, two FLOPs</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">        </span><span class="p">}</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">        </span><span class="n">C</span><span class="p">[</span><span class="n">row</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">col</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sum</span><span class="p">;</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">}</span>
+</code></pre></div>
+<p>בואו נספור את התעבורה מול הזיכרון בכל איטרציה של הלולאה הפנימית. אנחנו קוראים איבר אחד מ-<code>A</code> ואיבר אחד מ-<code>B</code> - שתי קריאות מ-global memory, 8 בתים - ומבצעים כפל וחיבור, כלומר שתי FLOPs. היחס הוא <strong>FLOP אחת לכל קריאה מ-global memory</strong> (שתי FLOPs חלקי שתי קריאות), או במונחי בתים: 0.25 FLOP לכל בית. זו arithmetic intensity נמוכה באופן קיצוני.</p>
+<p>הבעיה החמורה יותר היא שאין כאן שום ניצול-חוזר (reuse). שקלו את השורה <code>row</code> של <code>C</code>: כל <code>N</code> האיברים שבה קוראים את <strong>אותה שורה</strong> של <code>A</code>. בגרסה הנאיבית, כל אחד מ-<code>N</code> ה-threads שמחשבים את השורה הזו קורא את השורה של <code>A</code> מ-global memory מחדש, בנפרד. אותו נתון נשלף מה-HBM3 שוב ושוב. מטריצה <code>N x N</code> מבצעת <code>2*N^3</code> FLOPs אבל מייצרת בסדר גודל של <code>2*N^3</code> קריאות global - כמעט אפס ניצול-חוזר.</p>
+<p>התוצאה מנוסחת ב-glossary בחדות: <strong>"לעולם לא תנצלו כך את כל ה-GPU, כי רוחב הפס האריתמטי של ה-CUDA Cores ב-FLOPs/s גבוה בהרבה מרוחב הפס בין ה-GPU RAM ל-SMs."</strong> ב-H100, שיא ה-FP32 (ללא Tensor Cores) הוא כ-66.9 TFLOPS, בעוד רוחב הפס של ה-HBM3 הוא בסדר גודל של 3.35 TB/s. היחס בין השניים הוא כ-20 FLOPs לכל בית שנקרא. ה-matmul הנאיבי מספק 0.25 - פי 80 בערך פחות מהנקודה שבה החישוב מתחיל להיות צוואר הבקבוק. אנחנו מרעיבים את יחידות החישוב.</p>
+<p>הפתרון היחיד הוא להעלות את arithmetic intensity: לקרוא כל נתון מ-global memory פעם אחת, להניח אותו במחסן המהיר של ה-SM, ולסחוט ממנו כמה שיותר FLOPs לפני שנזרוק אותו. המחסן הזה הוא ה-shared memory, והשיטה היא tiling.</p>
+<h2 id="-shared">הכרזת זיכרון משותף - <strong>shared</strong><a class="headerlink" href="#-shared" title="Permanent link">&para;</a></h2>
+<p>ה-shared memory מוכרז בתוך ה-kernel במילת המפתח <code>__shared__</code>. יש שתי צורות: סטטית (בגודל קבוע הידוע בזמן קומפילציה) ודינמית (בגודל שנקבע בזמן הlaunch).</p>
+<p><strong>הצורה הסטטית</strong> היא הנפוצה. מכריזים מערך בגודל קבוע, וכל block מקבל עותק פרטי משלו:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="cp">#define TILE_WIDTH 16</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">k</span><span class="p">(...)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="n">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">As</span><span class="p">[</span><span class="n">TILE_WIDTH</span><span class="p">][</span><span class="n">TILE_WIDTH</span><span class="p">];</span><span class="w">   </span><span class="c1">// 16*16*4 = 1024 bytes per block</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="n">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">Bs</span><span class="p">[</span><span class="n">TILE_WIDTH</span><span class="p">][</span><span class="n">TILE_WIDTH</span><span class="p">];</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="p">...</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p">}</span>
+</code></pre></div>
+<p>שימו לב היטב: <code>As</code> ו-<code>Bs</code> <strong>אינם</strong> משתנים פרטיים לכל thread כמו משתנה רגיל בתוך ה-kernel. הם משותפים לכל ה-threads של ה-block - זו בדיוק הנקודה. thread מספר <code>(0,0)</code> יכול לכתוב ל-<code>As[0][0]</code> ו-thread מספר <code>(5,3)</code> יקרא את הערך הזה. ה-block כולו חולק לוח כתיבה אחד. פיזית, כפי שראינו ב-3.1, ה-shared memory יושב ב-L1 data cache של ה-SM, ולכן הגישה אליו מהירה בסדר גודל מ-global memory בשתי המידות - גם ב-latency (השהיה) וגם ב-throughput (תפוקה).</p>
+<p><strong>הצורה הדינמית</strong> משמשת כשגודל ה-tile אינו ידוע בזמן קומפילציה. מכריזים מערך יחיד עם <code>extern __shared__</code> וללא גודל, ומספקים את הגודל בבתים כפרמטר השלישי של תצורת ההרצה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">extern</span><span class="w"> </span><span class="n">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">smem</span><span class="p">[];</span><span class="w">       </span><span class="c1">// size unknown at compile time</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">kDyn</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">tile</span><span class="p">,</span><span class="w"> </span><span class="p">...)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">As</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">smem</span><span class="p">;</span><span class="w">                 </span><span class="c1">// first half</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">Bs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">smem</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">tile</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">tile</span><span class="p">;</span><span class="w">   </span><span class="c1">// second half</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="c1">// As[ty*tile + tx] instead of As[ty][tx] - manual two-dimensional indexing</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="p">...</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="p">}</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1">// at launch: the third parameter in the triple angle brackets is the number of bytes</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="kt">size_t</span><span class="w"> </span><span class="n">smemBytes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">tile</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">tile</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">);</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="n">kDyn</span><span class="o">&lt;&lt;&lt;</span><span class="n">grid</span><span class="p">,</span><span class="w"> </span><span class="n">block</span><span class="p">,</span><span class="w"> </span><span class="n">smemBytes</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">tile</span><span class="p">,</span><span class="w"> </span><span class="p">...);</span>
+</code></pre></div>
+<p>הפרמטר השלישי ב-<code>&lt;&lt;&lt;grid, block, smemBytes&gt;&gt;&gt;</code> הוא <strong>מספר הבתים</strong> של ה-shared memory הדינמי שיוקצה לכל block (ברירת המחדל, כשהוא מושמט, היא 0). כל ההקצאה הדינמית מגיעה כבלוק זיכרון אחד ורציף שמצביע <code>smem</code> מצביע לתחילתו; אם צריך שני מערכים לוגיים, מחלקים אותו ידנית כפי שעשינו כאן. המחיר של הדינמיות הוא ויתור על האינדוקס הדו-ממדי הנוח <code>As[ty][tx]</code> - חייבים לשטח אותו ל-<code>As[ty*tile + tx]</code> בעצמנו.</p>
+<table>
+<thead>
+<tr>
+<th>מאפיין</th>
+<th>סטטי (<code>__shared__ float As[T][T]</code>)</th>
+<th>דינמי (<code>extern __shared__</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>גודל ידוע ב</td>
+<td>קומפילציה</td>
+<td>זמן launch</td>
+</tr>
+<tr>
+<td>מהיכן הגודל</td>
+<td>מהמערך עצמו</td>
+<td>הפרמטר השלישי של <code>&lt;&lt;&lt; &gt;&gt;&gt;</code> (בתים)</td>
+</tr>
+<tr>
+<td>אינדוקס</td>
+<td>דו-ממדי נוח <code>As[y][x]</code></td>
+<td>ידני ומשוטח <code>As[y*T+x]</code></td>
+</tr>
+<tr>
+<td>כמה מערכים</td>
+<td>כמה שרוצים</td>
+<td>בלוק אחד רציף, מחלקים ידנית</td>
+</tr>
+<tr>
+<td>מתי להשתמש</td>
+<td>גודל tile קבוע (רוב המקרים)</td>
+<td>tile בגודל זמן-ריצה, kernel גנרי</td>
+</tr>
+</tbody>
+</table>
+<h2 id="-staging-load-sync-compute-sync">תבנית ה-staging - load, sync, compute, sync<a class="headerlink" href="#-staging-load-sync-compute-sync" title="Permanent link">&para;</a></h2>
+<p>ה-glossary מתאר את התבנית הקנונית של kernel מהיר בארבעה שלבים, וזו התבנית שנחזור עליה שוב ושוב בקורס:</p>
+<ol>
+<li><strong>טעינה</strong> של נתח נתונים מ-global memory אל shared memory, בשיתוף פעולה בין כל ה-threads של ה-block.</li>
+<li><strong>מחסום</strong> - <code>__syncthreads()</code> - כדי לוודא שכל ה-block סיים לטעון לפני שמישהו מתחיל לחשב.</li>
+<li><strong>חישוב</strong> מתוך ה-shared memory המהיר, שוב ושוב, כמה שיותר.</li>
+<li><strong>מחסום שני</strong> לפני שמאתחלים מחדש את אותו ה-shared memory לנתח הבא, ולבסוף כתיבה חזרה ל-global memory.</li>
+</ol>
+<p>הפקודה <code>__syncthreads()</code> היא מחסום (barrier) ברמת ה-block: <strong>כל</strong> ה-threads של ה-block חייבים להגיע אליה לפני ש<strong>אף אחד</strong> מהם ממשיך הלאה. זה בדיוק המנגנון שהוזכר ב-2.2 - שיתוף פעולה בתוך block אפשרי כי כל ה-threads שלו מתוזמנים יחד על אותו SM. שימו לב לאזהרה קריטית: <code>__syncthreads()</code> חייב להיות במסלול שכל ה-threads של ה-block מגיעים אליו. אם תקראו לו בתוך <code>if</code> שרק חלק מה-threads נכנסים אליו, ה-block ייתקע לנצח (deadlock), כי המחסום ממתין ל-threads שלעולם לא יגיעו.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>   the staging pattern on a timeline (one block, several warps)
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>   ─────────────────────────────────────────────────────►  time
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>   warp 0:  load ─┐            compute ────┐            load ...
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>   warp 1:  load ─┤            compute ────┤            load ...
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>   warp 2:  load ─┤            compute ────┤            load ...
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>   warp 3:  load ─┘            compute ────┘            load ...
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>                  │                        │
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>              __syncthreads()          __syncthreads()
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>              (load barrier)           (reuse barrier)
+</code></pre></div>
+<p>הרעיון העמוק: המחיר של קריאה מ-global memory משולם פעם אחת בשלב הטעינה, ואז מתחלק (amortized) על פני עשרות פעולות אריתמטיות מהירות מתוך ה-shared memory. זה בדיוק מה שמעלה את arithmetic intensity.</p>
+<h2 id="-matmul-tiling-the-tiled-kernel">ה-matmul עם tiling - the tiled kernel<a class="headerlink" href="#-matmul-tiling-the-tiled-kernel" title="Permanent link">&para;</a></h2>
+<p>עכשיו נחבר הכל ל-matmul המרובע עם tiling. הרעיון הגיאומטרי: מחלקים את מטריצת התוצאה <code>C</code> לtiles בגודל <code>TILE_WIDTH x TILE_WIDTH</code>. כל block אחראי על tile אחד של <code>C</code>. כדי לחשב את הtile, ה-block מתקדם לאורך <code>A</code> ו-<code>B</code> בשלבים (phases), tile בכל פעם: בכל שלב הוא טוען tile אחד של <code>A</code> וtile אחד של <code>B</code> ל-shared memory, ומצטבר את המכפלות החלקיות.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>        B: tiles along the columns
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>        ┌────┬────┬────┐
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>        │ B0 │    │    │
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>        ├────┼────┼────┤
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>        │ B1 │    │    │
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>        ├────┼────┼────┤
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>   A    │ B2 │    │    │
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a> ┌───┬──┴────┴────┴────┘
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a> │A0 │A1│A2│        C
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a> ├───┼──┼──┤   ┌────┬────┬────┐
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a> │   │  │  │   │ C  │    │    │   C = sum_t (A_t * B_t)
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a> └───┴──┴──┘   └────┴────┴────┘   each block accumulates one tile of C
+</code></pre></div>
+<p>הנה ה-kernel המלא. שימו לב לשני מחסומי ה-<code>__syncthreads()</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="cp">#define TILE_WIDTH 16</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">mmTiled</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">A</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">B</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">C</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">N</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="n">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">As</span><span class="p">[</span><span class="n">TILE_WIDTH</span><span class="p">][</span><span class="n">TILE_WIDTH</span><span class="p">];</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="n">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">Bs</span><span class="p">[</span><span class="n">TILE_WIDTH</span><span class="p">][</span><span class="n">TILE_WIDTH</span><span class="p">];</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">tx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">ty</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">TILE_WIDTH</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ty</span><span class="p">;</span><span class="w">   </span><span class="c1">// row in C this thread is responsible for</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">TILE_WIDTH</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">tx</span><span class="p">;</span><span class="w">   </span><span class="c1">// column in C</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">numTiles</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">TILE_WIDTH</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">TILE_WIDTH</span><span class="p">;</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">numTiles</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">        </span><span class="c1">// cooperative load: each thread loads one element of A and one of B</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">aCol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">TILE_WIDTH</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">tx</span><span class="p">;</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">bRow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">TILE_WIDTH</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ty</span><span class="p">;</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">        </span><span class="n">As</span><span class="p">[</span><span class="n">ty</span><span class="p">][</span><span class="n">tx</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">row</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">aCol</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">A</span><span class="p">[</span><span class="n">row</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">aCol</span><span class="p">]</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="w">        </span><span class="n">Bs</span><span class="p">[</span><span class="n">ty</span><span class="p">][</span><span class="n">tx</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">bRow</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">B</span><span class="p">[</span><span class="n">bRow</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">col</span><span class="p">]</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="w">        </span><span class="n">__syncthreads</span><span class="p">();</span><span class="w">                       </span><span class="c1">// barrier 1: the tile is fully loaded</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="w">        </span><span class="c1">// compute from shared memory only</span>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">TILE_WIDTH</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="o">++</span><span class="p">)</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="w">            </span><span class="n">sum</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">As</span><span class="p">[</span><span class="n">ty</span><span class="p">][</span><span class="n">k</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">Bs</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">tx</span><span class="p">];</span>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a><span class="w">        </span><span class="n">__syncthreads</span><span class="p">();</span><span class="w">                       </span><span class="c1">// barrier 2: before overwriting the tile in the next stage</span>
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">row</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="p">)</span>
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a><span class="w">        </span><span class="n">C</span><span class="p">[</span><span class="n">row</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">col</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sum</span><span class="p">;</span>
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a><span class="p">}</span>
+</code></pre></div>
+<p>והlaunch, עם block דו-ממדי בגודל הtile ו-grid דו-ממדי שמכסה את <code>C</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">dim3</span><span class="w"> </span><span class="nf">block</span><span class="p">(</span><span class="n">TILE_WIDTH</span><span class="p">,</span><span class="w"> </span><span class="n">TILE_WIDTH</span><span class="p">);</span><span class="w">            </span><span class="c1">// 16x16 = 256 threads</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">dim3</span><span class="w"> </span><span class="n">grid</span><span class="p">((</span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">TILE_WIDTH</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">TILE_WIDTH</span><span class="p">,</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">          </span><span class="p">(</span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">TILE_WIDTH</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">TILE_WIDTH</span><span class="p">);</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">mmTiled</span><span class="o">&lt;&lt;&lt;</span><span class="n">grid</span><span class="p">,</span><span class="w"> </span><span class="n">block</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">d_A</span><span class="p">,</span><span class="w"> </span><span class="n">d_B</span><span class="p">,</span><span class="w"> </span><span class="n">d_C</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">);</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaGetLastError</span><span class="p">());</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaDeviceSynchronize</span><span class="p">());</span>
+</code></pre></div>
+<p>הריפוד ב-<code>0.0f</code> בטעינה (ה-<code>? :</code>) מטפל במטריצות ש-<code>N</code> שלהן אינו מתחלק ב-<code>TILE_WIDTH</code>: הtiles החלקיים בשוליים מתמלאים באפסים, שאינם תורמים לסכום. כך ה-kernel נכון לכל <code>N</code>, לא רק לכפולות של גודל הtile.</p>
+<p><strong>החשבון של הניצול-חוזר.</strong> ניקח <code>TILE_WIDTH = 16</code>, כלומר block של 256 threads. בכל שלב:</p>
+<ul>
+<li>ה-block מבצע <code>256</code> קריאות מ-global memory כדי לטעון את <code>As</code> (thread אחד לכל איבר), ועוד <code>256</code> כדי לטעון את <code>Bs</code>. סך הכל <strong>512 קריאות global</strong>.</li>
+<li>לאחר מכן, כל אחד מ-256 ה-threads מבצע את הלולאה הפנימית <code>TILE_WIDTH = 16</code> פעמים, וכל איטרציה היא כפל-חיבור = 2 FLOPs. כלומר <code>256 * 16 * 2 = 8192</code> FLOPs.</li>
+<li>היחס: <code>8192</code> FLOPs חלקי <code>512</code> קריאות = <strong>16 FLOPs לכל קריאה מ-global memory</strong>.</li>
+</ul>
+<p>זו קפיצה מ-1 (הנאיבי) ל-<code>TILE_WIDTH</code> (המרוצף). הסיבה פשוטה: כל איבר שנטען ל-shared memory מנוצל <code>TILE_WIDTH</code> פעמים לפני שנזרק. איבר של <code>As[ty][k]</code> נקרא בידי כל <code>TILE_WIDTH</code> ה-threads שבשורה <code>ty</code> של ה-block; איבר של <code>Bs[k][tx]</code> נקרא בידי כל <code>TILE_WIDTH</code> ה-threads שבעמודה <code>tx</code>. ל-<code>TILE_WIDTH = 32</code> הarithmetic intensity מוכפלת ל-32 FLOPs לקריאה.</p>
+<p><strong>מהי המשמעות למהירות?</strong> להלן מדידות אופייניות ל-<code>N = 4096</code> על H100 (הערכים משתנים בין הרצות ובין דורות חומרה - קחו אותם כסדרי גודל, לא כמספרים מקודשים):</p>
+<table>
+<thead>
+<tr>
+<th>גרסה</th>
+<th>GFLOP/s (בקירוב)</th>
+<th>אחוז משיא FP32 (~66.9 TFLOPS)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>נאיבי (2.3)</td>
+<td>~300</td>
+<td>~0.5%</td>
+</tr>
+<tr>
+<td>מרוצף, <code>TILE_WIDTH = 16</code></td>
+<td>~3,000</td>
+<td>~4.5%</td>
+</tr>
+<tr>
+<td>מרוצף, <code>TILE_WIDTH = 32</code></td>
+<td>~4,500</td>
+<td>~7%</td>
+</tr>
+<tr>
+<td>cuBLAS (Tensor Cores)</td>
+<td>~50,000+</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<p>הקפיצה מהנאיבי למרוצף היא בסדר גודל של פי 10 עד פי 15 - וזו רק ההתחלה. גם ה-kernel המרוצף שלנו רץ על CUDA Cores, ולכן, כפי שה-glossary מזכיר, הוא אינו תקרת הביצועים: ה-matmul המהיר ביותר רץ על Tensor Cores, שרוחב הפס האריתמטי שלהם גבוה בהרבה. ל-cuBLAS (שהוא, אגב, column-major) ולריצוף ברמת ה-register נגיע בפרויקט 3.5 ובפרק על Tensor Cores.</p>
+<h2 id="-the-two-barrier-rule">למה שני מחסומים - the two-barrier rule<a class="headerlink" href="#-the-two-barrier-rule" title="Permanent link">&para;</a></h2>
+<p>הנקודה העדינה ביותר בכל ה-kernel היא <strong>שני</strong> מחסומי ה-<code>__syncthreads()</code>. שניהם הכרחיים, וכל אחד מגן מפני סכנה (hazard) אחרת. הבה נבין בדיוק מפני מה.</p>
+<p><strong>מחסום 1 (מחסום הטעינה), לפני החישוב.</strong> ה-threads טוענים את הtile ל-<code>As</code> ו-<code>Bs</code>, ואז ניגשים לחשב. אבל ה-threads של ה-block אינם רצים בצעד אחיד - הם מפוזרים על פני כמה warps, ו-warps מתוזמנים בזמנים שונים. בלי המחסום, thread ב-warp מהיר עלול להתחיל את הלולאה הפנימית ולקרוא את <code>As[ty][k]</code> בעוד thread ב-warp אחר עדיין לא כתב את חלקו לtile. זו סכנת קריאה-לפני-כתיבה (read-before-write): קוראים נתון שעוד לא נטען. המחסום הראשון מבטיח שהtile מלא לגמרי לפני שמישהו קורא ממנו.</p>
+<p><strong>מחסום 2 (מחסום הניצול-חוזר), אחרי החישוב.</strong> זהו המחסום שמתחילים שוכחים, וזה הבאג הקלאסי. אחרי הלולאה הפנימית, השלב הבא בלולאת ה-<code>t</code> יכתוב tile <strong>חדש</strong> אל אותם <code>As</code> ו-<code>Bs</code> (אותו זיכרון פיזי). בלי המחסום השני, thread ב-warp מהיר שכבר סיים את החישוב שלו ימשיך לסיבוב הבא של הלולאה ויתחיל <strong>לדרוס</strong> את <code>As[ty][tx]</code> בנתון של הtile החדש - בעוד thread ב-warp איטי עדיין קורא את <code>As[ty][k]</code> של הtile <strong>הישן</strong> בלולאה הפנימית שלו. זו סכנת כתיבה-לפני-קריאה (write-after-read): דורסים נתון שעוד לא סיימו לקרוא. התוצאה היא ערכי <code>C</code> שגויים, ובאופן מרושע - <strong>לא דטרמיניסטיים</strong>: לפעמים נכון, לפעמים לא, תלוי בתזמון ה-warps.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>   The bug from omitting the second barrier:
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>   slow warp:   ...still in the inner loop, reading As[ty][k]  (tile t)
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>   fast warp:   already at stage t+1, writing As[ty][tx] = A[...]   (tile t+1)
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>                              └──► overwrote the data the slow warp is still reading!
+</code></pre></div>
+<p>אין להסתמך על סנכרון מרומז בתוך warp. מאז ארכיטקטורת Volta, ה-GPU תומך ב-independent thread scheduling, כך שאפילו threads באותו warp אינם בהכרח בצעד אחיד. שני המחסומים הם היחידים שמבטיחים נכונות. בתרגול תסירו את המחסום השני בכוונה, תראו במו עיניכם תוצאות שגויות ולא יציבות, ואז תתקנו.</p>
+<h2 id="-occupancy-interaction">אינטראקציה עם התפוסה - occupancy interaction<a class="headerlink" href="#-occupancy-interaction" title="Permanent link">&para;</a></h2>
+<p>ה-shared memory אינו חינם: הוא משאב מוגבל לכל SM, ולכן כמות ה-shared memory שכל block צורך מגבילה כמה blocks יכולים לשבת (resident) בו-זמנית על אותו SM. זהו לב חישוב ה-occupancy, שנקדיש לו את פרק 8.1; כאן רק נציץ.</p>
+<p>ב-H100, כל SM מכיל 256 KiB של L1/shared משותפים (עם חלוקה בת-הגדרה ביניהם), ומאפשר עד 2048 threads תושבים ועד 32 blocks תושבים. ה-occupancy בפועל נקבע על ידי <strong>המגביל החמור מכולם</strong> מבין: מכסת ה-threads, מכסת ה-blocks, ה-registers לכל thread, וה-shared memory לכל block. נחשב ל-<code>mmTiled</code> שלנו:</p>
+<p><strong>עבור <code>TILE_WIDTH = 16</code></strong> (block של 256 threads, <code>2 * 16 * 16 * 4 = 2048</code> בתים = 2 KiB shared לכל block):</p>
+<ul>
+<li>מגבלת threads: <code>2048 / 256 = 8</code> blocks.</li>
+<li>מגבלת blocks: <code>32</code> blocks.</li>
+<li>מגבלת shared: <code>256 KiB / 2 KiB = 128</code> blocks.</li>
+<li>המגביל החמור: <strong>8 blocks</strong> (מכסת ה-threads). ה-shared memory כלל אינו הצוואר כאן.</li>
+</ul>
+<p><strong>עבור <code>TILE_WIDTH = 32</code></strong> (block של 1024 threads, <code>2 * 32 * 32 * 4 = 8192</code> בתים = 8 KiB shared לכל block):</p>
+<ul>
+<li>מגבלת threads: <code>2048 / 1024 = 2</code> blocks.</li>
+<li>מגבלת shared: <code>256 KiB / 8 KiB = 32</code> blocks.</li>
+<li>המגביל החמור: <strong>2 blocks</strong> (שוב מכסת ה-threads).</li>
+</ul>
+<p>בשני המקרים ה-shared memory אינו המגביל - הtiles שלנו קטנים. אבל שנו את החשבון: kernel שצורך, נניח, 100 KiB shared לכל block יוגבל ל-2 blocks בלבד לפי ה-shared, גם אם ה-threads וה-registers היו מאפשרים יותר. זה הטרייד-אוף: הtile הגדול יותר משפר את הניצול-החוזר (arithmetic intensity <code>TILE_WIDTH</code>), אבל צורך יותר shared memory ועלול לחנוק את ה-occupancy. הערה מעשית: החלוקה הסטטית <code>__shared__</code> מוגבלת כברירת מחדל ל-48 KiB לכל block; לחריגה מעבר לכך חייבים shared memory דינמי ובקשה מפורשת דרך <code>cudaFuncSetAttribute</code> עם <code>cudaFuncAttributeMaxDynamicSharedMemorySize</code>.</p>
+<h2 id="-bank-conflicts-preview">הצצה להתנגשויות בנקים - bank conflicts preview<a class="headerlink" href="#-bank-conflicts-preview" title="Permanent link">&para;</a></h2>
+<p>ה-shared memory מהיר, אבל יש לו מבנה פנימי שיכול להאט אותנו אם ניגשים אליו לא נכון. הזיכרון מחולק ל-<strong>32 בנקים</strong> (banks), ברוחב 4 בתים כל אחד, כך שמילים בנות 32 סיביות עוקבות נופלות בבנקים עוקבים. ה-32 בנקים מתאימים בדיוק ל-32 ה-threads של warp. הכלל:</p>
+<ul>
+<li>אם 32 ה-threads של warp ניגשים ל-32 כתובות שנופלות ב-32 בנקים <strong>שונים</strong> - הגישה מתבצעת במחזור אחד, מלוא המהירות.</li>
+<li>אם כל ה-threads ניגשים ל<strong>אותה</strong> כתובת בדיוק - זהו broadcast (שידור), וגם הוא מהיר, מחזור אחד.</li>
+<li>אבל אם שני threads (או יותר) ניגשים לכתובות <strong>שונות</strong> שנופלות ב<strong>אותו בנק</strong> - זו bank conflict (התנגשות בנקים), וה-hardware מסדר (serialize) את הגישות. התנגשות של דרך-<code>k</code> מאיטה את הגישה פי <code>k</code>.</li>
+</ul>
+<p>ב-<code>mmTiled</code> שלנו, לולאת החישוב <code>As[ty][k] * Bs[k][tx]</code> דווקא נוחה: <code>As[ty][k]</code> היא אותה כתובת לכל 32 ה-threads של warp נתון (broadcast), ו-<code>Bs[k][tx]</code> רצה על <code>tx</code> העוקב (בנקים שונים). אבל דפוסי גישה אחרים - למשל קריאת <strong>עמודה</strong> של tile, שבה threads עוקבים קופצים בקפיצות של <code>TILE_WIDTH</code> - יכולים למפות את כולם לאותו בנק ולגרום להתנגשות של עד 32 דרכים. הטריק הקלאסי לשבירת ההתנגשות הוא ריפוד (padding) של הtile בעמודה מדומה אחת:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">As</span><span class="p">[</span><span class="n">TILE_WIDTH</span><span class="p">][</span><span class="n">TILE_WIDTH</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">];</span><span class="w">   </span><span class="c1">// +1 shifts the bank mapping</span>
+</code></pre></div>
+<p>הריפוד ב-<code>+1</code> מזיז כל שורה בבנק אחד, כך שגישה לעמודה שלמה פוגעת ב-32 בנקים שונים במקום באחד. זה מבזבז מעט shared memory אך יכול לתת שיפור ניכר. את הטיפול המלא בהתנגשויות בנקים - הכללים המדויקים, איך למדוד אותן עם <code>ncu</code>, ומתי הריפוד עוזר - נעשה בפרק 8.4. כאן די לזכור: ה-shared memory אינו קופסה שטוחה; יש לו 32 בנקים, ודפוס גישה גרוע מסדר אותם בטור ומאבד את היתרון.</p>
+<h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>ה-matmul הנאיבי memory-bound כי הוא מבצע כ-FLOP אחת לכל קריאה מ-global memory, בעוד ה-H100 דורש כ-20 FLOPs לבית כדי להיות compute-bound; הפתרון הוא להעלות את arithmetic intensity.</li>
+<li>ה-shared memory מוכרז ב-<code>__shared__</code>, משותף לכל ה-threads של ה-block, ויושב פיזית ב-L1 של ה-SM; יש צורה סטטית (גודל בקומפילציה) וצורה דינמית (<code>extern __shared__</code> + הפרמטר השלישי של <code>&lt;&lt;&lt; &gt;&gt;&gt;</code> במספר בתים).</li>
+<li>תבנית ה-staging היא: טעינה שיתופית global -&gt; shared, מחסום, חישוב מתוך shared, מחסום שני, ואז המשך או כתיבה חזרה ל-global.</li>
+<li>ב-matmul מרוצף כל block צובר tile של <code>C</code> בשלבים, כשבכל שלב נטענים tile של <code>A</code> וtile של <code>B</code> ל-shared memory; כל איבר טעון מנוצל <code>TILE_WIDTH</code> פעמים, וarithmetic intensity קופצת מ-1 ל-<code>TILE_WIDTH</code> FLOPs לכל קריאה.</li>
+<li>ל-<code>TILE_WIDTH = 16</code> מקבלים 16 FLOPs לקריאה (512 קריאות global לעומת 8192 FLOPs בכל שלב של block), והמהירות מזנקת בסדר גודל של פי 10 עד פי 15 לעומת הנאיבי.</li>
+<li>נדרשים בדיוק שני <code>__syncthreads()</code>: מחסום הטעינה (מונע קריאה-לפני-כתיבה) לפני החישוב, ומחסום הניצול-חוזר (מונע כתיבה-לפני-קריאה, דריסת הtile) אחריו; השמטת השני היא הבאג הקלאסי שנותן תוצאות שגויות ולא דטרמיניסטיות.</li>
+<li><code>__syncthreads()</code> חייב במסלול שכל ה-threads של ה-block מגיעים אליו, אחרת ה-block נתקע ב-deadlock.</li>
+<li>ה-shared memory שכל block צורך מגביל את מספר ה-blocks התושבים על SM ולכן את ה-occupancy; בtiles קטנים המגביל הוא בדרך כלל מכסת ה-threads, אך tile גדול הופך את ה-shared memory לצוואר (הרחבה בפרק 8.1, החלוקה הסטטית מוגבלת ל-48 KiB לכל block).</li>
+<li>ה-shared memory מחולק ל-32 בנקים ברוחב 4 בתים; גישה שבה threads שונים פוגעים באותו בנק מסתדרת בטור (bank conflict), וריפוד <code>[TILE_WIDTH + 1]</code> הוא הטריק הקלאסי לשבירתה (טיפול מלא בפרק 8.4).</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

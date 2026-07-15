@@ -1,0 +1,4025 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="ב-user space יש לנו את malloc ו-free. קוראים ל-malloc, מקבלים פוינטר לזכרון, משתמשים בו, ובסוף קוראים ל-free. פשוט. אבל מה הקרנל עצמו עושה כשהוא צריך...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../6.5%20-%20%D7%9E%D7%A2%D7%A8%D7%9B%D7%AA%20%D7%94%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%94%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/6.5%20-%20%D7%9E%D7%A2%D7%A8%D7%9B%D7%AA%20%D7%94%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%94%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>6.6 - הקצאת זכרון בקרנל - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "6.6 - \u05d4\u05e7\u05e6\u05d0\u05ea \u05d6\u05db\u05e8\u05d5\u05df \u05d1\u05e7\u05e8\u05e0\u05dc - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="6.6 - הקצאת זכרון בקרנל - הרצאה - עמית טק" />
+<meta property="og:description" content="ב-user space יש לנו את malloc ו-free. קוראים ל-malloc, מקבלים פוינטר לזכרון, משתמשים בו, ובסוף קוראים ל-free. פשוט. אבל מה הקרנל עצמו עושה כשהוא צריך..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="6.6 - הקצאת זכרון בקרנל - הרצאה - עמית טק" />
+<meta property="twitter:description" content="ב-user space יש לנו את malloc ו-free. קוראים ל-malloc, מקבלים פוינטר לזכרון, משתמשים בו, ובסוף קוראים ל-free. פשוט. אבל מה הקרנל עצמו עושה כשהוא צריך..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              6.6 - הקצאת זכרון בקרנל - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_1" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_1" id="__nav_7_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    ליבת המחשב
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%90%D7%A8%D7%92%D7%95%D7%9F%20%D7%94%D7%9E%D7%97%D7%A9%D7%91/0.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94/0.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   ארגון המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%2016%20%D7%91%D7%99%D7%98/1.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94/1.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   אסמבלי 16 ביט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%2032%20%D7%91%D7%99%D7%98/2.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/2.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   אסמבלי 32 ביט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%A9%D7%A4%D7%AA%20C/3.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/3.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   שפת C
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%99%D7%AA%20libc/4.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/4.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   ספריית libc
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/5.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/5.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   לינוקס
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_1_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_1_8" id="__nav_7_1_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   הקרנל של לינוקס
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_1_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_1_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    6   הקרנל של לינוקס
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C/6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.1   הקדמה לקרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.2%20-%20%D7%94syscall%20%D7%9E%D7%91%D7%A4%D7%A0%D7%99%D7%9D/6.2%20-%20%D7%94syscall%20%D7%9E%D7%91%D7%A4%D7%A0%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.2   הsyscall מבפנים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.3%20-%20%D7%9E%D7%AA%D7%96%D7%9E%D7%9F%20%D7%94%D7%AA%D7%94%D7%9C%D7%99%D7%9B%D7%99%D7%9D/6.3%20-%20%D7%9E%D7%AA%D7%96%D7%9E%D7%9F%20%D7%94%D7%AA%D7%94%D7%9C%D7%99%D7%9B%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.3   מתזמן התהליכים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.4%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F/6.4%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.4   ניהול זכרון
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.5%20-%20%D7%9E%D7%A2%D7%A8%D7%9B%D7%AA%20%D7%94%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%94%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/6.5%20-%20%D7%9E%D7%A2%D7%A8%D7%9B%D7%AA%20%D7%94%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%94%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.5   מערכת הקבצים הוירטואלית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_1_8_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_1_8_6" id="__nav_7_1_8_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.6   הקצאת זכרון בקרנל
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_1_8_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_1_8_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    6.6   הקצאת זכרון בקרנל
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.6 - הקצאת זכרון בקרנל - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.6 - הקצאת זכרון בקרנל - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הקדמה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#allocation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ההיררכיה של allocation זכרון
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kmalloc-kfree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        kmalloc ו-kfree
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="kmalloc ו-kfree">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gfp-gfp-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דגלי GFP - GFP flags
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kmalloc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מגבלות של kmalloc
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vmalloc-vfree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vmalloc ו-vfree
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="vmalloc ו-vfree">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-kmalloc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ההבדלים מ-kmalloc
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-vmalloc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מתי משתמשים ב-vmalloc
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-slab-slub" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מקצה ה-slab - SLUB
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מקצה ה-slab - SLUB">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הבעיה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-caches-slab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הפתרון - caches slab
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איך זה עובד
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה קורה מאחורי הקלעים
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-slab-caches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צפייה ב-slab caches
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-page-allocator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מקצה הדפים - page allocator
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דיבוג זכרון בקרנל
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="דיבוג זכרון בקרנל">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#kasan-kernel-address-sanitizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KASAN - Kernel Address Sanitizer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kmemleak" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        kmemleak
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-procfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מידע על זכרון ב-procfs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.6 - הקצאת זכרון בקרנל - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.6 - הקצאת זכרון בקרנל - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions/6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.7   פסיקות ו exceptions
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.8%20-%20%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%D7%99%D7%9D/6.8%20-%20%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.8   דרייברים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.9%20-%20%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA%20%D7%94%D7%A8%D7%A9%D7%AA/6.9%20-%20%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA%20%D7%94%D7%A8%D7%A9%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.9   מחסנית הרשת
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.10   סנכרון בקרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.11%20-%20%D7%90%D7%91%D7%98%D7%97%D7%94%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.11%20-%20%D7%90%D7%91%D7%98%D7%97%D7%94%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.11   אבטחה בקרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C/6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.12   דיבוג קרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.13%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A1%D7%99%D7%9B%D7%95%D7%9D/6.13%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A1%D7%99%D7%9B%D7%95%D7%9D%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.13   פרויקט סיכום
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94/7.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94/7.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   הנדסה הפוכה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%9E%D7%A2%D7%91%D7%93/8.1%20-%20%D7%A6%D7%99%D7%A0%D7%95%D7%A8%20%D7%94%D7%94%D7%95%D7%A8%D7%90%D7%95%D7%AA/8.1%20-%20%D7%A6%D7%99%D7%A0%D7%95%D7%A8%20%D7%94%D7%94%D7%95%D7%A8%D7%90%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   ארכיטקטורת מעבד
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%9C%D7%A6%D7%99%D7%94%20%D7%95%D7%9C%D7%99%D7%A0%D7%A7%D7%95%D7%92/9.1%20-%20%D7%A9%D7%9C%D7%91%D7%99%20%D7%94%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%9C%D7%A6%D7%99%D7%94/9.1%20-%20%D7%A9%D7%9C%D7%91%D7%99%20%D7%94%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%9C%D7%A6%D7%99%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   קומפילציה ולינקוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../10%20-%20C%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/10.1%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%20%D7%91%D7%AA%D7%95%D7%9A%20C/10.1%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%20%D7%91%D7%AA%D7%95%D7%9A%20C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10   C מתקדם
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../11%20-%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A8%D7%A9%D7%AA/11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D/11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    11   תכנות רשת
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../12%20-%20%D7%9E%D7%A7%D7%91%D7%99%D7%9C%D7%99%D7%95%D7%AA%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%AA/12.1%20-%20%D7%93%D7%A4%D7%95%D7%A1%D7%99%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%9E%D7%A7%D7%91%D7%99%D7%9C%D7%99/12.1%20-%20%D7%93%D7%A4%D7%95%D7%A1%D7%99%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%9E%D7%A7%D7%91%D7%99%D7%9C%D7%99%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    12   מקביליות מתקדמת
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הקדמה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#allocation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ההיררכיה של allocation זכרון
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kmalloc-kfree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        kmalloc ו-kfree
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="kmalloc ו-kfree">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gfp-gfp-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דגלי GFP - GFP flags
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kmalloc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מגבלות של kmalloc
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vmalloc-vfree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vmalloc ו-vfree
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="vmalloc ו-vfree">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-kmalloc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ההבדלים מ-kmalloc
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-vmalloc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מתי משתמשים ב-vmalloc
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-slab-slub" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מקצה ה-slab - SLUB
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מקצה ה-slab - SLUB">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הבעיה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-caches-slab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הפתרון - caches slab
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איך זה עובד
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה קורה מאחורי הקלעים
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-slab-caches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        צפייה ב-slab caches
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-page-allocator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מקצה הדפים - page allocator
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דיבוג זכרון בקרנל
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="דיבוג זכרון בקרנל">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#kasan-kernel-address-sanitizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KASAN - Kernel Address Sanitizer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kmemleak" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        kmemleak
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-procfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מידע על זכרון ב-procfs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    ליבת המחשב
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C/6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    6   הקרנל של לינוקס
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    6.6   הקצאת זכרון בקרנל
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>6.6 - הקצאת זכרון בקרנל - הרצאה</h1>
+
+<h2 id="_1">הקדמה<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>ב-user space יש לנו את malloc ו-free. קוראים ל-malloc, מקבלים פוינטר לזכרון, משתמשים בו, ובסוף קוראים ל-free. פשוט. אבל מה הקרנל עצמו עושה כשהוא צריך זכרון?</p>
+<p>הקרנל לא יכול להשתמש ב-malloc. למה? כי malloc מסתמך על syscalls כמו mmap ו-brk - שירותים שהקרנל עצמו מספק. הקרנל לא יכול לקרוא לעצמו. הוא צריך מנגנונים ברמה נמוכה יותר.</p>
+<p>בפרק הזה נלמד על המקצים של הקרנל: kmalloc, vmalloc, ה-slab allocator, ומקצה הpages. ראינו בפרק 6.4 את ה-buddy allocator שמנהל pages פיזיים - עכשיו נראה את כל מה שיושב מעליו.</p>
+<hr />
+<h2 id="allocation">ההיררכיה של allocation זכרון<a class="headerlink" href="#allocation" title="Permanent link">&para;</a></h2>
+<p>לפני שנצלול לפרטים, בואו נראה את התמונה הגדולה. הallocation זכרון בלינוקס היא שכבתית:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>----------------------------------------------------------
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>|  user space                                              |
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>|  malloc() / free()  --&gt;  mmap() / brk() syscalls        |
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>----------------------------------------------------------
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>|  kernel (kernel space)                                   |
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>|  kmalloc() / vmalloc()                                  |
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>|         |                                               |
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>|  slab allocator (SLUB)                                   |
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>|         |                                               |
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>|  page allocator - buddy allocator                        |
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>|         |                                               |
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>|  physical memory                                          |
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>----------------------------------------------------------
+</code></pre></div>
+<p>בuser space, הascall malloc קורא ל-mmap או brk, שהם syscalls. בkernel space, הכל מתחיל מ-kmalloc או vmalloc, שמשתמשים ב-slab allocator, שמשתמש ב-buddy allocator, שמנהל את הזכרון הפיזי ישירות.</p>
+<hr />
+<h2 id="kmalloc-kfree">kmalloc ו-kfree<a class="headerlink" href="#kmalloc-kfree" title="Permanent link">&para;</a></h2>
+<p>הפונקציה kmalloc היא המקבילה הקרנלית של malloc. היא מקצה בלוק רציף של זכרון - רציף גם וירטואלית וגם פיזית.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;linux/slab.h&gt;</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="nf">kmalloc</span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">size</span><span class="p">,</span><span class="w"> </span><span class="n">gfp_t</span><span class="w"> </span><span class="n">flags</span><span class="p">);</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="kt">void</span><span class="w"> </span><span class="nf">kfree</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">ptr</span><span class="p">);</span>
+</code></pre></div>
+<p>דוגמה פשוטה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">ptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">kmalloc</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span><span class="w"> </span><span class="n">GFP_KERNEL</span><span class="p">);</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">ptr</span><span class="p">)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">-</span><span class="n">ENOMEM</span><span class="p">;</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1">// use the memory...</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="n">kfree</span><span class="p">(</span><span class="n">ptr</span><span class="p">);</span>
+</code></pre></div>
+<p>שימו לב לכמה הבדלים מmalloc:</p>
+<ol>
+<li>
+<p><strong>אין צורך לבדוק errno</strong> - kmalloc מחזיר NULL אם הallocation נכשלה, ואנחנו מחזירים -ENOMEM (קוד שגיאה של "אין זכרון").</p>
+</li>
+<li>
+<p><strong>יש פרמטר flags</strong> - הדגל השני אומר לקרנל איך להתנהג בזמן הallocation. זה קריטי.</p>
+</li>
+<li>
+<p><strong>הזכרון רציף פיזית</strong> - בניגוד ל-malloc שמחזיר זכרון רציף וירטואלית בלבד, kmalloc מחזיר זכרון שרציף גם פיזית. זה חשוב עבור חומרה שצריכה לגשת לזכרון ישירות (DMA).</p>
+</li>
+</ol>
+<h3 id="gfp-gfp-flags">דגלי GFP - GFP flags<a class="headerlink" href="#gfp-gfp-flags" title="Permanent link">&para;</a></h3>
+<p>הדגלים (GFP = Get Free Pages) הם אחד הדברים הכי חשובים בallocation זכרון בקרנל. הם אומרים לקרנל באילו תנאים הוא רשאי להקצות:</p>
+<p><strong>GFP_KERNEL</strong> - הדגל הנפוץ ביותר. אומר: "אני בהקשר של process (process context) ואפשר לישון". אם אין זכרון פנוי, הקרנל יכול:<br />
+- להעביר pages ל-swap<br />
+- לכתוב dirty pages לדיסק<br />
+- להמתין עד שיתפנה זכרון</p>
+<p>משמשים אותו כשקוד רץ בהקשר של syscall, למשל.</p>
+<p><strong>GFP_ATOMIC</strong> - אומר: "אי אפשר לישון! תן לי זכרון עכשיו או אל תיתן בכלל". משמש בהקשרים שבהם אסור לישון:<br />
+- בתוך interrupt handlers<br />
+- בתוך spinlocks<br />
+- בתוך softirqs ו-tasklets</p>
+<p>אם אין זכרון פנוי מיד, kmalloc עם GFP_ATOMIC פשוט מחזיר NULL. הוא לא מחכה.</p>
+<p><strong>GFP_DMA</strong> - מבקש זכרון מתוך ZONE_DMA (16MB הראשונים), עבור התקני DMA ישנים.</p>
+<p><strong>GFP_DMA32</strong> - מבקש זכרון מתוך ZONE_DMA32 (עד 4GB), עבור התקנים שמוגבלים ל-32 ביט.</p>
+<p>למה ההבדל בין GFP_KERNEL ל-GFP_ATOMIC כל כך חשוב? תחשבו על זה: interrupt handler קוטע את הCPU באמצע משהו. אם הinterrupt handler ינסה לישון (כי ממתין לIO של דיסק כדי לפנות זכרון) - הCPU ייתקע. אף אחד לא יעיר אותו כי הinterrupt עדיין לא טופל. לכן בinterrupt handler חובה להשתמש ב-GFP_ATOMIC.</p>
+<h3 id="kmalloc">מגבלות של kmalloc<a class="headerlink" href="#kmalloc" title="Permanent link">&para;</a></h3>
+<p>ל-kmalloc יש מגבלה על גודל הallocation - בדרך כלל עד 4MB (תלוי בconfiguration). זה בגלל שהזכרון חייב להיות רציף פיזית, וככל שמבקשים בלוק גדול יותר, קשה יותר למצוא בלוק רציף. אם צריכים allocation גדולה יותר - משתמשים ב-vmalloc.</p>
+<hr />
+<h2 id="vmalloc-vfree">vmalloc ו-vfree<a class="headerlink" href="#vmalloc-vfree" title="Permanent link">&para;</a></h2>
+<p>הפונקציה vmalloc מקצה זכרון שרציף וירטואלית אבל לא בהכרח פיזית.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;linux/vmalloc.h&gt;</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="nf">vmalloc</span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">size</span><span class="p">);</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="kt">void</span><span class="w"> </span><span class="nf">vfree</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">addr</span><span class="p">);</span>
+</code></pre></div>
+<p>דוגמה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">buf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">vmalloc</span><span class="p">(</span><span class="mi">1024</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="p">);</span><span class="w">  </span><span class="c1">// 1MB</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">buf</span><span class="p">)</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">-</span><span class="n">ENOMEM</span><span class="p">;</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="c1">// use the buffer...</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">vfree</span><span class="p">(</span><span class="n">buf</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="-kmalloc">ההבדלים מ-kmalloc<a class="headerlink" href="#-kmalloc" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>תכונה</th>
+<th>kmalloc</th>
+<th>vmalloc</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>רציפות פיזית</td>
+<td>כן</td>
+<td>לא</td>
+</tr>
+<tr>
+<td>מהירות</td>
+<td>מהיר</td>
+<td>איטי יותר</td>
+</tr>
+<tr>
+<td>גודל מקסימלי</td>
+<td>מוגבל (בד"כ 4MB)</td>
+<td>גדול (מוגבל רק ע"י זכרון פנוי)</td>
+</tr>
+<tr>
+<td>שימוש ב-page tables</td>
+<td>לא צריך (הזכרון כבר ממופה)</td>
+<td>כן (צריך ליצור מיפויים)</td>
+</tr>
+<tr>
+<td>מתאים ל-DMA</td>
+<td>כן</td>
+<td>לא</td>
+</tr>
+</tbody>
+</table>
+<p>למה vmalloc איטי יותר? כי הוא צריך:<br />
+1. להקצות pages בודדים (שלא בהכרח רציפים פיזית).<br />
+2. ליצור ערכים חדשים בpage table של הקרנל כדי למפות את הpages הלא-רציפים לכתובות וירטואליות רציפות.</p>
+<h3 id="-vmalloc">מתי משתמשים ב-vmalloc<a class="headerlink" href="#-vmalloc" title="Permanent link">&para;</a></h3>
+<ul>
+<li>כשצריכים buffer גדול ולא אכפת לנו מרציפות פיזית.</li>
+<li>טעינת מודולים של הקרנל (kernel modules) - הקוד של מודול נטען לזכרון שהוקצה עם vmalloc.</li>
+<li>יצירת buffers גדולים עבור מערכות קבצים או רשת.</li>
+</ul>
+<hr />
+<h2 id="-slab-slub">מקצה ה-slab - SLUB<a class="headerlink" href="#-slab-slub" title="Permanent link">&para;</a></h2>
+<h3 id="_2">הבעיה<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<p>הקרנל יוצר ומשמיד מיליוני אובייקטים קטנים בכל שנייה. task_struct כשנוצר process חדש. inode כשפותחים קובץ. dentry כשפותרים נתיב. sk_buff כשמגיע פקט רשת.</p>
+<p>כל האובייקטים האלה הם בגודל קבוע. task_struct תמיד באותו גודל. inode תמיד באותו גודל. להשתמש ב-buddy allocator ישירות עבור כל אובייקט כזה זה בזבוז - buddy allocator עובד ביחידות של pages (4KB), ו-inode הוא הרבה יותר קטן.</p>
+<h3 id="-caches-slab">הפתרון - caches slab<a class="headerlink" href="#-caches-slab" title="Permanent link">&para;</a></h3>
+<p>הרעיון: ליצור pool (בריכה) מוכנה מראש של אובייקטים מאותו סוג. במקום להקצות ולשחרר כל פעם מה-buddy allocator, שומרים אובייקטים משומשים בcache ומחזרים אותם.</p>
+<p>בלינוקס מודרני, המימוש של slab נקרא SLUB (שהחליף את SLAB הישן יותר).</p>
+<h3 id="_3">איך זה עובד<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>יצירת cache</strong> - הקרנל יוצר slab cache לכל סוג אובייקט:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">kmem_cache</span><span class="w"> </span><span class="o">*</span><span class="n">task_struct_cache</span><span class="p">;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">task_struct_cache</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">kmem_cache_create</span><span class="p">(</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="s">&quot;task_struct&quot;</span><span class="p">,</span><span class="w">           </span><span class="c1">// name (appears in /proc/slabinfo)</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">task_struct</span><span class="p">),</span><span class="w"> </span><span class="c1">// object size</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span><span class="mi">0</span><span class="p">,</span><span class="w">                       </span><span class="c1">// alignment</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span><span class="n">SLAB_PANIC</span><span class="p">,</span><span class="w">              </span><span class="c1">// flags</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">    </span><span class="nb">NULL</span><span class="w">                     </span><span class="c1">// constructor</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="p">);</span>
+</code></pre></div>
+<ol>
+<li><strong>הallocation</strong> - כשצריכים אובייקט חדש:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">task_struct</span><span class="w"> </span><span class="o">*</span><span class="n">task</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">kmem_cache_alloc</span><span class="p">(</span><span class="n">task_struct_cache</span><span class="p">,</span><span class="w"> </span><span class="n">GFP_KERNEL</span><span class="p">);</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">task</span><span class="p">)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">-</span><span class="n">ENOMEM</span><span class="p">;</span>
+</code></pre></div>
+<ol>
+<li><strong>שחרור</strong> - כשהאובייקט כבר לא נחוץ:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">kmem_cache_free</span><span class="p">(</span><span class="n">task_struct_cache</span><span class="p">,</span><span class="w"> </span><span class="n">task</span><span class="p">);</span>
+</code></pre></div>
+<p>האובייקט לא באמת "משוחרר" - הוא חוזר לcache ויהיה זמין לallocation הבאה.</p>
+<h3 id="_4">מה קורה מאחורי הקלעים<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<p>ה-slab cache מבקש pages שלמים מה-buddy allocator ומחלק אותם לאובייקטים. למשל, אם כל אובייקט הוא 256 בתים וpage הוא 4096 בתים, אז כל page מכיל 16 אובייקטים.</p>
+<p>כשכל האובייקטים בcache תפוסים ומבקשים עוד, ה-slab מבקש עוד pages מה-buddy allocator ומחלק גם אותם.</p>
+<p>כש-kmalloc צריך להקצות 256 בתים, הוא לא הולך ישירות ל-buddy allocator. הוא הולך ל-slab cache שמוכן מראש עבור allocations בגודל 256 בתים. יש slab caches ייעודיים לגדלים 8, 16, 32, 64, 128, 256, 512, 1024, וכו'.</p>
+<h3 id="-slab-caches">צפייה ב-slab caches<a class="headerlink" href="#-slab-caches" title="Permanent link">&para;</a></h3>
+<p>אפשר לראות את כל ה-slab caches ואת מצבם:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>cat<span class="w"> </span>/proc/slabinfo
+</code></pre></div>
+<p>הפלט מראה כל cache - השם שלו, כמה אובייקטים פעילים, כמה מוקצים, גודל כל אובייקט, ומספר הpages.</p>
+<p>אפשר גם להשתמש בכלי <code>slabtop</code> שמציג את ה-slab caches בסדר יורד לפי שימוש בזכרון:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>sudo<span class="w"> </span>slabtop
+</code></pre></div>
+<p>דוגמה לפלט (מקוצר):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a> Active / Total Objects (% used)    : 1234567 / 1345678 (91.7%)
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a> Active / Total Slabs (% used)      : 45678 / 45678 (100.0%)
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>  OBJS ACTIVE   USE OBJ SIZE  SLABS OBJ/SLAB CACHE SIZE  NAME
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a> 89456  85432   95%    0.19K   4260       21     17040K  dentry
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a> 67890  65432   96%    0.62K   2611       26     41776K  inode_cache
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a> 45678  44567   97%    2.06K   2854       16     91328K  task_struct
+</code></pre></div>
+<p>אפשר לראות שdentry ו-inode_cache (שלמדנו עליהם ב-6.5) הם מה-caches הכי פעילים - הקרנל כל הזמן יוצר ומשמיד dentries ו-inodes כחלק מפתרון נתיבים ופתיחת קבצים.</p>
+<hr />
+<h2 id="-page-allocator">מקצה הדפים - page allocator<a class="headerlink" href="#-page-allocator" title="Permanent link">&para;</a></h2>
+<p>בתחתית ההיררכיה יושב מקצה הpages, שמבוסס על ה-buddy allocator שלמדנו עליו ב-6.4. הפונקציות העיקריות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1">// allocating pages</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="k">struct</span><span class="w"> </span><span class="nc">page</span><span class="w"> </span><span class="o">*</span><span class="n">alloc_pages</span><span class="p">(</span><span class="n">gfp_t</span><span class="w"> </span><span class="n">gfp</span><span class="p">,</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">order</span><span class="p">);</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="nf">__get_free_pages</span><span class="p">(</span><span class="n">gfp_t</span><span class="w"> </span><span class="n">gfp</span><span class="p">,</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">order</span><span class="p">);</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="c1">// freeing pages</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="kt">void</span><span class="w"> </span><span class="nf">__free_pages</span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">page</span><span class="w"> </span><span class="o">*</span><span class="n">page</span><span class="p">,</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">order</span><span class="p">);</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="kt">void</span><span class="w"> </span><span class="nf">free_pages</span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">addr</span><span class="p">,</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">order</span><span class="p">);</span>
+</code></pre></div>
+<p>הפרמטר <code>order</code> מציין כמה pages להקצות כחזקה של 2:<br />
+- order 0 = page אחד (4KB)<br />
+- order 1 = שני pages (8KB)<br />
+- order 2 = ארבעה pages (16KB)<br />
+- order 10 = 1024 pages (4MB)</p>
+<p>ההבדל בין alloc_pages ל-__get_free_pages:<br />
+- הפונקציה alloc_pages מחזירה מצביע ל-struct page (שלמדנו עליו ב-6.4).<br />
+- הפונקציה __get_free_pages מחזירה את הכתובת הוירטואלית של הpage.</p>
+<p>בפועל, kmalloc ו-slab allocator קוראים לפונקציות האלה מאחורי הקלעים. מתכנתי קרנל משתמשים בהן ישירות רק כשצריכים pages שלמים.</p>
+<hr />
+<h2 id="_5">דיבוג זכרון בקרנל<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<p>באגים של זכרון (use-after-free, buffer overflow, memory leak) הם מהבאגים הכי מסוכנים. בkernel space הם עוד יותר מסוכנים - באג זכרון בקרנל יכול לגרום לkernel panic (מה שנקרא "מסך כחול" בWindows, אבל בלינוקס זה kernel panic).</p>
+<h3 id="kasan-kernel-address-sanitizer">KASAN - Kernel Address Sanitizer<a class="headerlink" href="#kasan-kernel-address-sanitizer" title="Permanent link">&para;</a></h3>
+<p>כלי שמזהה גישה לזכרון לא חוקית בזמן ריצה:<br />
+- גישה לזכרון שכבר שוחרר (use-after-free)<br />
+- כתיבה מעבר לגבולות ה-buffer (buffer overflow)<br />
+- שימוש בזכרון לא מאותחל</p>
+<p>הוא מוסיף תקורה משמעותית ולכן משתמשים בו רק בזמן פיתוח ובדיקות, לא ב-production.</p>
+<h3 id="kmemleak">kmemleak<a class="headerlink" href="#kmemleak" title="Permanent link">&para;</a></h3>
+<p>כלי שמזהה דליפות זכרון בקרנל. הוא עוקב אחרי כל הallocations ובודק אם יש allocations שאף אחד לא מחזיק מצביע אליהן.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># enable (requires a kernel compiled with CONFIG_DEBUG_KMEMLEAK)</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nb">echo</span><span class="w"> </span>scan<span class="w"> </span>&gt;<span class="w"> </span>/sys/kernel/debug/kmemleak
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>cat<span class="w"> </span>/sys/kernel/debug/kmemleak
+</code></pre></div>
+<h3 id="-procfs">מידע על זכרון ב-procfs<a class="headerlink" href="#-procfs" title="Permanent link">&para;</a></h3>
+<p>הקובץ <code>/proc/meminfo</code> מכיל מידע מפורט על שימוש בזכרון:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>cat<span class="w"> </span>/proc/meminfo
+</code></pre></div>
+<p>שדות רלוונטיים:</p>
+<ul>
+<li><strong>MemTotal</strong> - סך כל הRAM</li>
+<li><strong>MemFree</strong> - זכרון חופשי (שלא משמש לשום דבר, גם לא cache)</li>
+<li><strong>MemAvailable</strong> - זכרון זמין (כולל cache שאפשר לשחרר)</li>
+<li><strong>Buffers</strong> - הcache של block device</li>
+<li><strong>Cached</strong> - page cache (cache קבצים)</li>
+<li><strong>Slab</strong> - סך כל הזכרון שה-slab allocator משתמש בו</li>
+<li><strong>SReclaimable</strong> - חלק מה-slab שאפשר לשחרר (בעיקר dcache ו-inode cache)</li>
+<li><strong>SUnreclaim</strong> - חלק מה-slab שלא ניתן לשחרור</li>
+</ul>
+<hr />
+<h2 id="_6">סיכום<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
+<p>למדנו על מנגנוני allocation הזכרון בתוך הקרנל:</p>
+<ul>
+<li><strong>kmalloc / kfree</strong> - המקבילה של malloc בקרנל. מקצה זכרון רציף פיזית. צריך לציין דגלי GFP (GFP_KERNEL לcontexts רגילים, GFP_ATOMIC כשאסור לישון).</li>
+<li><strong>vmalloc / vfree</strong> - מקצה זכרון רציף וירטואלית אבל לא פיזית. מתאים לallocations גדולות. איטי יותר מ-kmalloc.</li>
+<li><strong>מקצה ה-slab (SLUB)</strong> - pools של אובייקטים מאותו גודל. מייעל allocation ושחרור של אובייקטים נפוצים (task_struct, inode, dentry). אפשר לראות ב-/proc/slabinfo.</li>
+<li><strong>מקצה הpages</strong> - הרמה הכי נמוכה. alloc_pages מבוססת על ה-buddy allocator שלמדנו ב-6.4.</li>
+</ul>
+<p>הכל מתחבר: כשprocess קורא ל-malloc ב-user space, זה מגיע ל-mmap syscall, שיוצר VMA (6.4), ואז page fault מפעיל את מקצה הpages, שמשתמש ב-buddy allocator כדי להקצות page פיזי. כשהקרנל עצמו צריך זכרון (למשל ליצור task_struct עבור process חדש), הוא משתמש ב-slab allocator שמבקש pages מ-buddy allocator.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

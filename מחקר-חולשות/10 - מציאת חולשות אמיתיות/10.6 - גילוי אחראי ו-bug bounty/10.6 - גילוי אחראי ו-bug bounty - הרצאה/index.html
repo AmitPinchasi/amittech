@@ -1,0 +1,3032 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בפרקים 10.4 ו-10.5 עשינו את הקפיצה הגדולה: עברנו מאתגרי אימון לחולשות אמיתיות בתוכנה אמיתית, ניתחנו CVE קיים וגם כתבנו exploit משלנו. עכשיו יש לכם כוח...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/10%20-%20%D7%9E%D7%A6%D7%99%D7%90%D7%AA%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%90%D7%9E%D7%99%D7%AA%D7%99%D7%95%D7%AA/10.6%20-%20%D7%92%D7%99%D7%9C%D7%95%D7%99%20%D7%90%D7%97%D7%A8%D7%90%D7%99%20%D7%95-bug%20bounty/10.6%20-%20%D7%92%D7%99%D7%9C%D7%95%D7%99%20%D7%90%D7%97%D7%A8%D7%90%D7%99%20%D7%95-bug%20bounty%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../10.5%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20exploit%20%D7%9C-CVE%20%D7%90%D7%9E%D7%99%D7%AA%D7%99/10.5%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20exploit%20%D7%9C-CVE%20%D7%90%D7%9E%D7%99%D7%AA%D7%99%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../../10.7%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A1%D7%99%D7%95%D7%9D/10.7%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A1%D7%99%D7%95%D7%9D%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>10.6 - גילוי אחראי ו-bug bounty - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "10.6 - \u05d2\u05d9\u05dc\u05d5\u05d9 \u05d0\u05d7\u05e8\u05d0\u05d9 \u05d5-bug bounty - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/10%20-%20%D7%9E%D7%A6%D7%99%D7%90%D7%AA%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%90%D7%9E%D7%99%D7%AA%D7%99%D7%95%D7%AA/10.6%20-%20%D7%92%D7%99%D7%9C%D7%95%D7%99%20%D7%90%D7%97%D7%A8%D7%90%D7%99%20%D7%95-bug%20bounty/10.6%20-%20%D7%92%D7%99%D7%9C%D7%95%D7%99%20%D7%90%D7%97%D7%A8%D7%90%D7%99%20%D7%95-bug%20bounty%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="10.6 - גילוי אחראי ו-bug bounty - הרצאה - עמית טק" />
+<meta property="og:description" content="בפרקים 10.4 ו-10.5 עשינו את הקפיצה הגדולה: עברנו מאתגרי אימון לחולשות אמיתיות בתוכנה אמיתית, ניתחנו CVE קיים וגם כתבנו exploit משלנו. עכשיו יש לכם כוח..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/10%20-%20%D7%9E%D7%A6%D7%99%D7%90%D7%AA%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%90%D7%9E%D7%99%D7%AA%D7%99%D7%95%D7%AA/10.6%20-%20%D7%92%D7%99%D7%9C%D7%95%D7%99%20%D7%90%D7%97%D7%A8%D7%90%D7%99%20%D7%95-bug%20bounty/10.6%20-%20%D7%92%D7%99%D7%9C%D7%95%D7%99%20%D7%90%D7%97%D7%A8%D7%90%D7%99%20%D7%95-bug%20bounty%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/10%20-%20%D7%9E%D7%A6%D7%99%D7%90%D7%AA%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%90%D7%9E%D7%99%D7%AA%D7%99%D7%95%D7%AA/10.6%20-%20%D7%92%D7%99%D7%9C%D7%95%D7%99%20%D7%90%D7%97%D7%A8%D7%90%D7%99%20%D7%95-bug%20bounty/10.6%20-%20%D7%92%D7%99%D7%9C%D7%95%D7%99%20%D7%90%D7%97%D7%A8%D7%90%D7%99%20%D7%95-bug%20bounty%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="10.6 - גילוי אחראי ו-bug bounty - הרצאה - עמית טק" />
+<meta property="twitter:description" content="בפרקים 10.4 ו-10.5 עשינו את הקפיצה הגדולה: עברנו מאתגרי אימון לחולשות אמיתיות בתוכנה אמיתית, ניתחנו CVE קיים וגם כתבנו exploit משלנו. עכשיו יש לכם כוח..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/10%20-%20%D7%9E%D7%A6%D7%99%D7%90%D7%AA%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%90%D7%9E%D7%99%D7%AA%D7%99%D7%95%D7%AA/10.6%20-%20%D7%92%D7%99%D7%9C%D7%95%D7%99%20%D7%90%D7%97%D7%A8%D7%90%D7%99%20%D7%95-bug%20bounty/10.6%20-%20%D7%92%D7%99%D7%9C%D7%95%D7%99%20%D7%90%D7%97%D7%A8%D7%90%D7%99%20%D7%95-bug%20bounty%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-coordinated-vulnerability-disclosure" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              10.6 - גילוי אחראי ו-bug bounty - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר חולשות
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%95%D7%AA%D7%A9%D7%AA%D7%99%D7%AA/0.1%20-%20%D7%9E%D7%94%20%D7%96%D7%94%20%D7%9E%D7%97%D7%A7%D7%A8%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/0.1%20-%20%D7%9E%D7%94%20%D7%96%D7%94%20%D7%9E%D7%97%D7%A7%D7%A8%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה ותשתית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%A4%D7%A9%D7%95%D7%98%D7%95%D7%AA%20%D7%95%D7%91%D7%90%D7%92%D7%99%D7%9D%20%D7%9C%D7%95%D7%92%D7%99%D7%99%D7%9D/1.1%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%95%D7%90%D7%A8%D7%92%D7%95%D7%9E%D7%A0%D7%98%D7%99%D7%9D/1.1%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%95%D7%90%D7%A8%D7%92%D7%95%D7%9E%D7%A0%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   חולשות פשוטות ובאגים לוגיים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%92%D7%9C%D7%99%D7%A9%D7%AA%20%D7%97%D7%95%D7%A6%D7%A5%20%D7%A2%D7%9C%20%D7%94%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA/2.1%20-%20%D7%90%D7%A0%D7%98%D7%95%D7%9E%D7%99%D7%94%20%D7%A9%D7%9C%20%D7%92%D7%9C%D7%99%D7%A9%D7%94%20%D7%95%D7%A9%D7%9C%D7%99%D7%98%D7%94%20%D7%91RIP/2.1%20-%20%D7%90%D7%A0%D7%98%D7%95%D7%9E%D7%99%D7%94%20%D7%A9%D7%9C%20%D7%92%D7%9C%D7%99%D7%A9%D7%94%20%D7%95%D7%A9%D7%9C%D7%99%D7%98%D7%94%20%D7%91RIP%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   גלישת חוצץ על המחסנית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20Shellcode/3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99/3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   Shellcode
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A2%D7%A7%D7%99%D7%A4%D7%AA%20NX%20%D7%95ROP%20%D7%91%D7%A1%D7%99%D7%A1%D7%99/4.1%20-%20GOT%20%D7%95PLT%20%D7%9C%D7%A2%D7%95%D7%9E%D7%A7/4.1%20-%20GOT%20%D7%95PLT%20%D7%9C%D7%A2%D7%95%D7%9E%D7%A7%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   עקיפת NX וROP בסיסי
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%9E%D7%97%D7%A8%D7%95%D7%96%D7%AA%20%D7%A4%D7%95%D7%A8%D7%9E%D7%98/5.1%20-%20%D7%99%D7%A1%D7%95%D7%93%D7%95%D7%AA%20format%20string/5.1%20-%20%D7%99%D7%A1%D7%95%D7%93%D7%95%D7%AA%20format%20string%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   חולשות מחרוזת פורמט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20ROP%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/6.1%20-%20stack%20pivoting/6.1%20-%20stack%20pivoting%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ROP מתקדם
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc/7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   ניצול הHeap
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C/8.1%20-%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%90%D7%A8%D7%95%D7%96%D7%99%D7%9D%20%D7%95-UPX/8.1%20-%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%90%D7%A8%D7%95%D7%96%D7%99%D7%9D%20%D7%95-UPX%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   הנדסה הפוכה לניצול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%95%D7%90%D7%AA%D7%92%D7%A8%D7%99%D7%9D%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%99%D7%9D/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   ניצול קרנל ואתגרים מתקדמים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2_12" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2_12" id="__nav_7_2_12_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10   מציאת חולשות אמיתיות
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_2_12_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2_12">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    10   מציאת חולשות אמיתיות
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../10.1%20-%20%D7%A1%D7%A7%D7%99%D7%A8%D7%AA%20%D7%A7%D7%95%D7%93%20%D7%9E%D7%A7%D7%95%D7%A8/10.1%20-%20%D7%A1%D7%A7%D7%99%D7%A8%D7%AA%20%D7%A7%D7%95%D7%93%20%D7%9E%D7%A7%D7%95%D7%A8%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10.1   סקירת קוד מקור
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../10.2%20-%20Fuzzing%20%D7%A2%D7%9D%20AFL/10.2%20-%20Fuzzing%20%D7%A2%D7%9D%20AFL%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10.2   Fuzzing עם AFL
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../10.3%20-%20Fuzzing%20%D7%A2%D7%9D%20libFuzzer%20%D7%95sanitizers/10.3%20-%20Fuzzing%20%D7%A2%D7%9D%20libFuzzer%20%D7%95sanitizers%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10.3   Fuzzing עם libFuzzer וsanitizers
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../10.4%20-%20%D7%A0%D7%99%D7%AA%D7%95%D7%97%20CVE%20%D7%95-n-day/10.4%20-%20%D7%A0%D7%99%D7%AA%D7%95%D7%97%20CVE%20%D7%95-n-day%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10.4   ניתוח CVE ו n day
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../10.5%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20exploit%20%D7%9C-CVE%20%D7%90%D7%9E%D7%99%D7%AA%D7%99/10.5%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20exploit%20%D7%9C-CVE%20%D7%90%D7%9E%D7%99%D7%AA%D7%99%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10.5   כתיבת exploit ל CVE אמיתי
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2_12_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2_12_6" id="__nav_7_2_12_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10.6   גילוי אחראי ו bug bounty
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_2_12_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2_12_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    10.6   גילוי אחראי ו bug bounty
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10.6 - גילוי אחראי ו-bug bounty - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10.6 - גילוי אחראי ו-bug bounty - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-coordinated-vulnerability-disclosure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        גילוי מתואם של חולשות - Coordinated Vulnerability Disclosure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-disclosure-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מודלים של גילוי - disclosure models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-timelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ציר הזמן של גילוי - timelines
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דוח טוב וניתן לשחזור - the report
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-poc-vs-weaponization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הוכחת היתכנות מול חימוש - PoC vs weaponization
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-bug-bounty" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פלטפורמות והיקף - bug bounty
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cve-cna" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איך מוקצה מזהה CVE - CNA
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-safe-harbor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מקלט משפטי ואחריות החוקר - safe harbor
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-portfolio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        בניית פורטפוליו מחקרי - portfolio
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../10.7%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A1%D7%99%D7%95%D7%9D/10.7%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A1%D7%99%D7%95%D7%9D%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10.7   פרויקט סיום
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-coordinated-vulnerability-disclosure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        גילוי מתואם של חולשות - Coordinated Vulnerability Disclosure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-disclosure-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מודלים של גילוי - disclosure models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-timelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ציר הזמן של גילוי - timelines
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דוח טוב וניתן לשחזור - the report
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-poc-vs-weaponization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הוכחת היתכנות מול חימוש - PoC vs weaponization
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-bug-bounty" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פלטפורמות והיקף - bug bounty
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cve-cna" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איך מוקצה מזהה CVE - CNA
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-safe-harbor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מקלט משפטי ואחריות החוקר - safe harbor
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-portfolio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        בניית פורטפוליו מחקרי - portfolio
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר חולשות
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../10.1%20-%20%D7%A1%D7%A7%D7%99%D7%A8%D7%AA%20%D7%A7%D7%95%D7%93%20%D7%9E%D7%A7%D7%95%D7%A8/10.1%20-%20%D7%A1%D7%A7%D7%99%D7%A8%D7%AA%20%D7%A7%D7%95%D7%93%20%D7%9E%D7%A7%D7%95%D7%A8%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    10   מציאת חולשות אמיתיות
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    10.6   גילוי אחראי ו bug bounty
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>10.6 - גילוי אחראי ו-bug bounty - הרצאה</h1>
+
+<p>בפרקים 10.4 ו-10.5 עשינו את הקפיצה הגדולה: עברנו מאתגרי אימון לחולשות אמיתיות בתוכנה אמיתית, ניתחנו CVE קיים וגם כתבנו exploit משלנו. עכשיו יש לכם כוח אמיתי ביד, ואיתו מגיעה השאלה שאף אתגר CTF לא הכין אתכם אליה: מצאתם באג ניתן לexploit בתוכנה שאנשים אמיתיים מריצים - מה עכשיו? השיעור הזה הוא כולו על הצד המקצועי, האתי והמשפטי של המקצוע. איך מדווחים על חולשה בצורה שמגנה על המשתמשים, איך עובדים מול היצרן בלי להסתבך, איך מוקצה מזהה CVE, ואיך בונים מזה קריירה ומוניטין. זה החלק שמפריד בין חוקר חולשות מקצועי לבין מישהו שסתם מחזיק נשק.</p>
+<h2 id="-coordinated-vulnerability-disclosure">גילוי מתואם של חולשות - Coordinated Vulnerability Disclosure<a class="headerlink" href="#-coordinated-vulnerability-disclosure" title="Permanent link">&para;</a></h2>
+<p>הרעיון המרכזי נקרא גילוי מתואם - CVD (בעבר קראו לזה "גילוי אחראי", אבל המונח יצא מהאופנה כי הוא רומז שכל דרך אחרת היא "לא אחראית"). העיקרון פשוט: כשאתם מוצאים חולשה, אתם מיידעים קודם את הגורם שיכול לתקן אותה - היצרן - ונותנים לו חלון זמן סביר להוציא תיקון, לפני שהפרטים הטכניים מתפרסמים לכל העולם.</p>
+<p>למה בכלל צריך תיאום? כי לחולשה בתוכנה נייטיב יש שני צדדים. מצד אחד, אם תשתקו לגמרי, המשתמשים חשופים והיצרן אף פעם לא ילמד לתקן. מצד שני, אם תפרסמו PoC עובד לכל העולם ברגע שמצאתם אותו, נתתם לכל תוקף בעולם exploit מוכן לפני שקיים תיקון - זה נקרא 0-day בטבע, וזה גורם נזק אמיתי. גילוי מתואם מנסה לאזן: ליצרן יש הזדמנות הוגנת לתקן, ולציבור יש בסופו של דבר את המידע כדי להתגונן וללמוד.</p>
+<p>חשוב להבין שאתם מחזיקים ביד קלף מיקוח. עצם קיומו של תאריך פרסום עתידי הוא מה שגורם ליצרנים להתייחס ברצינות. בלי דדליין, דוחות רבים פשוט נרקבים בתור. הדדליין הוא לא איום - הוא מנגנון שמכריח את שני הצדדים לפעול.</p>
+<h2 id="-disclosure-models">מודלים של גילוי - disclosure models<a class="headerlink" href="#-disclosure-models" title="Permanent link">&para;</a></h2>
+<p>בגדול יש שלוש גישות, וכדאי להכיר את כולן כדי לבחור בתבונה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>+----------------------+-------------------------------------------+
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>| Model                 | What happens                               |
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>+----------------------+-------------------------------------------+
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>| Full Disclosure       | Publish everything immediately, no coordination with the vendor. |
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>|                       | Maximum pressure, but exposes users to a 0-day.   |
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>+----------------------+-------------------------------------------+
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>| Coordinated (CVD)    | Report to the vendor, give a time window, then     |
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>|                       | publish. The professional default.             |
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>+----------------------+-------------------------------------------+
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>| Non-Disclosure        | Keep it to yourself or sell it. No fix,        |
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>|                       | users remain exposed forever.              |
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>+----------------------+-------------------------------------------+
+</code></pre></div>
+<p>הקונצנזוס בתעשייה כיום הוא גילוי מתואם. גילוי מלא נחשב לגיטימי רק כמוצא אחרון - למשל כשיצרן מתעלם מכם חודשים, מנסה לאיים משפטית, או מכחיש שקיימת בעיה. גם אז, המקובל הוא לפרסם רק אחרי שנתתם התראה הוגנת עם דדליין ברור.</p>
+<h2 id="-timelines">ציר הזמן של גילוי - timelines<a class="headerlink" href="#-timelines" title="Permanent link">&para;</a></h2>
+<p>אין חוק אחד, אבל יש נורמות מקובלות. החלון הנפוץ ביותר הוא 90 יום מרגע הדיווח ועד הפרסום. הנה כמה מדיניות מוכרות שכדאי להכיר, כי הן קבעו את התקן:</p>
+<ul>
+<li>הצוות Project Zero של גוגל עובד לפי מדיניות 90 יום, עם תוספת של 30 יום להפצת התיקון: אם היצרן מוציא תיקון בתוך 90 הימים, הפרטים המלאים מתפרסמים 30 יום לאחר התיקון, כדי לתת למשתמשים זמן להתקין.</li>
+<li>היוזמה ZDI - Zero Day Initiative של Trend Micro נותנת ליצרנים 120 יום.</li>
+<li>הארגון CERT/CC נוהג במדיניות של 45 יום כברירת מחדל, עם גמישות.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Day 0            Day 90            Day 90+
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Report ---------&gt; Deadline ----------&gt; Publication
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  |                |                  |
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  | vendor         | develop fix,     | details become
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  | acknowledges   | test,            | public,
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  | within days    | ship             | CVE assigned
+</code></pre></div>
+<p>מה קורה בפועל לאורך החלון? היצרן אמור לאשר קבלת הדוח תוך ימים ספורים, לשחזר את הבאג, לפתח תיקון, לבדוק אותו ולהפיץ. אם היצרן מבקש הארכה כי התיקון מורכב - זו בקשה סבירה, וכדאי לשקול אותה בחיוב, במיוחד בתוכנה מוטמעת - firmware שבה עדכונים איטיים. אבל הארכה היא החלטה שלכם, לא זכות של היצרן. אם רואים גרירת רגליים, מזכירים בנימוס שהדדליין בעינו עומד.</p>
+<h2 id="-the-report">דוח טוב וניתן לשחזור - the report<a class="headerlink" href="#-the-report" title="Permanent link">&para;</a></h2>
+<p>הדוח הוא המוצר שלכם. חוקר שכותב דוח מבולבל מבזבז שבועות של הלוך ושוב, וחוקר שכותב דוח נקי מקבל תיקון מהר ומוניטין טוב. הכלל המקדש: <strong>היצרן חייב להיות מסוגל לשחזר את הקריסה מהדוח לבד, בלי לשאול אתכם שאלות</strong>. בעולם הנייטיב, שחזור פירושו קלט מדויק, סביבה מדויקת, ותוצאה חד-משמעית.</p>
+<p>מבנה דוח מומלץ לחולשת זיכרון:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Title:         one-line description - bug type + component.
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>              Example: &quot;Heap buffer overflow in parse_header of libfoo 2.3.1&quot;
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>Component and version:   product name, exact version number, git commit if known.
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>Environment:   OS, architecture, compiler and flags, glibc.
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>Severity:      CVSS score + vector, and a short explanation of the impact.
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>Description:   what the bug is, where the input comes from, what gets overwritten.
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>Reproduction:  exact steps + minimal attached crash input.
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>Root cause analysis: pointer to the code line/function, why the check is missing.
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>Impact:        crash only? controlled write? RCE? dependent on mitigations?
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>Suggested fix: patch or a description of the missing check (optional, professional).
+</code></pre></div>
+<p>הנה שני עקרונות שמייצרים דוח מעולה. ראשית, <strong>מזערו את הקלט</strong>. אל תשלחו קובץ קלט של 4 מגה-בייט שגורם לקריסה; צמצמו אותו לגודל המינימלי. בשביל קלטים לפאזר יש כלים אוטומטיים לזה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># minimizing an input AFL found, while keeping the same crash</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>afl-tmin<span class="w"> </span>-i<span class="w"> </span>crash_input<span class="w"> </span>-o<span class="w"> </span>crash_min<span class="w"> </span>--<span class="w"> </span>./target<span class="w"> </span>@@
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># minimizing source code/text input while keeping the crash condition</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>creduce<span class="w"> </span>./is_still_crashing.sh<span class="w"> </span>testcase.c
+</code></pre></div>
+<p>שנית, <strong>צרפו פלט חד-משמעי של קריסה</strong>. הדרך הכי משכנעת להוכיח באג זיכרון היא לקמפל את המטרה עם AddressSanitizer ולצרף את הפלט - הוא מצביע בדיוק על סוג הבאג, על הכתובת, ועל ה-backtrace:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># build the target with ASan and symbols</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>gcc<span class="w"> </span>-g<span class="w"> </span>-fsanitize<span class="o">=</span>address<span class="w"> </span>-o<span class="w"> </span>target_asan<span class="w"> </span>target.c
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># run with the minimal crash input</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>./target_asan<span class="w"> </span>crash_min
+</code></pre></div>
+<p>הפלט של ASan הוא זהב טהור לדוח - הוא נראה ככה, וממנו היצרן מבין הכל:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>==12345==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x60200000eff5
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>WRITE of size 16 at 0x60200000eff5 thread T0
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    #0 0x4a1b2c in parse_header src/parser.c:142
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    #1 0x4a0f1e in handle_input src/main.c:88
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>0x60200000eff5 is located 5 bytes to the right of 16-byte region
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>allocated by thread T0 here:
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    #0 malloc
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    #1 0x4a0e02 in parse_header src/parser.c:130
+</code></pre></div>
+<p>אם אין לכם קוד מקור (מטרה קלוזד-סורס), מצרפים במקום זאת backtrace מ-gdb או pwndbg עם <code>bt</code>, את מצב האוגרים בזמן הקריסה, ואת מפת הזיכרון. תמיד ציינו במפורש אילו הגנות היו פעילות - הרצתם <code>checksec</code> על הבינארי וצירפתם את התוצאה (NX, ASLR, PIE, canary, RELRO), כי היכולת לנצל תלויה בהן לחלוטין.</p>
+<h2 id="-poc-vs-weaponization">הוכחת היתכנות מול חימוש - PoC vs weaponization<a class="headerlink" href="#-poc-vs-weaponization" title="Permanent link">&para;</a></h2>
+<p>זו אחת השאלות האתיות החשובות במקצוע, וכדאי שיהיה לכם עליה קו ברור מראש. יש הבדל עצום בין שני דברים:</p>
+<ul>
+<li><strong>הוכחת היתכנות - PoC</strong>: קלט או סקריפט שמדגים את הבאג. בדרך כלל זו קריסה מבוקרת, או הוכחה שיש שליטה ב-RIP, או leak כתובת. המסר הוא "הנה, זה אמיתי וזה חמור".</li>
+<li><strong>נשק - weaponized exploit</strong>: exploit מלא, אמין, שעוקף את כל ההגנות ומשיג RCE יציב על יעדים אמיתיים. המסר הוא "הנה כלי מוכן לתקיפה".</li>
+</ul>
+<p>הכלל המקצועי: <strong>ליצרן שולחים בדיוק כמה שצריך כדי להוכיח ולתקן, לא יותר</strong>. כדי להוכיח heap overflow חמור, פלט ASan שמראה WRITE של 16 בתים מעבר לbuffer מספיק לחלוטין; אתם לא חייבים לצרף chain ROP שמפעילה <code>execve("/bin/sh")</code> על גרסת התפוצה. עודף פירוט לא מזרז את התיקון, ורק מגדיל את הסיכון שהכלי ידלוף.</p>
+<p>לגבי הפרסום הפומבי, אחרי שהתיקון יצא, השיקול דומה: writeup טכני מעולה מסביר את שורש הבאג, את זרימת הקלט, ואת הרעיון של הexploit - בלי בהכרח לפרסם exploit "לחיצת כפתור" שעובד על מיליוני מכשירים לא מעודכנים. אין כאן חוק ברזל, אבל יש אחריות: תחשבו על אוכלוסיית המשתמשים שעדיין לא עדכנה. חוקר טוב מלמד את הקהילה בלי לחמש את הפוגעים.</p>
+<p>ומעבר לזה יש קו אדום ברור: <strong>מכירת 0-day לברוקרים כמו Zerodium או Crowdfense</strong>. שם לא מדווחים ליצרן בכלל - החולשה נמכרת ללקוחות (לרוב ממשלתיים) ונשארת חיה. זה השוק האפור, זה חוקי בחלק מהמקומות, אבל זה מנוגד לרוח הגילוי המתואם ומשאיר משתמשים חשופים ביודעין. בקורס הזה הקו שלנו ברור: אנחנו חוקרים כדי לתקן, לא כדי לחמש.</p>
+<h2 id="-bug-bounty">פלטפורמות והיקף - bug bounty<a class="headerlink" href="#-bug-bounty" title="Permanent link">&para;</a></h2>
+<p>תוכנית bug bounty היא הסכם רשמי שבו יצרן מזמין חוקרים למצוא חולשות, מגדיר מה בתחום, ומשלם על ממצאים תקפים. עבור מטרות נייטיב ו-firmware הנוף קצת שונה מאשר לאתרים, אז הנה המפה:</p>
+<ul>
+<li>הפלטפורמות HackerOne, Bugcrowd, Intigriti ו-YesWeHack מארחות תוכניות של יצרנים רבים, כולל כאלה לתוכנה נייטיב ולרכיבי מערכת.</li>
+<li>החברה Trend Micro מפעילה את ZDI, שקונה חולשות ומטפלת בגילוי המתואם מולכם ומול היצרן במקומכם.</li>
+<li>התחרות Pwn2Own מזמינה חוקרים להדגים שרשראות exploit מלאות על מטרות אמיתיות (דפדפנים, טלפונים, רכבים, נתבים) בזמן אמת, תמורת פרסים גדולים ותיאום מסודר עם היצרנים.</li>
+<li>תוכניות של יצרנים ישירות: Apple Security Bounty (עד סכומים של מיליון דולר ומעלה על שרשרת מלאה), התוכניות של Google (למשל Chrome VRP, Android VRP ו-kernelCTF), ה-MSRC של Microsoft, וכן תוכניות של Qualcomm, Samsung ויצרני נתבים.</li>
+</ul>
+<p>לפני שאתם נוגעים במשהו, קראו את ה-scope עד המילה האחרונה. ההיקף מגדיר בדיוק אילו מוצרים, גרסאות ורכיבים בתחום, ומה מחוץ לתחום - out of scope. בעולם ה-firmware זה קריטי במיוחד: לעיתים חילוץ ה-firmware עצמו מותר, אבל תקיפה של שרתי הענן של המכשיר אסורה בהחלט. פעולה מחוץ ל-scope לא רק שלא תשולם - היא עלולה להוציא אתכם מהגנת ה-safe harbor של התוכנית ולחשוף אתכם משפטית.</p>
+<p>שימו לב גם להבדל בין תוכנית שמשלמת כסף לבין VDP - Vulnerability Disclosure Program, שהיא רק ערוץ דיווח מסודר בלי תשלום. שתיהן לגיטימיות, אבל תדעו למה אתם נכנסים.</p>
+<h2 id="cve-cna">איך מוקצה מזהה CVE - CNA<a class="headerlink" href="#cve-cna" title="Permanent link">&para;</a></h2>
+<p>מזהה CVE - Common Vulnerabilities and Exposures הוא השם הרשמי והייחודי של חולשה, בformat <code>CVE-2026-12345</code>. המערכת מנוהלת על ידי הארגון MITRE וממומנת על ידי סוכנות הסייבר האמריקאית CISA. מזהה CVE הוא מה שמאפשר לכל העולם - חוקרים, יצרנים, סורקים - לדבר על אותה חולשה בדיוק.</p>
+<p>מי מקצה את המזהים? גופים שנקראים CNA - CVE Numbering Authority. אלה יצרנים וארגונים שקיבלו הרשאה להקצות מזהי CVE בתוך תחום האחריות שלהם. למשל Microsoft, Google, Apple, Red Hat ו-GitHub הם כולם CNA, ומקצים מזהים למוצרים שלהם. אם החולשה שמצאתם היא במוצר של יצרן שהוא CNA, בקשת המזהה עוברת דרכו. אם היצרן איננו CNA, פונים ל-CNA של מוצא אחרון - כיום זו לרוב MITRE עצמה, דרך טופס באתר.</p>
+<p>מחזור החיים של רשומת CVE:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>RESERVED  -&gt;  identifier reserved, details still confidential (during coordinated disclosure)
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>              |
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>PUBLISHED -&gt;  the description, affected versions and references are published on cve.org
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>              |
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>ENRICHED  -&gt;  bodies like NVD add a CVSS score and links
+</code></pre></div>
+<p>על החומרה מדברים בשפה של CVSS - Common Vulnerability Scoring System (גרסאות 3.1 ו-4.0 בשימוש נפוץ). הציון בין 0 ל-10 מחושב מווקטור של מדדים. חולשה שניתן להפעיל מהרשת, בלי הרשאות ובלי אינטראקציה של משתמש, שנותנת שליטה מלאה, מקבלת ציון קריטי. דוגמה לווקטור של RCE קלאסי מרחוק:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H  =  9.8 (Critical)
+</code></pre></div>
+<p>כדאי לדעת לקרוא את הווקטור: ‏<code>AV:N</code> פירושו וקטור רשת, ‏<code>AC:L</code> מורכבות תקיפה נמוכה, ‏<code>PR:N</code> בלי הרשאות נדרשות, ‏<code>UI:N</code> בלי אינטראקציית משתמש, ו-<code>C/I/A:H</code> פגיעה גבוהה בסודיות, שלמות וזמינות.</p>
+<h2 id="-safe-harbor">מקלט משפטי ואחריות החוקר - safe harbor<a class="headerlink" href="#-safe-harbor" title="Permanent link">&para;</a></h2>
+<p>זה החלק שאף אחד לא אוהב, אבל התעלמות ממנו הרסה קריירות. מחקר חולשות נוגע בחוקים על גישה למחשבים, ואתם חייבים להכיר את הקווים.</p>
+<p>בארצות הברית החוק המרכזי הוא CFAA - Computer Fraud and Abuse Act, שאוסר על "גישה לא מורשית" למחשב. פסק הדין Van Buren משנת 2021 צמצם את הפרשנות הרחבה שלו, ובשנת 2022 משרד המשפטים האמריקאי פרסם מדיניות שלפיה אין להעמיד לדין מחקר אבטחה בתום לב. יש גם את סעיף 1201 ל-DMCA, שאוסר על עקיפת מנגנוני הגנה; ספריית הקונגרס מעניקה כל שלוש שנים פטור מפורש למחקר אבטחה בתום לב, אבל בתנאים. השורה התחתונה: ההגנות קיימות, אבל הן מותנות ב"תום לב" - כלומר בכך שתישארו בגבולות.</p>
+<p>מכאן נגזרת רשימת האחריות שלכם, ואלה לא המלצות - אלה התנאים שמשאירים אתכם בצד הבטוח:</p>
+<ul>
+<li>הישארו בתוך ה-scope. אל תיגעו במערכות, בחשבונות או בנתונים שלא הוגדרו במפורש כמותרים.</li>
+<li>אל תגרמו נזק. אל תמחקו נתונים, אל תפילו שירות (DoS), ואל תשנו מצב מערכת יותר ממה שנדרש להוכחה.</li>
+<li>מזערו חשיפת מידע. אם נתקלתם בנתונים אישיים, עצרו מיד, אל תחלצו יותר משורה אחת להוכחה, ואל תשמרו עותק. הדבר נכפף גם לרגולציית פרטיות כמו GDPR.</li>
+<li>אל תסתעפו. מציאת חולשה אחת לא נותנת רשות לנצל אותה כדי לחדור עמוק יותר לרשת.</li>
+<li>דווחו מיד, ובלעדיות. אל תמכרו במקביל, אל תפרסמו לפני הזמן, ואף פעם אל תדרשו תשלום בתמורה לשתיקה - זו סחיטה, לא bug bounty.</li>
+</ul>
+<p>טיפ מעשי: כשאתם ניגשים לתוכנית, חפשו נוסח safe harbor מפורש. יש תקן קהילתי לזה (הפרויקט disclose.io), ותוכנית עם safe harbor ברור מתחייבת לא לתבוע אתכם כל עוד פעלתם בגבולות ובתום לב. אם אין לחברה תוכנית ואין safe harbor, שקלו לעבוד דרך מתאם צד-שלישי כמו CERT/CC, ותמיד תעדו הכל בכתב.</p>
+<h2 id="-portfolio">בניית פורטפוליו מחקרי - portfolio<a class="headerlink" href="#-portfolio" title="Permanent link">&para;</a></h2>
+<p>הצד היפה בגילוי מתואם הוא שהוא בונה לכם קריירה כמעט כתופעת לוואי. בתחום הזה המוניטין נבנה מהוכחות, לא מהצהרות, וכל גילוי מתואם שביצעתם היטב הוא הוכחה מתועדת ופומבית ליכולת שלכם. הנה מה שמצטבר:</p>
+<ul>
+<li>רשומות CVE על שמכם. מזהה CVE עם קרדיט אליכם הוא שורת קורות חיים שכל מגייס בתחום מבין מיד.</li>
+<li>כתבות טכניות - writeups בבלוג. אחרי שהתיקון יצא, פרסמו ניתוח מעמיק: איך מצאתם, מה היה שורש הבאג, ואיך בניתם את הexploit. זה מה שבאמת מלמד את הקהילה ומוכיח עומק.</li>
+<li>הרצאות בכנסים כמו DEF CON, Black Hat או כנסים מקומיים. הצגה של מחקר מקורי היא קפיצת מדרגה במוניטין.</li>
+<li>קוד פתוח: כלים, patches ותרומות פומביות ב-GitHub שמראים שאתם יודעים גם לתקן, לא רק לשבור.</li>
+</ul>
+<p>עצה אחרונה שמלווה את כל השיעור: בתחום הזה השם הטוב שלכם הוא הנכס היקר ביותר. יצרן שסומך עליכם ישתף איתכם פעולה, ייתן קרדיט, ולפעמים אפילו יזמין אתכם לתוכנית פרטית. חוקר שנשרף פעם אחת - שדלף מידע, שחרג מ-scope, או שסחט - סוגר לעצמו דלתות לשנים. גילוי מתואם, שנעשה נכון, הוא לא רק הדבר האתי; הוא גם המהלך הקריירתי החכם ביותר.</p>
+<h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>בשיעור הזה עברנו על הצד המקצועי של מציאת חולשות אמיתיות:</p>
+<ul>
+<li><strong>גילוי מתואם - CVD</strong> הוא ברירת המחדל: מדווחים ליצרן, נותנים חלון זמן, ואז מפרסמים.</li>
+<li><strong>ציר הזמן</strong> נע סביב 90 יום כנורמה (עם וריאציות כמו 90+30 של Project Zero ו-120 של ZDI).</li>
+<li><strong>דוח טוב</strong> הוא ניתן לשחזור: קלט מינימלי, פלט ASan או backtrace, ניתוח שורש, ומצב ההגנות מ-checksec.</li>
+<li><strong>הוכחת היתכנות מול חימוש</strong>: שולחים ליצרן בדיוק כמה שצריך כדי להוכיח ולתקן, לא exploit מחומש למיליוני מכשירים.</li>
+<li><strong>מזהי CVE</strong> מוקצים על ידי CNA (יצרנים או MITRE), והחומרה מבוטאת בציון CVSS ובווקטור שלו.</li>
+<li><strong>מקלט משפטי - safe harbor</strong> מגן עליכם רק כל עוד אתם בתום לב: בתוך ה-scope, בלי נזק, בלי הסתעפות, בלי סחיטה.</li>
+<li><strong>פורטפוליו</strong> נבנה מ-CVE-ים, writeups, הרצאות ותרומות קוד - וכולם יחד בונים את המוניטין, שהוא ההון האמיתי במקצוע.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

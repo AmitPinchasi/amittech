@@ -1,0 +1,2854 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בשיעור 2.1 הכרנו את מודל ה-SIMT (Single Instruction, Multiple Threads) - 32 threads שמאוגדים ל-warp ומריצים פקודה אחת יחד בכל מחזור. בפרק 4 למדנו לקרוא...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls/8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency/8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>8.3 - Warp divergence ו-scoreboard stalls - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "8.3 - Warp divergence \u05d5-scoreboard stalls - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls/8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="8.3 - Warp divergence ו-scoreboard stalls - הרצאה - עמית טק" />
+<meta property="og:description" content="בשיעור 2.1 הכרנו את מודל ה-SIMT (Single Instruction, Multiple Threads) - 32 threads שמאוגדים ל-warp ומריצים פקודה אחת יחד בכל מחזור. בפרק 4 למדנו לקרוא..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls/8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls/8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="8.3 - Warp divergence ו-scoreboard stalls - הרצאה - עמית טק" />
+<meta property="twitter:description" content="בשיעור 2.1 הכרנו את מודל ה-SIMT (Single Instruction, Multiple Threads) - 32 threads שמאוגדים ל-warp ומריצים פקודה אחת יחד בכל מחזור. בפרק 4 למדנו לקרוא..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls/8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-simt-warp-divergence" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              8.3 - Warp divergence ו-scoreboard stalls - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_10" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_10" id="__nav_7_3_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_10_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    8   מדדים ואופטימיזציה
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.1   Occupancy ומצבי warp
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency/8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.2   ניצולת   SM, pipe ו issue efficiency
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_10_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_10_3" id="__nav_7_3_10_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.3   Warp divergence ו scoreboard stalls
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_10_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_10_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    8.3   Warp divergence ו scoreboard stalls
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.3 - Warp divergence ו-scoreboard stalls - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.3 - Warp divergence ו-scoreboard stalls - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-simt-warp-divergence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מודל ה-SIMT וההתפצלות - warp divergence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#volta-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        לפני Volta ואחריה - סריאליזציה מול תזמון עצמאי
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compiler-predicates-active-mask" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איך הcompiler מטפל בהתפצלות - predicates ו-active mask
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-branch-efficiency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        יעילות ההסתעפות - branch efficiency
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-scoreboard-stalls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        עצירות לוח-התוצאות - scoreboard stalls
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-scoreboard-sass-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סימון ה-scoreboard ב-SASS - קריאת המחסום
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-nsight-compute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מלכודות ואבחון ב-Nsight Compute
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.3 - Warp divergence ו-scoreboard stalls - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.3 - Warp divergence ו-scoreboard stalls - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.4%20-%20Coalescing%20%D7%95-bank%20conflicts/8.4%20-%20Coalescing%20%D7%95-bank%20conflicts%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.4   Coalescing ו bank conflicts
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D/8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.5   Register pressure ואיזון משאבים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-simt-warp-divergence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מודל ה-SIMT וההתפצלות - warp divergence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#volta-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        לפני Volta ואחריה - סריאליזציה מול תזמון עצמאי
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compiler-predicates-active-mask" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איך הcompiler מטפל בהתפצלות - predicates ו-active mask
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-branch-efficiency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        יעילות ההסתעפות - branch efficiency
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-scoreboard-stalls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        עצירות לוח-התוצאות - scoreboard stalls
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-scoreboard-sass-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סימון ה-scoreboard ב-SASS - קריאת המחסום
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-nsight-compute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מלכודות ואבחון ב-Nsight Compute
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    8   מדדים ואופטימיזציה
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    8.3   Warp divergence ו scoreboard stalls
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>8.3 - Warp divergence ו-scoreboard stalls - הרצאה</h1>
+
+<p>בשיעור 2.1 הכרנו את מודל ה-SIMT (Single Instruction, Multiple Threads) - 32 threads שמאוגדים ל-warp ומריצים פקודה אחת יחד בכל מחזור. בפרק 4 למדנו לקרוא SASS, האסמבלי האמיתי של החומרה, ובשיעורים 8.1 ו-8.2 ראינו כיצד occupancy (תפוסה) ו-warp state (מצב ה-warp) קובעים כמה עבודה מקבילה עומדת לרשות מתזמן ה-warps כדי להסתיר latency. עכשיו נרד רזולוציה אחת עמוק יותר ונשאל: גם כשיש לנו מספיק warps תושבים, מה גורם ל-warp בודד להפוך ללא-כשיר (not eligible) ולעכב את ההנפקה. בשיעור הזה נתמקד בשתי מכשלות שקוראים אותן ישירות ב-SASS - שתיהן חיות בדיוק בצומת שבין בקרת-הזרימה לבין תזמון ההנפקה. הראשונה היא warp divergence (התפצלות ה-warp) - מה קורה כש-32 ה-threads בתוך warp רוצים ללכת בכיוונים שונים של תנאי; המדד המכמת אותה הוא branch efficiency (יעילות ההסתעפות). השנייה היא scoreboard stall (עצירת לוח-התוצאות) - מה קורה כש-warp חייב להמתין לתוצאה של פקודה קודמת שעוד "בטיסה". נראה את שתיהן על SASS קונקרטי של H100, נבין את האסטרטגיה הלא-אינטואיטיבית של הcompiler בטיפול בהתפצלות, ונלמד לפענח את סימון ה-scoreboard בשורת פקודה - כלי אבחון שמלווה אתכם בכל פרופיל של ncu.</p>
+<h2 id="-simt-warp-divergence">מודל ה-SIMT וההתפצלות - warp divergence<a class="headerlink" href="#-simt-warp-divergence" title="Permanent link">&para;</a></h2>
+<p>נזכיר את הליבה של מודל ה-SIMT מ-2.1: ה-warp הוא יחידת ההנפקה. מתזמן ה-warp בוחר warp כשיר, שולף עבורו <strong>פקודה אחת</strong>, וכל 32 ה-threads מריצים אותה על הנתונים הפרטיים שלהם באותו מחזור-שעון. כל עוד כל 32 ה-threads מסכימים על מסלול ריצה יחיד - זהו המצב האידיאלי, וה-SIMT מנצל את החומרה במלואה: פענוח אחד, הנפקה אחת, 32 תוצאות.</p>
+<p>הבעיה מתחילה כשמופיע תנאי שתלוי בנתונים הפרטיים של כל thread. ה-glossary מגדיר זאת בחדות: <strong>warp divergence מתרחשת כאשר threads בתוך warp פוסעים במסלולי ריצה שונים בעקבות פקודת בקרת-זרימה.</strong> שימו לב לניסוח - זו איננה תופעה שאפשר "לתקן" בקוד. אם ההחלטה בענף תלויה בערך נתון פר-thread, אז לפי הגדרה אין שום דרך - לא למתכנת ולא לcompiler - למנוע את הפיצול. זו התפצלות <strong>תלוית-נתונים ובלתי-נמנעת</strong> מעצם בנייתה.</p>
+<p>בואו נראה את הדוגמה הקנונית. ה-kernel הבא מפצל את ה-threads לפי הערך שהם קראו מהזיכרון:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">divergent_kernel</span><span class="p">(</span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">idx</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.5f</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">            </span><span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">4.0f</span><span class="p">;</span><span class="w">   </span><span class="c1">// Block A (&quot;if&quot;)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">            </span><span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">2.0f</span><span class="p">;</span><span class="w">   </span><span class="c1">// Block B (&quot;else&quot;)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">        </span><span class="p">}</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">        </span><span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">];</span><span class="w">  </span><span class="c1">// convergence point</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">}</span>
+</code></pre></div>
+<p>אם ה-<code>data</code> הוא רעש אקראי אחיד ב-[0,1), אז בתוך כל warp בערך חצי מה-threads יראו ערך גדול מ-0.5 (מסלול A) והחצי השני ערך קטן ממנו (מסלול B). ה-warp <strong>מתפצל</strong>: אין פקודה יחידה שמתאימה לכל 32 ה-threads בו-זמנית. איך החומרה מתמודדת עם זה? כאן נכנס מנגנון ה-predicate registers (אוגרי חיווי) וה-active mask (מסכת פעילות), ולזה נקדיש את הסעיף אחרי הבא. קודם - למה בכלל זה כואב.</p>
+<h2 id="volta-">לפני Volta ואחריה - סריאליזציה מול תזמון עצמאי<a class="headerlink" href="#volta-" title="Permanent link">&para;</a></h2>
+<p>עלות ההתפצלות השתנתה מהותית עם דור Volta (2017), וזו נקודה שחשוב לדייק בה כי סביבה נוצרו הרבה אמונות מיושנות.</p>
+<p><strong>לפני Volta.</strong> ב-GPUs מדור Pascal ומטה, warp שהתפצל היה <strong>תמיד מסוריאל במלואו</strong> (always fully serialized). המשמעות: החומרה הריצה קודם את כל ה-threads של מסלול A כשמסכת ה-threads של מסלול B כבויה, ואז את כל ה-threads של מסלול B כשמסכת A כבויה. שני המסלולים רצו בטור, אחד אחרי השני, ולכן הזמן היה סכום שני המסלולים במקום המקסימום שלהם. מכאן נולד כלל-האצבע המפחיד "התפצלות = פי 2 האטה" (ובמקרה הגרוע, <code>if/else if</code> עמוק, פי 32).</p>
+<p><strong>Volta ואילך.</strong> מ-Volta והלאה (וכך גם ב-Turing, Ampere, Ada, Hopper וה-H100 שלנו, וכן ב-Blackwell) החומרה תומכת ב-<strong>independent thread scheduling</strong> (תזמון threads עצמאי): לכל thread יש מונה-תוכנית (program counter) ומחסנית-קריאה משלו, ולא רק מונה-תוכנית אחד לכל ה-warp. המשמעות המעשית, בלשון ה-glossary: התפצלות <strong>אינה גוררת בהכרח</strong> את קנס הסריאליזציה המלא. החומרה יכולה לשזור התקדמות של המסלולים ולהתכנס (reconverge) בצורה גמישה יותר, ובפרט warps שהתפצלו יכולים לחפוף זה את ה-latency של זה.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>   divergence into if/else, one warp:
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>   Pre-Volta (full serialization):
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>      |==== path A (16 threads) ====|==== path B (16 threads) ====|
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>      \_____________________ time = A + B _____________________/
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>   Volta+ (independent thread scheduling):
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>      |==== path A ====|
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>      |==== path B ====|   (can interleave; reconvergence is flexible)
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>      \___ time ~ max(A,B), and latency is interleaved with other warps ___/
+</code></pre></div>
+<p>המסקנה החשובה: <strong>"התפצלות = האטה אוטומטית פי 32" היא תפיסה מוטעית מעידן ה-pre-Volta.</strong> על H100 התפצלות עדיין עולה - היא מבזבזת מחזורי הנפקה ומקטינה את מספר ה-threads הפעילים לפקודה - אבל היא איננה גזירת-דין של סריאליזציה מלאה. עדיין, פחות התפצלות זה תמיד טוב יותר, ולכן נרצה למדוד אותה.</p>
+<h2 id="compiler-predicates-active-mask">איך הcompiler מטפל בהתפצלות - predicates ו-active mask<a class="headerlink" href="#compiler-predicates-active-mask" title="Permanent link">&para;</a></h2>
+<p>עכשיו נפתח את הקופסה השחורה ונראה מה ptxas באמת פולט. נהדר את ה-kernel מהסעיף הראשון ל-SASS של H100 ונביט בגוף התנאי הפנימי (הפלט מנוקה מעט לצורך קריאוּת; אפשר לשחזר ב-Godbolt, למשל https://godbolt.org/z/EGWKb5oWr):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nl">L1:</span><span class="w"> </span><span class="nf">LDG.E.SYS</span><span class="w"> </span><span class="nb">R4</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="nb">R2</span><span class="p">]</span><span class="w">                       </span><span class="o">//</span><span class="w"> </span><span class="nv">load</span><span class="w"> </span><span class="nv">of</span><span class="w"> </span><span class="nv">data</span><span class="p">[</span><span class="nv">idx</span><span class="p">]</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nl">L2:</span><span class="w"> </span><span class="nf">FSETP.GT.AND</span><span class="w"> </span><span class="nv">P0</span><span class="p">,</span><span class="w"> </span><span class="nv">PT</span><span class="p">,</span><span class="w"> </span><span class="nb">R4</span><span class="nv">.reuse</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="nv">PT</span><span class="w">   </span><span class="o">//</span><span class="w"> </span><span class="nv">P0</span><span class="w"> </span><span class="err">=</span><span class="w"> </span><span class="p">(</span><span class="nv">data</span><span class="p">[</span><span class="nv">idx</span><span class="p">]</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nl">L3:</span><span class="w"> </span><span class="nf">FADD</span><span class="w"> </span><span class="nb">R0</span><span class="p">,</span><span class="w"> </span><span class="nb">R4</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="w">                           </span><span class="o">//</span><span class="w"> </span><span class="nv">Block</span><span class="w"> </span><span class="nv">B</span><span class="p">:</span><span class="w"> </span><span class="nv">executed</span><span class="w"> </span><span class="nv">for</span><span class="w"> </span><span class="nv">every</span><span class="w"> </span><span class="nv">thread</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="nl">L4:</span><span class="w"> </span><span class="err">@</span><span class="nf">P0</span><span class="w"> </span><span class="nv">FMUL</span><span class="w"> </span><span class="nb">R0</span><span class="p">,</span><span class="w"> </span><span class="nb">R4</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="w">                       </span><span class="o">//</span><span class="w"> </span><span class="nv">Block</span><span class="w"> </span><span class="nv">A</span><span class="p">:</span><span class="w"> </span><span class="nv">conditioned</span><span class="w"> </span><span class="nv">on</span><span class="w"> </span><span class="nv">P0</span><span class="w"> </span><span class="p">(</span><span class="nv">divergent</span><span class="w"> </span><span class="nv">state</span><span class="p">)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="nl">L5:</span><span class="w"> </span><span class="nf">FMUL</span><span class="w"> </span><span class="nb">R5</span><span class="p">,</span><span class="w"> </span><span class="nb">R0</span><span class="p">,</span><span class="w"> </span><span class="nb">R0</span><span class="w">                          </span><span class="o">//</span><span class="w"> </span><span class="nv">convergence</span><span class="w"> </span><span class="nv">point</span><span class="p">:</span><span class="w"> </span><span class="nv">data</span><span class="p">[</span><span class="nv">idx</span><span class="p">]</span><span class="o">*</span><span class="nv">data</span><span class="p">[</span><span class="nv">idx</span><span class="p">]</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="nl">L6:</span><span class="w"> </span><span class="nf">STG.E.SYS</span><span class="w"> </span><span class="p">[</span><span class="nb">R2</span><span class="p">],</span><span class="w"> </span><span class="nb">R5</span><span class="w">                       </span><span class="o">//</span><span class="w"> </span><span class="nv">store</span><span class="w"> </span><span class="nv">of</span><span class="w"> </span><span class="nv">the</span><span class="w"> </span><span class="nv">result</span>
+</code></pre></div>
+<p>בואו נקרא שורה-שורה. ב-L1 נטען הערך ל-R4. ב-L2 הפקודה <code>FSETP.GT.AND</code> (Floating-point SET Predicate, Greater-Than) קובעת את אוגר החיווי <code>P0</code>: לכל thread ב-warp, <code>P0</code> נדלק אם ורק אם <code>data[idx] &gt; 0.5</code>. כעת <code>P0</code> הוא בעצם ה-<strong>active mask</strong> של מסלול A - וקטור של 32 ביטים, ביט לכל lane, שאומר מי הולך לאן.</p>
+<p>ועכשיו מגיע הפרט המפתיע ביותר בכל השיעור. הדבר הטבעי שהיינו מצפים לו הוא predication <strong>סימטרי</strong>: שורה <code>@P0 FMUL</code> למסלול A, ושורה <code>@!P0 FADD</code> למסלול B - כל אחת עם המסכה שלה. אבל לא זה מה שהcompiler עשה. הביטו ב-L3: פקודת ה-<code>FADD</code> (מסלול B, ה-else) רצה <strong>בלי predicate כלל - עבור כל 32 ה-threads</strong>, גם אלה שערכם גדול מ-0.5. רק אחריה, ב-L4, פקודת ה-<code>FMUL</code> (מסלול A, ה-if) רצה <strong>מותנית</strong> ב-<code>@P0</code> ודורסת את התוצאה של L3 עבור ה-threads שהחיווי שלהם דלוק.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>   lanes:        0    1    2    3   ...  31
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>   data&gt;0.5?     T    F    T    F        T      -&gt;  P0 = 1 0 1 0 ... 1
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>   L3 FADD (all):  every lane gets R0 = data+2      (even path-A lanes!)
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>   L4 @P0 FMUL:    only lanes with P0=1 overwrite R0 = data*4
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>   L5 FMUL (all):  every lane runs R5 = R0*R0       -&gt;  the warp converged
+</code></pre></div>
+<p>מה המשמעות? הcompiler <strong>מבזבז ביודעין</strong> פעולת FADD מיותרת עבור כל thread שבסופו של דבר לוקח את מסלול A - ה-threads האלה חישבו <code>data+2</code>, מיד דרסו אותה ב-<code>data*4</code>, וזרקו את התוצאה. למה לעשות דבר כזה? הפילוסופיה, בניסוח ה-glossary: <strong>עדיף לבזבז חישוב מאשר להוסיף מורכבות, אפילו אם זו רק predication נוספת.</strong> פעולת FADD על CUDA Core היא זולה עד כדי גיחוך - מחזור בודד, ויש 128 יחידות FP32 בכל SM של H100 שממילא לרוב אינן רוויות. לעומת זאת, כל predicate נוסף וכל החלטת בקרת-זרימה נוספת מסבכים את מנגנון ההנפקה. הcompiler בוחר במטבע הזול: הוא מריץ צד אחד ללא תנאי לכולם, ומכתים רק את הצד השני. ראיית פקודות "מבוזבזות" ב-SASS היא אפוא <strong>התנהגות צפויה, לא באג.</strong></p>
+<p><strong>נקודת ההתכנסות.</strong> ב-L4 ה-warp נמצא במצב מתפצל: רק חלק מה-lanes מריצים בפועל את ה-FMUL. ב-L5, כשמתזמן ה-warp מנפיק שוב את אותה פקודה (<code>FMUL R5, R0, R0</code>) עבור <strong>כל</strong> ה-threads על אותו מחזור-שעון, ה-warp <strong>התכנס</strong> מחדש (converged). מרגע זה כל 32 ה-lanes שוב פוסעים יחד, וניצול ה-SIMT חוזר למלואו.</p>
+<h2 id="-branch-efficiency">יעילות ההסתעפות - branch efficiency<a class="headerlink" href="#-branch-efficiency" title="Permanent link">&para;</a></h2>
+<p>התפצלות היא תופעה איכותית; כדי לנהל אותה צריך מדד. המדד הוא <strong>branch efficiency</strong>, וה-glossary מגדיר אותו כך: <strong>המידה שבה כל ה-threads בתוך warp לוקחים את אותו מסלול ריצה כשהם נתקלים בפקודה מותנית.</strong> החישוב הוא היחס:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>   branch efficiency  =  uniform branch decisions  /  total branch instructions executed
+</code></pre></div>
+<p>"החלטת-ענף אחידה" היא פקודת ענף שבה כל 32 ה-threads של ה-warp הסכימו על אותה תוצאה. branch efficiency גבוהה מעידה אפוא על <strong>היעדר warp divergence</strong> - היא בדיוק ההופכי הנמדד של ההתפצלות.</p>
+<p>הנה נקודת המפתח המושגית של השיעור, וכדאי לעצור עליה. ה-GPU מודד אחידות <strong>במרחב</strong> (in space) - האם 32 ה-threads שרצים <strong>בו-זמנית</strong> בתוך warp מסכימים על הענף. זה שונה בתכלית מ-branch prediction (חיזוי הסתעפות) של CPU, שהוא אחידות <strong>בזמן</strong> (in time) - חיזוי התוצאה של ענף יחיד לאורך זרם פקודות אחד, על סמך העבר. ה-CPU שואל "לאן הענף הזה הלך בפעמים הקודמות". ה-GPU שואל "האם 32 השכנים המרחביים שלי מסכימים עכשיו". זו הבחנה מרחב-מול-זמן שחייבים להפנים: branch efficiency היא מושג SIMT מרחבי, לא מושג חיזוי זמני.</p>
+<p>מסקנה מעשית חשובה שנובעת מכך: <strong>לא כל תנאי פוגע ביעילות.</strong> קחו את בדיקת-הגבולות הסטנדרטית שמופיעה כמעט בכל kernel:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kt">int</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">idx</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<p>מכיוון ש-<code>idx</code> עולה ברציפות עם מספר ה-thread, כמעט בכל warp כל 32 ה-threads חולקים את אותה תוצאה של <code>idx &lt; n</code>: או שכולם בפנים (warp מלא לפני הגבול), או שכולם בחוץ (warp מלא אחרי הגבול). רק <strong>warp בודד</strong> - זה שה-threads שלו רוכבים בדיוק על הגבול ב-<code>n</code> - מתפצל. בואו נעשה חשבון קונקרטי. נניח <code>n = 1,000,003</code>, <code>blockDim.x = 256</code>, ולכן <code>gridDim.x = ceil(1000003/256) = 3907</code> בלוקים, כלומר <code>3907 x 256 = 1,000,192</code> threads בסך הכל, שהם <code>1,000,192 / 32 = 31,256</code> warps:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>   total warps executing the check branch  :  31,256
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>   uniform warps (all in or all out)       :  31,255
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>   divergent warps (riding the boundary n) :       1
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>   branch efficiency = 31,255 / 31,256     =   99.997%
+</code></pre></div>
+<p>בדיקת-הגבולות היא אפוא <strong>כמעט חינמית</strong> מבחינת יעילות - warp בודד מתוך 31,256 מתפצל. זה מזכיר שהמטרה איננה "אפס תנאים", אלא תנאים שבהם ה-warp נשאר אחיד. נשווה זאת ל-kernel המתפצל מהסעיף הראשון: שם התנאי הפנימי <code>data[idx] &gt; 0.5f</code> על נתונים אקראיים גורם לכמעט <strong>כל</strong> warp להתפצל (ההסתברות ש-32 threads אקראיים יסכימו היא <code>2 x 0.5^32</code>, אפסית). ה-kernel הזה מריץ שני ענפים לכל thread - את בדיקת-הגבולות האחידה ואת התנאי הפנימי המתפצל - ולכן ה-branch efficiency הכוללת שלו תהיה בסביבות <code>1 מתוך 2 = 50%</code>. את שני המספרים האלה (99.997% מול ~50%) נמדוד במו ידינו ב-ncu בתרגול.</p>
+<h2 id="-scoreboard-stalls">עצירות לוח-התוצאות - scoreboard stalls<a class="headerlink" href="#-scoreboard-stalls" title="Permanent link">&para;</a></h2>
+<p>עברנו מבקרת-זרימה לתלויות-נתונים. גם כש-warp אחיד לחלוטין ולא מתפצל כלל, הוא עלול להיתקע - הפעם לא בגלל תנאי, אלא בגלל שהוא ממתין לתוצאה של פקודה קודמת שעדיין "בטיסה". זו <strong>scoreboard stall</strong>. ה-glossary: <strong>עצירת scoreboard מתרחשת כאשר פקודה אינה יכולה להיות מונפקת בגלל תלות בתוצאה של פקודה קודמת.</strong></p>
+<p>מהו scoreboard? זהו מבנה חומרה שעוקב אחרי אילו אוגרים ממתינים להיכתב על-ידי פקודה שעדיין בביצוע. כשפקודה ארוכת-latency מונפקת (למשל load), החומרה מסמנת ב-scoreboard שהאוגר-יעד שלה "תפוס-בכתיבה". כל פקודה מאוחרת שרוצה לקרוא את אותו אוגר חייבת להמתין עד שה-scoreboard יתנקה. בזמן ההמתנה ה-warp <strong>אינו כשיר</strong> (not eligible) - הוא לא יכול להנפיק את פקודתו הבאה, ומתזמן ה-warp מדלג עליו לטובת warp אחר. עובדה מספרית מכוננת: <strong>ל-warp יש 6 scoreboards</strong> שהcompiler משתמש בהם כדי לעקוב אחרי תלויות-הכתיבה בין פקודות.</p>
+<p>חשוב לחדד מול ה-CPU: מעבדים משתמשים ב-scoreboarding וב-Out-of-Order כדי לחלץ מקביליות <strong>בתוך</strong> thread בודד (ILP). ה-GPU עושה scoreboarding <strong>בין threads</strong> - זו הסתרת-latency ברמת ה-thread, לא חילוץ ILP בתוך thread. (הרעיון עצמו עתיק - הוא נולד במחשב-העל CDC 6600 מ-1966; ניסוח ה-GPU מתועד בפטנט NVIDIA מספר US7676657.)</p>
+<p>ה-glossary מבחין בין שני <strong>סוגים</strong> של עצירת scoreboard, ואת ההבחנה הזו חייבים להכיר כי היא לב האבחון ב-ncu:</p>
+<table>
+<thead>
+<tr>
+<th>מאפיין</th>
+<th>Short scoreboard</th>
+<th>Long scoreboard</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ממתין ל...</td>
+<td>פעולה ארוכת-latency ש<strong>נשארת על ה-SM</strong></td>
+<td>פעולת זיכרון ש<strong>עוזבת את ה-SM</strong></td>
+</tr>
+<tr>
+<td>פקודות אופייניות</td>
+<td><code>MUFU.EX2</code>, <code>MUFU.SQRT</code> (SFU); <code>MMA</code> (Tensor Core); <code>LDS</code>, <code>STS</code> (shared memory)</td>
+<td><code>LDG</code> (load גלובלי); <code>STG</code> (store גלובלי)</td>
+</tr>
+<tr>
+<td>מקור ה-latency</td>
+<td>יחידות תוך-SM עם latency משתנה</td>
+<td>הזיכרון הגלובלי (HBM), מאות מחזורים</td>
+</tr>
+<tr>
+<td>מתי שולט</td>
+<td>קוד עתיר-טרנסצנדנטלים / MMA / shared memory</td>
+<td><strong>שולט בקוד memory-bound</strong></td>
+</tr>
+</tbody>
+</table>
+<p>ה-<strong>short scoreboard</strong> הוא ההמתנה לפקודה תוך-SM בעלת latency משתנה: ה-Special Function Unit (יחידת הפונקציות המיוחדות) שמחשבת מתמטיקה איטית כמו <code>MUFU.EX2</code> (בסיס ל-<code>expf</code>) ו-<code>MUFU.SQRT</code>; ה-Tensor Core עם פקודת ה-<code>MMA</code>; וגישות ל-shared memory עם <code>LDS</code>/<code>STS</code>. ה-<strong>long scoreboard</strong> הוא ההמתנה לפעולת זיכרון שיוצאת מה-SM אל היררכיית הזיכרון הגלובלי - <code>LDG</code> ו-<code>STG</code>. ה-glossary מדגיש: <strong>long scoreboard stalls שולטות בקוד memory-bound</strong>. כשה-kernel שלכם memory-bound (בלשון פרק 7), הסיבה הדומיננטית לעצירה שתראו ב-ncu תהיה <code>Stall Long Scoreboard</code> - זה ה-warp שממתין ל-<code>LDG</code> שלו לחזור מ-HBM.</p>
+<h2 id="-scoreboard-sass-">סימון ה-scoreboard ב-SASS - קריאת המחסום<a class="headerlink" href="#-scoreboard-sass-" title="Permanent link">&para;</a></h2>
+<p>היופי הוא שהתלויות האלה גלויות לעין ב-SASS. הכלי <code>cuobjdump --dump-sass</code> (וכן <code>nvdisasm -c</code> על cubin) חושף לכל פקודה את <strong>סימון הבקרה/המחסום</strong> (control/barrier notation) בסוגריים המרובעים שלפני הפקודה. נביט בזוג load-then-use קלאסי - שני loads ואז פקודה שצורכת אותם:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>[B------:R-:W2:-:S04]  /*00f0*/  LDG.E.SYS R0, [R2] ;
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>[B------:R-:W2:-:S01]  /*0100*/  LDG.E.SYS R5, [R4] ;
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>[B--2---:R-:W-:Y:S08]  /*0150*/  IMAD R0, R0, c[0x0][0x160], R5 ;
+</code></pre></div>
+<p>נפרק את השדות בסוגריים. הפורמט הוא <code>[B&lt;barrier&gt;:R&lt;read&gt;:W&lt;write&gt;:&lt;yield&gt;:S&lt;stall&gt;]</code>:</p>
+<ul>
+<li><strong>שדה ה-barrier</strong> (למשל <code>B--2---</code>) - אילו scoreboards חייבים <strong>להתנקות</strong> לפני שהפקודה הזו רשאית להיות מונפקת. שש העמדות מייצגות את 6 ה-scoreboards; הספרה בעמדה מציינת על איזה scoreboard להמתין. <code>B--2---</code> פירושו "המתן עד ש-scoreboard מספר 2 יתנקה". (לצורך השוואה, <code>B01--4-</code> פירושו להמתין ש-scoreboards 0, 1 ו-4 כולם יתנקו.)</li>
+<li><strong>שדה ה-write</strong> (למשל <code>W2</code>) - איזה scoreboard הפקודה הזו <strong>מסמנת</strong> (מגדילה) כשהיא מונפקת, כלומר איזה scoreboard יעקוב אחרי התוצאה התלויה שלה.</li>
+<li><strong>שדה ה-read</strong> (<code>R-</code>) - scoreboard לתלות-קריאה (רלוונטי לפקודות עם אופרנד-מקור בעל latency; כאן ריק).</li>
+<li><strong>שדה ה-yield</strong> (<code>Y</code> או <code>-</code>) - רמז למתזמן להעדיף להחליף warp אחרי הפקודה.</li>
+<li><strong>שדה ה-stall</strong> (<code>S04</code>, <code>S08</code>) - מספר מחזורי-העצירה הסטטי שהמתזמן מחזיק לפני שהוא שוקל להנפיק את הפקודה הבאה מאותו warp.</li>
+</ul>
+<p>עכשיו הסיפור מסתדר. שני ה-<code>LDG</code> מסמנים scoreboard בכתיבה (<code>W2</code>) - הם מודיעים "התוצאה שלי בדרך, עקבו אחריה ב-scoreboard 2". ה-<code>IMAD</code> המאוחר, שצורך את שני הערכים הטעונים (R0 ו-R5), נחסם על scoreboard 2 (<code>B--2---</code>) - הוא <strong>חייב להמתין</strong> עד ש-scoreboard 2 יתנקה, כלומר עד ששני ה-loads יחזרו מהזיכרון. וזו בדיוק ה-long scoreboard stall שנראה כסיבת-עצירה דומיננטית ב-ncu: ה-warp תקוע על ה-<code>B--2---</code> הזה מאות מחזורים בזמן שה-HBM מספק את הבייטים. אם רק ה-warp הזה רץ - יחידת ה-IMAD יושבת בטל; אם יש עוד עשרות warps תושבים (occupancy מספיק, פרק 8.1), מתזמן ה-warp ממלא את החור בעבודה שלהם וה-latency <strong>מוסתר</strong>.</p>
+<p>שימו לב לדקות: <strong>שני</strong> ה-<code>LDG</code> השתמשו באותו scoreboard (<code>W2</code>). מכיוון שיש רק 6 scoreboards, הcompiler ממחזר אותם, ולכן חסימה על scoreboard 2 ממתינה למעשה לשניהם. הדבר הזה בדיוק הוא שורש המלכודת בסעיף הבא.</p>
+<h2 id="-nsight-compute">מלכודות ואבחון ב-Nsight Compute<a class="headerlink" href="#-nsight-compute" title="Permanent link">&para;</a></h2>
+<p>נאסוף את הכלים המעשיים לפרופיל. שני המדדים המרכזיים של השיעור נחשפים ב-ncu:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># branch efficiency - percentage of uniform branch decisions</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>ncu<span class="w"> </span>--metrics<span class="w"> </span>smsp__sass_average_branch_targets_threads_uniform.pct<span class="w"> </span>./a.out
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># average active threads per instruction (0-32) - a direct divergence metric</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>ncu<span class="w"> </span>--metrics<span class="w"> </span>smsp__thread_inst_executed_per_inst_executed.ratio<span class="w"> </span>./a.out
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># breakdown of stall reasons, including Long/Short Scoreboard</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>ncu<span class="w"> </span>--section<span class="w"> </span>WarpStateStats<span class="w"> </span>./a.out
+</code></pre></div>
+<p>בדוח המלא (<code>ncu --set full</code>) תמצאו את ה-branch efficiency ואת "Avg. Divergent Branches" תחת "Source Counters", ואת פירוק סיבות העצירה תחת "Warp State Statistics" - שם <code>Stall Long Scoreboard</code> ו-<code>Stall Short Scoreboard</code> מופיעים כמחזורי-עצירה ממוצעים לפקודה. עבור ה-kernel המתפצל שלנו נצפה ל-branch efficiency בסביבות 50% ול-active threads בסביבות 16 מתוך 32; עבור kernel memory-bound נצפה ש-<code>Stall Long Scoreboard</code> יהיה הסיבה הדומיננטית.</p>
+<p><strong>המלכודת הקריטית של ה-scoreboards.</strong> ראינו שיש רק 6 scoreboards ושהcompiler ממחזר אותם. התוצאה, בלשון ה-glossary: <strong>מיחזור scoreboards עלול לגרום ל-Nsight Compute לסווג שגוי את סוג העצירה - עצירת long ועצירת short עלולות להתערבב אם הן משתמשות באותו scoreboard.</strong> במילים אחרות, סיווג שמדווח כ-"short scoreboard" עשוי להיות בפועל המתנה ל-load מזיכרון (long), ולהפך. <strong>אל תסמכו בעיוורון על התווית short/long.</strong> כשהמספרים מפתיעים, חזרו ל-SASS עצמו (<code>cuobjdump --dump-sass</code>), אתרו את הפקודה שעל ה-source line החם, וקִראו ישירות איזה scoreboard היא ממתינה עליו (שדה ה-B) ומה הפקודה שסימנה אותו (שדה ה-W). ה-SASS הוא מקור-האמת; המונה של ncu הוא הערכה.</p>
+<p><strong>מלכודת נוספת - התפצלות איננה אסון.</strong> כפי שראינו, על H100 התפצלות אינה גוררת סריאליזציה מלאה. לפני שאתם משכתבים אלגוריתם שלם כדי להסיר ענף, מדדו: אם ה-branch efficiency כבר גבוהה (כמו בבדיקת-גבולות), אין מה לתקן. ואם ה-kernel memory-bound (long scoreboard שולט), אזי גם התפצלות מלאה כמעט לא תשפיע - צוואר-הבקבוק הוא ה-HBM, לא ה-CUDA Cores שמריצים את הענף. תמיד אבחנו קודם, ואז אופטמו את הצוואר האמיתי.</p>
+<h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>התפצלות ה-warp (warp divergence) מתרחשת כאשר 32 ה-threads בתוך warp פוסעים במסלולי בקרת-זרימה שונים בעקבות תנאי תלוי-נתונים; זו תופעה בלתי-נמנעת של מודל ה-SIMT, ולא ניתן "לתקן" אותה בקוד כשההחלטה תלויה בערך פר-thread.</li>
+<li>לפני Volta warp מתפצל היה תמיד מסוריאל במלואו (מכאן המיתוס "פי 32 האטה"); מ-Volta ואילך (וכך ב-H100) יש independent thread scheduling עם מונה-תוכנית פר-thread, ולכן אין קנס סריאליזציה מלא מובנה - התפצלות עדיין עולה, אך אינה גזירת-דין.</li>
+<li>החומרה מטפלת בהתפצלות עם predicate registers ו-active masks: <code>FSETP.GT.AND</code> קובע את <code>P0</code> כמסכת ה-lanes, ופקודה מותנית <code>@P0</code> מבוצעת רק על ה-lanes הדלוקים; ההתכנסות (reconvergence) חוזרת כשכל ה-threads מנפיקים שוב אותה פקודה יחד.</li>
+<li>האסטרטגיה הלא-אינטואיטיבית של הcompiler: להריץ צד אחד של הענף (<code>FADD</code>) עבור <strong>כל</strong> ה-threads ללא תנאי, ואז לדרוס אותו עם הצד השני המותנה (<code>@P0 FMUL</code>) - בזבוז מכוון של חישוב CUDA-Core זול כדי להימנע ממורכבות בקרת-זרימה; פקודות "מבוזבזות" ב-SASS הן צפויות, לא באג.</li>
+<li>יעילות ההסתעפות (branch efficiency) = החלטות-ענף אחידות חלקי סך פקודות-הענף; זהו ההופכי הנמדד של ההתפצלות, והוא מודד אחידות <strong>במרחב</strong> (האם 32 ה-threads מסכימים עכשיו), בניגוד ל-branch prediction של CPU שהוא חיזוי <strong>בזמן</strong>.</li>
+<li>בדיקת-הגבולות <code>if (idx &lt; n)</code> כמעט חינמית: רק warp בודד שרוכב על הגבול מתפצל, ולכן היעילות ~99.997% - לא כל תנאי פוגע ביעילות, רק זה שמפצל את ה-warp.</li>
+<li>ה-scoreboard stall היא עצירת warp שממתין לתוצאת פקודה קודמת שעדיין בטיסה; ל-warp יש 6 scoreboards שעוקבים אחרי תלויות-כתיבה, וה-GPU עושה scoreboarding בין threads (הסתרת-latency), לא לחילוץ ILP בתוך thread כמו OoO של CPU.</li>
+<li>ה-short scoreboard הוא המתנה לפעולה ארוכת-latency שנשארת על ה-SM (<code>MUFU.EX2/SQRT</code>, <code>MMA</code>, <code>LDS/STS</code>); long scoreboard = המתנה לזיכרון שיוצא מה-SM (<code>LDG/STG</code>), והוא הסיבה הדומיננטית לעצירה בקוד memory-bound.</li>
+<li>סימון המחסום ב-SASS <code>[B&lt;barrier&gt;:R-:W&lt;n&gt;:&lt;yield&gt;:S&lt;stall&gt;]</code> נקרא כך: שדה ה-B מציין על אילו scoreboards להמתין, שדה ה-W מציין איזה scoreboard הפקודה מסמנת; זוג load-then-use מראה <code>LDG ... W2</code> ואז <code>IMAD ... B--2---</code> הממתין ל-load.</li>
+<li>ב-ncu מודדים branch efficiency עם <code>smsp__sass_average_branch_targets_threads_uniform.pct</code> ואת סיבות העצירה תחת "Warp State Statistics"; מלכודת: מיחזור scoreboards עלול לגרום ל-ncu לסווג שגוי short מול long, ולכן כשמופתעים חוזרים ל-SASS כמקור-האמת.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

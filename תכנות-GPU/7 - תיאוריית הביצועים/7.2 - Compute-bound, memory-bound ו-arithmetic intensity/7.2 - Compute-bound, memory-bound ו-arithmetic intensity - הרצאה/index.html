@@ -1,0 +1,2818 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בשיעור 7.1 בנינו את מודל ה-Roofline (מודל קו-הגג): גרף עם שני גגות - גג חישוב אופקי ששווה ל-arithmetic bandwidth (רוחב הפס האריתמטי) של החומרה, וגג זיכרון...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.2%20-%20Compute-bound%2C%20memory-bound%20%D7%95-arithmetic%20intensity/7.2%20-%20Compute-bound%2C%20memory-bound%20%D7%95-arithmetic%20intensity%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../7.2%20-%20Compute-bound%2C%20memory-bound%20%D7%95-arithmetic%20intensity%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>7.2 - Compute-bound, memory-bound ו-arithmetic intensity - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "7.2 - Compute-bound, memory-bound \u05d5-arithmetic intensity - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.2%20-%20Compute-bound%2C%20memory-bound%20%D7%95-arithmetic%20intensity/7.2%20-%20Compute-bound%2C%20memory-bound%20%D7%95-arithmetic%20intensity%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="7.2 - Compute-bound, memory-bound ו-arithmetic intensity - הרצאה - עמית טק" />
+<meta property="og:description" content="בשיעור 7.1 בנינו את מודל ה-Roofline (מודל קו-הגג): גרף עם שני גגות - גג חישוב אופקי ששווה ל-arithmetic bandwidth (רוחב הפס האריתמטי) של החומרה, וגג זיכרון..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.2%20-%20Compute-bound%2C%20memory-bound%20%D7%95-arithmetic%20intensity/7.2%20-%20Compute-bound%2C%20memory-bound%20%D7%95-arithmetic%20intensity%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.2%20-%20Compute-bound%2C%20memory-bound%20%D7%95-arithmetic%20intensity/7.2%20-%20Compute-bound%2C%20memory-bound%20%D7%95-arithmetic%20intensity%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="7.2 - Compute-bound, memory-bound ו-arithmetic intensity - הרצאה - עמית טק" />
+<meta property="twitter:description" content="בשיעור 7.1 בנינו את מודל ה-Roofline (מודל קו-הגג): גרף עם שני גגות - גג חישוב אופקי ששווה ל-arithmetic bandwidth (רוחב הפס האריתמטי) של החומרה, וגג זיכרון..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.2%20-%20Compute-bound%2C%20memory-bound%20%D7%95-arithmetic%20intensity/7.2%20-%20Compute-bound%2C%20memory-bound%20%D7%95-arithmetic%20intensity%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-arithmetic-intensity" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              7.2 - Compute-bound, memory-bound ו-arithmetic intensity - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_9" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_9" id="__nav_7_3_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    7   תיאוריית הביצועים
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.1   צווארי בקבוק ומודל Roofline
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_9_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_9_2" id="__nav_7_3_9_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.2   Compute bound, memory bound ו arithmetic intensity
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_9_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_9_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    7.2   Compute bound, memory bound ו arithmetic intensity
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.2 - Compute-bound, memory-bound ו-arithmetic intensity - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.2 - Compute-bound, memory-bound ו-arithmetic intensity - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-arithmetic-intensity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        המספר היחיד שמכריע - arithmetic intensity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-compute-bound" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חסום-חישוב - compute-bound
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-memory-bound" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חסום-זיכרון - memory-bound
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-arithmetic-intensity_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        טבלת הסקיילינג - איך הarithmetic intensity גדלה עם הגודל
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-llm-1-tb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הדוגמה המשולבת - מודל LLM בגודל 1 TB
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-ridge-point-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        טבלת ה-ridge point - החומרה והדיוק מזיזים את הרכס
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-arithmetic-intensity_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        להחליף עבודת זיכרון בעבודת חישוב - להעלות arithmetic intensity בכוונה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../7.2%20-%20Compute-bound%2C%20memory-bound%20%D7%95-arithmetic%20intensity%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.2 - Compute-bound, memory-bound ו-arithmetic intensity - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../7.2%20-%20Compute-bound%2C%20memory-bound%20%D7%95-arithmetic%20intensity%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.2 - Compute-bound, memory-bound ו-arithmetic intensity - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.3%20-%20%D7%A8%D7%95%D7%97%D7%91%D7%99%20%D7%A4%D7%A1%20%D7%95-peak%20rate/7.3%20-%20%D7%A8%D7%95%D7%97%D7%91%D7%99%20%D7%A4%D7%A1%20%D7%95-peak%20rate%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.3   רוחבי פס ו peak rate
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.4%20-%20Overhead%2C%20latency%20hiding%20%D7%95%D7%97%D7%95%D7%A7%20Little/7.4%20-%20Overhead%2C%20latency%20hiding%20%D7%95%D7%97%D7%95%D7%A7%20Little%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.4   Overhead, latency hiding וחוק Little
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-arithmetic-intensity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        המספר היחיד שמכריע - arithmetic intensity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-compute-bound" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חסום-חישוב - compute-bound
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-memory-bound" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חסום-זיכרון - memory-bound
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-arithmetic-intensity_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        טבלת הסקיילינג - איך הarithmetic intensity גדלה עם הגודל
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-llm-1-tb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הדוגמה המשולבת - מודל LLM בגודל 1 TB
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-ridge-point-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        טבלת ה-ridge point - החומרה והדיוק מזיזים את הרכס
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-arithmetic-intensity_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        להחליף עבודת זיכרון בעבודת חישוב - להעלות arithmetic intensity בכוונה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    7   תיאוריית הביצועים
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    7.2   Compute bound, memory bound ו arithmetic intensity
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>7.2 - Compute-bound, memory-bound ו-arithmetic intensity - הרצאה</h1>
+
+<p>בשיעור 7.1 בנינו את מודל ה-Roofline (מודל קו-הגג): גרף עם שני גגות - גג חישוב אופקי ששווה ל-arithmetic bandwidth (רוחב הפס האריתמטי) של החומרה, וגג זיכרון משופע ששיפועו שווה ל-memory bandwidth (רוחב פס הזיכרון). ראינו גם את ה-ridge point (נקודת הרכס), המקום שבו שני הגגות נפגשים. אבל השארנו שאלה פתוחה: בהינתן kernel קונקרטי, איך יודעים מראש מתחת לאיזה גג הוא נופל - האם הוא compute-bound (חסום-חישוב) או memory-bound (חסום-זיכרון)? בשיעור הזה נענה על כך במדויק. נראה שיש מספר יחיד - ה-arithmetic intensity (עצימות אריתמטית) - שקובע לבדו את הצד: הוא ציר ה-X של ה-Roofline, והשוואתו ל-ridge point מכריעה את הדין. נגדיר את המספר, נחשב אותו לשלושה גרעיני חישוב אמיתיים, נראה למה כפל מטריצות "מנצח" ורשתות נוירונים משגשגות בזכות זה, ונפרוס את דוגמת ה-LLM המפורסמת של מודל 500 מיליארד פרמטרים - זו שמסבירה למה batch של אחד תמיד memory-bound ולמה batching משפר תפוקה כמעט בחינם. את המשמעות המעשית של כל זה - איך לכתוב kernel שיושב בצד הנכון - נעמיק בכל פרק 8.</p>
+<h2 id="-arithmetic-intensity">המספר היחיד שמכריע - arithmetic intensity<a class="headerlink" href="#-arithmetic-intensity" title="Permanent link">&para;</a></h2>
+<p>ה-arithmetic intensity של kernel מוגדר כיחס בין כמות פעולות החישוב לכמות תנועת הנתונים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>                  floating-point operations the kernel performs   [FLOPs]
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>arithmetic  =  ----------------------------------------------
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a> intensity        bytes the kernel moves from/to memory   [bytes]
+</code></pre></div>
+<p>היחידה היא <strong>FLOPs לכל בית</strong> (פעולות לכל בית). זהו מספר טהור שמתאר "כמה עבודת חישוב אנחנו סוחטים מכל בית שהזזנו". וזהו בדיוק ציר ה-X של ה-Roofline שראינו ב-7.1. ההגדרה נשמעת פשוטה, אבל שני חלקי המונה והמכנה טומנים דקויות שחובה לדייק בהן:</p>
+<ul>
+<li><strong>המונה - FLOPs.</strong> סופרים את פעולות הנקודה-צפה בפועל. מוסכמה חשובה: פעולת <strong>MAC</strong> (כפל-וצבירה, <code>d = a*b + c</code>) נספרת כ<strong>שתי</strong> פעולות - כפל אחד וחיבור אחד. זו הסיבה שכפל מטריצות של <code>N x N</code> נספר כ-<code>2N^3</code> ולא <code>N^3</code> FLOPs.</li>
+<li><strong>המכנה - bytes moved.</strong> לא כמה זיכרון מוקצה, אלא כמה בתים נעים בפועל דרך צוואר הבקבוק הרלוונטי. ב-Roofline הרלוונטי הוא המסלול בין GPU RAM (זיכרון ה-GPU, ה-DRAM) לבין הcache המקומי של ה-SM (מעבד רב-זרמי - Streaming Multiprocessor). קלט שנקרא פעם אחת ואז יושב ב-shared memory (זיכרון משותף) ונקרא ממנו שוב ושוב - נספר <strong>פעם אחת</strong> בלבד במכנה. זה בדיוק המפתח לכל מה שיבוא.</li>
+</ul>
+<p>הרעיון הגדול שמאחורי המספר הזה מגיע היישר מ-7.1: החומרה המודרנית מספקת arithmetic bandwidth <strong>גבוה בהרבה</strong> מ-memory bandwidth. ב-H100 (כרטיס הייחוס שלנו) יש כ-989 TFLOP/s בכפל מטריצות BF16 מול כ-3.35 TB/s רוחב פס לזיכרון - יחס של כמעט 300 פעולות לכל בית. משמע: אם גרעין מבצע פחות מ-295 FLOPs לכל בית שהוא מזיז, הוא ירעב לנתונים ויבזבז את יחידות החישוב היקרות. <strong>arithmetic intensity גבוה הוא, אפוא, המדד ליעילות</strong> - הוא אומר שאנחנו מעסיקים את מנועי החישוב המהירים במקום להרעיב אותם על הזיכרון האיטי.</p>
+<h2 id="-compute-bound">חסום-חישוב - compute-bound<a class="headerlink" href="#-compute-bound" title="Permanent link">&para;</a></h2>
+<p>גרעין (kernel) הוא compute-bound כאשר ה-arithmetic intensity שלו <strong>גבוה</strong> מה-ridge point של ה-Roofline הרלוונטי. במילים של ה-glossary: גרעינים compute-bound "מוגבלים על ידי ה-arithmetic bandwidth של ה-CUDA Cores (ליבות CUDA) או ה-Tensor Cores (ליבות טנזור)". המאפיין המגדיר הוא <strong>הרבה פעולות אריתמטיות לכל בית</strong> שנטען או נשמר.</p>
+<p>הגורם החוסם כאן הוא <strong>pipe utilization - ניצול צינורות האריתמטיקה</strong>. כשגרעין compute-bound, יחידות החישוב עסוקות עד צוואר; הזיכרון מספיק להביא נתונים, והשאלה היחידה היא כמה מהר הpipelines מסוגלים לטחון. זה הצד המבורך של ה-Roofline - הצד שבו אתם ממצים את החומרה היקרה.</p>
+<p><strong>דגש על תחולה.</strong> ה-glossary מזהיר: compute-boundedness מוגדר רק עבור <strong>kernel יחיד</strong>, כחלק ממודל ה-Roofline. אפשר להרחיב אותו לעומס עבודה שלם המורכב מהרבה גרעינים רק "בקירוב", תוך "מצמוץ עיניים". שימו לב לכך כשאתם אומרים "האפליקציה שלי compute-bound" - זו אמירה מקורבת על תערובת של גרעינים.</p>
+<p><strong>דוגמאות מהעולם האמיתי:</strong></p>
+<ul>
+<li><strong>הסקה במודלי דיפוזיה (diffusion).</strong> עומסי הסקה גדולים של מודלי דיפוזיה הם בדרך כלל compute-bound - הרבה כפלי מטריצות כבדים על מעט נתונים יחסית.</li>
+<li><strong>שלב ה-prefill בהסקת LLM.</strong> הסקה של מודלי שפה גדולים היא לרוב compute-bound דווקא בשלב עיבוד הפרומפט (batch prefill / prompt processing). הסיבה עמוקה וכדאי לתפוס אותה: בשלב ה-prefill, <strong>כל משקל נטען פעם אחת ל-shared memory ואז נעשה בו שימוש חוזר על פני הרבה tokens</strong> בבת אחת. אותו משקל שנקרא פעם אחת מהזיכרון משרת עשרות או מאות פעולות - ולכן המכנה (בתים) קטן, המונה (FLOPs) גדול, וה-arithmetic intensity מרקיע. זו בדיוק ההפוכה מ-decode/generation, שנראה מיד שהוא memory-bound.</li>
+</ul>
+<h2 id="-memory-bound">חסום-זיכרון - memory-bound<a class="headerlink" href="#-memory-bound" title="Permanent link">&para;</a></h2>
+<p>גרעין (kernel) הוא memory-bound כאשר ה-arithmetic intensity שלו <strong>נמוך</strong> מה-ridge point. ה-glossary מדייק: הגרעין מוגבל על ידי "רוחב הפס בין GPU RAM לבין הcache המקומי של ה-SM" - כלומר מסלול ה-DRAM אל cache ה-L1 של ה-SM. יחידות החישוב יושבות ומחכות; המנוע החוסם הוא כמה מהר בתים מגיעים.</p>
+<p>מדוע זה תרחיש כה נפוץ? בגלל <strong>גודל ה-working set</strong>. ה-glossary קובע שבעיות מעניינות בביצועי GPU נוטות להיות עם working set "גדול בהרבה מכל רמה גבוהה יותר בהיררכיית הזיכרון". הנתונים פשוט לא נכנסים לcaches, ולכן חייבים להזרים אותם שוב ושוב מ-DRAM - והזרימה הזו היא צוואר הבקבוק. גם memory-boundedness, בדיוק כמו אחיו, מוגדר פורמלית רק ל-kernel יחיד ומורחב לעומס שלם "במצמוץ".</p>
+<p><strong>דוגמאות מהעולם האמיתי:</strong></p>
+<ul>
+<li><strong>פעולות וקטוריות</strong> מכל סוג - חיבור וקטורים, SAXPY, פונקציות אקטיבציה איבר-איבר. נראה מיד ש-arithmetic intensity שלהן קבוע וזעום.</li>
+<li><strong>שלב ה-decode / generation בהסקת LLM.</strong> זו התאומה של ה-prefill, ובדיוק ההיפך ממנו. בשלב יצירת ה-tokens, בכל צעד מייצרים token אחד (ל-batch של אחד), ולשם כך צריך לטעון את <strong>כל</strong> משקלי המודל מהזיכרון - ולעשות בהם שימוש בודד לפני שנטענים מחדש לצעד הבא. שימוש בודד לכל משקל טעון פירושו arithmetic intensity זעום, ולכן decode ל-batch יחיד הוא memory-bound באופן מובהק. את המספרים המדויקים נראה בפרק הבא.</li>
+</ul>
+<h2 id="-arithmetic-intensity_1">טבלת הסקיילינג - איך הarithmetic intensity גדלה עם הגודל<a class="headerlink" href="#-arithmetic-intensity_1" title="Permanent link">&para;</a></h2>
+<p>עכשיו נחשב את ה-arithmetic intensity לשלושה גרעינים קלאסיים ונראה תופעה מכרעת: <strong>הקצב שבו הarithmetic intensity גדלה עם גודל הבעיה <code>N</code> שונה מהותית מגרעין לגרעין</strong>. זו הטבלה החשובה ביותר בשיעור:</p>
+<table>
+<thead>
+<tr>
+<th>גרעין</th>
+<th>FLOPs</th>
+<th>בתים שזזים</th>
+<th>arithmetic intensity</th>
+<th>סקיילינג ב-N</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SAXPY (<code>y = a*x + y</code>)</td>
+<td>2N</td>
+<td>12N</td>
+<td>1/6</td>
+<td>O(1) - קבוע</td>
+</tr>
+<tr>
+<td>FFT ממשי, דיוק יחיד</td>
+<td>(5/2)·N·log(N)</td>
+<td>16N</td>
+<td>(5/32)·log(N)</td>
+<td>O(log N)</td>
+</tr>
+<tr>
+<td>SGEMM (<code>C = A@B + C</code>)</td>
+<td>2N³</td>
+<td>16N²</td>
+<td>N/8</td>
+<td>O(N) - לינארי</td>
+</tr>
+</tbody>
+</table>
+<p>בואו נגזור כל שורה, כי הגזירה היא כל הסיפור.</p>
+<p><strong>SAXPY - arithmetic intensity קבועה וזעומה.</strong> הפעולה <code>y = a*x + y</code> על וקטורים באורך <code>N</code>, בדיוק float (4 בתים). לכל איבר: כפל אחד (<code>a*x</code>) וחיבור אחד (<code>+y</code>) = 2 FLOPs, ובסך הכל <code>2N</code>. תנועת הזיכרון לכל איבר: קוראים <code>x</code> (4 בתים), קוראים <code>y</code> (4 בתים), כותבים <code>y</code> (4 בתים) = 12 בתים, ובסך הכל <code>12N</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>AI(SAXPY) = 2N / 12N = 1/6 ≈ 0.167 FLOPs/byte   (N cancels out - constant!)
+</code></pre></div>
+<p>ה-<code>N</code> מתבטל. משמע: <strong>לא משנה כמה תגדילו את הווקטור, ה-arithmetic intensity נשאר 1/6</strong> - הרחק, הרחק משמאל ל-ridge point של H100 (295). SAXPY, ובעצם כל פעולה וקטורית איבר-איבר, היא memory-bound תמיד ולנצח.</p>
+<p><strong>FFT - arithmetic intensity שגדלה לוגריתמית.</strong> ל-FFT ממשי בדיוק יחיד: <code>(5/2)·N·log(N)</code> FLOPs מול <code>16N</code> בתים.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>AI(FFT) = (5/2)·N·log(N) / 16N = (5/32)·log(N)   (N cancels out, log N remains)
+</code></pre></div>
+<p>כאן ה-<code>N</code> מתבטל אבל נשאר <code>log(N)</code>. הarithmetic intensity <strong>גדלה</strong> עם הגודל, אבל לאט מאוד - לוגריתמית. גם FFT ענק יתקשה לחצות את ה-ridge point.</p>
+<p><strong>SGEMM - arithmetic intensity שגדלה לינארית.</strong> כפל מטריצות מרובעות <code>N x N</code>: מספר פעולות ה-MAC הוא <code>N^3</code>, ובכל MAC שתי פעולות, ומכאן <code>2N^3</code> FLOPs. תנועת הזיכרון: קוראים <code>A</code> (N² איברים × 4 בתים), קוראים <code>B</code>, קוראים <code>C</code>, כותבים <code>C</code> = ארבע מטריצות של <code>N^2</code> איברים = <code>16N^2</code> בתים.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>AI(SGEMM) = 2N³ / 16N² = N/8 FLOPs/byte   (N remains - linear!)
+</code></pre></div>
+<p>וזה ההבדל המהותי: כאן ה-<code>N</code> <strong>לא</strong> מתבטל. ה-arithmetic intensity של כפל מטריצות <strong>גדל לינארית עם הגודל</strong>. הסיבה עמוקה: כפל מטריצות עושה <code>O(N^3)</code> פעולות על <code>O(N^2)</code> נתונים - כל איבר קלט משתתף ב-<code>N</code> מכפלות. ככל שהמטריצה גדלה, כל בית טעון "עובד קשה יותר".</p>
+<p><strong>למה זה קריטי לרשתות נוירונים.</strong> נציב מספרים ל-H100: כדי לחצות את ה-ridge point של BF16 (295), צריך <code>N/8 &gt;= 295</code>, כלומר <code>N &gt;= 2360</code>. מטריצה בגודל <code>2360 x 2360</code> ומעלה כבר compute-bound על H100. וזה בדיוק למה מודלים גדולים משגשגים: <strong>ככל שהמטריצות גדֵלות, הarithmetic intensity גדֵלה, קל יותר להיות compute-bound, וניצול ה-Tensor Cores משתפר</strong>. הסקיילינג הלינארי של SGEMM הוא הסיבה האלגוריתמית שבזכותה חומרת ה-GPU והלמידה העמוקה נישאו זו את זו להצלחה. פעולה וקטורית (arithmetic intensity קבועה) לעולם לא תמצה את החומרה; כפל מטריצות ענק - כן.</p>
+<h2 id="-llm-1-tb">הדוגמה המשולבת - מודל LLM בגודל 1 TB<a class="headerlink" href="#-llm-1-tb" title="Permanent link">&para;</a></h2>
+<p>נגיע כעת לדוגמה המכוננת שה-glossary בונה, ושמסבירה בבת אחת את שני הצדדים של ה-Roofline. נגדיר מודל LLM אחד ונשאל עליו שתי שאלות תאומות.</p>
+<p><strong>המודל:</strong> 500 מיליארד פרמטרים, בדיוק של 16 ביט (2 בתים לפרמטר). הגודל הכולל:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>500·10^9 parameters × 2 bytes = 10^12 bytes = 1 TB of weights
+</code></pre></div>
+<p><strong>כמות החישוב:</strong> בכל forward pass, כל פרמטר משתתף בערך בפעולת MAC אחת לכל איבר ב-batch, כלומר כ-2 FLOPs לפרמטר:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>FLOPs per batch element ≈ 2 × 500·10^9 = 10^12 FLOP = ~1 TFLOP
+</code></pre></div>
+<p><strong>שאלה 1 - decode ל-batch יחיד (הצד memory-bound).</strong> נניח GPU עם memory bandwidth של 10 TB/s. כדי לייצר token אחד, חייבים לטעון את כל 1 TB המשקלים מהזיכרון:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>weight loading time = 1 TB / 10 TB/s = 0.1 s = 100 ms
+</code></pre></div>
+<p>זה קורה <strong>פעם אחת לכל token פלט</strong> (אלא אם משתמשים ב-multi-token prediction או speculative decoding). לכן ה-intertoken latency (השהיה בין tokens, או time per output token) המינימלי הוא כ-<strong>100 ms/token</strong>. ומה ה-arithmetic intensity כאן? מונה של <code>~1 TFLOP</code> חלקי מכנה של <code>1 TB</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>AI(decode, batch=1) = 10^12 FLOP / 10^12 bytes = 1 FLOP/byte
+</code></pre></div>
+<p>הarithmetic intensity של 1 - הרחק משמאל לכל ridge point סביר. decode ל-batch יחיד הוא <strong>memory-bound קלאסי</strong>. יחידות החישוב יושבות בטלות ומחכות שהמשקלים יזרמו.</p>
+<p><strong>שאלה 2 - מה נדרש כדי להיות compute-bound ב-batch יחיד?</strong> נניח שה-GPU מסוגל ל-1 PFLOP/s (10^15 FLOP/s) בכפל מטריצות 16 ביט. זמן החישוב:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>compute time = 10^12 FLOP / 10^15 FLOP/s = 10^-3 s = 1 ms
+</code></pre></div>
+<p>כדי שהחישוב (1 ms) יהיה צוואר הבקבוק ולא הזיכרון, היינו צריכים לטעון 1 TB תוך 1 ms:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>required bandwidth = 1 TB / 1 ms = 1 PB/s (!)
+</code></pre></div>
+<p><strong>1 פטהבייט לשנייה</strong> - פי אלף בערך מרוחבי הפס של ימינו (שהם בטווח ה-TB/s). המסקנה חדה: אין שום סיכוי להיות compute-bound ב-decode של batch יחיד. הפער בין 10 TB/s הזמינים ל-1 PB/s הנדרש הוא מדוע.</p>
+<p><strong>הפתרון - batching, והתפוקה שגדלה בחינם.</strong> כאן הקסם. אם נעבד <strong>batch של B קלטים יחד</strong>, נטען את אותם משקלים (1 TB) פעם אחת בלבד, אבל נעשה בהם <code>B</code> פעמים יותר עבודת חישוב. המכנה נשאר קבוע, המונה גדל פי <code>B</code>, ולכן ה-arithmetic intensity גדל לינארית:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>AI(decode, batch=B) = B × 10^12 FLOP / 10^12 bytes = B FLOPs/byte
+</code></pre></div>
+<p>והזמן? זהה. אותם 100 ms לטעינת המשקלים משרתים עכשיו <code>B</code> tokens במקום אחד. משמע ה-<strong>throughput (תפוקה) גדל לינארית ב-B בלי לשלם ולו מילישנייה נוספת של latency</strong>. זה נמשך "בחינם" עד שמגיעים ל-ridge point - הנקודה שבה הarithmetic intensity <code>B</code> משתווה ל-ridge, ומשם והלאה כבר נהיים compute-bound ואי אפשר להוציא עוד. עבור ה-GPU ההיפותטי הזה (ridge = 1 PFLOP/s ÷ 10 TB/s = 100), צריך batch בסדר גודל של <strong>~100 קלטים</strong> כדי להתקרב לcompute-bound. זו הסיבה שמערכות הסקת LLM עובדות ב-batching אגרסיבי: לא כדי לחסוך latency לבקשה בודדת, אלא כדי לרכוב על העלייה הלינארית בarithmetic intensity ולמצות את החומרה.</p>
+<h2 id="-ridge-point-">טבלת ה-ridge point - החומרה והדיוק מזיזים את הרכס<a class="headerlink" href="#-ridge-point-" title="Permanent link">&para;</a></h2>
+<p>ה-ridge point אינו מספר אחד. הוא <strong>arithmetic bandwidth חלקי memory bandwidth</strong>, ולכן משתנה עם הכרטיס, עם סוג הזיכרון, ובעיקר עם <strong>דיוק</strong> החישוב. הנה הטבלה הקונקרטית, ישירות מנתוני החומרה:</p>
+<table>
+<thead>
+<tr>
+<th>מערכת / תצורה</th>
+<th>arithmetic BW</th>
+<th>memory BW</th>
+<th>ridge point (FLOPs/byte)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A100 80GB SXM, BF16 / HBM2e</td>
+<td>312 TFLOP/s</td>
+<td>2 TB/s</td>
+<td>156</td>
+</tr>
+<tr>
+<td>H100 SXM, BF16 / HBM3</td>
+<td>989 TFLOP/s</td>
+<td>3.35 TB/s</td>
+<td>295</td>
+</tr>
+<tr>
+<td>B200, BF16 / HBM3e</td>
+<td>2250 TFLOP/s</td>
+<td>8 TB/s</td>
+<td>281</td>
+</tr>
+<tr>
+<td>H100 SXM, FP8 / HBM3</td>
+<td>1979 TFLOP/s</td>
+<td>3.35 TB/s</td>
+<td>592</td>
+</tr>
+<tr>
+<td>B200, FP8 / HBM3e</td>
+<td>4500 TFLOP/s</td>
+<td>8 TB/s</td>
+<td>562</td>
+</tr>
+<tr>
+<td>B200, FP4 / HBM3e</td>
+<td>9000 TFLOP/s</td>
+<td>8 TB/s</td>
+<td>1125</td>
+</tr>
+</tbody>
+</table>
+<p>כל ערך בעמודה האחרונה הוא פשוט חלוקה: <code>312/2 = 156</code>, <code>989/3.35 ≈ 295</code>, <code>2250/8 ≈ 281</code>, וכן הלאה. שתי מגמות עולות מהטבלה, ושתיהן אומרות אותו דבר - <strong>קשה יותר ויותר להיות compute-bound</strong>:</p>
+<p><strong>מגמה 1 - הרכס נודד ימינה בין דורות.</strong> A100 (Ampere) עם 156, H100 (Hopper) עם 295. ככל שהחומרה מתקדמת, ה-arithmetic bandwidth גדל מהר יותר מה-memory bandwidth (זו בדיוק "חומת הזיכרון" מ-7.1: החישוב מדביק את הזיכרון). התוצאה: ה-ridge point נודד ימינה, ונדרשת arithmetic intensity גבוהה יותר כדי לחצות אותו. שימו לב ש-B200 (281) נראה מעט נמוך מ-H100 - זה משום ש-HBM3e של Blackwell קפץ ל-8 TB/s וקצת פיצה, אבל המגמה ההיסטורית הכוללת Ampere -&gt; Hopper -&gt; Blackwell היא של רכס עולה.</p>
+<p><strong>מגמה 2 - דיוק נמוך דוחף את הרכס ימינה בחדות.</strong> הביטו ב-B200: BF16 נותן ridge 281, FP8 נותן 562, FP4 נותן 1125. הסיבה: ירידה בדיוק <strong>מכפילה את ה-arithmetic bandwidth</strong> (FP8 מכפיל את FP16, FP4 מכפיל שוב) בעוד שה-memory bandwidth <strong>אינו משתנה</strong> - אותו HBM3e של 8 TB/s. ולכן היחס, שהוא ה-ridge point, קופץ. המסקנה מפתיעה ולא-אינטואיטיבית: <strong>ככל שיורדים בדיוק, קשה יותר להישאר compute-bound</strong>. ב-FP4 אתם צריכים arithmetic intensity של 1125 FLOPs לכל בית כדי למצות את החומרה - סף אדיר. הדיוק הנמוך נותן לכם המון כוח חישוב, אבל דורש מכם עוד יותר arithmetic intensity כדי בכלל להזין אותו. את זה נראה בפועל כשנכוונן GEMM ב-FP8 בפרק 8.</p>
+<h2 id="-arithmetic-intensity_2">להחליף עבודת זיכרון בעבודת חישוב - להעלות arithmetic intensity בכוונה<a class="headerlink" href="#-arithmetic-intensity_2" title="Permanent link">&para;</a></h2>
+<p>מהמודל נובעת אסטרטגיית אופטימיזציה עוצמתית. כאשר גרעין memory-bound, החישוב ממילא יושב בטל. אז אפשר <strong>להעביר עבודה מתת-מערכת הזיכרון לתת-מערכת החישוב</strong> - לחסוך ברוחב פס הזיכרון על חשבון עומס נוסף על יחידות האריתמטיקה שבין כה וכה פנויות. אנחנו מזיזים ביודעין את ה-arithmetic intensity ימינה, לכיוון ה-ridge point. שתי טכניקות קלאסיות:</p>
+<p><strong>דחיסה - compression.</strong> מאחסנים ומעבירים נתונים דחוסים, כך שפחות בתים זזים דרך צוואר הבקבוק. המחיר: צריך decompress - חישוב פענוח שנוסף ל-arithmetic units. אם הגרעין היה memory-bound, החישוב הנוסף כמעט "חינם" (הpipelines היו בטלים), והחיסכון בבתים מזיז אותנו ימינה על ה-Roofline. הרווחנו.</p>
+<p><strong>gradient checkpointing - נקודות ביקורת בגרדיאנט.</strong> טכניקה מפורסמת מאימון רשתות נוירונים (Arxiv:1604.06174). בזמן backpropagation צריך את ערכי הביניים (activations) של ה-forward pass. במקום <strong>לאחסן</strong> את כולם ב-global memory ולקרוא אותם שוב (הרבה בתים זזים), <strong>מחשבים אותם מחדש</strong> מנקודות ביקורת ספורות בזמן ה-backward. מחליפים תעבורת זיכרון בחישוב חוזר - וכך <strong>מעלים את ה-arithmetic intensity</strong> ובד בבד חוסכים זיכרון. זה בדיוק אותו עיקרון: recompute במקום store, חישוב במקום זיכרון.</p>
+<p>הכלל הכללי: <strong>חישוב זול, זיכרון יקר.</strong> כל עוד אתם משמאל ל-ridge point, כדאי כמעט תמיד לשלם בעוד FLOPs כדי לחסוך בבתים - עד שאתם מגיעים לרכס, ומשם והלאה כבר לא (כי אז החישוב עצמו נהיה צוואר הבקבוק). זה בדיוק הרעיון שמאחורי fused kernels, Flash Attention, וכל טכניקת ה-fusion שנראה בפרק 8 - כולן, בבסיסן, מהלכים להעלאת arithmetic intensity.</p>
+<h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>ה-arithmetic intensity (עצימות אריתמטית) הוא היחס <code>FLOPs / bytes moved</code>, ציר ה-X של ה-Roofline, והמספר היחיד שמכריע אם kernel compute-bound (arithmetic intensity מעל ה-ridge point) או memory-bound (arithmetic intensity מתחת לו); מונים MAC כשתי פעולות, וסופרים במכנה רק בתים שזזים בפועל דרך צוואר הבקבוק DRAM אל cache ה-SM.</li>
+<li>גרעין חסום-חישוב (compute-bound) מוגבל ב-arithmetic bandwidth של ה-CUDA/Tensor Cores, מאופיין בarithmetic intensity גבוהה, וגורם החסימה שלו הוא pipe utilization; דוגמאות: הסקת דיפוזיה גדולה ושלב ה-prefill ב-LLM, שבו כל משקל נטען פעם אחת ומשמש הרבה tokens.</li>
+<li>גרעין חסום-זיכרון (memory-bound) מוגבל ברוחב הפס בין GPU RAM לcache ה-SM, מאופיין בarithmetic intensity נמוכה ובעל working set הגדול מcaches; דוגמאות: פעולות וקטוריות ושלב ה-decode/generation ב-LLM (batch יחיד).</li>
+<li>טבלת הסקיילינג: SAXPY היא <code>2N/12N = 1/6</code>, arithmetic intensity O(1) קבועה וזעומה (memory-bound תמיד); FFT ממשי הוא <code>(5/32)log(N)</code>, גדל O(log N); SGEMM הוא <code>2N³/16N² = N/8</code>, גדל O(N) לינארית - ולכן מטריצות גדולות יותר קלות יותר להיות compute-bound, וזו הסיבה האלגוריתמית להצלחת רשתות הנוירונים.</li>
+<li>בדוגמת ה-LLM של 1 TB (500 מיליארד פרמטרים × 16 ביט): ב-10 TB/s ה-decode ל-batch יחיד memory-bound ב-~100 ms/token; כדי להיות compute-bound ב-batch יחיד היה נדרש רוחב פס של ~1 PB/s (פי אלף מהמצוי).</li>
+<li>קיבוץ (batching) מעלה את הarithmetic intensity לינארית - אותם משקלים נטענים פעם אחת ומשמשים B קלטים - ולכן ה-throughput גדל לינארית ב-batch כמעט בחינם, עד שמגיעים ל-ridge point ונהיים compute-bound.</li>
+<li>טבלת ה-ridge point (arithmetic BW / memory BW): A100 BF16 = 156, H100 BF16 = 295, B200 BF16 = 281, H100 FP8 = 592, B200 FP8 = 562, B200 FP4 = 1125; הרכס נודד ימינה בין דורות (החישוב מדביק את הזיכרון) ובחדות בדיוק נמוך (FP8/FP4 מכפילים arithmetic BW בעוד memory BW קבוע) - ולכן קשה יותר להישאר compute-bound.</li>
+<li>אפשר להעלות arithmetic intensity בכוונה כדי לברוח מmemory-boundedness: דחיסה (חוסכת בתים, מוסיפה עלות decompress) ו-gradient checkpointing (recompute במקום store) - שתיהן מחליפות עבודת זיכרון בעבודת חישוב, לפי הכלל "חישוב זול, זיכרון יקר".</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

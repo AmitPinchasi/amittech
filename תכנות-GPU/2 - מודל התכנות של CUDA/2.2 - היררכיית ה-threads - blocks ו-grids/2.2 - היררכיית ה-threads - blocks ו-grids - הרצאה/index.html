@@ -1,0 +1,2867 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בשיעור 2.1 עמדנו על התחתית של ההיררכיה: ה-thread הבודד, האטום של מודל התכנות, שמחזיק אוגרים משלו ולעיתים מונה-פקודות משלו, ואת ה-warp - קבוצת 32 threads...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.2%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94-threads%20-%20blocks%20%D7%95-grids/2.2%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94-threads%20-%20blocks%20%D7%95-grids%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../2.2%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94-threads%20-%20blocks%20%D7%95-grids%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>2.2 - היררכיית ה-threads - blocks ו-grids - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "2.2 - \u05d4\u05d9\u05e8\u05e8\u05db\u05d9\u05d9\u05ea \u05d4-threads - blocks \u05d5-grids - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.2%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94-threads%20-%20blocks%20%D7%95-grids/2.2%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94-threads%20-%20blocks%20%D7%95-grids%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="2.2 - היררכיית ה-threads - blocks ו-grids - הרצאה - עמית טק" />
+<meta property="og:description" content="בשיעור 2.1 עמדנו על התחתית של ההיררכיה: ה-thread הבודד, האטום של מודל התכנות, שמחזיק אוגרים משלו ולעיתים מונה-פקודות משלו, ואת ה-warp - קבוצת 32 threads..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.2%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94-threads%20-%20blocks%20%D7%95-grids/2.2%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94-threads%20-%20blocks%20%D7%95-grids%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.2%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94-threads%20-%20blocks%20%D7%95-grids/2.2%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94-threads%20-%20blocks%20%D7%95-grids%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="2.2 - היררכיית ה-threads - blocks ו-grids - הרצאה - עמית טק" />
+<meta property="twitter:description" content="בשיעור 2.1 עמדנו על התחתית של ההיררכיה: ה-thread הבודד, האטום של מודל התכנות, שמחזיק אוגרים משלו ולעיתים מונה-פקודות משלו, ואת ה-warp - קבוצת 32 threads..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.2%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94-threads%20-%20blocks%20%D7%95-grids/2.2%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94-threads%20-%20blocks%20%D7%95-grids%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-thread-block-grid" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              2.2 - היררכיית ה-threads - blocks ו-grids - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_4" id="__nav_7_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2   מודל התכנות של CUDA
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.1   Threads ו Warps   מודל SIMT
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_4_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_4_2" id="__nav_7_3_4_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.2   היררכיית ה threads   blocks ו grids
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_4_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2.2   היררכיית ה threads   blocks ו grids
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.2 - היררכיית ה-threads - blocks ו-grids - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.2 - היררכיית ה-threads - blocks ו-grids - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-thread-block-grid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלוש הרמות של ההיררכיה - thread, block ו-grid
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-cta-block-cooperative-thread-array" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הבלוק וה-CTA - block ו-Cooperative Thread Array
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-independence-transparent-scaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חוק העצמאות וההרחבה השקופה - independence ו-transparent scaling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-global-memory-atomics-deadlock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אין מחסום חוצה-בלוקים - global memory, atomics ו-deadlock
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-blockidx-blockdim-threadidx-griddim" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אריתמטיקת האינדקסים - blockIdx, blockDim, threadIdx ו-gridDim
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-dim3-2d-indexing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אינדוקס דו-ממדי עם dim3 - 2D indexing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-sm-occupancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        כמה בלוקים נכנסים ל-SM - occupancy ומגבלות משאבים
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2.2%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94-threads%20-%20blocks%20%D7%95-grids%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.2 - היררכיית ה-threads - blocks ו-grids - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2.2%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94-threads%20-%20blocks%20%D7%95-grids%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.2 - היררכיית ה-threads - blocks ו-grids - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../2.3%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20kernel%20-%20%D7%90%D7%99%D7%A0%D7%93%D7%95%D7%A7%D7%A1%20%D7%95-launch%20configuration/2.3%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20kernel%20-%20%D7%90%D7%99%D7%A0%D7%93%D7%95%D7%A7%D7%A1%20%D7%95-launch%20configuration%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.3   כתיבת kernel   אינדוקס ו launch configuration
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../2.4%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%2C%20cooperative%20groups%20%D7%95-warpgroups/2.4%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%2C%20cooperative%20groups%20%D7%95-warpgroups%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.4   סנכרון, cooperative groups ו warpgroups
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../2.5%20-%20Compute%20Capability%20%D7%95%D7%92%D7%A8%D7%A1%D7%90%D7%95%D7%AA%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%94/2.5%20-%20Compute%20Capability%20%D7%95%D7%92%D7%A8%D7%A1%D7%90%D7%95%D7%AA%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.5   Compute Capability וגרסאות ארכיטקטורה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-thread-block-grid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלוש הרמות של ההיררכיה - thread, block ו-grid
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-cta-block-cooperative-thread-array" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הבלוק וה-CTA - block ו-Cooperative Thread Array
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-independence-transparent-scaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חוק העצמאות וההרחבה השקופה - independence ו-transparent scaling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-global-memory-atomics-deadlock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אין מחסום חוצה-בלוקים - global memory, atomics ו-deadlock
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-blockidx-blockdim-threadidx-griddim" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אריתמטיקת האינדקסים - blockIdx, blockDim, threadIdx ו-gridDim
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-dim3-2d-indexing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אינדוקס דו-ממדי עם dim3 - 2D indexing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-sm-occupancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        כמה בלוקים נכנסים ל-SM - occupancy ומגבלות משאבים
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    2   מודל התכנות של CUDA
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    2.2   היררכיית ה threads   blocks ו grids
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>2.2 - היררכיית ה-threads - blocks ו-grids - הרצאה</h1>
+
+<p>בשיעור 2.1 עמדנו על התחתית של ההיררכיה: ה-thread הבודד, האטום של מודל התכנות, שמחזיק אוגרים משלו ולעיתים מונה-פקודות משלו, ואת ה-warp - קבוצת 32 threads שהחומרה מתזמנת יחד, פרט מימוש שאינו חלק רשמי מהמודל. עכשיו נטפס שתי רמות מעלה. מעל ה-thread יושב ה-block (בלוק) - קבוצת threads שמתוזמנת יחד על SM אחד ויכולה לשתף פעולה; ומעל הבלוקים יושב ה-grid (רשת) - כל הthreads של kernel launch אחד, פרוסים על פני כל ה-GPU. בשיעור הזה נבין את שלוש הרמות ואת המיפוי שלהן לחומרה, נוכיח מדוע חוק העצמאות של הבלוקים הוא הלב של ההרחבה השקופה (transparent scaling), נראה למה אין מחסום (barrier) בין בלוקים ומדוע ניסיון לחסום בלוק אחד על אחר מזמין deadlock, ונשלוט באריתמטיקת האינדקסים החד-ממדית והדו-ממדית שממנה כל thread מגלה על איזה נתון לעבוד. בשיעור 2.3 נשתמש בכל זה כדי לכתוב kernels אמיתיים.</p>
+<h2 id="-thread-block-grid">שלוש הרמות של ההיררכיה - thread, block ו-grid<a class="headerlink" href="#-thread-block-grid" title="Permanent link">&para;</a></h2>
+<p>מודל התכנות של CUDA בנוי על היררכיה מקוננת בת שלוש רמות, וזו אחת משתי אבני היסוד שלו (השנייה היא היררכיית הזיכרון, שנעמיק בה בפרק 3). כל רמה מקבצת את הרמה שמתחתיה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>                 thread block grid  (grid - all threads of the launch)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>      +------------------------------------------------------+
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>      |   block            block            block            |
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>      | +---------+      +---------+      +---------+         |
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>      | | warp    |      | warp    |      | warp    |   ...   |
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>      | | warp    |      | warp    |      | warp    |         |
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>      | +---------+      +---------+      +---------+         |
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>      | (&lt;=1024      (&lt;=1024        (&lt;=1024                   |
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>      |  threads)     threads)       threads)                 |
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>      +------------------------------------------------------+
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>        thread  &lt;  (warp)  &lt;  block/CTA  &lt;  grid
+</code></pre></div>
+<ul>
+<li><strong>thread</strong> - יחידת ההרצה האטומית. לכל thread מזהה ייחודי מבוסס-אינדקס בתוך הבלוק שלו, וממנו הוא מחשב על איזה איבר לעבוד.</li>
+<li><strong>warp</strong> - קבוצת 32 threads שהחומרה מתזמנת יחד. חשוב לזכור מ-2.1: ה-warp הוא פרט מימוש, לא רמה רשמית במודל התכנות. הוא לא מופיע בקוד שלנו כאובייקט, אבל הוא קובע ביצועים.</li>
+<li><strong>block (בלוק)</strong> - קבוצת threads שמתוזמנת יחד על SM אחד. גודל מרבי של <strong>1024 threads</strong> על החומרה הנוכחית, ונבחר כמעט תמיד ככפולה של גודל ה-warp (32), כדי שהthreads ייארזו לתוך warps שלמים. בלוק מכיל warp אחד או יותר.</li>
+<li><strong>grid (רשת)</strong> - אוסף כל הבלוקים שנוצרים מkernel launch אחד. הlaunch אחד = grid אחד = כל הthreads שמריצים את אותו ה-kernel. ה-grid יכול להיות חד-ממדי, דו-ממדי או תלת-ממדי (1D / 2D / 3D), בהתאם למבנה הבעיה.</li>
+</ul>
+<p>המיפוי לחומרה מדויק ומחייב: <strong>thread רץ על core (ליבה, compute pipeline), block מתוזמן כולו על SM אחד, ו-grid נפרס על פני כל ה-SMs של הכרטיס.</strong> ב-H100, למשל, ה-grid מתחלק על פני 132 ה-SMs. שימו לב לאסימטריה: thread ל-core הוא יחסי-רבים (SM מריץ עשרות warps), אבל בלוק ל-SM הוא כלל ברזל של מיקום - כל threads הבלוק על אותו SM, אף פעם לא מפוצלים בין שניים.</p>
+<h2 id="-cta-block-cooperative-thread-array">הבלוק וה-CTA - block ו-Cooperative Thread Array<a class="headerlink" href="#-cta-block-cooperative-thread-array" title="Permanent link">&para;</a></h2>
+<p>המילה "block" (או "thread block") היא השם ברמת מודל התכנות. לאותו דבר בדיוק יש שם נוסף ברמה הנמוכה, ברמת ה-PTX וה-SASS (שפות הביניים והמכונה של ה-GPU): <strong>Cooperative Thread Array</strong>, בקיצור CTA - מערך תהליכונים משתף-פעולה. שני השמות מתייחסים לאותה ישות; פשוט אחד הוא ההפשטה שאנחנו כותבים בה, והשני הוא איך שהחומרה והcompiler מדברים עליה. כשתקראו PTX או פלט של <code>cuobjdump</code> ותיתקלו ב-CTA, דעו שמדובר בבלוק.</p>
+<p>התכונה הקריטית של הבלוק היא ערובת ה-SM המשותף: <strong>כל threads בלוק מתוזמנים בו-זמנית על אותו SM יחיד.</strong> המיקום המשותף הזה (co-residency) איננו פרט טכני שולי - הוא בדיוק מה שמאפשר שיתוף פעולה בתוך בלוק, ומכאן נגזרות שתי היכולות הבלעדיות של הרמה הזו:</p>
+<ol>
+<li><strong>shared memory (זיכרון משותף)</strong> - כל threads הבלוק רואים אותו בלוק זיכרון מהיר שיושב פיזית ב-L1 של ה-SM (ב-H100, מתוך 256 KiB של L1/shared מאוחד; עד 228 KiB מהם ניתנים להקצאה כ-shared memory לבלוק). זהו ערוץ תקשורת מהיר בין הthreads, בסדרי גודל מהיר מ-global memory.</li>
+<li><strong>barriers (מחסומים)</strong> - הפקודה <code>__syncthreads()</code> היא מחסום ברמת הבלוק: כל threads הבלוק חייבים להגיע אליו לפני שאף אחד ממשיך. זו נקודת סנכרון שמאפשרת, למשל, לטעון נתונים ל-shared memory ואז להבטיח שכולם מוכנים לפני שקוראים אותם.</li>
+</ol>
+<p>הניסוח שנצמד אליו: <strong>הבלוק הוא היחידה הקטנה ביותר של שיתוף פעולה בין threads שנחשפת למתכנת.</strong> מתחת לבלוק, שיתוף הפעולה מובלע בחומרה (warp); מעל הבלוק, כפי שנראה מיד, אין מנגנון סנכרון ישיר בכלל. הבלוק הוא הרמה שבה שיתוף הפעולה המפורש מתחיל ונגמר.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>        why are all the block&#39;s threads on the same SM?  -&gt;  because only that way can you have:
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>   thread 0 ─┐
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>   thread 1 ─┤   __shared__ float tile[...]   (memory on the SM)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>   thread 2 ─┤   ...everyone reads/writes to it...
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>     ...     ─┤
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>   thread N ─┘   __syncthreads();             (barrier on the SM)
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>                 ^^^^^^^^^^^^^^^^ possible only when everyone is on the same SM
+</code></pre></div>
+<h2 id="-independence-transparent-scaling">חוק העצמאות וההרחבה השקופה - independence ו-transparent scaling<a class="headerlink" href="#-independence-transparent-scaling" title="Permanent link">&para;</a></h2>
+<p>וכעת לכלל היחיד, החשוב ביותר, שקובע נכונות ברמת ה-grid: <strong>הבלוקים חייבים לרוץ באופן עצמאי, כך שכל סדר הרצה של הבלוקים יהיה תקף.</strong> הזמן (runtime) חופשי להריץ את הבלוקים בכל סדר - החל מסדרתי לחלוטין (בלוק אחרי בלוק) ועד מקבילי לחלוטין (כולם בבת אחת) - ותוכנית CUDA נכונה חייבת להישאר נכונה תחת <strong>כל</strong> שזירה (interleaving) של הבלוקים. אסור להניח שבלוק 5 רץ אחרי בלוק 3, אסור להניח ששניהם רצים בו-זמנית, אסור להניח כלום על הסדר.</p>
+<p>האי-דטרמיניזם הזה נראה כמו מגבלה, אבל הוא בדיוק המנוע של התכונה המרכזית של CUDA - <strong>הרחבה שקופה (transparent scaling).</strong> מטרת התכנון של המודל היא שקוד שנכתב נכון "יתרחב בשקיפות ככל שהתקני ה-GPU מתרחבים במשאבי ההרצה המקבילית שלהם" - כלומר, שאותו קוד בדיוק יֵרוץ מהר יותר על כרטיס גדול יותר בלי שכתבנו אותו מחדש. ניסוח פרובוקטיבי מהמקור: המודל תוכנן כדי למנוע מהמתכנת לכתוב קוד ש"ייכשל בלהיות מהיר יותר כשהמשתמש קונה GPU חדש של NVIDIA".</p>
+<p>הדוגמה הממחישה: אותו grid בדיוק, עם אותם בלוקים, רץ נכון בשני קצוות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>          grid with 8 blocks  (B0..B7)
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  GPU with one SM (sequential):   [B0][B1][B2][B3][B4][B5][B6][B7]   one after another
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>                           SM0 ─────────── over time ───────────►
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  GPU with 4 SMs (parallel):   SM0: [B0][B4]
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>                           SM1: [B1][B5]     four at once,
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>                           SM2: [B2][B6]     then four more
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>                           SM3: [B3][B7]
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>  H100 with 132 SMs:         all eight blocks at once, with SMs to spare
+</code></pre></div>
+<p>בכל שלושת המקרים התוצאה זהה. זה עובד <strong>רק</strong> מפני שהבלוקים עצמאיים: אם בלוק B4 היה תלוי בכך ש-B0 סיים, הגרסה הסדרתית עדיין הייתה עובדת, אבל הגרסה המקבילית - שבה B0 ו-B4 רצים יחד - הייתה נשברת. העצמאות היא המחיר שאנחנו משלמים כדי לקבל את הניידות הזו בין כרטיסים בגדלים שונים, וזו עסקה משתלמת.</p>
+<h2 id="-global-memory-atomics-deadlock">אין מחסום חוצה-בלוקים - global memory, atomics ו-deadlock<a class="headerlink" href="#-global-memory-atomics-deadlock" title="Permanent link">&para;</a></h2>
+<p>מכיוון שהבלוקים עצמאיים ויכולים לרוץ בכל סדר, נובעת מגבלה חדה: <strong>בלוקים ב-grid אינם יכולים לסנכרן זה עם זה באמצעות מחסומים.</strong> ה-<code>__syncthreads()</code> שפגשנו הוא מחסום ברמת הבלוק בלבד - הוא מסנכרן את threads אותו הבלוק, ואין לו שום השפעה על בלוקים אחרים. אין <code>__syncgrid()</code> פשוט שאפשר לזרוק לתוך kernel רגיל (קיים מנגנון cooperative groups לסנכרון grid, אך הוא דורש launch מיוחד ומגביל את גודל ה-grid לתפוסה - נושא מתקדם שאינו הדרך הרגילה).</p>
+<p>אז איך בלוקים כן מתאמים ביניהם, כשצריך? הדרך היחידה היא דרך <strong>global memory (זיכרון גלובלי) בעזרת פעולות אטומיות (atomics).</strong> thread בבלוק אחד כותב לכתובת ב-global memory, וthread בבלוק אחר קורא אותה; כדי שהעדכונים לא ידרסו זה את זה, משתמשים בפקודות כמו <code>atomicAdd</code>, שמבצעות קריאה-שינוי-כתיבה כפעולה אחת בלתי-ניתנת-לחלוקה. זו תקשורת איטית (global memory) ומבוססת-atomics, לא מבוססת-מחסום.</p>
+<p>ומכאן מלכוד ה-deadlock, שחובה להפנים: <strong>מכיוון שסדר הבלוקים נשלט על ידי הנהג (driver) ואינו מובטח, חסימת בלוק אחד בהמתנה לבלוק אחר יכולה בקלות להוביל ל-deadlock.</strong> דמיינו kernel שבו בלוק 1 מסתובב בלולאת המתנה (busy-wait) עד שבלוק 0 יכתוב דגל ל-global memory:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1">// incorrect code - may cause a deadlock, do not do this</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">bad</span><span class="p">(</span><span class="k">volatile</span><span class="w"> </span><span class="kt">int</span><span class="o">*</span><span class="w"> </span><span class="n">flag</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">        </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* waiting for block 0 */</span><span class="w"> </span><span class="p">}</span><span class="w">  </span><span class="c1">// busy-wait</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">        </span><span class="n">flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w">                                  </span><span class="c1">// releases block 1</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="p">}</span>
+</code></pre></div>
+<p>על GPU קטן עם SM אחד, ייתכן שהנהג יתזמן קודם את בלוק 1. בלוק 1 יתפוס את ה-SM ויסתובב לנצח בהמתנה, ובלוק 0 לעולם לא יקבל הזדמנות לרוץ ולשחרר אותו - קיפאון מוחלט. הכלל: <strong>אסור לכתוב קוד שבו בלוק אחד ממתין באופן פעיל להתקדמות של בלוק אחר.</strong> אם צריך תלות כזו בין שלבים, מפצלים לשני kernel launches נפרדים - הסיום של ה-kernel הראשון הוא נקודת הסנכרון החוצה-בלוקים היחידה שאפשר לסמוך עליה.</p>
+<h2 id="-blockidx-blockdim-threadidx-griddim">אריתמטיקת האינדקסים - blockIdx, blockDim, threadIdx ו-gridDim<a class="headerlink" href="#-blockidx-blockdim-threadidx-griddim" title="Permanent link">&para;</a></h2>
+<p>השקנו kernel אחד באלפי עותקים; איך כל עותק יודע על איזה נתון לעבוד? מהמזהים המובנים. כל thread רואה ארבעה משתני dim3 מובנים שהחומרה ממלאת עבורו (ל-dim3 שלושה שדות: <code>.x</code>, <code>.y</code>, <code>.z</code>):</p>
+<table>
+<thead>
+<tr>
+<th>משתנה</th>
+<th>משמעות</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>threadIdx</code></td>
+<td>האינדקס של ה-thread בתוך הבלוק שלו</td>
+</tr>
+<tr>
+<td><code>blockDim</code></td>
+<td>מספר הthreads בכל בלוק (מימדי הבלוק)</td>
+</tr>
+<tr>
+<td><code>blockIdx</code></td>
+<td>האינדקס של הבלוק בתוך ה-grid</td>
+</tr>
+<tr>
+<td><code>gridDim</code></td>
+<td>מספר הבלוקים ב-grid (מימדי ה-grid)</td>
+</tr>
+</tbody>
+</table>
+<p>בעולם החד-ממדי, האינדקס הגלובלי הקנוני - הביטוי שראינו כבר בשיעור 0.3 ושחוזר בכל תוכנית CUDA:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+</code></pre></div>
+<p>הפירוק במספרים, עם <code>blockDim.x = 256</code>: הthread הראשון של בלוק 0 מקבל <code>0*256 + 0 = 0</code>; הthread האחרון של בלוק 0 מקבל <code>0*256 + 255 = 255</code>; הthread הראשון של בלוק 1 מקבל <code>1*256 + 0 = 256</code>; וכן הלאה. כל האיברים מכוסים פעם אחת בדיוק, בלי חפיפה ובלי חורים. גודל ה-grid מחושב בעיגול כלפי מעלה <code>(n + blockSize - 1) / blockSize</code>, ותמיד נדרש שומר גבולות <code>if (i &lt; n)</code> כדי להגן על הthreads העודפים שנוצרים כשה-grid לא מחלק בדיוק את <code>n</code>.</p>
+<h2 id="-dim3-2d-indexing">אינדוקס דו-ממדי עם dim3 - 2D indexing<a class="headerlink" href="#-dim3-2d-indexing" title="Permanent link">&para;</a></h2>
+<p>כשהבעיה עצמה דו-ממדית - תמונה, מטריצה, לוח - נוח למפות אליה grid דו-ממדי, כך שהאינדקסים של הthread משקפים ישירות שורה ועמודה. משתמשים בטיפוס <code>dim3</code> כדי לבנות תצורת הרצה דו-ממדית. שימו לב לאמנה שקל להתבלבל בה: <strong><code>.x</code> הוא הממד המהיר (עמודות), <code>.y</code> הוא האיטי (שורות).</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kt">int</span><span class="w"> </span><span class="n">width</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1920</span><span class="p">,</span><span class="w"> </span><span class="n">height</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1080</span><span class="p">;</span><span class="w">             </span><span class="c1">// example image</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">dim3</span><span class="w"> </span><span class="nf">block</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="mi">16</span><span class="p">);</span><span class="w">                          </span><span class="c1">// 256 threads per block, 16x16</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">dim3</span><span class="w"> </span><span class="n">grid</span><span class="p">((</span><span class="n">width</span><span class="w">  </span><span class="o">+</span><span class="w"> </span><span class="n">block</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">block</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w">  </span><span class="c1">// blocks across width (columns)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">          </span><span class="p">(</span><span class="n">height</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">block</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">block</span><span class="p">.</span><span class="n">y</span><span class="p">);</span><span class="w"> </span><span class="c1">// blocks across height (rows)</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">myKernel</span><span class="o">&lt;&lt;&lt;</span><span class="n">grid</span><span class="p">,</span><span class="w"> </span><span class="n">block</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">img</span><span class="p">,</span><span class="w"> </span><span class="n">width</span><span class="p">,</span><span class="w"> </span><span class="n">height</span><span class="p">);</span>
+</code></pre></div>
+<p>בתוך ה-kernel, כל thread מחשב את השורה והעמודה שהוא אחראי עליהן, ואז ניגש לזיכרון ליניארי בעזרת <code>row * width + col</code> (כי מטריצות ותמונות נשמרות ברצף שורה-אחר-שורה, row-major):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">myKernel</span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">img</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">width</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">height</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span><span class="w">   </span><span class="c1">// .x -&gt; column</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">y</span><span class="p">;</span><span class="w">   </span><span class="c1">// .y -&gt; row</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">row</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">height</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">width</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">                 </span><span class="c1">// 2D bounds guard</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">width</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">col</span><span class="p">;</span><span class="w">                   </span><span class="c1">// row-major flattening</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">        </span><span class="n">img</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">255</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">img</span><span class="p">[</span><span class="n">idx</span><span class="p">];</span><span class="w">                     </span><span class="c1">// example: pixel inversion</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="p">}</span>
+</code></pre></div>
+<p>הנה המיפוי הוויזואלי של grid דו-ממדי על מטריצה. כל בלוק הוא tile של <code>16x16</code> threads, והבלוקים מרצפים את המישור:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>              col = blockIdx.x*blockDim.x + threadIdx.x  ─────►
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>        +----------------+----------------+----------------+
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>        |  block (0,0)   |  block (1,0)   |  block (2,0)   |
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>   r    |  16x16 threads |  16x16 threads |  16x16 threads |
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>   o    +----------------+----------------+----------------+
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>   w    |  block (0,1)   |  block (1,1)   |  block (2,1)   |
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>   |    |  16x16 threads |  16x16 threads |  16x16 threads |
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>   v    +----------------+----------------+----------------+
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>   (blockIdx.y, threadIdx.y)     idx = row * width + col
+</code></pre></div>
+<p>שומר הגבולות כאן הוא <code>if (row &lt; height &amp;&amp; col &lt; width)</code> - שני התנאים, כי ה-grid מעוגל כלפי מעלה בשני הממדים, וייווצרו threads עודפים גם מימין למטריצה וגם מתחתיה. הרחבה ל-3D זהה ברוחה: מוסיפים <code>.z</code> ומחשבים <code>depth</code> באותה תבנית. את ה-kernel הזה לכפל מטריצות נראה במלואו בשיעור 2.3.</p>
+<h2 id="-sm-occupancy">כמה בלוקים נכנסים ל-SM - occupancy ומגבלות משאבים<a class="headerlink" href="#-sm-occupancy" title="Permanent link">&para;</a></h2>
+<p>ראינו שבלוק שלם יושב על SM אחד. שאלה מעשית: <strong>כמה בלוקים יכולים לשבת על אותו SM בו-זמנית?</strong> התשובה קובעת את ה-occupancy (תפוסה) - כמה warps תושבים יש על ה-SM ביחס למקסימום - וזה בתורו קובע כמה טוב ה-SM יכול להסתיר latency (השהיה), כפי שראינו בפרק 1. ככל שיותר בלוקים תושבים, יותר warps זמינים להחלפה כשאחד נתקע.</p>
+<p>מספר הבלוקים לכל SM חסום על ידי המשאבים הסופיים של ה-SM, וכל אחד מהם יכול להיות הגורם המגביל:</p>
+<ul>
+<li><strong>קובץ האוגרים (register file):</strong> ב-H100, 65,536 אוגרים בני 32 סיביות ל-SM. כל thread צורך מספר אוגרים קבוע (שה-nvcc קובע בקומפילציה), וסך האוגרים של כל הthreads התושבים לא יכול לחרוג מהתקציב.</li>
+<li><strong>חריצי warp (warp slots):</strong> ה-SM יכול לעקוב אחר מספר מוגבל של warps תושבים - ב-H100, 64 warps (כלומר 2,048 threads).</li>
+<li><strong>בייטים של shared memory:</strong> כל בלוק שמכריז על <code>__shared__</code> צורך נתח מה-L1/shared, וסך הצריכה חסום (עד 228 KiB לבלוק, ופחות מכך אם רוצים כמה בלוקים תושבים).</li>
+<li><strong>מגבלה קשיחה של בלוקים ל-SM:</strong> ב-Hopper, עד 32 בלוקים תושבים ל-SM.</li>
+</ul>
+<p><strong>החשבון נעשה בזמן קומפילציה על ידי nvcc:</strong> הcompiler יודע כמה אוגרים ו-shared memory כל בלוק צורך, וכך אפשר לחשב מראש כמה בלוקים ייכנסו. בואו נחשב דוגמה מלאה ל-H100, עם kernel שבו כל בלוק הוא 256 threads (8 warps) ומשתמש ב-8 KiB shared memory לבלוק:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>assume: blockSize = 256 threads = 8 warps ;  shared = 8 KiB/block
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>register limit (with 32 registers/thread):
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>   32 registers/thread * 256 threads = 8,192 registers/block
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>   65,536 / 8,192            = 8 blocks
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>warp slot limit:
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>   64 warps / 8 warps-per-block  = 8 blocks
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>shared memory limit:
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>   228 KiB / 8 KiB           = 28 blocks
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>hard block limit:            = 32 blocks
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>                              ------------------
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>   limiting factor = minimum    = 8 resident blocks
+</code></pre></div>
+<p>שמונה בלוקים תושבים פירושם <code>8 * 256 = 2,048</code> threads תושבים - בדיוק המקסימום של ה-SM, כלומר <strong>תפוסה מלאה (100% occupancy).</strong> עכשיו נראה את כוחו של לחץ האוגרים: אם אותו kernel היה צורך 64 אוגרים לthread במקום 32, מגבלת האוגרים הייתה <code>65,536 / (64*256) = 4</code> בלוקים בלבד, כלומר <code>4 * 256 = 1,024</code> threads תושבים - <strong>50% תפוסה בלבד.</strong> אותו קוד, פי שניים אוגרים, חצי מהתפוסה. זו בדיוק הסיבה שכתיבת kernels "רזים" באוגרים היא מפתח לביצועים. את הטיפול המלא ב-occupancy - איך מודדים אותה, איך מכווננים אותה, ומתי תפוסה גבוהה בכלל עוזרת - נפתח בפרק 8.</p>
+<h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>היררכיית הthreads בת שלוש רמות: thread (רץ על core) &lt; block/CTA (מתוזמן כולו על SM אחד) &lt; grid (נפרס על כל ה-SMs); ה-warp הוא פרט מימוש שיושב בין ה-thread לבלוק ואינו רמה רשמית במודל.</li>
+<li>בלוק מכיל עד 1024 threads, נבחר ככפולה של 32, ומכיל warp אחד או יותר; grid הוא אוסף כל הבלוקים של kernel launch אחד, ויכול להיות 1D/2D/3D.</li>
+<li>"block" הוא שם מודל התכנות ו-"Cooperative Thread Array" (CTA) הוא אותו דבר ברמת PTX/SASS; ערובת ה-SM המשותף (כל threads הבלוק על SM אחד) היא מה שמאפשר shared memory ו-barriers, ולכן הבלוק הוא היחידה הקטנה ביותר של שיתוף פעולה שנחשפת למתכנת.</li>
+<li>חוק העצמאות: הבלוקים חייבים לרוץ באופן עצמאי וכל סדר שזירה שלהם חייב להיות תקף; האי-דטרמיניזם הזה הוא בדיוק מה שמאפשר הרחבה שקופה - אותו grid רץ נכון על GPU עם SM אחד (סדרתי) או עם 132 SMs (מקבילי מלא).</li>
+<li>אין מחסום חוצה-בלוקים: <code>__syncthreads()</code> הוא ברמת הבלוק בלבד; בלוקים מתאמים ביניהם רק דרך global memory עם atomics, וחסימת בלוק בהמתנה לבלוק אחר מזמינה deadlock כי הנהג שולט בסדר - תלות בין שלבים פותרים בשני kernel launches נפרדים.</li>
+<li>האינדקס הגלובלי החד-ממדי הוא <code>i = blockIdx.x * blockDim.x + threadIdx.x</code>, עם <code>gridDim</code> ו-<code>blockDim</code> כמימדים; תמיד נדרש שומר גבולות <code>if (i &lt; n)</code>.</li>
+<li>אינדוקס דו-ממדי עם <code>dim3</code>: <code>col = blockIdx.x*blockDim.x + threadIdx.x</code>, <code>row = blockIdx.y*blockDim.y + threadIdx.y</code>, גישה לזיכרון ב-<code>row*width + col</code>, ושומר גבולות כפול <code>if (row &lt; height &amp;&amp; col &lt; width)</code>; זכרו ש-<code>.x</code> הוא הממד המהיר (עמודות).</li>
+<li>מספר הבלוקים שנכנסים ל-SM נקבע על ידי המשאב הסופי הכי מגביל - קובץ האוגרים (65,536 ל-SM ב-H100), חריצי warp (64), בייטים של shared memory (עד 228 KiB), ומגבלת 32 בלוקים ל-SM; nvcc מחשב זאת בזמן קומפילציה.</li>
+<li>מספר הבלוקים התושבים קובע את ה-occupancy: בדוגמת 256 threads ו-32 אוגרים/thread מתקבלים 8 בלוקים תושבים = 2,048 threads = תפוסה מלאה, אך הכפלת האוגרים ל-64 מורידה ל-4 בלוקים = 50% - לחץ אוגרים הוא בלם ביצועים מרכזי, ונרחיב עליו בפרק 8.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

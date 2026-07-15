@@ -1,0 +1,4663 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בסעיף 5.8 למדנו על מנעולים (mutexes) במרחב המשתמש - ראינו איך processes ו-threads יכולים לסנכרן גישה למשאבים משותפים. עכשיו נצלול לתוך מנגנוני הסנכרון של...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../6.9%20-%20%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA%20%D7%94%D7%A8%D7%A9%D7%AA/6.9%20-%20%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA%20%D7%94%D7%A8%D7%A9%D7%AA%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>סנכרון בקרנל - kernel synchronization - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "\u05e1\u05e0\u05db\u05e8\u05d5\u05df \u05d1\u05e7\u05e8\u05e0\u05dc - kernel synchronization",
+            "item": "https://amittech.dev/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="סנכרון בקרנל - kernel synchronization - עמית טק" />
+<meta property="og:description" content="בסעיף 5.8 למדנו על מנעולים (mutexes) במרחב המשתמש - ראינו איך processes ו-threads יכולים לסנכרן גישה למשאבים משותפים. עכשיו נצלול לתוך מנגנוני הסנכרון של..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="סנכרון בקרנל - kernel synchronization - עמית טק" />
+<meta property="twitter:description" content="בסעיף 5.8 למדנו על מנעולים (mutexes) במרחב המשתמש - ראינו איך processes ו-threads יכולים לסנכרן גישה למשאבים משותפים. עכשיו נצלול לתוך מנגנוני הסנכרון של..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-kernel-synchronization" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              סנכרון בקרנל - kernel synchronization
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_1" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_1" id="__nav_7_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    ליבת המחשב
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%90%D7%A8%D7%92%D7%95%D7%9F%20%D7%94%D7%9E%D7%97%D7%A9%D7%91/0.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94/0.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   ארגון המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%2016%20%D7%91%D7%99%D7%98/1.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94/1.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   אסמבלי 16 ביט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%2032%20%D7%91%D7%99%D7%98/2.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/2.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   אסמבלי 32 ביט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%A9%D7%A4%D7%AA%20C/3.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/3.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   שפת C
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%99%D7%AA%20libc/4.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/4.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   ספריית libc
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/5.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/5.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   לינוקס
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_1_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_1_8" id="__nav_7_1_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   הקרנל של לינוקס
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_1_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_1_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    6   הקרנל של לינוקס
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C/6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.1   הקדמה לקרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.2%20-%20%D7%94syscall%20%D7%9E%D7%91%D7%A4%D7%A0%D7%99%D7%9D/6.2%20-%20%D7%94syscall%20%D7%9E%D7%91%D7%A4%D7%A0%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.2   הsyscall מבפנים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.3%20-%20%D7%9E%D7%AA%D7%96%D7%9E%D7%9F%20%D7%94%D7%AA%D7%94%D7%9C%D7%99%D7%9B%D7%99%D7%9D/6.3%20-%20%D7%9E%D7%AA%D7%96%D7%9E%D7%9F%20%D7%94%D7%AA%D7%94%D7%9C%D7%99%D7%9B%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.3   מתזמן התהליכים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.4%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F/6.4%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.4   ניהול זכרון
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.5%20-%20%D7%9E%D7%A2%D7%A8%D7%9B%D7%AA%20%D7%94%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%94%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/6.5%20-%20%D7%9E%D7%A2%D7%A8%D7%9B%D7%AA%20%D7%94%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%94%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.5   מערכת הקבצים הוירטואלית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.6   הקצאת זכרון בקרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions/6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.7   פסיקות ו exceptions
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.8%20-%20%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%D7%99%D7%9D/6.8%20-%20%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.8   דרייברים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.9%20-%20%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA%20%D7%94%D7%A8%D7%A9%D7%AA/6.9%20-%20%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA%20%D7%94%D7%A8%D7%A9%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.9   מחסנית הרשת
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_1_8_10" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_1_8_10" id="__nav_7_1_8_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.10   סנכרון בקרנל
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_1_8_10_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_1_8_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    6.10   סנכרון בקרנל
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    סנכרון בקרנל - kernel synchronization
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    סנכרון בקרנל - kernel synchronization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מבוא
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        למה סנכרון בקרנל קשה יותר
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="למה סנכרון בקרנל קשה יותר">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-smp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ריבוי מעבדים - SMP
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-interrupts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פסיקות - interrupts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הקשרים שלא יכולים לישון
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-atomic-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פעולות אטומיות - atomic operations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="פעולות אטומיות - atomic operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#atomic_t" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הטיפוס atomic_t
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מימוש ברמת החומרה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מתי להשתמש
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-spinlocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מנעולי סיבוב - spinlocks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מנעולי סיבוב - spinlocks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        העיקרון
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#busy-wait-sleep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        למה busy-wait ולא sleep?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spinlock-interrupts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        spinlock וinterrupts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spinlock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        spinlock על מעבד יחיד
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        כללים חשובים
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-kernel-mutexes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מנעולים בקרנל - kernel mutexes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מנעולים בקרנל - kernel mutexes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mutex-spinlock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מתי mutex ומתי spinlock?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תכונות מיוחדות
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-read-write-locks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מנעולי קריאה-כתיבה - read-write locks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מנעולי קריאה-כתיבה - read-write locks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#spinlock-rwlock_t" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        גרסת spinlock - rwlock_t
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#semaphore-rw_semaphore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        גרסת semaphore - rw_semaphore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        בעיות אפשריות
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rcu-read-copy-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RCU - Read-Copy-Update
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RCU - Read-Copy-Update">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        העיקרון
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איך זה עובד
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הinterface קריאה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interface_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הinterface כתיבה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דוגמה מלאה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-rcu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איפה משתמשים ב-RCU
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-semaphores" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סמפורים - semaphores
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-per-cpu-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        משתנים לכל מעבד - per-CPU variables
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="משתנים לכל מעבד - per-CPU variables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שימושים נפוצים
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        למה זה עובד
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מניעת דדלוקים בקרנל
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מניעת דדלוקים בקרנל">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        כללי ברזל
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lockdep-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        lockdep - גילוי דדלוקים בזמן ריצה
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום - מתי להשתמש במה
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    סנכרון בקרנל - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    סנכרון בקרנל - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.11%20-%20%D7%90%D7%91%D7%98%D7%97%D7%94%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.11%20-%20%D7%90%D7%91%D7%98%D7%97%D7%94%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.11   אבטחה בקרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C/6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.12   דיבוג קרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.13%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A1%D7%99%D7%9B%D7%95%D7%9D/6.13%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A1%D7%99%D7%9B%D7%95%D7%9D%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.13   פרויקט סיכום
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94/7.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94/7.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   הנדסה הפוכה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%9E%D7%A2%D7%91%D7%93/8.1%20-%20%D7%A6%D7%99%D7%A0%D7%95%D7%A8%20%D7%94%D7%94%D7%95%D7%A8%D7%90%D7%95%D7%AA/8.1%20-%20%D7%A6%D7%99%D7%A0%D7%95%D7%A8%20%D7%94%D7%94%D7%95%D7%A8%D7%90%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   ארכיטקטורת מעבד
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%9C%D7%A6%D7%99%D7%94%20%D7%95%D7%9C%D7%99%D7%A0%D7%A7%D7%95%D7%92/9.1%20-%20%D7%A9%D7%9C%D7%91%D7%99%20%D7%94%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%9C%D7%A6%D7%99%D7%94/9.1%20-%20%D7%A9%D7%9C%D7%91%D7%99%20%D7%94%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%9C%D7%A6%D7%99%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   קומפילציה ולינקוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../10%20-%20C%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/10.1%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%20%D7%91%D7%AA%D7%95%D7%9A%20C/10.1%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%20%D7%91%D7%AA%D7%95%D7%9A%20C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10   C מתקדם
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../11%20-%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A8%D7%A9%D7%AA/11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D/11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    11   תכנות רשת
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../12%20-%20%D7%9E%D7%A7%D7%91%D7%99%D7%9C%D7%99%D7%95%D7%AA%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%AA/12.1%20-%20%D7%93%D7%A4%D7%95%D7%A1%D7%99%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%9E%D7%A7%D7%91%D7%99%D7%9C%D7%99/12.1%20-%20%D7%93%D7%A4%D7%95%D7%A1%D7%99%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%9E%D7%A7%D7%91%D7%99%D7%9C%D7%99%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    12   מקביליות מתקדמת
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מבוא
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        למה סנכרון בקרנל קשה יותר
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="למה סנכרון בקרנל קשה יותר">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-smp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ריבוי מעבדים - SMP
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-interrupts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פסיקות - interrupts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הקשרים שלא יכולים לישון
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-atomic-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פעולות אטומיות - atomic operations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="פעולות אטומיות - atomic operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#atomic_t" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הטיפוס atomic_t
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מימוש ברמת החומרה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מתי להשתמש
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-spinlocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מנעולי סיבוב - spinlocks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מנעולי סיבוב - spinlocks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        העיקרון
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#busy-wait-sleep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        למה busy-wait ולא sleep?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spinlock-interrupts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        spinlock וinterrupts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spinlock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        spinlock על מעבד יחיד
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        כללים חשובים
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-kernel-mutexes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מנעולים בקרנל - kernel mutexes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מנעולים בקרנל - kernel mutexes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mutex-spinlock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מתי mutex ומתי spinlock?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תכונות מיוחדות
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-read-write-locks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מנעולי קריאה-כתיבה - read-write locks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מנעולי קריאה-כתיבה - read-write locks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#spinlock-rwlock_t" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        גרסת spinlock - rwlock_t
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#semaphore-rw_semaphore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        גרסת semaphore - rw_semaphore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        בעיות אפשריות
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rcu-read-copy-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RCU - Read-Copy-Update
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RCU - Read-Copy-Update">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        העיקרון
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איך זה עובד
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הinterface קריאה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interface_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הinterface כתיבה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דוגמה מלאה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-rcu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איפה משתמשים ב-RCU
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-semaphores" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סמפורים - semaphores
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-per-cpu-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        משתנים לכל מעבד - per-CPU variables
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="משתנים לכל מעבד - per-CPU variables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שימושים נפוצים
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        למה זה עובד
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מניעת דדלוקים בקרנל
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מניעת דדלוקים בקרנל">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        כללי ברזל
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lockdep-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        lockdep - גילוי דדלוקים בזמן ריצה
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום - מתי להשתמש במה
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    ליבת המחשב
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C/6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    6   הקרנל של לינוקס
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    6.10   סנכרון בקרנל
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="-kernel-synchronization">סנכרון בקרנל - kernel synchronization<a class="headerlink" href="#-kernel-synchronization" title="Permanent link">&para;</a></h1>
+<h2 id="_1">מבוא<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>בסעיף 5.8 למדנו על מנעולים (mutexes) במרחב המשתמש - ראינו איך processes ו-threads יכולים לסנכרן גישה למשאבים משותפים. עכשיו נצלול לתוך מנגנוני הסנכרון של הקרנל עצמו, ונגלה שהם הרבה יותר מורכבים.</p>
+<p>למה? כי הקרנל מתמודד עם אתגרים שלא קיימים ב-user space:</p>
+<ul>
+<li>מספר מעבדים (CPUs) מריצים קוד קרנל <strong>בו-זמנית</strong></li>
+<li>פסיקות (interrupts) יכולות לקטוע קוד קרנל <strong>בכל רגע</strong></li>
+<li>חלק מההקשרים בקרנל <strong>לא יכולים לישון</strong> (interrupt handlers, softirqs)</li>
+<li>דדלוק בקרנל = <strong>הקפאה מוחלטת של המערכת</strong></li>
+</ul>
+<p>אין פה מנגנון הגנה שיציל אתכם - אם הקרנל נתקע, כל המערכת נתקעת. לכן הסנכרון בקרנל הוא נושא קריטי.</p>
+<hr />
+<h2 id="_2">למה סנכרון בקרנל קשה יותר<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<h3 id="-smp">ריבוי מעבדים - SMP<a class="headerlink" href="#-smp" title="Permanent link">&para;</a></h3>
+<p>במערכת עם מספר מעבדים (SMP - Symmetric Multiprocessing), שני מעבדים שונים יכולים להריץ קוד קרנל <strong>באותו רגע ממש</strong>. למשל, שני processes על שני מעבדים שונים יכולים לקרוא לאותו syscall ולגשת לאותו מבנה נתונים בקרנל.</p>
+<p>ב-user space, ה-scheduler מחליף בין threads, אבל בכל רגע נתון רק thread אחד רץ (על CPU אחד). בקרנל, המצב שונה לגמרי - קוד קרנל רץ <strong>במקביל אמיתי</strong>.</p>
+<h3 id="-interrupts">פסיקות - interrupts<a class="headerlink" href="#-interrupts" title="Permanent link">&para;</a></h3>
+<p>נניח שקוד קרנל מעדכן מבנה נתונים, ובדיוק באמצע - מגיעה interrupt מכרטיס הרשת. ה-interrupt handler רץ <strong>על אותו CPU</strong>, ואם הוא ניגש לאותו מבנה נתונים - יש לנו בעיה.</p>
+<h3 id="_3">הקשרים שלא יכולים לישון<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<p>ב-user space, mutex פשוט שולח את ה-thread לישון אם המנעול תפוס. אבל בקרנל, יש הקשרים שבהם <strong>אסור לישון</strong>:</p>
+<ul>
+<li><strong>הקשר interrupt</strong> - interrupt handler: לא שייך לשום process, אז אי אפשר לשים אותו ב-sleep queue</li>
+<li><strong>הקשר softirq</strong> ו-tasklet: מטפלים בinterrupts "רכות", גם הם לא יכולים לישון</li>
+<li><strong>כשמחזיקים spinlock</strong>: כי spinlock משבית preemption, ואם נירדם נתקע</li>
+</ul>
+<hr />
+<h2 id="-atomic-operations">פעולות אטומיות - atomic operations<a class="headerlink" href="#-atomic-operations" title="Permanent link">&para;</a></h2>
+<p>הרמה הבסיסית ביותר של סנכרון. עבור פעולות פשוטות כמו הגדלת מונה, אין צורך במנעול מלא - מספיקה פעולה אטומית.</p>
+<h3 id="atomic_t">הטיפוס atomic_t<a class="headerlink" href="#atomic_t" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;linux/types.h&gt;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">atomic_t</span><span class="w"> </span><span class="n">counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ATOMIC_INIT</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+</code></pre></div>
+<p>הפעולות העיקריות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kt">int</span><span class="w"> </span><span class="n">val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">atomic_read</span><span class="p">(</span><span class="o">&amp;</span><span class="n">counter</span><span class="p">);</span><span class="w">    </span><span class="c1">// atomic read</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">atomic_set</span><span class="p">(</span><span class="o">&amp;</span><span class="n">counter</span><span class="p">,</span><span class="w"> </span><span class="mi">42</span><span class="p">);</span><span class="w">           </span><span class="c1">// atomic write</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">atomic_add</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">counter</span><span class="p">);</span><span class="w">            </span><span class="c1">// counter += 5</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">atomic_sub</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">counter</span><span class="p">);</span><span class="w">            </span><span class="c1">// counter -= 3</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="n">atomic_inc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">counter</span><span class="p">);</span><span class="w">               </span><span class="c1">// counter++</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="n">atomic_dec</span><span class="p">(</span><span class="o">&amp;</span><span class="n">counter</span><span class="p">);</span><span class="w">               </span><span class="c1">// counter--</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="c1">// operations that also return a value</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="kt">int</span><span class="w"> </span><span class="n">old</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">atomic_inc_return</span><span class="p">(</span><span class="o">&amp;</span><span class="n">counter</span><span class="p">);</span><span class="w">  </span><span class="c1">// ++counter, returns the new value</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">atomic_dec_and_test</span><span class="p">(</span><span class="o">&amp;</span><span class="n">counter</span><span class="p">))</span><span class="w">      </span><span class="c1">// --counter, returns true if the result is 0</span>
+</code></pre></div>
+<h3 id="_4">מימוש ברמת החומרה<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<p>על ארכיטקטורת x86, פעולות אטומיות מומשות באמצעות הפקודה LOCK prefix:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="na">lock</span><span class="w"> </span><span class="nf">incl</span><span class="w"> </span><span class="p">(</span><span class="nv">%rdi</span><span class="p">)</span><span class="w">    </span><span class="c1">; atomic increment</span>
+</code></pre></div>
+<p>הפקודה LOCK נועלת את ה-memory bus (או cache line ספציפי) למשך הפעולה, ומבטיחה שאף CPU אחר לא יגש לאותו כתובת באמצע.</p>
+<p>על ארכיטקטורות אחרות, משתמשים ב-compare-and-swap (cmpxchg) או ב-load-linked/store-conditional (LL/SC).</p>
+<h3 id="_5">מתי להשתמש<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<p>פעולות אטומיות מתאימות לדברים פשוטים:<br />
+- מוני התייחסות (reference counters)<br />
+- דגלים (flags)<br />
+- סטטיסטיקות פשוטות</p>
+<p>אם צריך לעדכן מבנה נתונים מורכב - צריך מנעול אמיתי.</p>
+<hr />
+<h2 id="-spinlocks">מנעולי סיבוב - spinlocks<a class="headerlink" href="#-spinlocks" title="Permanent link">&para;</a></h2>
+<p>ה-spinlock הוא המנעול הפשוט ביותר בקרנל, והשימוש הנפוץ ביותר בהקשרים שלא יכולים לישון.</p>
+<h3 id="_6">העיקרון<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<p>כשprocess מנסה לקבל spinlock שתפוס, הוא <strong>מסתובב בלולאה</strong> (spins) ובודק שוב ושוב אם המנעול התפנה. הוא <strong>לא הולך לישון</strong> - הוא פשוט ממתין בפעילות (busy-wait).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;linux/spinlock.h&gt;</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">DEFINE_SPINLOCK</span><span class="p">(</span><span class="n">my_lock</span><span class="p">);</span><span class="w">     </span><span class="c1">// static definition</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1">// or</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">spinlock_t</span><span class="w"> </span><span class="n">my_lock</span><span class="p">;</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">spin_lock_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_lock</span><span class="p">);</span><span class="w">     </span><span class="c1">// dynamic definition</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="n">spin_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_lock</span><span class="p">);</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="c1">// ... critical section ...</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="n">spin_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_lock</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="busy-wait-sleep">למה busy-wait ולא sleep?<a class="headerlink" href="#busy-wait-sleep" title="Permanent link">&para;</a></h3>
+<p>כי spinlock משמש בהקשרים שבהם <strong>אסור לישון</strong> (interrupt handlers, softirqs). בנוסף, אם הקטע הקריטי קצר מאוד (כמה שורות קוד), ה-overhead של הרדמה והקצה מחדש גדול יותר מאשר לסובב קצת.</p>
+<h3 id="spinlock-interrupts">spinlock וinterrupts<a class="headerlink" href="#spinlock-interrupts" title="Permanent link">&para;</a></h3>
+<p>נניח את התרחיש הבא:<br />
+1. process A לוקח spinlock<br />
+2. מגיעה interrupt <strong>על אותו CPU</strong><br />
+3. ה-interrupt handler מנסה לקחת את אותו spinlock<br />
+4. <strong>דדלוק!</strong> - ה-handler מסתובב, אבל process A לא יכול לשחרר כי ה-handler רץ על אותו CPU</p>
+<p>הפתרון - להשבית interrupts ביחד עם לקיחת ה-lock:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">flags</span><span class="p">;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">spin_lock_irqsave</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_lock</span><span class="p">,</span><span class="w"> </span><span class="n">flags</span><span class="p">);</span><span class="w">     </span><span class="c1">// locks + disables interrupts + saves state</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1">// ... critical section ...</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">spin_unlock_irqrestore</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_lock</span><span class="p">,</span><span class="w"> </span><span class="n">flags</span><span class="p">);</span><span class="w"> </span><span class="c1">// unlocks + restores interrupt state</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1">// if we know for certain that interrupts are enabled:</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="n">spin_lock_irq</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_lock</span><span class="p">);</span><span class="w">     </span><span class="c1">// locks + disables interrupts</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="c1">// ... critical section ...</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="n">spin_unlock_irq</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_lock</span><span class="p">);</span><span class="w">   </span><span class="c1">// unlocks + enables interrupts</span>
+</code></pre></div>
+<p>השיטה <code>irqsave</code> בטוחה יותר כי היא שומרת את מצב הinterrupts המקורי (אולי הן כבר היו מושבתות).</p>
+<h3 id="spinlock">spinlock על מעבד יחיד<a class="headerlink" href="#spinlock" title="Permanent link">&para;</a></h3>
+<p>על מערכת עם CPU אחד, אין צורך ב-spinning אמיתי - הרי אין CPU אחר שמחזיק את המנעול. במקום זה, spinlock פשוט <strong>משבית preemption</strong> על ה-CPU המקומי, מה שמבטיח שאף קוד אחר לא ירוץ עד ששוחררים את המנעול.</p>
+<h3 id="_7">כללים חשובים<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>החזיקו spinlock לזמן קצר ככל האפשר</strong> - כל מי שמחכה מבזבז CPU cycles</li>
+<li><strong>לעולם אל תישנו בתוך spinlock</strong> - אסור לקרוא לפונקציות שעלולות לישון (kmalloc עם GFP_KERNEL, copy_from_user, וכו')</li>
+<li><strong>אם צריכים לישון - השתמשו ב-mutex</strong></li>
+</ul>
+<hr />
+<h2 id="-kernel-mutexes">מנעולים בקרנל - kernel mutexes<a class="headerlink" href="#-kernel-mutexes" title="Permanent link">&para;</a></h2>
+<p>ה-mutex בקרנל דומה למה שראינו ב-user space, אבל עם כמה הבדלים חשובים.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;linux/mutex.h&gt;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">DEFINE_MUTEX</span><span class="p">(</span><span class="n">my_mutex</span><span class="p">);</span><span class="w">        </span><span class="c1">// static definition</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1">// or</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="k">struct</span><span class="w"> </span><span class="nc">mutex</span><span class="w"> </span><span class="n">my_mutex</span><span class="p">;</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">mutex_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_mutex</span><span class="p">);</span><span class="w">          </span><span class="c1">// dynamic definition</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="n">mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_mutex</span><span class="p">);</span><span class="w">          </span><span class="c1">// locks, sleeps if the lock is held</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="c1">// ... critical section (can sleep!) ...</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="n">mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_mutex</span><span class="p">);</span><span class="w">        </span><span class="c1">// unlocks</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="c1">// non-blocking version:</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mutex_trylock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_mutex</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">    </span><span class="c1">// we managed to lock</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">    </span><span class="n">mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_mutex</span><span class="p">);</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="p">}</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="c1">// version that can be interrupted by a signal:</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mutex_lock_interruptible</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_mutex</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="w">    </span><span class="c1">// we managed to lock</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="w">    </span><span class="n">mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_mutex</span><span class="p">);</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="mutex-spinlock">מתי mutex ומתי spinlock?<a class="headerlink" href="#mutex-spinlock" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>מאפיין</th>
+<th>spinlock</th>
+<th>mutex</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>התנהגות כשתפוס</td>
+<td>מסתובב (busy-wait)</td>
+<td>הולך לישון</td>
+</tr>
+<tr>
+<td>שימוש ב-interrupt handler</td>
+<td>כן</td>
+<td><strong>לא!</strong></td>
+</tr>
+<tr>
+<td>מותר לישון בתוכו</td>
+<td><strong>לא!</strong></td>
+<td>כן</td>
+</tr>
+<tr>
+<td>קטע קריטי ארוך</td>
+<td>לא מומלץ</td>
+<td>כן</td>
+</tr>
+<tr>
+<td>overhead כשהמנעול פנוי</td>
+<td>מינימלי</td>
+<td>קצת יותר</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_8">תכונות מיוחדות<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<p>ל-mutex בקרנל יש כמה תכונות שאין ל-spinlock:<br />
+- <strong>מעקב בעלות</strong> (owner tracking) - רק מי שנעל יכול לשחרר<br />
+- <strong>תמיכה ב-lockdep</strong> - מערכת הדיבאג של הקרנל יכולה לזהות סדרי נעילה שגויים<br />
+- <strong>אופטימיזציה של fast path</strong> - אם המנעול פנוי, הנעילה היא פעולה אטומית אחת בלבד</p>
+<hr />
+<h2 id="-read-write-locks">מנעולי קריאה-כתיבה - read-write locks<a class="headerlink" href="#-read-write-locks" title="Permanent link">&para;</a></h2>
+<p>לפעמים יש מבנה נתונים שנקרא הרבה אבל נכתב מעט. למשל, טבלת ניתוב (routing table) - כל חבילת רשת צריכה לקרוא ממנה, אבל עדכונים מגיעים לעיתים רחוקות.</p>
+<p>במצב כזה, אין סיבה שקוראים יחסמו אחד את השני. מנעולי קריאה-כתיבה מאפשרים:<br />
+- <strong>מספר קוראים במקביל</strong> - כל עוד אין כותב<br />
+- <strong>כותב בלעדי</strong> - חוסם את כל הקוראים והכותבים האחרים</p>
+<h3 id="spinlock-rwlock_t">גרסת spinlock - rwlock_t<a class="headerlink" href="#spinlock-rwlock_t" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;linux/rwlock.h&gt;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">DEFINE_RWLOCK</span><span class="p">(</span><span class="n">my_rwlock</span><span class="p">);</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c1">// read:</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">read_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_rwlock</span><span class="p">);</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1">// ... read from the structure ...</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">read_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_rwlock</span><span class="p">);</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1">// write:</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="n">write_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_rwlock</span><span class="p">);</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="c1">// ... update the structure ...</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="n">write_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_rwlock</span><span class="p">);</span>
+</code></pre></div>
+<p>כמו spinlock רגיל - לא ישן, מסתובב. יש גם גרסאות עם irqsave.</p>
+<h3 id="semaphore-rw_semaphore">גרסת semaphore - rw_semaphore<a class="headerlink" href="#semaphore-rw_semaphore" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;linux/rwsem.h&gt;</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">DECLARE_RWSEM</span><span class="p">(</span><span class="n">my_rwsem</span><span class="p">);</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1">// read:</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="n">down_read</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_rwsem</span><span class="p">);</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1">// ... reading (can sleep) ...</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="n">up_read</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_rwsem</span><span class="p">);</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="c1">// write:</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="n">down_write</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_rwsem</span><span class="p">);</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="c1">// ... writing (can sleep) ...</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="n">up_write</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_rwsem</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="_9">בעיות אפשריות<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>הרעבת כותבים</strong> (writer starvation) - אם כל הזמן יש קוראים חדשים, הכותב לעולם לא מקבל תור</li>
+<li><strong>ב-Linux הבעיה מטופלת</strong> - כשכותב מחכה, קוראים חדשים נחסמים גם הם</li>
+</ul>
+<hr />
+<h2 id="rcu-read-copy-update">RCU - Read-Copy-Update<a class="headerlink" href="#rcu-read-copy-update" title="Permanent link">&para;</a></h2>
+<p>זהו מנגנון הסנכרון המתקדם ביותר ב-Linux, והוא משמש באופן נרחב ברחבי הקרנל. הרעיון הבסיסי גאוני בפשטותו.</p>
+<h3 id="_10">העיקרון<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>קוראים לא צריכים מנעול בכלל</strong> - אפס overhead!</li>
+<li><strong>כותבים יוצרים עותק, מעדכנים אותו, ואז מחליפים את המצביע בפעולה אטומית</strong></li>
+<li><strong>הנתונים הישנים משוחררים רק אחרי שכל הקוראים סיימו</strong> (תקופת חסד - grace period)</li>
+</ul>
+<h3 id="_11">איך זה עובד<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>reader 1:  [----reads old data----]
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>reader 2:       [----reads old/new data----]
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>writer:    copy -&gt; update -&gt; pointer swap
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>                                        |--- grace period ---|
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>                                                              release old data
+</code></pre></div>
+<ol>
+<li>הכותב מקצה עותק חדש של מבנה הנתונים</li>
+<li>מעדכן את העותק החדש</li>
+<li>מחליף את המצביע (פעולה אטומית - <code>rcu_assign_pointer()</code>)</li>
+<li>מחכה שכל הקוראים שהחלו <strong>לפני</strong> ההחלפה יסיימו (grace period)</li>
+<li>משחרר את הנתונים הישנים</li>
+</ol>
+<h3 id="interface">הinterface קריאה<a class="headerlink" href="#interface" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;linux/rcupdate.h&gt;</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">rcu_read_lock</span><span class="p">();</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="k">struct</span><span class="w"> </span><span class="nc">my_data</span><span class="w"> </span><span class="o">*</span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rcu_dereference</span><span class="p">(</span><span class="n">global_ptr</span><span class="p">);</span><span class="w">  </span><span class="c1">// safe read of the pointer</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="c1">// ... use p ...</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="c1">// sleeping is forbidden here!</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="n">rcu_read_unlock</span><span class="p">();</span>
+</code></pre></div>
+<p>מה עושים <code>rcu_read_lock()</code> ו-<code>rcu_read_unlock()</code> בפועל? <strong>רק משביתים ומפעילים preemption!</strong> זה כל מה שצריך כדי להגן על הקורא. ה-overhead הוא אפסי - שתי פקודות מעבד פשוטות.</p>
+<h3 id="interface_1">הinterface כתיבה<a class="headerlink" href="#interface_1" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1">// pointer swap (atomic):</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">rcu_assign_pointer</span><span class="p">(</span><span class="n">global_ptr</span><span class="p">,</span><span class="w"> </span><span class="n">new_data</span><span class="p">);</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1">// releasing old data - two options:</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="c1">// 1. synchronous - blocks until all readers finish:</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="n">synchronize_rcu</span><span class="p">();</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="n">kfree</span><span class="p">(</span><span class="n">old_data</span><span class="p">);</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="c1">// 2. asynchronous - calls a callback when safe:</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="n">call_rcu</span><span class="p">(</span><span class="o">&amp;</span><span class="n">old_data</span><span class="o">-&gt;</span><span class="n">rcu_head</span><span class="p">,</span><span class="w"> </span><span class="n">my_rcu_callback</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="_12">דוגמה מלאה<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">my_entry</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">key</span><span class="p">;</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">value</span><span class="p">;</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">rcu_head</span><span class="w"> </span><span class="n">rcu</span><span class="p">;</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="p">};</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="k">struct</span><span class="w"> </span><span class="nc">my_entry</span><span class="w"> </span><span class="n">__rcu</span><span class="w"> </span><span class="o">*</span><span class="n">global_entry</span><span class="p">;</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="c1">// read (very fast):</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="kt">int</span><span class="w"> </span><span class="nf">read_value</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="p">{</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">val</span><span class="p">;</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="w">    </span><span class="n">rcu_read_lock</span><span class="p">();</span>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">my_entry</span><span class="w"> </span><span class="o">*</span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rcu_dereference</span><span class="p">(</span><span class="n">global_entry</span><span class="p">);</span>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="w">        </span><span class="n">val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">;</span>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="w">    </span><span class="k">else</span>
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="w">        </span><span class="n">val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">-1</span><span class="p">;</span>
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a><span class="w">    </span><span class="n">rcu_read_unlock</span><span class="p">();</span>
+<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">val</span><span class="p">;</span>
+<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a><span class="p">}</span>
+<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a>
+<a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a><span class="c1">// callback for releasing:</span>
+<a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">free_entry_rcu</span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">rcu_head</span><span class="w"> </span><span class="o">*</span><span class="n">head</span><span class="p">)</span>
+<a id="__codelineno-11-25" name="__codelineno-11-25" href="#__codelineno-11-25"></a><span class="p">{</span>
+<a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">my_entry</span><span class="w"> </span><span class="o">*</span><span class="n">entry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">container_of</span><span class="p">(</span><span class="n">head</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">my_entry</span><span class="p">,</span><span class="w"> </span><span class="n">rcu</span><span class="p">);</span>
+<a id="__codelineno-11-27" name="__codelineno-11-27" href="#__codelineno-11-27"></a><span class="w">    </span><span class="n">kfree</span><span class="p">(</span><span class="n">entry</span><span class="p">);</span>
+<a id="__codelineno-11-28" name="__codelineno-11-28" href="#__codelineno-11-28"></a><span class="p">}</span>
+<a id="__codelineno-11-29" name="__codelineno-11-29" href="#__codelineno-11-29"></a>
+<a id="__codelineno-11-30" name="__codelineno-11-30" href="#__codelineno-11-30"></a><span class="c1">// write:</span>
+<a id="__codelineno-11-31" name="__codelineno-11-31" href="#__codelineno-11-31"></a><span class="kt">void</span><span class="w"> </span><span class="nf">update_value</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">new_key</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">new_value</span><span class="p">)</span>
+<a id="__codelineno-11-32" name="__codelineno-11-32" href="#__codelineno-11-32"></a><span class="p">{</span>
+<a id="__codelineno-11-33" name="__codelineno-11-33" href="#__codelineno-11-33"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">my_entry</span><span class="w"> </span><span class="o">*</span><span class="n">new</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">kmalloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">new</span><span class="p">),</span><span class="w"> </span><span class="n">GFP_KERNEL</span><span class="p">);</span>
+<a id="__codelineno-11-34" name="__codelineno-11-34" href="#__codelineno-11-34"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">my_entry</span><span class="w"> </span><span class="o">*</span><span class="n">old</span><span class="p">;</span>
+<a id="__codelineno-11-35" name="__codelineno-11-35" href="#__codelineno-11-35"></a>
+<a id="__codelineno-11-36" name="__codelineno-11-36" href="#__codelineno-11-36"></a><span class="w">    </span><span class="n">new</span><span class="o">-&gt;</span><span class="n">key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">new_key</span><span class="p">;</span>
+<a id="__codelineno-11-37" name="__codelineno-11-37" href="#__codelineno-11-37"></a><span class="w">    </span><span class="n">new</span><span class="o">-&gt;</span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">new_value</span><span class="p">;</span>
+<a id="__codelineno-11-38" name="__codelineno-11-38" href="#__codelineno-11-38"></a>
+<a id="__codelineno-11-39" name="__codelineno-11-39" href="#__codelineno-11-39"></a><span class="w">    </span><span class="n">old</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rcu_dereference_protected</span><span class="p">(</span><span class="n">global_entry</span><span class="p">,</span><span class="w"> </span><span class="n">lockdep_is_held</span><span class="p">(</span><span class="o">&amp;</span><span class="n">update_mutex</span><span class="p">));</span>
+<a id="__codelineno-11-40" name="__codelineno-11-40" href="#__codelineno-11-40"></a><span class="w">    </span><span class="n">rcu_assign_pointer</span><span class="p">(</span><span class="n">global_entry</span><span class="p">,</span><span class="w"> </span><span class="n">new</span><span class="p">);</span>
+<a id="__codelineno-11-41" name="__codelineno-11-41" href="#__codelineno-11-41"></a>
+<a id="__codelineno-11-42" name="__codelineno-11-42" href="#__codelineno-11-42"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">old</span><span class="p">)</span>
+<a id="__codelineno-11-43" name="__codelineno-11-43" href="#__codelineno-11-43"></a><span class="w">        </span><span class="n">call_rcu</span><span class="p">(</span><span class="o">&amp;</span><span class="n">old</span><span class="o">-&gt;</span><span class="n">rcu</span><span class="p">,</span><span class="w"> </span><span class="n">free_entry_rcu</span><span class="p">);</span>
+<a id="__codelineno-11-44" name="__codelineno-11-44" href="#__codelineno-11-44"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="-rcu">איפה משתמשים ב-RCU<a class="headerlink" href="#-rcu" title="Permanent link">&para;</a></h3>
+<p>ב-Linux RCU משמש <strong>בכל מקום</strong>:<br />
+- טבלאות ניתוב ברשת<br />
+- חיפוש קבצים במערכת הקבצים (dcache)<br />
+- רשימת מודולים טעונים<br />
+- טבלאות processes<br />
+- ועוד הרבה - יש אלפי שימושים בקרנל</p>
+<hr />
+<h2 id="-semaphores">סמפורים - semaphores<a class="headerlink" href="#-semaphores" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;linux/semaphore.h&gt;</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="k">struct</span><span class="w"> </span><span class="nc">semaphore</span><span class="w"> </span><span class="n">sem</span><span class="p">;</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="n">sema_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sem</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span><span class="w">    </span><span class="c1">// initial value 1 = binary semaphore (like mutex)</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="n">sema_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sem</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">);</span><span class="w">    </span><span class="c1">// initial value 5 = allows 5 concurrent locks</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="n">down</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sem</span><span class="p">);</span><span class="w">            </span><span class="c1">// waits (sleeps) until the value &gt; 0, then decrements</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="c1">// ... critical section ...</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="n">up</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sem</span><span class="p">);</span><span class="w">              </span><span class="c1">// increments the value</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="n">down_interruptible</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sem</span><span class="p">);</span><span class="w">  </span><span class="c1">// can be interrupted by a signal</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="n">down_trylock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sem</span><span class="p">);</span><span class="w">        </span><span class="c1">// non-blocking</span>
+</code></pre></div>
+<p>סמפורים הם מנגנון ישן יותר שהיה בקרנל לפני ש-mutex נוסף. כיום, ברוב המקרים עדיף להשתמש ב-mutex (שיש לו אופטימיזציות ומעקב טובים יותר). סמפורים עדיין שימושיים כש-counting semaphore נדרש (מספר נועלים במקביל).</p>
+<hr />
+<h2 id="-per-cpu-variables">משתנים לכל מעבד - per-CPU variables<a class="headerlink" href="#-per-cpu-variables" title="Permanent link">&para;</a></h2>
+<p>הגישה הטובה ביותר לסנכרון היא... <strong>להימנע ממנו!</strong></p>
+<p>אם לכל CPU יש עותק משלו של משתנה, אין צורך בנעילה בכלל. זה בדיוק מה ש-per-CPU variables עושים.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;linux/percpu.h&gt;</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1">// static definition:</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="n">DEFINE_PER_CPU</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span><span class="w"> </span><span class="n">my_counter</span><span class="p">);</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="c1">// usage:</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="kt">int</span><span class="w"> </span><span class="n">cpu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">get_cpu</span><span class="p">();</span><span class="w">                    </span><span class="c1">// disables preemption and returns the CPU number</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="n">per_cpu</span><span class="p">(</span><span class="n">my_counter</span><span class="p">,</span><span class="w"> </span><span class="n">cpu</span><span class="p">)</span><span class="o">++</span><span class="p">;</span><span class="w">             </span><span class="c1">// access the current CPU&#39;s variable</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="n">put_cpu</span><span class="p">();</span><span class="w">                              </span><span class="c1">// enables preemption</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="c1">// or in short form:</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="n">get_cpu_var</span><span class="p">(</span><span class="n">my_counter</span><span class="p">)</span><span class="o">++</span><span class="p">;</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="n">put_cpu_var</span><span class="p">(</span><span class="n">my_counter</span><span class="p">);</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="c1">// dynamic allocation:</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="kt">int</span><span class="w"> </span><span class="n">__percpu</span><span class="w"> </span><span class="o">*</span><span class="n">dynamic_counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">alloc_percpu</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="kt">int</span><span class="w"> </span><span class="o">*</span><span class="n">ptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">per_cpu_ptr</span><span class="p">(</span><span class="n">dynamic_counter</span><span class="p">,</span><span class="w"> </span><span class="n">cpu</span><span class="p">);</span>
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="o">*</span><span class="n">ptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">42</span><span class="p">;</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="n">free_percpu</span><span class="p">(</span><span class="n">dynamic_counter</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="_13">שימושים נפוצים<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>מוני סטטיסטיקות</strong> - כל CPU מעדכן את המונה שלו, ורק כשרוצים את הסכום הכולל קוראים מכל ה-CPUs</li>
+<li><strong>מטמונים</strong> (caches) - כל CPU שומר עותק מקומי של נתונים שנגישים תכופות</li>
+<li><strong>מקצי זיכרון</strong> - ה-slab allocator משתמש ב-per-CPU caches</li>
+</ul>
+<h3 id="_14">למה זה עובד<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h3>
+<p><code>get_cpu()</code> משבית preemption - מה שמבטיח שהprocess לא יעבור ל-CPU אחר באמצע הגישה למשתנה. זה מספיק כי CPU אחר לא ניגש למשתנה הזה (לכל CPU יש עותק משלו).</p>
+<hr />
+<h2 id="_15">מניעת דדלוקים בקרנל<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h2>
+<p>דדלוק בקרנל הוא אסון - המערכת קופאת ואין דרך להתאושש (חוץ מ-restart). לכן הקרנל מספק כלים וכללים למניעת דדלוקים.</p>
+<h3 id="_16">כללי ברזל<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h3>
+<p><strong>1. תמיד תנעלו מנעולים באותו סדר</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1">// correct - always A before B:</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">spin_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lock_a</span><span class="p">);</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="n">spin_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lock_b</span><span class="p">);</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1">// ...</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="n">spin_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lock_b</span><span class="p">);</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="n">spin_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lock_a</span><span class="p">);</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="c1">// wrong - can create a deadlock!</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="c1">// thread 1: lock_a -&gt; lock_b</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="c1">// thread 2: lock_b -&gt; lock_a</span>
+</code></pre></div>
+<p><strong>2. לעולם אל תישנו כשמחזיקים spinlock</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">spin_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_lock</span><span class="p">);</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="n">kmalloc</span><span class="p">(</span><span class="n">size</span><span class="p">,</span><span class="w"> </span><span class="n">GFP_ATOMIC</span><span class="p">);</span><span class="w">    </span><span class="c1">// correct - GFP_ATOMIC doesn&#39;t sleep</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="c1">// kmalloc(size, GFP_KERNEL); // wrong! GFP_KERNEL can sleep</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="n">spin_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_lock</span><span class="p">);</span>
+</code></pre></div>
+<p><strong>3. אל תנסו לנעול spinlock שכבר מחזיקים (non-recursive)</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">spin_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_lock</span><span class="p">);</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="n">spin_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_lock</span><span class="p">);</span><span class="w">   </span><span class="c1">// deadlock! spinlock in Linux is not recursive</span>
+</code></pre></div>
+<h3 id="lockdep-">lockdep - גילוי דדלוקים בזמן ריצה<a class="headerlink" href="#lockdep-" title="Permanent link">&para;</a></h3>
+<p>ה-Linux kernel כולל מערכת גאונית בשם lockdep (מופעלת עם CONFIG_PROVE_LOCKING) שמזהה <strong>פוטנציאל</strong> לדדלוק עוד לפני שהוא קורה.</p>
+<p>איך? lockdep עוקב אחרי סדר הנעילות. אם הוא רואה שב-thread אחד נעלתם A ואז B, ואז ב-thread אחר נעלתם B ואז A - הוא מתריע <strong>מיד</strong>, גם אם דדלוק עדיין לא קרה בפועל.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>=============================================
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>WARNING: possible circular locking dependency detected
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>5.10.0 #1 Not tainted
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>---------------------------------------------
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>process/1234 is trying to acquire lock:
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a> (&amp;lock_b){+.+.}-{2:2}, at: my_function+0x42/0x100
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>but task is already holding lock:
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a> (&amp;lock_a){+.+.}-{2:2}, at: my_function+0x20/0x100
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>which lock already depends on the new lock.
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>...
+</code></pre></div>
+<p>הודעות lockdep הן שלא יסולא בפז לפיתוח קרנל - הן מגלות באגי סנכרון לפני שהם הופכים לקריסות בייצור.</p>
+<hr />
+<h2 id="-">סיכום - מתי להשתמש במה<a class="headerlink" href="#-" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>מנגנון</th>
+<th>ישן?</th>
+<th>הקשר interrupt?</th>
+<th>ביצועים</th>
+<th>שימוש טיפוסי</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>פעולות אטומיות - atomic operations</td>
+<td>לא</td>
+<td>כן</td>
+<td>הכי מהיר</td>
+<td>מונים, דגלים</td>
+</tr>
+<tr>
+<td>spinlock</td>
+<td>לא</td>
+<td>כן</td>
+<td>מהיר</td>
+<td>קטעים קריטיים קצרים</td>
+</tr>
+<tr>
+<td>mutex</td>
+<td>כן</td>
+<td><strong>לא</strong></td>
+<td>טוב</td>
+<td>קטעים קריטיים ארוכים</td>
+</tr>
+<tr>
+<td>rwlock</td>
+<td>לא</td>
+<td>כן</td>
+<td>מהיר לקוראים</td>
+<td>נתונים שנקראים הרבה</td>
+</tr>
+<tr>
+<td>RCU</td>
+<td>לא (קוראים)</td>
+<td>כן (קוראים)</td>
+<td>הכי מהיר לקוראים</td>
+<td>רשימות, טבלאות</td>
+</tr>
+<tr>
+<td>משתנים per-CPU</td>
+<td>לא</td>
+<td>כן</td>
+<td>הכי מהיר (אין נעילה)</td>
+<td>מונים, caches</td>
+</tr>
+</tbody>
+</table>
+<p>הכלל הפשוט: <strong>השתמשו במנגנון הקל ביותר שמספיק</strong>. אם מספיק atomic - אל תשתמשו ב-spinlock. אם מספיק spinlock - אל תשתמשו ב-mutex. ואם אפשר per-CPU - זו האפשרות הטובה ביותר.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

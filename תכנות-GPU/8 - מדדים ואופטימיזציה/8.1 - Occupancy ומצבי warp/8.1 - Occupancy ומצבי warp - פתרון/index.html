@@ -1,0 +1,2909 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="הערה: כל הזמנים המוחלטים, ה-occupancy הנמדד וספירות ה-spill בפלטים למטה הם דוגמאות ממכונת H100 SXM עם CUDA 12, וישתנו אצלכם לפי הכרטיס, גרסת הדרייבר ומצב...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        <link rel="prev" href="../8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="next" href="../8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>8.1 - Occupancy ומצבי warp - פתרון - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "8.1 - Occupancy \u05d5\u05de\u05e6\u05d1\u05d9 warp - \u05e4\u05ea\u05e8\u05d5\u05df",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="8.1 - Occupancy ומצבי warp - פתרון - עמית טק" />
+<meta property="og:description" content="הערה: כל הזמנים המוחלטים, ה-occupancy הנמדד וספירות ה-spill בפלטים למטה הם דוגמאות ממכונת H100 SXM עם CUDA 12, וישתנו אצלכם לפי הכרטיס, גרסת הדרייבר ומצב..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="8.1 - Occupancy ומצבי warp - פתרון - עמית טק" />
+<meta property="twitter:description" content="הערה: כל הזמנים המוחלטים, ה-occupancy הנמדד וספירות ה-spill בפלטים למטה הם דוגמאות ממכונת H100 SXM עם CUDA 12, וישתנו אצלכם לפי הכרטיס, גרסת הדרייבר ומצב..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-occupancy-warp" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              8.1 - Occupancy ומצבי warp - פתרון
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_10" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_10" id="__nav_7_3_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_10_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    8   מדדים ואופטימיזציה
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_10_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_10_1" id="__nav_7_3_10_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.1   Occupancy ומצבי warp
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_10_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_10_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    8.1   Occupancy ומצבי warp
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.1 - Occupancy ומצבי warp - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.1 - Occupancy ומצבי warp - פתרון
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.1 - Occupancy ומצבי warp - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-occupancy-warp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון - Occupancy ומצבי warp
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="פתרון - Occupancy ומצבי warp">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-occupancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 1 - חישוב occupancy ביד
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-occupancy-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 2 - אימות עם ה-Occupancy API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-ncu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 3 - אימות ב-ncu
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-occupancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 4 - סריקה: occupancy מול ביצועים
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-warp-ncu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 5 - זיהוי מצבי ה-warp בדוח ncu
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-register-pressure-occupancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 6 (בונוס) - register pressure: כשעלייה ב-occupancy מזיקה
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.1 - Occupancy ומצבי warp - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency/8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.2   ניצולת   SM, pipe ו issue efficiency
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls/8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.3   Warp divergence ו scoreboard stalls
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.4%20-%20Coalescing%20%D7%95-bank%20conflicts/8.4%20-%20Coalescing%20%D7%95-bank%20conflicts%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.4   Coalescing ו bank conflicts
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D/8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.5   Register pressure ואיזון משאבים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-occupancy-warp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון - Occupancy ומצבי warp
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="פתרון - Occupancy ומצבי warp">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-occupancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 1 - חישוב occupancy ביד
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-occupancy-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 2 - אימות עם ה-Occupancy API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-ncu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 3 - אימות ב-ncu
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-occupancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 4 - סריקה: occupancy מול ביצועים
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-warp-ncu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 5 - זיהוי מצבי ה-warp בדוח ncu
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-register-pressure-occupancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 6 (בונוס) - register pressure: כשעלייה ב-occupancy מזיקה
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    8   מדדים ואופטימיזציה
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    8.1   Occupancy ומצבי warp
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>8.1 - Occupancy ומצבי warp - פתרון</h1>
+
+<h2 id="-occupancy-warp">פתרון - Occupancy ומצבי warp<a class="headerlink" href="#-occupancy-warp" title="Permanent link">&para;</a></h2>
+<p>הערה: כל הזמנים המוחלטים, ה-occupancy הנמדד וספירות ה-spill בפלטים למטה הם דוגמאות ממכונת H100 SXM עם CUDA 12, וישתנו אצלכם לפי הכרטיס, גרסת הדרייבר ומצב המערכת. מה שלא ישתנה הוא המבנה, סדרי הגודל והמגמות. תרגילי החשבון (1, 5) מדויקים ואינם תלויים בחומרה (בהנחת מגבלות ה-H100). הקוד מתקמפל עם <code>nvcc -O2 -arch=sm_90a</code> (החליפו ל-<code>sm_75</code> על T4 וכדומה). לאורך הפתרון נשתמש בקובץ <code>occ.cu</code> הבא, שמשרת את תרגילים 2-4:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdio&gt;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdlib&gt;</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cuda_runtime.h&gt;</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="cp">#define CUDA_CHECK(call)                                                      \</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="cp">    do {                                                                      \</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="cp">        cudaError_t err_ = (call);                                            \</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="cp">        if (err_ != cudaSuccess) {                                            \</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="cp">            fprintf(stderr, &quot;CUDA error at %s:%d\n  &#39;%s&#39;\n  -&gt; %s\n&quot;,         \</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="cp">                    __FILE__, __LINE__, #call, cudaGetErrorString(err_));     \</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="cp">            exit(EXIT_FAILURE);                                               \</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="cp">        }                                                                     \</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="cp">    } while (0)</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="k">extern</span><span class="w"> </span><span class="n">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">smem</span><span class="p">[];</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1">// memory-dependent work; smemFloats controls how much shared memory is consumed</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">work</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">iters</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">smemFloats</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">acc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">iters</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="o">++</span><span class="p">)</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">        </span><span class="n">acc</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">in</span><span class="p">[(</span><span class="n">t</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">k</span><span class="p">)</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">n</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1.0009f</span><span class="p">;</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">smemFloats</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">smemFloats</span><span class="p">;</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">        </span><span class="n">smem</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">acc</span><span class="p">;</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">        </span><span class="n">__syncthreads</span><span class="p">();</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">        </span><span class="n">acc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">smem</span><span class="p">[</span><span class="n">idx</span><span class="p">];</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="n">out</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">acc</span><span class="p">;</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="1-occupancy">פתרון תרגיל 1 - חישוב occupancy ביד<a class="headerlink" href="#1-occupancy" title="Permanent link">&para;</a></h3>
+<p>נתונים: 32 threads/block, 8 אוגרים/thread, 12 KB smem/block. מגבלות H100 SM: 64 warps, 32 blocks, 65,536 אוגרים, 228 KB smem.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>   (1) warps per block        = 32 / 32              = 1 warp
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>   (2) register limit         = 65,536 / (32 x 8)    = 65,536 / 256 = 256 blocks
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>   (3) shared memory limit    = 228 KB / 12 KB       = 19 blocks
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>   (4) warp limit             = 64 / 1               = 64 blocks
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>       hardware limit                                 = 32 blocks
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>   max blocks = min(256, 19, 32, 64) = 19 blocks      &lt;- bottleneck: shared memory
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>   occupancy  = 19 blocks x 1 warp / 64 = 0.297 ≈ 30%
+</code></pre></div>
+<p>הצוואר הוא <strong>shared memory</strong> - היא נגמרת ב-19 blocks. סעיף 6, להעלאה ל-50% (= 32 warps = 32 blocks, כי יש warp אחד ל-block): צריך שמגבלת ה-smem תרשה לפחות 32 blocks, כלומר <code>228 / smem &gt;= 32</code> -&gt; <code>smem &lt;= 7.125 KB</code>. נוריד ל-6 KB:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>   shared memory limit = 228 / 6 = 38 blocks
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>   max blocks = min(256, 38, 32, 64) = 32 blocks      &lt;- now the bottleneck: hardware
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>   occupancy  = 32 / 64 = 50%
+</code></pre></div>
+<p>למה זה עבד: הרעיון הוא שכל משאב מגביל בנפרד את מספר ה-blocks, וה-SM יכול להכיל רק את המינימום. חישבנו ארבע מגבלות ולקחנו את הקטנה. הורדת ה-smem מ-12 ל-6 KB הכפילה את מגבלת ה-smem מ-19 ל-38, אבל אז מגבלת החומרה (32) הפכה לצוואר החדש - ולכן קיבלנו בדיוק 50%, לא יותר. שינוי מספר האוגרים לא היה עוזר כלל, כי הם מעולם לא היו הצוואר (256 &gt;&gt; 19).</p>
+<p>איך להכליל: תמיד חשבו את כל המגבלות וזהו את המינימום; שחררו <strong>רק</strong> את הצוואר, ואז בדקו שוב - כי צוואר חדש תמיד עלול לצוץ. הנוסחה: <code>occupancy = min(מגבלות) x warps_per_block / max_warps_per_SM</code>.</p>
+<h3 id="2-occupancy-api">פתרון תרגיל 2 - אימות עם ה-Occupancy API<a class="headerlink" href="#2-occupancy-api" title="Permanent link">&para;</a></h3>
+<p>הוסיפו את ה-<code>main</code> הבא ל-<code>occ.cu</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="n">cudaDeviceProp</span><span class="w"> </span><span class="n">p</span><span class="p">;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaGetDeviceProperties</span><span class="p">(</span><span class="o">&amp;</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">));</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s (CC %d.%d)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">major</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">minor</span><span class="p">);</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;maxThreads/SM=%d  regs/SM=%d  smem/SM=%zu KB  warpSize=%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">           </span><span class="n">p</span><span class="p">.</span><span class="n">maxThreadsPerMultiProcessor</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">regsPerMultiprocessor</span><span class="p">,</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">           </span><span class="n">p</span><span class="p">.</span><span class="n">sharedMemPerMultiprocessor</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">warpSize</span><span class="p">);</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">blockSize</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="mi">32</span><span class="p">;</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">dynSmem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">12</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="p">;</span><span class="w">              </span><span class="c1">// 12 KB</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">blocks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaOccupancyMaxActiveBlocksPerMultiprocessor</span><span class="p">(</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">        </span><span class="o">&amp;</span><span class="n">blocks</span><span class="p">,</span><span class="w"> </span><span class="n">work</span><span class="p">,</span><span class="w"> </span><span class="n">blockSize</span><span class="p">,</span><span class="w"> </span><span class="n">dynSmem</span><span class="p">));</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">maxWarps</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">maxThreadsPerMultiProcessor</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">warpSize</span><span class="p">;</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">activeWarps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blocks</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">blockSize</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">warpSize</span><span class="p">);</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;blockSize=%d dynSmem=12KB -&gt; %d blocks, %d warps, occ=%.1f%%</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">           </span><span class="n">blockSize</span><span class="p">,</span><span class="w"> </span><span class="n">blocks</span><span class="p">,</span><span class="w"> </span><span class="n">activeWarps</span><span class="p">,</span><span class="w"> </span><span class="mf">100.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">activeWarps</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">maxWarps</span><span class="p">);</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">minGrid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">bestBlock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaOccupancyMaxPotentialBlockSize</span><span class="p">(</span>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="w">        </span><span class="o">&amp;</span><span class="n">minGrid</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">bestBlock</span><span class="p">,</span><span class="w"> </span><span class="n">work</span><span class="p">,</span><span class="w"> </span><span class="n">dynSmem</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">));</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;suggested blockSize=%d (minGrid=%d)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">bestBlock</span><span class="p">,</span><span class="w"> </span><span class="n">minGrid</span><span class="p">);</span>
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="p">}</span>
+</code></pre></div>
+<p>בדיקת מספר האוגרים בפועל, וההרצה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>nvcc<span class="w"> </span>-O2<span class="w"> </span>-arch<span class="o">=</span>sm_90a<span class="w"> </span>--ptxas-options<span class="o">=</span>-v<span class="w"> </span>-o<span class="w"> </span>occ<span class="w"> </span>occ.cu
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1"># ptxas info : Used 18 registers, ...  (the real number; different from the example&#39;s 8)</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>./occ
+</code></pre></div>
+<p>הפלט הצפוי (H100 SXM):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>NVIDIA H100 80GB HBM3 (CC 9.0)
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>maxThreads/SM=2048  regs/SM=65536  smem/SM=228 KB  warpSize=32
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>blockSize=32 dynSmem=12KB -&gt; 19 blocks, 19 warps, occ=29.7%
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>suggested blockSize=128 (minGrid=2112)
+</code></pre></div>
+<p>ה-API מאשש: <strong>19 blocks, 19 warps, 29.7%</strong> - בדיוק החישוב הידני. ה-<code>suggested blockSize=128</code> מלמד ש-32 threads/block הוא בחירה גרועה: עם block של 128, אותם 12 KB smem עדיין מגבילים ל-19 blocks לפי smem, אבל מגבלת ה-warps (<code>64/4 = 16 blocks</code>) נותנת 16 blocks x 4 warps = 64 warps = 100% occupancy.</p>
+<p>למה זה עבד: ה-API מגלם את אותו חישוב min-על-המגבלות שעשינו ביד, אבל מתחשב באוגרים ה<strong>אמיתיים</strong> של ה-kernel (18 כאן, לא 8) ובגרנולריות ההקצאה של Hopper. במקרה הזה האוגרים לא הצוואר בכל מקרה, אז התוצאה זהה (19). אילו ה-smem השמור לדרייבר או עיגול ל-128 בייט היו קופצים, ה-API היה יכול להחזיר 18 - וזה היה הפוסק המדויק. <code>cudaOccupancyMaxPotentialBlockSize</code> הוא heuristic מוכן לבחירת block size שממקסם occupancy - שימושי כברירת-מחדל שפויה.</p>
+<p>איך להכליל: אל תחשבו occupancy ביד בקוד ייצור - קראו ל-<code>cudaOccupancyMaxActiveBlocksPerMultiprocessor</code>. חלקו את התוצאה כדי לקבל occupancy, והשתמשו ב-<code>cudaOccupancyMaxPotentialBlockSize</code> כדי לקבל נקודת-פתיחה טובה ל-block size. תמיד ודאו שה-<code>dynSmem</code> שאתם מעבירים ל-API זהה לזה שתעבירו ב-<code>&lt;&lt;&lt;...&gt;&gt;&gt;</code>.</p>
+<h3 id="3-ncu">פתרון תרגיל 3 - אימות ב-ncu<a class="headerlink" href="#3-ncu" title="Permanent link">&para;</a></h3>
+<p>הlaunch על grid אמיתי והרצת הפרופיילר:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>ncu<span class="w"> </span>--section<span class="w"> </span>Occupancy<span class="w"> </span>-k<span class="w"> </span>work<span class="w"> </span>-c<span class="w"> </span><span class="m">1</span><span class="w"> </span>./occ_run<span class="w">     </span><span class="c1"># occ_run launches work&lt;&lt;&lt;1024,32,12*1024&gt;&gt;&gt;</span>
+</code></pre></div>
+<p>הפלט הצפוי (block=32, dynSmem=12 KB):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>  Section: Occupancy
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  ------------------------------- ----------- ------------
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  Block Limit SM                        block           32
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  Block Limit Registers                 block          113
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>  Block Limit Shared Mem                block           19   &lt;- bottleneck
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>  Block Limit Warps                     block           64
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>  Theoretical Active Warps per SM        warp           19
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>  Theoretical Occupancy                     %        29.69
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>  Achieved Occupancy                        %        27.31
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>  Achieved Active Warps Per SM           warp        17.48
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>  ------------------------------- ----------- ------------
+</code></pre></div>
+<p>ה-<code>Block Limit Shared Mem = 19</code> הוא הנמוך - הצוואר שחישבנו, ו-<code>Theoretical Occupancy = 29.69%</code> (= 19/64). ה-<code>Achieved = 27.31%</code> נמוך מעט יותר. עכשיו עם 6 KB:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>  Block Limit Shared Mem                block           38
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>  Theoretical Active Warps per SM        warp           32
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>  Theoretical Occupancy                     %        50.00
+</code></pre></div>
+<p>הצוואר עבר ל-<code>Block Limit SM = 32</code>, וה-occupancy קפץ ל-50% - בדיוק כמו החישוב הידני מתרגיל 1 סעיף 6.</p>
+<p>למה זה עבד: ncu מודד את מגבלות ה-block ישירות מהחומרה ומציג אותן שורה-שורה, כך שהמשאב-המגביל גלוי מיד. ה-<code>Achieved</code> נמוך מ-<code>Theoretical</code> בגלל אפקט זנב: ה-blocks האחרונים בכל SM מסיימים בזמנים שונים, וברגעים אלה פחות warps תושבים, אז הממוצע על פני המחזורים הפעילים יורד. אם ה-grid קטן מ-132 blocks, חלק מה-SMs בכלל לא מקבלים עבודה וה-Achieved צונח עוד יותר.</p>
+<p>איך להכליל: <code>ncu --section Occupancy</code> הוא הדרך המהירה ביותר לענות "מי הצוואר של ה-kernel שלי". קראו את ארבע שורות ה-Block Limit, זהו את הנמוכה, ושחררו רק אותה. פער גדול בין Theoretical ל-Achieved = חשד לזנב או ל-grid קטן מדי - הגדילו את ה-grid או אזנו את העבודה.</p>
+<h3 id="4-occupancy">פתרון תרגיל 4 - סריקה: occupancy מול ביצועים<a class="headerlink" href="#4-occupancy" title="Permanent link">&para;</a></h3>
+<p>לולאת הסריקה (block קבוע 128, סך העבודה קבוע):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">static</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="nf">timeKernel</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">grid</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">block</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">dynSmem</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">smemFloats</span><span class="p">,</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">                        </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">iters</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="n">cudaEvent_t</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">;</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventCreate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">));</span><span class="w"> </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventCreate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">e</span><span class="p">));</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="n">work</span><span class="o">&lt;&lt;&lt;</span><span class="n">grid</span><span class="p">,</span><span class="w"> </span><span class="n">block</span><span class="p">,</span><span class="w"> </span><span class="n">dynSmem</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">iters</span><span class="p">,</span><span class="w"> </span><span class="n">smemFloats</span><span class="p">);</span><span class="w">   </span><span class="c1">// warmup</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaDeviceSynchronize</span><span class="p">());</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">best</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1e30f</span><span class="p">;</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">20</span><span class="p">;</span><span class="w"> </span><span class="n">r</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">        </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventRecord</span><span class="p">(</span><span class="n">s</span><span class="p">));</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">        </span><span class="n">work</span><span class="o">&lt;&lt;&lt;</span><span class="n">grid</span><span class="p">,</span><span class="w"> </span><span class="n">block</span><span class="p">,</span><span class="w"> </span><span class="n">dynSmem</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">iters</span><span class="p">,</span><span class="w"> </span><span class="n">smemFloats</span><span class="p">);</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">        </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventRecord</span><span class="p">(</span><span class="n">e</span><span class="p">));</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="w">        </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventSynchronize</span><span class="p">(</span><span class="n">e</span><span class="p">));</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">ms</span><span class="p">;</span><span class="w"> </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventElapsedTime</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ms</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">));</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ms</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">best</span><span class="p">)</span><span class="w"> </span><span class="n">best</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ms</span><span class="p">;</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventDestroy</span><span class="p">(</span><span class="n">s</span><span class="p">));</span><span class="w"> </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventDestroy</span><span class="p">(</span><span class="n">e</span><span class="p">));</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">best</span><span class="p">;</span>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="p">}</span>
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>
+<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="c1">// inside main, after allocating d_in/d_out of size n:</span>
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="kt">int</span><span class="w"> </span><span class="n">block</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">128</span><span class="p">,</span><span class="w"> </span><span class="n">maxWarps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">64</span><span class="p">;</span>
+<a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a><span class="kt">int</span><span class="w"> </span><span class="n">smemKB</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span><span class="w"> </span><span class="mi">48</span><span class="p">};</span>
+<a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%8s %10s %10s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;smem_KB&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;occ_%&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;time_ms&quot;</span><span class="p">);</span>
+<a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">7</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a><span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">dynSmem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="p">)</span><span class="n">smemKB</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="p">;</span>
+<a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">smemFloats</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">smemKB</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">256</span><span class="p">;</span><span class="w">               </span><span class="c1">// 1KB = 256 floats</span>
+<a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">blocks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaOccupancyMaxActiveBlocksPerMultiprocessor</span><span class="p">(</span>
+<a id="__codelineno-9-29" name="__codelineno-9-29" href="#__codelineno-9-29"></a><span class="w">        </span><span class="o">&amp;</span><span class="n">blocks</span><span class="p">,</span><span class="w"> </span><span class="n">work</span><span class="p">,</span><span class="w"> </span><span class="n">block</span><span class="p">,</span><span class="w"> </span><span class="n">dynSmem</span><span class="p">));</span>
+<a id="__codelineno-9-30" name="__codelineno-9-30" href="#__codelineno-9-30"></a><span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">occ</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">100.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blocks</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">block</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">32</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">maxWarps</span><span class="p">;</span>
+<a id="__codelineno-9-31" name="__codelineno-9-31" href="#__codelineno-9-31"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">grid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">132</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">16</span><span class="p">;</span><span class="w">                             </span><span class="c1">// fixed amount of work, fills the GPU</span>
+<a id="__codelineno-9-32" name="__codelineno-9-32" href="#__codelineno-9-32"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">ms</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">timeKernel</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span><span class="w"> </span><span class="n">block</span><span class="p">,</span><span class="w"> </span><span class="n">dynSmem</span><span class="p">,</span><span class="w"> </span><span class="n">smemFloats</span><span class="p">,</span><span class="w"> </span><span class="n">d_in</span><span class="p">,</span><span class="w"> </span><span class="n">d_out</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="mi">512</span><span class="p">);</span>
+<a id="__codelineno-9-33" name="__codelineno-9-33" href="#__codelineno-9-33"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%8d %10.1f %10.3f</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">smemKB</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="w"> </span><span class="n">occ</span><span class="p">,</span><span class="w"> </span><span class="n">ms</span><span class="p">);</span>
+<a id="__codelineno-9-34" name="__codelineno-9-34" href="#__codelineno-9-34"></a><span class="p">}</span>
+</code></pre></div>
+<p>הפלט הצפוי (H100 SXM):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a> smem_KB      occ_%    time_ms
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>       0      100.0      3.084
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>       2      100.0      3.086
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>       4      100.0      3.089
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>       8      100.0      3.091
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>      16       87.5      3.098
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>      32       43.8      3.142
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>      48       25.0      3.588
+</code></pre></div>
+<p>וסריקת גודל ה-block (smem=0):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>   block   occ_%   time_ms
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>      32    50.0     4.401
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>      64   100.0     3.140
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>     128   100.0     3.084
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>     256   100.0     3.083
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>     512   100.0     3.091
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    1024   100.0     3.126
+</code></pre></div>
+<p>התוצאה המכוננת: ה-occupancy יורד מ-100% ל-25% ככל שה-smem ל-block גדל, אבל <strong>הזמן כמעט לא משתנה</strong> בטווח רחב - מ-100% עד ~44% occupancy הזמן קבוע בערך על 3.09-3.14 ms. רק ב-25% occupancy (16 warps ל-SM) הזמן קופץ, כי ירדנו מתחת לסף חוק Little וה-latency כבר לא מוסתר לגמרי. בסריקת ה-block, המהיר ביותר הוא 128-256 threads (100% occupancy), אבל 512 ו-1024 - גם הם 100% - <strong>איטיים</strong> במקצת, ו-32 threads (רק 50%) הכי איטי. שיא ה-occupancy אינו נקודה בודדת של שיא ביצועים; יש <strong>רמה</strong> שלמה של occupancy שנותנים את אותו זמן.</p>
+<p>למה זה עבד: ברגע שיש מספיק warps כדי להסתיר את ה-latency (חוק Little, ~24-30 warps), warps נוספים לא קונים כלום - ה-latency כבר מוסתר, וה-throughput רווי. לכן הזמן קבוע לאורך טווח occupancy רחב. הקפיצה ב-25% מראה מה קורה כשיורדים <strong>מתחת</strong> לסף: פתאום אין מספיק מלאי, ה-scheduler רעב, וה-latency מתגלה. block=32 איטי כי הוא נחסם ל-50% (מגבלת 32 blocks בחומרה) ומבזבז חצי מהמלאי.</p>
+<p>איך להכליל: אל תרדפו אחרי 100% occupancy. מצאו את הסף שבו הזמן מתייצב, ותנו לעצמכם מרווח מעליו - זהו ה-occupancy ה"מספיק". מעבר לו, השקיעו את המשאבים (אוגרים, smem) בטובת כל thread, לא במספר ה-threads. בחרו block size מתוך הרמה השטוחה (כאן 128-256), לא את הקיצון.</p>
+<h3 id="5-warp-ncu">פתרון תרגיל 5 - זיהוי מצבי ה-warp בדוח ncu<a class="headerlink" href="#5-warp-ncu" title="Permanent link">&para;</a></h3>
+<p><strong>סעיף 1 - warps פעילים.</strong><br />
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>   active/scheduler = 4.46;  per SM (4 schedulers) = 4.46 x 4 = 17.84 warps
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>   occupancy = 17.84 / 64 ≈ 27.9%  ≈  28%
+</code></pre></div></p>
+<p><strong>סעיף 2 - כשירים ונבחרים.</strong> בממוצע <code>0.61</code> warps <strong>כשירים</strong> לכל scheduler, ורק <code>0.27</code> <strong>נבחרים</strong> (Issued). "נבחר" תמיד קטן-או-שווה ל"כשיר" כי ה-scheduler בוחר את הנבחר <strong>מתוך</strong> מאגר הכשירים, ולכל היותר warp אחד למחזור - אי אפשר לבחור warp שאינו כשיר.</p>
+<p><strong>סעיף 3 - No Eligible = 73%.</strong> ב-73% מהמחזורים הפעילים ל-scheduler <strong>אין אף warp כשיר</strong> להנפיק. באותם מחזורים כל ה-warps התושבים (הפעילים) נמצאים במצב <strong>תקוע</strong> - הם פעילים אבל אף אחד לא עומד בארבעת תנאי הכשירות. ה-scheduler יושב בטל.</p>
+<p><strong>סעיף 4 - Stall Long Scoreboard.</strong> ה-warps תקועים בעיקר בהמתנה ל-<strong>load מהזיכרון הגלובלי</strong>. ה-<code>Long Scoreboard</code> הוא ה-scoreboard שעוקב אחרי תוצאות מ-GPU RAM (זיכרון גלובלי), בניגוד ל-<code>Short Scoreboard</code> שעוקב אחרי shared memory ואריתמטיקה. <code>11.9</code> מחזורים מתוך <code>16.55</code> מבוזבזים בהמתנה הזו - רוב זמן ה-stall.</p>
+<p><strong>סעיף 5 - אבחון.</strong> יש רק ~17.8 warps פעילים על ה-SM (28% occupancy). חוק Little דורש ~24-30 warps כדי להסתיר latency של זיכרון (תוצאת Volkov, שיעור 7.4). אנחנו <strong>מתחת</strong> לסף: אין מספיק warps כדי לכסות את ה-<code>Long Scoreboard</code>, ולכן ה-scheduler רעב ב-73% מהמחזורים. כאן, ובאופן חריג, התשובה <strong>כן</strong> להעלות occupancy - אבל לא כמטרה, אלא כאמצעי: אנחנו מתחת לרצפת חוק Little, וצריך עוד warps רק כדי להגיע אליה. אילו היינו כבר ב-40 warps עם No Eligible גבוה, המסקנה הייתה הפוכה - הבעיה במקום אחר (למשל latency שאי אפשר להסתיר, שדורש תיקון אלגוריתמי).</p>
+<p>למה זה עבד: הדוח מתרגם ישירות את ארבעת המצבים - Active/Eligible/Selected - ואת סיבות ה-stall. <code>No Eligible</code> גבוה יחד עם occupancy נמוך יחד עם <code>Long Scoreboard</code> דומיננטי הם שלישיית האבחון הקלאסית של kernel memory-latency-bound עם מלאי warps לא מספיק.</p>
+<p>איך להכליל: קראו כל דוח ncu כסיפור: כמה warps פעילים (occupancy), כמה מהם כשירים (No Eligible), ועל מה התקועים תקועים (סיבת ה-stall). השוו את מספר ה-warps הפעילים לסף חוק Little - זה מה שקובע אם התרופה היא "עוד occupancy" או "תקן את הצוואר האמיתי".</p>
+<h3 id="6-register-pressure-occupancy">פתרון תרגיל 6 (בונוס) - register pressure: כשעלייה ב-occupancy מזיקה<a class="headerlink" href="#6-register-pressure-occupancy" title="Permanent link">&para;</a></h3>
+<p>kernel כבד-אוגרים (unroll שמחזיק הרבה ערכים חמים):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">heavy</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">r</span><span class="p">[</span><span class="mi">40</span><span class="p">];</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span><span class="cp">#pragma unroll</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">40</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="n">r</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in</span><span class="p">[(</span><span class="n">t</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">n</span><span class="p">];</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span><span class="cp">#pragma unroll</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">40</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">        </span><span class="n">r</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">r</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">r</span><span class="p">[(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">40</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">r</span><span class="p">[(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">7</span><span class="p">)</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">40</span><span class="p">];</span><span class="w">   </span><span class="c1">// dependent, keeps r[] hot</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">acc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">40</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="n">acc</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">r</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="n">out</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">acc</span><span class="p">;</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="p">}</span>
+</code></pre></div>
+<p>שלוש הקומפילציות ובדיקת ה-spills:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>nvcc<span class="w"> </span>-O2<span class="w"> </span>-arch<span class="o">=</span>sm_90a<span class="w"> </span>--ptxas-options<span class="o">=</span>-v<span class="w"> </span>-maxrregcount<span class="o">=</span><span class="m">255</span><span class="w"> </span>-o<span class="w"> </span>h255<span class="w"> </span>heavy.cu
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>nvcc<span class="w"> </span>-O2<span class="w"> </span>-arch<span class="o">=</span>sm_90a<span class="w"> </span>--ptxas-options<span class="o">=</span>-v<span class="w"> </span>-maxrregcount<span class="o">=</span><span class="m">64</span><span class="w">  </span>-o<span class="w"> </span>h64<span class="w">  </span>heavy.cu
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>nvcc<span class="w"> </span>-O2<span class="w"> </span>-arch<span class="o">=</span>sm_90a<span class="w"> </span>--ptxas-options<span class="o">=</span>-v<span class="w"> </span>-maxrregcount<span class="o">=</span><span class="m">32</span><span class="w">  </span>-o<span class="w"> </span>h32<span class="w">  </span>heavy.cu
+</code></pre></div>
+<p>פלט <code>-v</code> צפוי (block=128), וזמני הריצה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>   version         regs   spill stores/loads   theoretical occ.   time_ms
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>   -maxrreg=255      82        0 / 0                 37.5%           1.90
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>   -maxrreg=64       64        24 / 64               50.0%           2.35
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>   -maxrreg=32       32       160 / 410            100.0%           4.65
+</code></pre></div>
+<p>הגרסה <strong>המהירה ביותר היא בעלת ה-occupancy הנמוך ביותר</strong> (37.5%, 1.90 ms), והאיטית ביותר היא זו של 100% occupancy (4.65 ms). ncu על <code>h32</code> יראה <code>Stall Long Scoreboard</code> גבוה בהרבה מ-<code>h255</code> - כי כל אחד מ-48 האוגרים העודפים שנשפכו ל-local memory הופך לגישת זיכרון גלובלי.</p>
+<p>למה זה עבד: המשאבים על ה-SM קבועים - 65,536 אוגרים לחלוקה בין כל ה-threads התושבים. כדי לדחוס 64 warps (2048 threads, 100% occupancy), כל thread מוגבל ל-<code>65,536/2048 = 32</code> אוגרים. אבל ה-kernel צריך 82; 50 האוגרים העודפים <strong>נשפכים</strong> ל-local memory (זיכרון גלובלי איטי), ויוצרים מבול של loads/stores שמתקעים את ה-warps על ה-Long Scoreboard. ה-occupancy הגבוה שהרווחנו לא שווה כלום מול הזיכרון הנוסף שיצרנו. הגרסה של 37.5% occupancy נותנת לכל thread 82 אוגרים מלאים, בלי spill - וזה מנצח בגדול.</p>
+<p>איך להכליל: זו בדיוק הסיבה ש-GEMM מהיר על Hopper/Blackwell רץ ב-occupancy חד-ספרתי - הוא מעדיף לתת לכל thread הרבה אוגרים ו-tiles ענקיים על פני הרבה warps. occupancy הוא אמצעי להסתרת latency, לא מטרה: ברגע שיש מספיק warps לחוק Little, הפסיקו להוסיף - כל warp נוסף גוזל אוגרים ו-smem מהאחרים ועלול לגרום ל-spilling שהורס הכל.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

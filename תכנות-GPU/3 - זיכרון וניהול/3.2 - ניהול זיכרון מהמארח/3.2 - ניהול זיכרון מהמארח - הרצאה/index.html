@@ -1,0 +1,2959 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בשיעור 0.3 כתבנו את חיבור הווקטורים הראשון וראינו את כוריאוגרפיית חמשת השלבים - cudaMalloc, cudaMemcpy H2D, launch, cudaMemcpy D2H, cudaFree - ובשיעור 3.1...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.2%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%9E%D7%94%D7%9E%D7%90%D7%A8%D7%97/3.2%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%9E%D7%94%D7%9E%D7%90%D7%A8%D7%97%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../3.2%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%9E%D7%94%D7%9E%D7%90%D7%A8%D7%97%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>3.2 - ניהול זיכרון מהמארח - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "3.2 - \u05e0\u05d9\u05d4\u05d5\u05dc \u05d6\u05d9\u05db\u05e8\u05d5\u05df \u05de\u05d4\u05de\u05d0\u05e8\u05d7 - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.2%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%9E%D7%94%D7%9E%D7%90%D7%A8%D7%97/3.2%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%9E%D7%94%D7%9E%D7%90%D7%A8%D7%97%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="3.2 - ניהול זיכרון מהמארח - הרצאה - עמית טק" />
+<meta property="og:description" content="בשיעור 0.3 כתבנו את חיבור הווקטורים הראשון וראינו את כוריאוגרפיית חמשת השלבים - cudaMalloc, cudaMemcpy H2D, launch, cudaMemcpy D2H, cudaFree - ובשיעור 3.1..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.2%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%9E%D7%94%D7%9E%D7%90%D7%A8%D7%97/3.2%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%9E%D7%94%D7%9E%D7%90%D7%A8%D7%97%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.2%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%9E%D7%94%D7%9E%D7%90%D7%A8%D7%97/3.2%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%9E%D7%94%D7%9E%D7%90%D7%A8%D7%97%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="3.2 - ניהול זיכרון מהמארח - הרצאה - עמית טק" />
+<meta property="twitter:description" content="בשיעור 0.3 כתבנו את חיבור הווקטורים הראשון וראינו את כוריאוגרפיית חמשת השלבים - cudaMalloc, cudaMemcpy H2D, launch, cudaMemcpy D2H, cudaFree - ובשיעור 3.1..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.2%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%9E%D7%94%D7%9E%D7%90%D7%A8%D7%97/3.2%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%9E%D7%94%D7%9E%D7%90%D7%A8%D7%97%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-allocate-copy-directions" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              3.2 - ניהול זיכרון מהמארח - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_5" id="__nav_7_3_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    3   זיכרון וניהול
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.1   היררכיית הזיכרון הלוגית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_5_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_5_2" id="__nav_7_3_5_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.2   ניהול זיכרון מהמארח
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_5_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    3.2   ניהול זיכרון מהמארח
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.2 - ניהול זיכרון מהמארח - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.2 - ניהול זיכרון מהמארח - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-allocate-copy-directions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הבסיס - ההקצאה, ההעתקה והכיוונים - allocate, copy, directions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-pinned-page-locked-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        זיכרון נעול-עמודים - pinned (page-locked) memory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-unified-managed-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        זיכרון מנוהל - unified / managed memory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-streams-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        זרמים - streams - מבוא
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#events-cuda-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מדידה ותלויות עם events - CUDA events
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-overlapping-copy-with-compute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חפיפה של העתקה וחישוב - overlapping copy with compute
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-a-decision-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מתי להשתמש במה - a decision table
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../3.2%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%9E%D7%94%D7%9E%D7%90%D7%A8%D7%97%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.2 - ניהול זיכרון מהמארח - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../3.2%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%9E%D7%94%D7%9E%D7%90%D7%A8%D7%97%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.2 - ניהול זיכרון מהמארח - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../3.3%20-%20Shared%20memory%20%D7%95-tiling/3.3%20-%20Shared%20memory%20%D7%95-tiling%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.3   Shared memory ו tiling
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../3.4%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%A7%D7%91%D7%95%D7%A2%20%D7%95%D7%98%D7%A7%D7%A1%D7%98%D7%95%D7%A8%D7%94/3.4%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%A7%D7%91%D7%95%D7%A2%20%D7%95%D7%98%D7%A7%D7%A1%D7%98%D7%95%D7%A8%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.4   זיכרון קבוע וטקסטורה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../3.5%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20%D7%9B%D7%A4%D7%9C%20%D7%9E%D7%98%D7%A8%D7%99%D7%A6%D7%95%D7%AA%20tiled/3.5%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20%D7%9B%D7%A4%D7%9C%20%D7%9E%D7%98%D7%A8%D7%99%D7%A6%D7%95%D7%AA%20tiled%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.5   פרויקט   כפל מטריצות tiled
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-allocate-copy-directions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הבסיס - ההקצאה, ההעתקה והכיוונים - allocate, copy, directions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-pinned-page-locked-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        זיכרון נעול-עמודים - pinned (page-locked) memory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-unified-managed-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        זיכרון מנוהל - unified / managed memory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-streams-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        זרמים - streams - מבוא
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#events-cuda-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מדידה ותלויות עם events - CUDA events
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-overlapping-copy-with-compute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חפיפה של העתקה וחישוב - overlapping copy with compute
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-a-decision-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מתי להשתמש במה - a decision table
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    3   זיכרון וניהול
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    3.2   ניהול זיכרון מהמארח
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>3.2 - ניהול זיכרון מהמארח - הרצאה</h1>
+
+<p>בשיעור 0.3 כתבנו את חיבור הווקטורים הראשון וראינו את כוריאוגרפיית חמשת השלבים - <code>cudaMalloc</code>, <code>cudaMemcpy</code> H2D, launch, <code>cudaMemcpy</code> D2H, <code>cudaFree</code> - ובשיעור 3.1 מיפינו את היררכיית הזיכרון של הdevice מבפנים (registers, shared memory, global memory) מנקודת המבט של ה-kernel. בשיעור הזה אנחנו חוזרים אל צד הhost (כלומר ה-CPU) ושואלים את השאלה המעשית שמלווה כל תוכנית CUDA רצינית: איך מנהלים את הזיכרון של הdevice ביעילות מהhost? נעמיק בכל אחד מכלי הניהול - ההקצאה וההעתקה הבסיסיות, זיכרון host נעול-עמודים (pinned) שפותח את הדלת להעברות מהירות ואסינכרוניות, זיכרון מנוהל (managed / unified) שמטשטש את הגבול בין המרחבים ומעביר עמודים לפי דרישה, וה-streams (זרמים) שמאפשרים לחפוף העתקה עם חישוב במקום לשלם עליהם בזה אחר זה. את ה-streams נציג כאן ברמת המבוא ההכרחית כדי לחפוף העברות, ואת הטיפול המלא בהם - תלויות, עדיפויות, callbacks - נפרוש בשיעור 5.3. המסר המרכזי: לרוב, צוואר הבקבוק של תוכנית CUDA איננו ה-kernel אלא תנועת הנתונים סביבו, וכאן נלמד לשלוט בה.</p>
+<h2 id="-allocate-copy-directions">הבסיס - ההקצאה, ההעתקה והכיוונים - allocate, copy, directions<a class="headerlink" href="#-allocate-copy-directions" title="Permanent link">&para;</a></h2>
+<p>נחזור בקצרה על שלישיית הפונקציות מ-CUDA Runtime API (הinterface ברמה הגבוהה עם התחילית <code>cuda</code>, כפי שראינו בשיעור 0.4), הפעם עם דגש על הפרטים שדילגנו עליהם. <code>cudaMalloc(void** ptr, size_t bytes)</code> מקצה בלוק רציף ב-global memory של הdevice ומחזיר קוד שגיאה; הכתובת נכתבת לתוך המצביע שלכם. <code>cudaFree(ptr)</code> משחרר אותו. <code>cudaMemcpy(dst, src, bytes, kind)</code> מעתיק בתים בין המרחבים, כשהפרמטר <code>kind</code> קובע את הכיוון:</p>
+<table>
+<thead>
+<tr>
+<th>ערך <code>kind</code></th>
+<th>כינוי</th>
+<th>כיוון</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cudaMemcpyHostToDevice</code></td>
+<td>H2D</td>
+<td>host -&gt; device (מעלים קלט)</td>
+</tr>
+<tr>
+<td><code>cudaMemcpyDeviceToHost</code></td>
+<td>D2H</td>
+<td>device -&gt; host (מורידים תוצאה)</td>
+</tr>
+<tr>
+<td><code>cudaMemcpyDeviceToDevice</code></td>
+<td>D2D</td>
+<td>device -&gt; device (בתוך אותו GPU)</td>
+</tr>
+<tr>
+<td><code>cudaMemcpyHostToHost</code></td>
+<td>H2H</td>
+<td>host -&gt; host (נדיר, כמו <code>memcpy</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>העתקת D2D שימושית כשמעתיקים בין שני buffers על אותו כרטיס בלי לצאת אל הhost - היא רצה על רוחב הפס של ה-HBM3 (ב-H100, בסדר גודל של 3.35 TB/s) ולא על ה-PCIe האיטי. יש גם <code>cudaMemcpyDefault</code>, שמסיק את הכיוון לבד מסוג המצביעים באמצעות Unified Virtual Addressing - נוח, אבל עדיף לציין כיוון מפורש כדי שהקוד יתעד את כוונתו.</p>
+<p>הבחנה שכדאי לדעת: כל הפונקציות האלה שייכות ל-CUDA Runtime API. יש להן מקבילות ברמה נמוכה יותר ב-CUDA Driver API (עם התחילית <code>cu</code> במקום <code>cuda</code>, למשל <code>cuMemAlloc</code> ו-<code>cuMemcpyHtoD</code>). ה-Runtime API הוא עטיפה מעל ה-Driver API, וכמעט כל התוכניות משתמשות ב-Runtime בגלל הארגונומיה; את ה-Driver API שומרים לשליטה מפורשת ב-contexts ובהשקות. בקורס הזה נשארים ב-Runtime API לכל אורך הדרך.</p>
+<p><strong>נקודה קריטית שנחזור אליה מיד:</strong> <code>cudaMemcpy</code> הרגילה היא <strong>חוסמת (blocking / synchronous)</strong> מנקודת מבט הhost - היא לא חוזרת עד שההעתקה הסתיימה. זה נוח וקל להבנה, אבל זה גם אומר שבזמן ההעברה ה-CPU עומד ומחכה, וה-GPU אינו יכול לחפוף אליה חישוב. כדי לשבור את המחסום הזה נצטרך שני דברים חדשים: זיכרון host מסוג pinned, ו-copy אסינכרוני על stream. נתחיל מהזיכרון.</p>
+<h2 id="-pinned-page-locked-memory">זיכרון נעול-עמודים - pinned (page-locked) memory<a class="headerlink" href="#-pinned-page-locked-memory" title="Permanent link">&para;</a></h2>
+<p>כדי להבין למה זיכרון pinned מהיר יותר, צריך להיזכר איך מערכת ההפעלה מנהלת את זיכרון הhost. הקצאה רגילה ב-<code>malloc</code> מחזירה זיכרון <strong>בר-החלפה (pageable)</strong>: מערכת ההפעלה רשאית להזיז את העמודים הפיזיים שלו, אפילו לגרש אותם אל הדיסק (swap), ולכן הכתובת הפיזית של buffer יכולה להשתנות מתחת לרגליים. ה-DMA engine (מנוע ההעברה הישירה) שעל ה-GPU, לעומת זאת, עובד מול <strong>כתובות פיזיות</strong> וחייב שהן יישארו קבועות לאורך כל ההעברה.</p>
+<p>מכאן נובע מנגנון ה-bounce buffer (חוצץ ביניים) שקורה מאחורי הקלעים כשמעתיקים מזיכרון pageable:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>   cudaMemcpy from pageable memory (the slow path):
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>   [ h_a - pageable ]                    [ d_a - GPU ]
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>        │                                     ▲
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        │ 1. the driver copies (CPU memcpy)     │ 2. DMA
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        ▼    to an internal pinned buffer         │    from the pinned buffer
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>   [ pinned staging buffer ]  ──────────────────┘
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>   two copies: first CPU-copy to the buffer, then DMA to the GPU.
+</code></pre></div>
+<p>הדרייבר מקצה חוצץ נעול פנימי, מעתיק אליו את הנתונים בעותק CPU רגיל, ורק ממנו מבצע את ה-DMA אל הdevice. עותק כפול זה מבזבז רוחב פס ומחייב את ה-CPU. אם נקצה את זיכרון הhost מלכתחילה כ<strong>נעול-עמודים (page-locked, המכונה pinned)</strong>, מערכת ההפעלה מבטיחה שהעמודים לא יזוזו ולא יגורשו, כך שה-DMA engine יכול לקרוא ישירות מזיכרון הhost - העתקה אחת בלבד:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>   cudaMemcpy from pinned memory (the fast path):
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>   [ h_a - pinned ]  ───── DMA ─────►  [ d_a - GPU ]
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>   a single direct copy, no CPU involvement.
+</code></pre></div>
+<p>שתי דרכים להקצות זיכרון pinned, ובן זוגן לשחרור:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">h_a</span><span class="p">;</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMallocHost</span><span class="p">(</span><span class="o">&amp;</span><span class="n">h_a</span><span class="p">,</span><span class="w"> </span><span class="n">bytes</span><span class="p">));</span><span class="w">      </span><span class="c1">// the simple way</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1">// ... use ...</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaFreeHost</span><span class="p">(</span><span class="n">h_a</span><span class="p">));</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="c1">// a richer version with flags:</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">h_b</span><span class="p">;</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaHostAlloc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">h_b</span><span class="p">,</span><span class="w"> </span><span class="n">bytes</span><span class="p">,</span><span class="w"> </span><span class="n">cudaHostAllocDefault</span><span class="p">));</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaFreeHost</span><span class="p">(</span><span class="n">h_b</span><span class="p">));</span>
+</code></pre></div>
+<p>הפונקציה <code>cudaMallocHost</code> היא הקיצור הנוח. <code>cudaHostAlloc</code> חושפת דגלים מתקדמים: <code>cudaHostAllocPortable</code> (הזיכרון נעול עבור כל ה-contexts), <code>cudaHostAllocMapped</code> (ממפה את הזיכרון גם למרחב הכתובות של הdevice - zero-copy), ו-<code>cudaHostAllocWriteCombined</code> (cache write-combining, מהיר יותר להעברות H2D אבל איטי מאוד לקריאה מה-CPU). לרוב המקרים <code>cudaMallocHost</code> מספיקה. <strong>חובה</strong> לשחרר זיכרון pinned עם <code>cudaFreeHost</code> ולא עם <code>free</code> - אלה מקצים ממאגרים שונים לגמרי.</p>
+<p>שני היתרונות של pinned, וזו הנקודה המרכזית של הסעיף:</p>
+<ol>
+<li><strong>מהירות H2D/D2H גבוהה יותר</strong> - העתקה אחת במקום שתיים. בפועל, על מערכת עם PCIe Gen5, העברה מזיכרון pinned מגיעה קרוב לרוחב הפס התיאורטי של ה-PCIe (כ-64 GB/s, בפועל 50-55 GB/s), בעוד שהעברה מזיכרון pageable נעצרת לרוב סביב חצי מכך. פי 2 עד פי 3 הבדל הוא תוצאה טיפוסית שתמדדו בעצמכם בתרגול.</li>
+<li><strong>תנאי הכרחי להעברות אסינכרוניות</strong> - רק העתקה מזיכרון pinned יכולה להיות באמת אסינכרונית ולחפוף לחישוב. את זה נפתח בסעיף ה-streams.</li>
+</ol>
+<p><strong>מחיר ה-over-pinning (מלכוד).</strong> זיכרון pinned אינו קסם חינם. עמודים נעולים אינם ניתנים להחלפה, ולכן הם גוזלים באופן קשיח מזיכרון ה-RAM הפיזי הזמין למערכת ההפעלה ולשאר התהליכים. אם תנעלו נתחים ענקיים - נניח רוב ה-RAM - תחניקו את המערכת כולה: תהליכים אחרים ייכנסו ל-swap, וההקצאה עצמה תואט (נעילת עמודים היא קריאת מערכת יקרה). לכן הכלל: נעלו רק את ה-buffers שבאמת חוזרים ומעורבים בהעברות (למשל buffers של קלט/פלט בלולאה חמה), לא כל הקצאת host. הקצאת pinned גם איטית יותר מ-<code>malloc</code>, ולכן מקצים אותה פעם אחת ומחזירים אותה שימוש, לא בכל איטרציה.</p>
+<h2 id="-unified-managed-memory">זיכרון מנוהל - unified / managed memory<a class="headerlink" href="#-unified-managed-memory" title="Permanent link">&para;</a></h2>
+<p>עד עכשיו ניהלנו שני מרחבי זיכרון נפרדים ידנית: מצביע host, מצביע device, והעתקות מפורשות ביניהם. <strong>זיכרון מנוהל (managed memory, המכונה גם unified memory)</strong> מציע מודל אחר: הקצאה אחת שמצביע יחיד עליה תקף גם על הhost וגם על הdevice, וה-CUDA runtime מזיז את הנתונים ביניהם אוטומטית לפי הצורך.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMallocManaged</span><span class="p">(</span><span class="o">&amp;</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">bytes</span><span class="p">));</span><span class="w">   </span><span class="c1">// single pointer, both worlds</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">;</span><span class="w">    </span><span class="c1">// write from the host - legal!</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">vecAdd</span><span class="o">&lt;&lt;&lt;</span><span class="n">blocks</span><span class="p">,</span><span class="w"> </span><span class="n">threads</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">);</span><span class="w">    </span><span class="c1">// same pointer to the kernel - legal!</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaDeviceSynchronize</span><span class="p">());</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%f</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span><span class="w">                        </span><span class="c1">// read from the host - legal!</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaFree</span><span class="p">(</span><span class="n">a</span><span class="p">));</span><span class="w">                      </span><span class="c1">// yes, cudaFree (not cudaFreeHost)</span>
+</code></pre></div>
+<p>שימו לב כמה זה קצר לעומת שרשרת חמשת השלבים. אין <code>cudaMalloc</code> נפרד לhost ולdevice, אין <code>cudaMemcpy</code>. איך זה עובד? על ארכיטקטורות Pascal ומעלה (וה-H100 בכללן), הזיכרון המנוהל נשען על <strong>migration של עמודים לפי דרישה (on-demand page migration)</strong> באמצעות page faults של החומרה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>   the sequence with managed memory:
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>   1. cudaMallocManaged  ─► logical allocation, not yet physically placed
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>   2. the host writes a[i]  ─► page fault -&gt; the page is placed in host RAM
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>   3. the kernel reads a[i] ─► GPU page fault -&gt; the page migrates to HBM3
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>   4. the host reads c[i]   ─► page fault -&gt; the page migrates back to RAM
+</code></pre></div>
+<p>כשה-kernel ניגש לעמוד שנמצא כרגע בזיכרון הhost, ה-GPU מייצר page fault, ה-runtime עוצר, מעתיק את העמוד (בדרך כלל 4 KiB או 2 MiB) אל ה-HBM3, וממשיך. ההגירה אוטומטית לחלוטין. <strong>היתרון: פרודוקטיביות.</strong> מבנים מקוננים עם מצביעים, פורטינג מהיר של קוד CPU קיים, ופיתוח ראשוני - כל אלה נעשים פשוט הרבה יותר. <strong>יתרון שני: oversubscription (הקצאת-יתר).</strong> אפשר להקצות עם <code>cudaMallocManaged</code> יותר זיכרון ממה שנכנס פיזית ב-80 GiB של ה-HBM3; ה-runtime יחליף עמודים פנימה והחוצה לפי הצורך, בדיוק כמו זיכרון וירטואלי. עם <code>cudaMalloc</code> רגיל הקצאה כזו פשוט הייתה נכשלת ב-<code>out of memory</code>.</p>
+<p><strong>המחיר (caveat ביצועי).</strong> ה-page faults אינם חינם. אם ה-kernel נוגע לראשונה בכל הנתונים, כל אחד מהם מייצר fault, וההגירה ה"עצלה" עמוד-אחר-עמוד איטית בהרבה מ-<code>cudaMemcpy</code> אחד גדול ורציף. בקוד תמים, managed memory יכול להיות איטי משמעותית מניהול ידני, כי אתם משלמים על ההעברות בזמן הריצה של ה-kernel, מפוזרות ולא בבת אחת. הפתרון: לומר ל-runtime מראש לאן שייכים הנתונים.</p>
+<p><strong>Prefetch מפורש עם <code>cudaMemPrefetchAsync</code>.</strong> מזיזים בלוק שלם אל היעד לפני שנוגעים בו, במקום להמתין ל-faults:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kt">int</span><span class="w"> </span><span class="n">device</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="c1">// before the launch: move a,b to the GPU at once (one large contiguous transfer)</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMemPrefetchAsync</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">bytes</span><span class="p">,</span><span class="w"> </span><span class="n">device</span><span class="p">));</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMemPrefetchAsync</span><span class="p">(</span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">bytes</span><span class="p">,</span><span class="w"> </span><span class="n">device</span><span class="p">));</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">vecAdd</span><span class="o">&lt;&lt;&lt;</span><span class="n">blocks</span><span class="p">,</span><span class="w"> </span><span class="n">threads</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">);</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1">// after the launch: move the result c back to the host ahead of time</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMemPrefetchAsync</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="n">bytes</span><span class="p">,</span><span class="w"> </span><span class="n">cudaCpuDeviceId</span><span class="p">));</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaDeviceSynchronize</span><span class="p">());</span>
+</code></pre></div>
+<p>ה-prefetch הופך את ההגירה מ"הרבה faults קטנים בזמן ה-kernel" ל"העברה אחת גדולה, מקונבעת, לפני ה-kernel" - וזה מחזיר את הביצועים קרוב לרמת הניהול הידני, בלי לוותר על נוחות המצביע היחיד. הקבוע <code>cudaCpuDeviceId</code> מציין את הhost כיעד.</p>
+<p><strong>רמזים עם <code>cudaMemAdvise</code>.</strong> כשהגישה לנתונים אינה חד-כיוונית, אפשר לרמוז ל-runtime על דפוס השימוש כדי שינהל את העמודים חכם יותר:</p>
+<table>
+<thead>
+<tr>
+<th>רמז (advice)</th>
+<th>משמעות</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cudaMemAdviseSetReadMostly</code></td>
+<td>הנתונים נקראים בעיקר ולא נכתבים; ה-runtime רשאי לשכפל אותם (עותק לקריאה בכל הdevice)</td>
+</tr>
+<tr>
+<td><code>cudaMemAdviseSetPreferredLocation</code></td>
+<td>קבע "בית" מועדף לעמודים; הגירות ינסו להשאיר אותם שם</td>
+</tr>
+<tr>
+<td><code>cudaMemAdviseSetAccessedBy</code></td>
+<td>הdevice הזה ייגש לנתונים; מפה אותם למרחבו במקום להגר בכל fault</td>
+</tr>
+</tbody>
+</table>
+<p>השימוש: <code>cudaMemAdvise(ptr, bytes, cudaMemAdviseSetPreferredLocation, device)</code>. הרמזים אינם משנים נכונות - רק ביצועים - ולכן הם כלי כוונון, לא חובה. הכלל המנחה: התחילו עם <code>cudaMallocManaged</code> לפרודוקטיביות, מדדו, ואם ה-page faults פוגעים - הוסיפו <code>cudaMemPrefetchAsync</code> בנקודות הברורות, ורק אם צריך עוד, כווננו עם <code>cudaMemAdvise</code>.</p>
+<h2 id="-streams-">זרמים - streams - מבוא<a class="headerlink" href="#-streams-" title="Permanent link">&para;</a></h2>
+<p>עד עכשיו כל פעולות ה-CUDA שלנו רצו זו אחר זו, סדרתית. <strong>stream (זרם) הוא תור של פעולות GPU המתבצעות לפי סדר.</strong> שתי עובדות היסוד:</p>
+<ul>
+<li><strong>בתוך אותו stream, הפעולות מבוצעות לפי הסדר</strong> שבו הונפקו. פעולה שנייה לא מתחילה עד שהראשונה הסתיימה.</li>
+<li><strong>בין streams שונים אין סדר מובטח</strong> - הם עצמאיים וה-GPU רשאי להריץ אותם במקביל, בכפוף למשאבי החומרה.</li>
+</ul>
+<p>זהו בדיוק המנוף שמאפשר חפיפה (overlap): אם נשים העתקה של נתח אחד ב-stream אחד וחישוב על נתח אחר ב-stream שני, ה-GPU יכול לבצע את שניהם בו-זמנית, כי מנועי ה-DMA (Copy Engines) של ה-H100 עצמאיים מ-CUDA Cores. יצירה והשמדה של stream:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">cudaStream_t</span><span class="w"> </span><span class="n">stream</span><span class="p">;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaStreamCreate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">stream</span><span class="p">));</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1">// ... use ...</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaStreamDestroy</span><span class="p">(</span><span class="n">stream</span><span class="p">));</span>
+</code></pre></div>
+<p>הגרסה האסינכרונית של ההעתקה היא <code>cudaMemcpyAsync</code>, שמקבלת פרמטר stream נוסף וחוזרת לhost <strong>מיד</strong>, בלי לחכות לסיום:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMemcpyAsync</span><span class="p">(</span><span class="n">d_a</span><span class="p">,</span><span class="w"> </span><span class="n">h_a</span><span class="p">,</span><span class="w"> </span><span class="n">bytes</span><span class="p">,</span><span class="w"> </span><span class="n">cudaMemcpyHostToDevice</span><span class="p">,</span><span class="w"> </span><span class="n">stream</span><span class="p">));</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">myKernel</span><span class="o">&lt;&lt;&lt;</span><span class="n">blocks</span><span class="p">,</span><span class="w"> </span><span class="n">threads</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">stream</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">d_a</span><span class="p">,</span><span class="w"> </span><span class="p">...);</span><span class="w">   </span><span class="c1">// the fourth parameter is the stream</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMemcpyAsync</span><span class="p">(</span><span class="n">h_c</span><span class="p">,</span><span class="w"> </span><span class="n">d_c</span><span class="p">,</span><span class="w"> </span><span class="n">bytes</span><span class="p">,</span><span class="w"> </span><span class="n">cudaMemcpyDeviceToHost</span><span class="p">,</span><span class="w"> </span><span class="n">stream</span><span class="p">));</span>
+</code></pre></div>
+<p>שימו לב לתצורת הlaunch בעלת ארבעה שדות <code>&lt;&lt;&lt;grid, block, sharedBytes, stream&gt;&gt;&gt;</code> - השדה הרביעי הוא ה-stream (השלישי, כאן 0, הוא shared memory דינמי). <strong>תנאי הכרחי:</strong> כדי ש-<code>cudaMemcpyAsync</code> תהיה באמת אסינכרונית, זיכרון הhost <strong>חייב להיות pinned.</strong> אם תעבירו לה מצביע pageable, הקריאה תתנהג כמעט כמו <code>cudaMemcpy</code> חוסמת - הדרייבר נופל בחזרה ל-bounce buffer ולסנכרון. זו הסיבה ששני הסעיפים הקודמים מתחברים כאן: pinned + async + streams הם השלישייה שמאפשרת חפיפה.</p>
+<p><strong>מלכוד ה-default stream.</strong> אם לא תציינו stream (כמו בכל הקוד שלנו עד שיעור זה), הפעולות רצות ב-default stream (stream 0). ב-semantics המסורתי (legacy), ה-default stream מסונכרן מול כל שאר ה-streams - כלומר פעולה בו חוסמת את כולם, ולא תקבלו חפיפה. לכן, לחפיפה אמיתית, צרו streams מפורשים ושמו בהם את העבודה, ולעולם אל תשאירו את הפעולות הקריטיות ב-default stream.</p>
+<h2 id="events-cuda-events">מדידה ותלויות עם events - CUDA events<a class="headerlink" href="#events-cuda-events" title="Permanent link">&para;</a></h2>
+<p>איך יודעים כמה זמן לקח ה-kernel, וכיצד יוצרים תלות בין streams? התשובה לשניהם היא <strong>event (אירוע)</strong> - סמן שמניחים בתוך ה-stream ושמוקלט ברגע שכל הפעולות שלפניו הסתיימו. ל-event שני תפקידים:</p>
+<p><strong>מדידת זמן מדויקת.</strong> בניגוד ל-<code>std::chrono</code> שמודד על ה-CPU (וממדוד גם overhead של הסנכרון), event מוקלט על ה-GPU עצמו ומודד את הזמן שבו ה-GPU באמת עבד:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">cudaEvent_t</span><span class="w"> </span><span class="n">start</span><span class="p">,</span><span class="w"> </span><span class="n">stop</span><span class="p">;</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventCreate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">start</span><span class="p">));</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventCreate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">stop</span><span class="p">));</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventRecord</span><span class="p">(</span><span class="n">start</span><span class="p">));</span><span class="w">                 </span><span class="c1">// mark before</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="n">myKernel</span><span class="o">&lt;&lt;&lt;</span><span class="n">blocks</span><span class="p">,</span><span class="w"> </span><span class="n">threads</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">d_a</span><span class="p">,</span><span class="w"> </span><span class="n">d_b</span><span class="p">,</span><span class="w"> </span><span class="n">d_c</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">);</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventRecord</span><span class="p">(</span><span class="n">stop</span><span class="p">));</span><span class="w">                  </span><span class="c1">// mark after</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventSynchronize</span><span class="p">(</span><span class="n">stop</span><span class="p">));</span><span class="w">             </span><span class="c1">// wait for stop to be recorded</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="kt">float</span><span class="w"> </span><span class="n">ms</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventElapsedTime</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ms</span><span class="p">,</span><span class="w"> </span><span class="n">start</span><span class="p">,</span><span class="w"> </span><span class="n">stop</span><span class="p">));</span><span class="w"> </span><span class="c1">// difference in milliseconds (float)</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="n">printf</span><span class="p">(</span><span class="s">&quot;kernel: %.3f ms</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ms</span><span class="p">);</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventDestroy</span><span class="p">(</span><span class="n">start</span><span class="p">));</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaEventDestroy</span><span class="p">(</span><span class="n">stop</span><span class="p">));</span>
+</code></pre></div>
+<p>הדיוק של <code>cudaEventElapsedTime</code> הוא בסדר גודל של חצי מיקרו-שנייה - הרבה מעבר לרזולוציה שנחוצה לנו. חשוב: <code>cudaEventRecord(start)</code> בלי ציון stream מקליט ב-default stream, שמסנכרן מול השאר; אם אתם מתזמנים עבודה ב-stream ספציפי, העבירו אותו כפרמטר שני: <code>cudaEventRecord(start, stream)</code>. ותמיד הריצו איטרציית חימום (warm-up) לפני המדידה - הקומפילציה של PTX ל-SASS (JIT) וההקצאות הראשונות מוסיפות overhead חד-פעמי שתזהם מדידה יחידה.</p>
+<p><strong>יצירת תלות בין streams.</strong> <code>cudaStreamWaitEvent(streamB, event)</code> גורם ל-<code>streamB</code> להמתין עד שה-<code>event</code> (שהוקלט אולי ב-<code>streamA</code>) מתרחש - כך בונים תלות בין זרמים בלי לחסום את הhost. את זה נרחיב בשיעור 5.3. אם ה-event משמש רק לסנכרון ולא למדידה, כדאי ליצור אותו עם <code>cudaEventCreateWithFlags(&amp;e, cudaEventDisableTiming)</code> כדי לחסוך overhead.</p>
+<h2 id="-overlapping-copy-with-compute">חפיפה של העתקה וחישוב - overlapping copy with compute<a class="headerlink" href="#-overlapping-copy-with-compute" title="Permanent link">&para;</a></h2>
+<p>נחבר הכל לתבנית שהיא הסיבה האמיתית שלמדנו pinned, async ו-streams. נניח שאנחנו מעבדים מערך גדול. במקום להעתיק את <strong>כולו</strong> ל-GPU, לחשב, ולהעתיק חזרה - שלושה שלבים סדרתיים - נפרק אותו ל-<code>chunks</code> (נתחים) ונשכן אותם ב-streams מתחלפים. בזמן שה-GPU מחשב על נתח אחד, ה-DMA engine מעתיק את הנתח הבא:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">nStreams</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">cudaStream_t</span><span class="w"> </span><span class="n">streams</span><span class="p">[</span><span class="n">nStreams</span><span class="p">];</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">nStreams</span><span class="p">;</span><span class="w"> </span><span class="n">s</span><span class="o">++</span><span class="p">)</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaStreamCreate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">streams</span><span class="p">[</span><span class="n">s</span><span class="p">]));</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="kt">int</span><span class="w"> </span><span class="n">chunk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">nChunks</span><span class="p">;</span><span class="w">                 </span><span class="c1">// chunk size (assuming an even split)</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="kt">size_t</span><span class="w"> </span><span class="n">cbytes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="p">)</span><span class="n">chunk</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">);</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">nChunks</span><span class="p">;</span><span class="w"> </span><span class="n">c</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">off</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">chunk</span><span class="p">;</span><span class="w">                 </span><span class="c1">// chunk offset</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">    </span><span class="n">cudaStream_t</span><span class="w"> </span><span class="n">st</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">streams</span><span class="p">[</span><span class="n">c</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">nStreams</span><span class="p">];</span><span class="w">   </span><span class="c1">// round-robin across the streams</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMemcpyAsync</span><span class="p">(</span><span class="n">d_a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">off</span><span class="p">,</span><span class="w"> </span><span class="n">h_a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">off</span><span class="p">,</span><span class="w"> </span><span class="n">cbytes</span><span class="p">,</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">                               </span><span class="n">cudaMemcpyHostToDevice</span><span class="p">,</span><span class="w"> </span><span class="n">st</span><span class="p">));</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMemcpyAsync</span><span class="p">(</span><span class="n">d_b</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">off</span><span class="p">,</span><span class="w"> </span><span class="n">h_b</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">off</span><span class="p">,</span><span class="w"> </span><span class="n">cbytes</span><span class="p">,</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="w">                               </span><span class="n">cudaMemcpyHostToDevice</span><span class="p">,</span><span class="w"> </span><span class="n">st</span><span class="p">));</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="w">    </span><span class="n">vecAdd</span><span class="o">&lt;&lt;&lt;</span><span class="p">(</span><span class="n">chunk</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">256</span><span class="p">,</span><span class="w"> </span><span class="mi">256</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">st</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">d_a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">off</span><span class="p">,</span><span class="w"> </span><span class="n">d_b</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">off</span><span class="p">,</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="w">                                                </span><span class="n">d_c</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">off</span><span class="p">,</span><span class="w"> </span><span class="n">chunk</span><span class="p">);</span>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMemcpyAsync</span><span class="p">(</span><span class="n">h_c</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">off</span><span class="p">,</span><span class="w"> </span><span class="n">d_c</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">off</span><span class="p">,</span><span class="w"> </span><span class="n">cbytes</span><span class="p">,</span>
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="w">                               </span><span class="n">cudaMemcpyDeviceToHost</span><span class="p">,</span><span class="w"> </span><span class="n">st</span><span class="p">));</span>
+<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="p">}</span>
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">nStreams</span><span class="p">;</span><span class="w"> </span><span class="n">s</span><span class="o">++</span><span class="p">)</span>
+<a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaStreamSynchronize</span><span class="p">(</span><span class="n">streams</span><span class="p">[</span><span class="n">s</span><span class="p">]));</span><span class="w">   </span><span class="c1">// wait for completion</span>
+</code></pre></div>
+<p>הרעיון בציר הזמן. סדרתי לעומת חופף, כשזמן ההעתקה של נתח וזמן החישוב עליו דומים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>   sequential (single stream, no overlap):
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>   H2D₀ ─► K₀ ─► D2H₀ ─► H2D₁ ─► K₁ ─► D2H₁ ─► ...
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>   |&lt;---------- everything one after another -----------&gt;|
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>   overlapped (two streams, pinned):
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>   stream A:  H2D₀ ─► K₀ ─► D2H₀ ─► H2D₂ ─► K₂ ─► D2H₂
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>   stream B:        H2D₁ ─► K₁ ─► D2H₁ ─► H2D₃ ─► K₃
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>                    ▲ while A computes, B copies - in parallel
+</code></pre></div>
+<p><strong>חשבון מודל.</strong> נניח ארבעה נתחים, וזמן העתקה של נתח (H2D בלבד) שווה לזמן החישוב עליו, כל אחד <code>t</code>. סדרתי לחלוטין (H2D ואז K לכל נתח, בלי חפיפה) עולה בערך <code>2t x 4 = 8t</code>. עם חפיפה מלאה בין ההעתקות לחישוב, הזמן מתקרב ל-<code>max(סך ההעתקות, סך החישוב)</code> ועוד עלות של נתח בודד בקצוות - בערך <code>4t + t = 5t</code>. חיסכון של כ-37%. ככל שמגדילים את מספר הנתחים, "הזנב" של נתח בודד נעשה זניח, ומגיעים לחסם התיאורטי <code>max(copy, compute)</code> - הזמן של הרכיב האיטי לבדו, כאילו השני חינם. את זה בדיוק תמדדו בתרגול.</p>
+<p>שני תנאים הכרחיים לחפיפה שקל לשכוח: (1) זיכרון הhost <code>h_a</code>, <code>h_b</code>, <code>h_c</code> חייב להיות pinned, אחרת <code>cudaMemcpyAsync</code> מסתנכרנת ואין חפיפה; (2) העבודה חייבת להתפזר על streams לא-default, אחרת ה-default stream מסדרן הכל. ה-H100 מצויד במספר Copy Engines, כך שהוא יכול אפילו לחפוף H2D ו-D2H בו-זמנית עם חישוב - שלושה זרמי עבודה במקביל.</p>
+<h2 id="-a-decision-table">מתי להשתמש במה - a decision table<a class="headerlink" href="#-a-decision-table" title="Permanent link">&para;</a></h2>
+<p>נסכם את ארבעת הכלים כטבלת החלטה מעשית:</p>
+<table>
+<thead>
+<tr>
+<th>צורך</th>
+<th>הכלי</th>
+<th>הערה</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>הקצאה בסיסית של global memory</td>
+<td><code>cudaMalloc</code> / <code>cudaFree</code></td>
+<td>ברירת המחדל; שליטה מלאה, ניהול ידני</td>
+</tr>
+<tr>
+<td>קלט/פלט חוזרים בהעברות</td>
+<td><code>cudaMallocHost</code> (pinned)</td>
+<td>פי 2-3 מהירות; אל תנעלו יותר מדי</td>
+</tr>
+<tr>
+<td>חפיפת העתקה עם חישוב</td>
+<td>pinned + <code>cudaMemcpyAsync</code> + streams</td>
+<td>דורש את שלושתם יחד</td>
+</tr>
+<tr>
+<td>פרודוקטיביות, פורטינג, מבני מצביעים</td>
+<td><code>cudaMallocManaged</code></td>
+<td>הוסיפו <code>cudaMemPrefetchAsync</code> לביצועים</td>
+</tr>
+<tr>
+<td>הקצאה גדולה מ-80 GiB (oversubscription)</td>
+<td><code>cudaMallocManaged</code></td>
+<td>ה-runtime מחליף עמודים אוטומטית</td>
+</tr>
+<tr>
+<td>מדידת זמן GPU מדויקת</td>
+<td><code>cudaEvent</code></td>
+<td>תמיד עם איטרציית חימום</td>
+</tr>
+</tbody>
+</table>
+<p>הכלל המנחה לאורך הקורס: <strong>צוואר הבקבוק לרוב הוא תנועת הנתונים, לא ה-kernel.</strong> ניהול נכון של הזיכרון מהhost - מזעור העברות, נעילת ה-buffers הנכונים, וחפיפת מה שנשאר עם חישוב - הוא לעיתים קרובות מה שמפריד בין קוד CUDA איטי לקוד CUDA מהיר, יותר מכל אופטימיזציה בתוך ה-kernel עצמו.</p>
+<h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>cudaMemcpy</code> הרגילה חוסמת את הhost; הכיוונים הם H2D, D2H, D2D (על רוחב הפס של ה-HBM3) ו-H2H, וכולם שייכים ל-CUDA Runtime API שהוא עטיפה מעל ה-Driver API.</li>
+<li>זיכרון host pinned (נעול-עמודים) שמוקצה ב-<code>cudaMallocHost</code> או <code>cudaHostAlloc</code> מדלג על ה-bounce buffer ומאפשר DMA ישיר, ומכאן פי 2-3 מהירות בהעברות והתנאי ההכרחי להעברות אסינכרוניות.</li>
+<li>נעילת-יתר (over-pinning) גוזלת RAM פיזי קשיח ומחניקה את המערכת; נועלים רק את ה-buffers החוזרים בהעברות, ומקצים אותם פעם אחת.</li>
+<li><code>cudaMallocManaged</code> מספק מצביע יחיד לשני העולמות עם migration של עמודים לפי דרישה (page faults); הוא מנצח בפרודוקטיביות וב-oversubscription אך משלם ב-page faults מפוזרים.</li>
+<li><code>cudaMemPrefetchAsync</code> ממיר את ההגירה מ-faults עצלים להעברה אחת גדולה ומחזיר ביצועים, ו-<code>cudaMemAdvise</code> מרמז על דפוסי גישה (ReadMostly, PreferredLocation, AccessedBy) לכוונון בלבד.</li>
+<li>stream הוא תור פעולות מסודר; בתוך stream יש סדר, בין streams שונים אין - וזה בדיוק מה שמאפשר חפיפה.</li>
+<li><code>cudaMemcpyAsync</code> על stream חוזרת מיד, אך רק מזיכרון pinned ורק ב-stream לא-default היא באמת אסינכרונית וחופפת.</li>
+<li><code>cudaEvent</code> (עם <code>cudaEventRecord</code> ו-<code>cudaEventElapsedTime</code>) מודד זמן GPU בדיוק תת-מיקרו-שנייה ובונה תלויות בין streams דרך <code>cudaStreamWaitEvent</code>; תמיד עם איטרציית חימום.</li>
+<li>חפיפת העתקה עם חישוב על פני נתחים ושני streams מקרבת את הזמן מ-<code>copy + compute</code> אל <code>max(copy, compute)</code>, ודורשת בו-זמנית pinned, async ו-streams לא-default.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

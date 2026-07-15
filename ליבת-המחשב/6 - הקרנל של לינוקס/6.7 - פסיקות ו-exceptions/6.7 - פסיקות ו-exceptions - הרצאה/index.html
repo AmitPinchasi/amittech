@@ -1,0 +1,4508 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בפרק 1.6 למדנו על interrupts במצב 16 ביט - ראינו את טבלת הIVT, את הפקודה INT, ואיך הBIOS וDOS מספקים שירותים דרך interrupts.">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions/6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>6.7 פסיקות ו exceptions הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "6.7   \u05e4\u05e1\u05d9\u05e7\u05d5\u05ea \u05d5 exceptions   \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions/6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="6.7   פסיקות ו exceptions   הרצאה - עמית טק" />
+<meta property="og:description" content="בפרק 1.6 למדנו על interrupts במצב 16 ביט - ראינו את טבלת הIVT, את הפקודה INT, ואיך הBIOS וDOS מספקים שירותים דרך interrupts." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions/6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions/6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="6.7   פסיקות ו exceptions   הרצאה - עמית טק" />
+<meta property="twitter:description" content="בפרק 1.6 למדנו על interrupts במצב 16 ביט - ראינו את טבלת הIVT, את הפקודה INT, ואיך הBIOS וDOS מספקים שירותים דרך interrupts." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions/6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-exceptions-interrupts-and-exceptions" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              6.7   פסיקות ו exceptions   הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_1" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_1" id="__nav_7_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    ליבת המחשב
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%90%D7%A8%D7%92%D7%95%D7%9F%20%D7%94%D7%9E%D7%97%D7%A9%D7%91/0.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94/0.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   ארגון המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%2016%20%D7%91%D7%99%D7%98/1.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94/1.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   אסמבלי 16 ביט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%2032%20%D7%91%D7%99%D7%98/2.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/2.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   אסמבלי 32 ביט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%A9%D7%A4%D7%AA%20C/3.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/3.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   שפת C
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%99%D7%AA%20libc/4.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/4.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   ספריית libc
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/5.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/5.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   לינוקס
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_1_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_1_8" id="__nav_7_1_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   הקרנל של לינוקס
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_1_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_1_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    6   הקרנל של לינוקס
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C/6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.1   הקדמה לקרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.2%20-%20%D7%94syscall%20%D7%9E%D7%91%D7%A4%D7%A0%D7%99%D7%9D/6.2%20-%20%D7%94syscall%20%D7%9E%D7%91%D7%A4%D7%A0%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.2   הsyscall מבפנים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.3%20-%20%D7%9E%D7%AA%D7%96%D7%9E%D7%9F%20%D7%94%D7%AA%D7%94%D7%9C%D7%99%D7%9B%D7%99%D7%9D/6.3%20-%20%D7%9E%D7%AA%D7%96%D7%9E%D7%9F%20%D7%94%D7%AA%D7%94%D7%9C%D7%99%D7%9B%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.3   מתזמן התהליכים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.4%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F/6.4%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.4   ניהול זכרון
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.5%20-%20%D7%9E%D7%A2%D7%A8%D7%9B%D7%AA%20%D7%94%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%94%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/6.5%20-%20%D7%9E%D7%A2%D7%A8%D7%9B%D7%AA%20%D7%94%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%94%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.5   מערכת הקבצים הוירטואלית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.6   הקצאת זכרון בקרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_1_8_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_1_8_7" id="__nav_7_1_8_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.7   פסיקות ו exceptions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_1_8_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_1_8_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    6.7   פסיקות ו exceptions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.7   פסיקות ו exceptions   הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.7   פסיקות ו exceptions   הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#interrupts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה זה בכלל interrupts?
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מה זה בכלל interrupts?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-hardware-interrupts-irqs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פסיקות חומרה - hardware interrupts (IRQs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-exceptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חריגות - exceptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#idt-interrupt-descriptor-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        טבלת הIDT - Interrupt Descriptor Table
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="טבלת הIDT - Interrupt Descriptor Table">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#idt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איך הIDT מוגדרת?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חלוקת הכניסות
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חריגות המעבד החשובות (0-31)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interrupt-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        זרימת interrupt חומרה - מההתקן עד לקרנל
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="זרימת interrupt חומרה - מההתקן עד לקרנל">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-interrupts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 1 - ההתקן שולח אות לבקר הinterrupts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-interrupts-interrupt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 2 - בקר הinterrupts מעביר את הinterrupt למעבד
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-handler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 3 - המעבד שומר מצב וקופץ לhandler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-handler-top-half" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 4 - הhandler רץ (החצי העליון - top half)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-bottom-half" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 5 - החצי התחתון רץ מאוחר יותר (bottom half)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-interrupt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 6 - חזרה מהinterrupt
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-top-half-vs-bottom-half" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חצי עליון מול חצי תחתון - top half vs bottom half
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="חצי עליון מול חצי תחתון - top half vs bottom half">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-top-half" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        החצי העליון - top half
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-bottom-half" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        החצי התחתון - bottom half
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="החצי התחתון - bottom half">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#softirqs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מנגנון softirqs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tasklets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מנגנון tasklets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workqueues-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מנגנון workqueues - תורי עבודה
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דוגמה - כרטיס רשת
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#apic-advanced-programmable-interrupt-controller" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הAPIC - Advanced Programmable Interrupt Controller
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="הAPIC - Advanced Programmable Interrupt Controller">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#apic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        למה צריך APIC?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        המבנה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-interrupt-balancing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איזון פסיקות - interrupt balancing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#procinterrupts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קובץ proc/interrupts/
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-exceptions_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        טיפול בחריגות - exceptions בפירוט
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="טיפול בחריגות - exceptions בפירוט">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דוגמה: מה קורה כשתוכנה ניגשת לכתובת לא ממופה?
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="דוגמה: מה קורה כשתוכנה ניגשת לכתובת לא ממופה?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 1 - המעבד מזהה שגיאה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 2 - המעבד שומר מצב
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-handler_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 3 - קפיצה לhandler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 4 - הקרנל מנתח את המצב
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 5 - תגובה
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הקשר בין חריגות לסיגנלים
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="הקשר בין חריגות לסיגנלים">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gdb-breakpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איך GDB משתמש בbreakpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.7 - פסיקות ו-exceptions - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.7 - פסיקות ו-exceptions - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.8%20-%20%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%D7%99%D7%9D/6.8%20-%20%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.8   דרייברים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.9%20-%20%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA%20%D7%94%D7%A8%D7%A9%D7%AA/6.9%20-%20%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA%20%D7%94%D7%A8%D7%A9%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.9   מחסנית הרשת
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.10   סנכרון בקרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.11%20-%20%D7%90%D7%91%D7%98%D7%97%D7%94%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.11%20-%20%D7%90%D7%91%D7%98%D7%97%D7%94%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.11   אבטחה בקרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C/6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.12   דיבוג קרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.13%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A1%D7%99%D7%9B%D7%95%D7%9D/6.13%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A1%D7%99%D7%9B%D7%95%D7%9D%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.13   פרויקט סיכום
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94/7.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94/7.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   הנדסה הפוכה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%9E%D7%A2%D7%91%D7%93/8.1%20-%20%D7%A6%D7%99%D7%A0%D7%95%D7%A8%20%D7%94%D7%94%D7%95%D7%A8%D7%90%D7%95%D7%AA/8.1%20-%20%D7%A6%D7%99%D7%A0%D7%95%D7%A8%20%D7%94%D7%94%D7%95%D7%A8%D7%90%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   ארכיטקטורת מעבד
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%9C%D7%A6%D7%99%D7%94%20%D7%95%D7%9C%D7%99%D7%A0%D7%A7%D7%95%D7%92/9.1%20-%20%D7%A9%D7%9C%D7%91%D7%99%20%D7%94%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%9C%D7%A6%D7%99%D7%94/9.1%20-%20%D7%A9%D7%9C%D7%91%D7%99%20%D7%94%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%9C%D7%A6%D7%99%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   קומפילציה ולינקוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../10%20-%20C%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/10.1%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%20%D7%91%D7%AA%D7%95%D7%9A%20C/10.1%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%20%D7%91%D7%AA%D7%95%D7%9A%20C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10   C מתקדם
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../11%20-%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A8%D7%A9%D7%AA/11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D/11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    11   תכנות רשת
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../12%20-%20%D7%9E%D7%A7%D7%91%D7%99%D7%9C%D7%99%D7%95%D7%AA%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%AA/12.1%20-%20%D7%93%D7%A4%D7%95%D7%A1%D7%99%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%9E%D7%A7%D7%91%D7%99%D7%9C%D7%99/12.1%20-%20%D7%93%D7%A4%D7%95%D7%A1%D7%99%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%9E%D7%A7%D7%91%D7%99%D7%9C%D7%99%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    12   מקביליות מתקדמת
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#interrupts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה זה בכלל interrupts?
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מה זה בכלל interrupts?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-hardware-interrupts-irqs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פסיקות חומרה - hardware interrupts (IRQs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-exceptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חריגות - exceptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#idt-interrupt-descriptor-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        טבלת הIDT - Interrupt Descriptor Table
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="טבלת הIDT - Interrupt Descriptor Table">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#idt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איך הIDT מוגדרת?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חלוקת הכניסות
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חריגות המעבד החשובות (0-31)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interrupt-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        זרימת interrupt חומרה - מההתקן עד לקרנל
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="זרימת interrupt חומרה - מההתקן עד לקרנל">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-interrupts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 1 - ההתקן שולח אות לבקר הinterrupts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-interrupts-interrupt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 2 - בקר הinterrupts מעביר את הinterrupt למעבד
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-handler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 3 - המעבד שומר מצב וקופץ לhandler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-handler-top-half" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 4 - הhandler רץ (החצי העליון - top half)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-bottom-half" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 5 - החצי התחתון רץ מאוחר יותר (bottom half)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-interrupt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 6 - חזרה מהinterrupt
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-top-half-vs-bottom-half" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חצי עליון מול חצי תחתון - top half vs bottom half
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="חצי עליון מול חצי תחתון - top half vs bottom half">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-top-half" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        החצי העליון - top half
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-bottom-half" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        החצי התחתון - bottom half
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="החצי התחתון - bottom half">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#softirqs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מנגנון softirqs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tasklets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מנגנון tasklets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workqueues-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מנגנון workqueues - תורי עבודה
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דוגמה - כרטיס רשת
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#apic-advanced-programmable-interrupt-controller" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הAPIC - Advanced Programmable Interrupt Controller
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="הAPIC - Advanced Programmable Interrupt Controller">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#apic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        למה צריך APIC?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        המבנה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-interrupt-balancing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איזון פסיקות - interrupt balancing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#procinterrupts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קובץ proc/interrupts/
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-exceptions_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        טיפול בחריגות - exceptions בפירוט
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="טיפול בחריגות - exceptions בפירוט">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דוגמה: מה קורה כשתוכנה ניגשת לכתובת לא ממופה?
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="דוגמה: מה קורה כשתוכנה ניגשת לכתובת לא ממופה?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 1 - המעבד מזהה שגיאה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 2 - המעבד שומר מצב
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-handler_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 3 - קפיצה לhandler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 4 - הקרנל מנתח את המצב
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שלב 5 - תגובה
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הקשר בין חריגות לסיגנלים
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="הקשר בין חריגות לסיגנלים">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gdb-breakpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איך GDB משתמש בbreakpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    ליבת המחשב
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C/6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    6   הקרנל של לינוקס
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    6.7   פסיקות ו exceptions
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<p>בפרק 1.6 למדנו על interrupts במצב 16 ביט - ראינו את טבלת הIVT, את הפקודה <code>INT</code>, ואיך הBIOS וDOS מספקים שירותים דרך interrupts.<br />
+בפרק 2 ראינו בקצרה את הIDT - טבלת הinterrupts של Protected Mode, ואיך היא מחליפה את הIVT הישנה.<br />
+עכשיו הגיע הזמן להבין לעומק איך הקרנל של לינוקס מטפל בinterrupts וב-exceptions על ארכיטקטורת x86-64 המודרנית.</p>
+<h1 id="-exceptions-interrupts-and-exceptions">פסיקות ו-exceptions - interrupts and exceptions<a class="headerlink" href="#-exceptions-interrupts-and-exceptions" title="Permanent link">&para;</a></h1>
+<h2 id="interrupts">מה זה בכלל interrupts?<a class="headerlink" href="#interrupts" title="Permanent link">&para;</a></h2>
+<p>הinterrupt (interrupt) היא אירוע שגורם למעבד <strong>להפסיק את מה שהוא עושה עכשיו</strong> ולקפוץ לפונקציית טיפול (handler) שהוגדרה מראש.</p>
+<p>זוכרים את הרעיון מפרק 1.6? אותו רעיון בדיוק - רק שעכשיו אנחנו ב-64 ביט, בProtected Mode (ליתר דיוק - ב-Long Mode), עם קרנל שלם שמנהל את כל התהליך.</p>
+<p>יש שני סוגים עיקריים של interrupts:</p>
+<h3 id="-hardware-interrupts-irqs">פסיקות חומרה - hardware interrupts (IRQs)<a class="headerlink" href="#-hardware-interrupts-irqs" title="Permanent link">&para;</a></h3>
+<p>אותות שמגיעים מהתקנים חיצוניים:<br />
+- <strong>מקלדת</strong> - לחצתם על מקש? המקלדת שולחת IRQ<br />
+- <strong>דיסק</strong> - הדיסק סיים לקרוא נתונים? הוא שולח IRQ<br />
+- <strong>כרטיס רשת</strong> - הגיעה חבילת רשת? כרטיס הרשת שולח IRQ<br />
+- <strong>טיימר</strong> - הטיימר של המערכת מתקתק ושולח IRQ בקצב קבוע (זה מה שמאפשר למתזמן לעבוד - זוכרים מפרק 6.3?)</p>
+<h3 id="-exceptions">חריגות - exceptions<a class="headerlink" href="#-exceptions" title="Permanent link">&para;</a></h3>
+<p>נגרמות על ידי המעבד עצמו, כתוצאה ממשהו שקרה בזמן ריצת הקוד:<br />
+- <strong>שגיאת דף - page fault (#PF)</strong> - גישה לכתובת שלא ממופה (זוכרים מפרק 6.4?)<br />
+- <strong>חלוקה באפס - divide error (#DE)</strong> - ניסיון לחלק באפס<br />
+- <strong>הגנה כללית - general protection fault (#GP)</strong> - ניסיון לבצע פעולה אסורה<br />
+- <strong>נקודת עצירה - breakpoint (#BP)</strong> - פקודת <code>int3</code> (ככה debuggers עובדים!)<br />
+- <strong>קוד לא חוקי - invalid opcode (#UD)</strong> - המעבד נתקל בפקודה שהוא לא מכיר</p>
+<hr />
+<h2 id="idt-interrupt-descriptor-table">טבלת הIDT - Interrupt Descriptor Table<a class="headerlink" href="#idt-interrupt-descriptor-table" title="Permanent link">&para;</a></h2>
+<p>הIDT היא מערך של 256 כניסות (entries), כאשר כל כניסה מצביעה על פונקציית טיפול (handler) בקרנל.</p>
+<p>בפרק 1.6 ראינו את הIVT (Interrupt Vector Table) שהיתה פשוט מערך של כתובות בזיכרון. הIDT היא הגרסה המתקדמת שלה - כל כניסה מכילה לא רק כתובת, אלא גם מידע על הרשאות, סוג הgate, וסגמנט היעד.</p>
+<h3 id="idt">איך הIDT מוגדרת?<a class="headerlink" href="#idt" title="Permanent link">&para;</a></h3>
+<ul>
+<li>הקרנל בונה את הIDT בזמן אתחול המערכת (boot time)</li>
+<li>הכתובת של הIDT נטענת לרגיסטר מיוחד של המעבד באמצעות הפקודה <code>LIDT</code></li>
+<li>כל כניסה היא מבנה בגודל 16 בתים (ב-64 ביט) שמכיל את כתובת הhandler, selector, ודגלים</li>
+</ul>
+<h3 id="_1">חלוקת הכניסות<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>טווח</th>
+<th>שימוש</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0-31</td>
+<td>חריגות מעבד (exceptions) - מוגדרות על ידי אינטל, קבועות</td>
+</tr>
+<tr>
+<td>32-255</td>
+<td>זמינות לinterrupts חומרה (IRQs) וinterrupts תוכנה</td>
+</tr>
+</tbody>
+</table>
+<h3 id="0-31">חריגות המעבד החשובות (0-31)<a class="headerlink" href="#0-31" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>מספר</th>
+<th>סימון</th>
+<th>שם</th>
+<th>מתי קורה</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>#DE</td>
+<td>שגיאת חילוק - Divide Error</td>
+<td>חלוקה באפס או overflow בחלוקה</td>
+</tr>
+<tr>
+<td>1</td>
+<td>#DB</td>
+<td>דיבוג - Debug</td>
+<td>צעד בודד (single step) או hardware breakpoint</td>
+</tr>
+<tr>
+<td>3</td>
+<td>#BP</td>
+<td>נקודת עצירה - Breakpoint</td>
+<td>הפקודה <code>int3</code> הופעלה</td>
+</tr>
+<tr>
+<td>4</td>
+<td>#OF</td>
+<td>גלישה - Overflow</td>
+<td>הפקודה <code>into</code> כשדגל OF דלוק</td>
+</tr>
+<tr>
+<td>6</td>
+<td>#UD</td>
+<td>פקודה לא חוקית - Invalid Opcode</td>
+<td>המעבד נתקל בopcode שהוא לא מכיר</td>
+</tr>
+<tr>
+<td>7</td>
+<td>#NM</td>
+<td>התקן לא זמין - Device Not Available</td>
+<td>ניסיון להשתמש בFPU/SSE כשהם כבויים</td>
+</tr>
+<tr>
+<td>8</td>
+<td>#DF</td>
+<td>שגיאה כפולה - Double Fault</td>
+<td>exception קרה בזמן טיפול בexception אחר</td>
+</tr>
+<tr>
+<td>13</td>
+<td>#GP</td>
+<td>הגנה כללית - General Protection Fault</td>
+<td>הפרת הרשאה - ניסיון לבצע פעולה אסורה</td>
+</tr>
+<tr>
+<td>14</td>
+<td>#PF</td>
+<td>שגיאת דף - Page Fault</td>
+<td>גישה לpage שלא ממופה או שאין הרשאה אליו</td>
+</tr>
+</tbody>
+</table>
+<p>שימו לב שהDouble Fault (#DF) מספר 8 הוא מצב מיוחד - הוא קורה כשexception נזרק בזמן שהמעבד מנסה לטפל בexception אחר. אם גם הDouble Fault נכשל, המעבד עושה Triple Fault ומאתחל את המחשב מחדש (ריסטרט).</p>
+<hr />
+<h2 id="interrupt-">זרימת interrupt חומרה - מההתקן עד לקרנל<a class="headerlink" href="#interrupt-" title="Permanent link">&para;</a></h2>
+<p>בואו נעקוב אחרי מה קורה כשהתקן חומרה צריך את תשומת הלב של המעבד. ניקח לדוגמה לחיצה על מקש במקלדת:</p>
+<h3 id="1-interrupts">שלב 1 - ההתקן שולח אות לבקר הinterrupts<a class="headerlink" href="#1-interrupts" title="Permanent link">&para;</a></h3>
+<p>המקלדת שולחת אות חשמלי לבקר הinterrupts. במערכות מודרניות זה הAPIC (נדבר עליו בהמשך). במערכות ישנות זה היה הPIC (Programmable Interrupt Controller) - שבט 8259.</p>
+<h3 id="2-interrupts-interrupt">שלב 2 - בקר הinterrupts מעביר את הinterrupt למעבד<a class="headerlink" href="#2-interrupts-interrupt" title="Permanent link">&para;</a></h3>
+<p>הAPIC מעביר את הinterrupt למעבד המתאים עם מספר vector (מספר הכניסה בIDT).</p>
+<h3 id="3-handler">שלב 3 - המעבד שומר מצב וקופץ לhandler<a class="headerlink" href="#3-handler" title="Permanent link">&para;</a></h3>
+<p>המעבד עושה את הדברים הבאים אוטומטית (בחומרה, לא בתוכנה):<br />
+1. שומר את הרגיסטרים RFLAGS, CS, RIP על מחסנית הקרנל<br />
+2. אם היה מעבר מuser mode לkernel mode - שומר גם SS ו-RSP ומחליף מחסנית<br />
+3. מנקה את דגל הIF (Interrupt Flag) - כדי לחסום interrupts נוספות<br />
+4. מחפש את הכניסה המתאימה בIDT<br />
+5. קופץ לכתובת הhandler</p>
+<h3 id="4-handler-top-half">שלב 4 - הhandler רץ (החצי העליון - top half)<a class="headerlink" href="#4-handler-top-half" title="Permanent link">&para;</a></h3>
+<p>הקרנל מריץ את הhandler - שצריך להיות <strong>מהיר מאוד</strong>. הוא עושה את המינימום ההכרחי:<br />
+- מאשר לחומרה שקיבל את הinterrupt (acknowledge)<br />
+- שומר את המידע הדרוש<br />
+- מתזמן עבודה כבדה יותר שתרוץ מאוחר יותר (bottom half)</p>
+<h3 id="5-bottom-half">שלב 5 - החצי התחתון רץ מאוחר יותר (bottom half)<a class="headerlink" href="#5-bottom-half" title="Permanent link">&para;</a></h3>
+<p>העיבוד הכבד של הinterrupt קורה בהמשך, כשinterrupts כבר מותרות שוב.</p>
+<h3 id="6-interrupt">שלב 6 - חזרה מהinterrupt<a class="headerlink" href="#6-interrupt" title="Permanent link">&para;</a></h3>
+<p>הפקודה <code>iretq</code> (interrupt return) משחזרת את כל מה שהמעבד שמר בשלב 3, והריצה ממשיכה מאיפה שהופסקה.</p>
+<hr />
+<h2 id="-top-half-vs-bottom-half">חצי עליון מול חצי תחתון - top half vs bottom half<a class="headerlink" href="#-top-half-vs-bottom-half" title="Permanent link">&para;</a></h2>
+<p>למה בכלל צריך את החלוקה הזאת? הסיבה פשוטה:</p>
+<p>כשהhandler של interrupt רץ, interrupts אחרות חסומות (או לפחות הIRQ הנוכחי חסום). אם נעשה עיבוד כבד בhandler, אנחנו <strong>נפסיד interrupts אחרות</strong> ומערכת תהפוך ללא רספונסיבית.</p>
+<p>לכן עושים חלוקה:</p>
+<h3 id="-top-half">החצי העליון - top half<a class="headerlink" href="#-top-half" title="Permanent link">&para;</a></h3>
+<ul>
+<li>רץ עם interrupts חסומות (או לפחות הIRQ הנוכחי חסום)</li>
+<li><strong>חייב להיות מהיר</strong> - מיקרושניות בודדות</li>
+<li>עושה רק את המינימום: מאשר לחומרה, קורא מידע קריטי, מתזמן את הbottom half</li>
+<li><strong>לא יכול לישון</strong> (אי אפשר לקרוא ל-sleep, ללכת לדיסק, להקצות זיכרון עם GFP_KERNEL)</li>
+</ul>
+<h3 id="-bottom-half">החצי התחתון - bottom half<a class="headerlink" href="#-bottom-half" title="Permanent link">&para;</a></h3>
+<p>כאן מתבצע העיבוד האמיתי. יש שלושה מנגנונים שונים:</p>
+<h4 id="softirqs">מנגנון softirqs<a class="headerlink" href="#softirqs" title="Permanent link">&para;</a></h4>
+<ul>
+<li>מוגדרים סטטית בזמן קומפילציה של הקרנל (לא ניתן להוסיף חדשים בזמן ריצה)</li>
+<li>הכי מהירים ויעילים</li>
+<li>משמשים למשימות קריטיות כמו עיבוד רשת (NET_TX_SOFTIRQ, NET_RX_SOFTIRQ) ובלוק I/O</li>
+<li>יכולים לרוץ במקביל על מספר מעבדים (ולכן צריך להיזהר עם נעילות)</li>
+<li><strong>לא יכולים לישון</strong></li>
+</ul>
+<h4 id="tasklets">מנגנון tasklets<a class="headerlink" href="#tasklets" title="Permanent link">&para;</a></h4>
+<ul>
+<li>בנויים מעל softirqs</li>
+<li>אפשר להקצות אותם דינמית</li>
+<li>פשוטים יותר לשימוש - tasklet ספציפי לא ירוץ על שני מעבדים במקביל</li>
+<li><strong>לא יכולים לישון</strong></li>
+</ul>
+<h4 id="workqueues-">מנגנון workqueues - תורי עבודה<a class="headerlink" href="#workqueues-" title="Permanent link">&para;</a></h4>
+<ul>
+<li>רצים בהקשר של thread קרנל רגיל</li>
+<li><strong>יכולים לישון</strong> - ולכן מתאימים לעבודה כבדה</li>
+<li>יכולים להקצות זיכרון, לגשת לדיסק, לבצע פעולות ארוכות</li>
+<li>איטיים יותר מsoftirqs ומtasklets</li>
+<li>משמשים למשימות שדורשות עבודה כבדה ולא דחופה</li>
+</ul>
+<h3 id="-">דוגמה - כרטיס רשת<a class="headerlink" href="#-" title="Permanent link">&para;</a></h3>
+<p>כשכרטיס הרשת מקבל חבילה:<br />
+1. <strong>חצי עליון</strong>: הdriver קורא את החבילה מהחומרה, שם אותה בqueue, מאשר את הinterrupt - סיים תוך מיקרושניות<br />
+2. <strong>חצי תחתון (softirq)</strong>: הstack של הרשת בקרנל מעבד את החבילה - בודק headers, מחליט לאיזה socket להעביר, מטפל בTCP - יכול לקחת הרבה יותר זמן</p>
+<hr />
+<h2 id="apic-advanced-programmable-interrupt-controller">הAPIC - Advanced Programmable Interrupt Controller<a class="headerlink" href="#apic-advanced-programmable-interrupt-controller" title="Permanent link">&para;</a></h2>
+<p>בפרק 1.6 הזכרנו בקצרה את הPIC (שבב 8259) שהיה בקר הinterrupts במערכות ישנות. במערכות מודרניות השתדרגנו לAPIC.</p>
+<h3 id="apic">למה צריך APIC?<a class="headerlink" href="#apic" title="Permanent link">&para;</a></h3>
+<p>הPIC הישן תמך ב-15 קווי interrupt בלבד, ותמיד שלח interrupts למעבד אחד בלבד. במערכות מודרניות עם מספר מעבדים (וליבות), זה לא מספיק.</p>
+<h3 id="_2">המבנה<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<p>מערכת הAPIC מורכבת משני חלקים:</p>
+<p><strong>Local APIC</strong> - לכל ליבה במעבד יש Local APIC משלה. היא:<br />
+- מקבלת interrupts מהI/O APIC ומ-Local APICים אחרים<br />
+- מנהלת את הטיימר המקומי של הליבה<br />
+- יכולה לשלוח interrupts לליבות אחרות (IPI - Inter-Processor Interrupt)</p>
+<p><strong>I/O APIC</strong> - יושב על לוח האם. הוא:<br />
+- מקבל interrupts מהתקני חומרה חיצוניים<br />
+- ממפה כל interrupt חומרה לvector בIDT<br />
+- מנתב את הinterrupt לליבה המתאימה</p>
+<h3 id="-interrupt-balancing">איזון פסיקות - interrupt balancing<a class="headerlink" href="#-interrupt-balancing" title="Permanent link">&para;</a></h3>
+<p>הI/O APIC יכול להפיץ interrupts בין הליבות השונות, כדי שליבה אחת לא תהיה עמוסה בכל הinterrupts. בלינוקס אפשר לשלוט בזה דרך <code>/proc/irq/&lt;N&gt;/smp_affinity</code>.</p>
+<hr />
+<h2 id="procinterrupts">קובץ proc/interrupts/<a class="headerlink" href="#procinterrupts" title="Permanent link">&para;</a></h2>
+<p>אחד הכלים השימושיים ביותר לבדיקת interrupts במערכת חיה הוא הקובץ <code>/proc/interrupts</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>cat<span class="w"> </span>/proc/interrupts
+</code></pre></div>
+<p>הפלט נראה משהו כזה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>           CPU0       CPU1       CPU2       CPU3
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  0:         50          0          0          0   IO-APIC   2-edge      timer
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  1:          0          0          0         23   IO-APIC   1-edge      i8042
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  8:          0          0          1          0   IO-APIC   8-edge      rtc0
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  9:          0          0          0          3   IO-APIC   9-fasteoi   acpi
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a> 14:          0          0          0          0   IO-APIC  14-edge      ata_piix
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a> 15:          0          0        231          0   IO-APIC  15-edge      ata_piix
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a> 19:       1205          0          0          0   IO-APIC  19-fasteoi   eth0
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>NMI:          0          0          0          0   Non-maskable interrupts
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>LOC:      12504      11987      12133      12045   Local timer interrupts
+</code></pre></div>
+<p>מה רואים כאן:<br />
+- <strong>עמודה שמאלית</strong> - מספר הIRQ<br />
+- <strong>עמודות CPUn</strong> - כמה interrupts כל ליבה טיפלה בIRQ הזה<br />
+- <strong>סוג הבקר</strong> - IO-APIC, MSI וכו'<br />
+- <strong>שם ההתקן</strong> - הdriver שרשום לIRQ הזה</p>
+<p>שימו לב לLOC (Local timer interrupts) - זה הטיימר המקומי של כל ליבה, שאחראי על תזמון processes (scheduler tick).</p>
+<hr />
+<h2 id="-exceptions_1">טיפול בחריגות - exceptions בפירוט<a class="headerlink" href="#-exceptions_1" title="Permanent link">&para;</a></h2>
+<p>בואו נעקוב אחרי חריגה שכולנו מכירים - שגיאת דף - Page Fault.</p>
+<h3 id="_3">דוגמה: מה קורה כשתוכנה ניגשת לכתובת לא ממופה?<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kt">int</span><span class="w"> </span><span class="o">*</span><span class="n">ptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="mh">0xDEADBEEF</span><span class="p">;</span><span class="w">  </span><span class="c1">// address that isn&#39;t mapped</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="o">*</span><span class="n">ptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">42</span><span class="p">;</span><span class="w">                      </span><span class="c1">// BOOM - page fault!</span>
+</code></pre></div>
+<p>הנה מה שקורה צעד אחרי צעד:</p>
+<h4 id="1-">שלב 1 - המעבד מזהה שגיאה<a class="headerlink" href="#1-" title="Permanent link">&para;</a></h4>
+<p>המעבד מנסה לתרגם את הכתובת הוירטואלית <code>0xDEADBEEF</code> לכתובת פיזית דרך טבלאות הpages. הוא מגלה שאין מיפוי - ומייצר exception מספר 14 (#PF).</p>
+<h4 id="2-">שלב 2 - המעבד שומר מצב<a class="headerlink" href="#2-" title="Permanent link">&para;</a></h4>
+<p>המעבד דוחף על מחסנית הקרנל:<br />
+- קוד שגיאה (error code) - מכיל מידע על סוג הכשלון (קריאה/כתיבה, user/kernel, page לא קיים/הפרת הרשאה)<br />
+- שומר את הכתובת הפוגעת ברגיסטר CR2</p>
+<h4 id="3-handler_1">שלב 3 - קפיצה לhandler<a class="headerlink" href="#3-handler_1" title="Permanent link">&para;</a></h4>
+<p>הIDT כניסה מספר 14 מצביעה על הפונקציה <code>page_fault</code> בקרנל, שקוראת לפונקציה <code>do_page_fault()</code>.</p>
+<h4 id="4-">שלב 4 - הקרנל מנתח את המצב<a class="headerlink" href="#4-" title="Permanent link">&para;</a></h4>
+<p>הפונקציה <code>do_page_fault()</code> קוראת את CR2 כדי לדעת <strong>איזו כתובת</strong> גרמה לבעיה, ואז בודקת:</p>
+<ol>
+<li><strong>האם הכתובת שייכת לVMA חוקי?</strong> (זוכרים VMAs מפרק 6.4?) - מחפשת את הכתובת בעץ הVMAs של הprocess</li>
+<li><strong>אם כן</strong> - אולי צריך להקצות page חדש (demand paging), או לטעון page מהדיסק (swap), או לבצע copy-on-write</li>
+<li><strong>אם לא</strong> - הכתובת לא חוקית, הprocess ניגש למקום שלא שייך לו</li>
+</ol>
+<h4 id="5-">שלב 5 - תגובה<a class="headerlink" href="#5-" title="Permanent link">&para;</a></h4>
+<ul>
+<li>אם אפשר לטפל - הקרנל מקצה page, ממפה אותו, וחוזר לתוכנה שממשיכה כרגיל (התוכנה אפילו לא יודעת שהיה page fault!)</li>
+<li>אם לא אפשר לטפל - הקרנל שולח <strong>סיגנל SIGSEGV</strong> לprocess (ה-Segmentation Fault המפורסם)</li>
+</ul>
+<hr />
+<h2 id="_4">הקשר בין חריגות לסיגנלים<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<p>זוכרים סיגנלים מפרק 5.4? עכשיו אנחנו יכולים לסגור את המעגל ולהבין מאיפה הם באמת מגיעים:</p>
+<table>
+<thead>
+<tr>
+<th>חריגה (exception)</th>
+<th>מספר</th>
+<th>סיגנל שנשלח</th>
+<th>מה קורה</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>שגיאת חילוק - #DE</td>
+<td>0</td>
+<td>SIGFPE</td>
+<td>התוכנה חילקה באפס</td>
+</tr>
+<tr>
+<td>נקודת עצירה - #BP</td>
+<td>3</td>
+<td>SIGTRAP</td>
+<td>הפקודה <code>int3</code> הופעלה (debugger!)</td>
+</tr>
+<tr>
+<td>פקודה לא חוקית - #UD</td>
+<td>6</td>
+<td>SIGILL</td>
+<td>המעבד נתקל בopcode שהוא לא מכיר</td>
+</tr>
+<tr>
+<td>הגנה כללית - #GP</td>
+<td>13</td>
+<td>SIGSEGV</td>
+<td>הפרת הרשאה</td>
+</tr>
+<tr>
+<td>שגיאת דף - #PF</td>
+<td>14</td>
+<td>SIGSEGV (אם לא ניתן לטפל)</td>
+<td>גישה לזכרון לא חוקי</td>
+</tr>
+</tbody>
+</table>
+<h3 id="gdb-breakpoints">איך GDB משתמש בbreakpoints<a class="headerlink" href="#gdb-breakpoints" title="Permanent link">&para;</a></h3>
+<p>כשאתם שמים breakpoint בGDB, הנה מה שקורה מאחורי הקלעים:</p>
+<ol>
+<li>GDB כותב את הבית <code>0xCC</code> (הopcode של <code>int3</code>) במקום הפקודה הראשונה בכתובת של הbreakpoint</li>
+<li>כשהתוכנה מגיעה לנקודה הזו, המעבד מבצע <code>int3</code></li>
+<li>המעבד מייצר exception #BP (מספר 3)</li>
+<li>הקרנל מזהה breakpoint exception ושולח <strong>SIGTRAP</strong> לprocess</li>
+<li>הsyscall ptrace (שGDB משתמש בו) לוכד את הSIGTRAP</li>
+<li>GDB מקבל שליטה - ואתם רואים שהתוכנה "עצרה" בbreakpoint</li>
+</ol>
+<p>ועכשיו אתם מבינים את כל השרשרת - מהחומרה (exception), דרך הקרנל (IDT handler), ועד לתוכנה (סיגנל)!</p>
+<hr />
+<h2 id="_5">סיכום<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<ul>
+<li>הinterrupts חומרה מגיעות מהתקנים דרך הAPIC, חריגות נגרמות על ידי המעבד עצמו</li>
+<li>הIDT היא טבלה של 256 כניסות שממפה כל מספר interrupt לhandler בקרנל</li>
+<li>הטיפול מחולק לtop half (מהיר, interrupts חסומות) ולbottom half (softirq/tasklet/workqueue)</li>
+<li>חריגות מעבד הופכות לסיגנלים שנשלחים לprocess</li>
+<li>כל הנושאים שלמדנו מתחברים: IDT מפרק 2, סיגנלים מפרק 5.4, VMAs מפרק 6.4, מתזמן מפרק 6.3</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

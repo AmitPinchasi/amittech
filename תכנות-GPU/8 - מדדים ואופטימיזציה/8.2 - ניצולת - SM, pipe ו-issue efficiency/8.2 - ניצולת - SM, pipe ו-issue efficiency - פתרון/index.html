@@ -1,0 +1,2813 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="הערה: כל המספרים בפלטים למטה הם דוגמאות ממכונת H100 SXM עם CUDA 12 ו-Nsight Compute 2024.x, וישתנו אצלכם לפי הכרטיס, גרסת הדרייבר ומצב המערכת. מה שלא...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency/8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        <link rel="prev" href="../8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="next" href="../8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>8.2 - ניצולת - SM, pipe ו-issue efficiency - פתרון - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "8.2 - \u05e0\u05d9\u05e6\u05d5\u05dc\u05ea - SM, pipe \u05d5-issue efficiency - \u05e4\u05ea\u05e8\u05d5\u05df",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency/8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="8.2 - ניצולת - SM, pipe ו-issue efficiency - פתרון - עמית טק" />
+<meta property="og:description" content="הערה: כל המספרים בפלטים למטה הם דוגמאות ממכונת H100 SXM עם CUDA 12 ו-Nsight Compute 2024.x, וישתנו אצלכם לפי הכרטיס, גרסת הדרייבר ומצב המערכת. מה שלא..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency/8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency/8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="8.2 - ניצולת - SM, pipe ו-issue efficiency - פתרון - עמית טק" />
+<meta property="twitter:description" content="הערה: כל המספרים בפלטים למטה הם דוגמאות ממכונת H100 SXM עם CUDA 12 ו-Nsight Compute 2024.x, וישתנו אצלכם לפי הכרטיס, גרסת הדרייבר ומצב המערכת. מה שלא..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency/8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-sm-pipe-issue-efficiency" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              8.2 - ניצולת - SM, pipe ו-issue efficiency - פתרון
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_10" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_10" id="__nav_7_3_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_10_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    8   מדדים ואופטימיזציה
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.1   Occupancy ומצבי warp
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_10_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_10_2" id="__nav_7_3_10_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.2   ניצולת   SM, pipe ו issue efficiency
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_10_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_10_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    8.2   ניצולת   SM, pipe ו issue efficiency
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.2 - ניצולת - SM, pipe ו-issue efficiency - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.2 - ניצולת - SM, pipe ו-issue efficiency - פתרון
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.2 - ניצולת - SM, pipe ו-issue efficiency - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-sm-pipe-issue-efficiency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון - ניצולת - SM, pipe ו-issue efficiency
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="פתרון - ניצולת - SM, pipe ו-issue efficiency">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-gpu-sm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 1 - ניצולת GPU מול ניצולת SM
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-pipe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 2 - איזה pipe שולט
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-occupancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 3 - יעילות הנפקה ו-occupancy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 4 - מסלול הדיבוג המלא
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-nvidia-smi-ncu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 5 (בונוס) - למה nvidia-smi ו-ncu לא מסכימים
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.2 - ניצולת - SM, pipe ו-issue efficiency - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls/8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.3   Warp divergence ו scoreboard stalls
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.4%20-%20Coalescing%20%D7%95-bank%20conflicts/8.4%20-%20Coalescing%20%D7%95-bank%20conflicts%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.4   Coalescing ו bank conflicts
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D/8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.5   Register pressure ואיזון משאבים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-sm-pipe-issue-efficiency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון - ניצולת - SM, pipe ו-issue efficiency
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="פתרון - ניצולת - SM, pipe ו-issue efficiency">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-gpu-sm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 1 - ניצולת GPU מול ניצולת SM
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-pipe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 2 - איזה pipe שולט
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-occupancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 3 - יעילות הנפקה ו-occupancy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 4 - מסלול הדיבוג המלא
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-nvidia-smi-ncu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פתרון תרגיל 5 (בונוס) - למה nvidia-smi ו-ncu לא מסכימים
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    8   מדדים ואופטימיזציה
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    8.2   ניצולת   SM, pipe ו issue efficiency
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>8.2 - ניצולת - SM, pipe ו-issue efficiency - פתרון</h1>
+
+<h2 id="-sm-pipe-issue-efficiency">פתרון - ניצולת - SM, pipe ו-issue efficiency<a class="headerlink" href="#-sm-pipe-issue-efficiency" title="Permanent link">&para;</a></h2>
+<p>הערה: כל המספרים בפלטים למטה הם דוגמאות ממכונת H100 SXM עם CUDA 12 ו-Nsight Compute 2024.x, וישתנו אצלכם לפי הכרטיס, גרסת הדרייבר ומצב המערכת. מה שלא ישתנה הוא המבנה, סדרי הגודל והמגמות. חישובי-העיפרון (הצפי של 1/132, חוק Little) מדויקים ואינם תלויים בחומרה. כל הפקודות מניחות ש-<code>profile.cu</code> קומפל עם <code>nvcc -O2 -arch=sm_90a -o profile profile.cu</code> כפי שב-<code>הכנה</code> (החליפו ל-<code>sm_75</code> על T4, ואז 132 ה-SM הופכים ל-40).</p>
+<h3 id="1-gpu-sm">פתרון תרגיל 1 - ניצולת GPU מול ניצולת SM<a class="headerlink" href="#1-gpu-sm" title="Permanent link">&para;</a></h3>
+<p>בזמן שהריצה <code>./profile compute 1 256 40000</code> פעילה, <code>nvidia-smi dmon -s u</code> מראה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a># gpu    sm   mem   enc   dec
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a># Idx     %     %     %     %
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    0    99     0     0     0
+</code></pre></div>
+<p>ואילו <code>ncu</code> על אותה הlaunch בדיוק נותן את האמת:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>  sm__cycles_active.avg.pct_of_peak_sustained_elapsed    0.76  %
+</code></pre></div>
+<p>הצפי בעיפרון: block יחיד רץ על SM אחד מתוך 132, ולכן ניצולת ה-SM = 1/132 = 0.0076 = <strong>0.76%</strong> - בדיוק המספר שהתקבל. הפער מ-<code>nvidia-smi</code> הוא פי ~130.</p>
+<p>התיקון - הצפת כל ה-SM עם grid גדול:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>ncu<span class="w"> </span>-s<span class="w"> </span><span class="m">1</span><span class="w"> </span>-c<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--metrics<span class="w"> </span>sm__cycles_active.avg.pct_of_peak_sustained_elapsed<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>./profile<span class="w"> </span>compute<span class="w"> </span><span class="m">1056</span><span class="w"> </span><span class="m">256</span><span class="w"> </span><span class="m">40000</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>  sm__cycles_active.avg.pct_of_peak_sustained_elapsed    99.30  %
+</code></pre></div>
+<p>מ-0.76% ל-99.3% - קפיצה של פי 130 בעבודה השימושית, בלי לגעת בשורת חישוב אחת, רק בתצורת הlaunch.</p>
+<p>למה זה עבד: <code>nvidia-smi</code> מודד ניצולת GPU/kernel - מדד גס שאומר רק "רץ kernel". block יחיד מספיק כדי לפנן אותו ל-100%. ניצולת ה-SM האמיתית מודדת ממוצע על כל 132 ה-SM, ולכן היא רואה ש-131 מהם בטלים. הסיומת <code>elapsed</code> היא הקריטית כאן: היא כוללת את המחזורים הבטלים במכנה, ולכן חושפת את הבטלה - לו השתמשנו ב-<code>active</code> היינו מחריגים בדיוק את מה שרצינו למדוד.</p>
+<p>איך להכליל: כל kernel עם grid קטן מדי מ-<code>nvidia-smi</code> נראה בריא ובעצם משאיר את רוב המכונה בטלה. הכלל: ודאו שיש לפחות <code>2 x מספר_ה-SM</code> blocks (רצוי הרבה יותר) כדי לתת לכל SM עבודה ולתזמן ממה לבחור. <code>nvidia-smi</code> הוא בדיקת החיים הראשונה, אף פעם לא האבחנה הסופית.</p>
+<h3 id="2-pipe">פתרון תרגיל 2 - איזה pipe שולט<a class="headerlink" href="#2-pipe" title="Permanent link">&para;</a></h3>
+<p>המדידות על שני ה-kernels מסתדרות כך:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>  ./profile compute 1056 256 4096
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    sm__inst_executed_pipe_fma...active      82.40  %
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    sm__inst_executed_pipe_tensor...active    0.00  %
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    sm__inst_executed_pipe_lsu...active       1.10  %
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>  ./profile mem 1056 256
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    sm__inst_executed_pipe_fma...active       4.30  %
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    sm__inst_executed_pipe_tensor...active    0.00  %
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    sm__inst_executed_pipe_lsu...active      88.70  %
+</code></pre></div>
+<p>בטבלה:</p>
+<table>
+<thead>
+<tr>
+<th>kernel</th>
+<th>fma</th>
+<th>tensor</th>
+<th>lsu</th>
+<th>הpipe השולט</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>compute</td>
+<td>82.4%</td>
+<td>0%</td>
+<td>1.1%</td>
+<td>fma (CUDA Cores)</td>
+</tr>
+<tr>
+<td>mem</td>
+<td>4.3%</td>
+<td>0%</td>
+<td>88.7%</td>
+<td>lsu (Load/Store)</td>
+</tr>
+</tbody>
+</table>
+<p>הpipe ה-<code>tensor</code> הוא 0% בשניהם כי אף אחד מה-kernels לא מנפיק הוראת <code>HMMA</code>/<code>WMMA</code>. שרשרת ה-<code>x = x*a + b</code> מתקמפלת ל-<code>FFMA</code> על ה-CUDA Cores, לא על ה-Tensor Cores; אלה מונעים רק מ-API של <code>wmma</code>/<code>mma</code> או מספריות כמו cuBLAS/cuDNN (פרק 6). Tensor Cores בשקט אינם אשמה - הם פשוט לא רלוונטיים לעומס הזה.</p>
+<p>למה זה עבד: לכל kernel יש "טביעת אצבע" של pipes. <code>compute_fma</code> הוא לולאת חשבון טהורה, ולכן pipe ה-fma עולה גבוה וה-lsu כמעט אפס (רק load אחד בכניסה ו-store אחד ביציאה, מבוזרים על אלפי איטרציות). <code>mem_stream</code> הוא ההפך - load ו-store לכל thread כמעט בלי חשבון, ולכן ה-lsu רווי. הpipe הדומיננטי הוא הרמז הראשון לסיווג Roofline: fma דומיננטי מרמז על compute-bound, lsu דומיננטי על memory-bound (שיעור 7.2).</p>
+<p>איך להכליל: הריצו את שלושת מדדי ה-pipe על כל kernel חדש כדי לזהות מיד היכן העבודה מתרכזת. אבל תמיד יחד עם ניצולת ה-SM (תרגיל 1): ניצולת pipe ממוצעת רק על מחזורים פעילים, אז 82% fma על kernel שרוב הזמן רץ על SM יחיד היא מספר חסר-משמעות עד שמוודאים שה-SM עצמם רוויים.</p>
+<h3 id="3-occupancy">פתרון תרגיל 3 - יעילות הנפקה ו-occupancy<a class="headerlink" href="#3-occupancy" title="Permanent link">&para;</a></h3>
+<p>מדידת שלושת הצעדים (מ-warp יחיד לכל SM עד occupancy גבוה):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>  ./profile compute 132 32 20000    (1 warp / block, ~1 block / SM)
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    smsp__issue_active...active         26.10  %   &lt;- issue efficiency
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    sm__warps_active...active            1.55  %   &lt;- achieved occupancy
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>  ./profile compute 132 128 20000   (4 warps / block)
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    smsp__issue_active...active         74.80  %
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    sm__warps_active...active            6.20  %
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>  ./profile compute 528 256 20000   (8 warps / block, many blocks)
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    smsp__issue_active...active         97.30  %
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>    sm__warps_active...active          49.10  %
+</code></pre></div>
+<p>בטבלה:</p>
+<table>
+<thead>
+<tr>
+<th>תצורה</th>
+<th>achieved occupancy</th>
+<th>issue efficiency</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>132 x 32</td>
+<td>1.55%</td>
+<td>26.1%</td>
+</tr>
+<tr>
+<td>132 x 128</td>
+<td>6.2%</td>
+<td>74.8%</td>
+</tr>
+<tr>
+<td>528 x 256</td>
+<td>49.1%</td>
+<td>97.3%</td>
+</tr>
+</tbody>
+</table>
+<p>הקשר ברור ומונוטוני: ככל שה-occupancy עולה, יעילות ההנפקה עולה איתה - עד שהיא נרוויה קרוב ל-100%. חוק Little בעיפרון: latency של FFMA ~4 מחזורים, throughput רצוי = הנפקה למחזור לכל scheduler, ולכן צריך בערך <code>4 x 1 = 4</code> warps כשירים לכל scheduler. ל-H100 יש 4 schedulers ל-SM, כלומר בערך <code>4 x 4 = 16</code> warps תושבים ל-SM כדי להסתיר את השרשרת - וזה בדיוק סדר-הגודל שבו יעילות ההנפקה מזנקת בטבלה (בין הצעד השני לשלישי).</p>
+<p>למה זה עבד: השרשרת <code>x = x*a + b</code> תלויה - כל FFMA ממתין לתוצאת קודמו. עם warp יחיד לכל scheduler, אחרי כל הנפקה ה-warp נתקע ~4 מחזורים ואין ממי אחר להנפיק, אז המתזמן יושב בטל ויעילות ההנפקה צונחת ל-26%. הוספת warps ממלאת את החורים: בכל מחזור warp אחר כשיר, המתזמן מנפיק ברציפות, והיעילות עולה. זה חוק Little משיעור 7.4 בפעולה - occupancy היא הסיבה, issue efficiency הוא הסימפטום.</p>
+<p>איך להכליל: כשאתם רואים issue efficiency נמוך (<code>smsp__issue_active</code> נמוך), החשוד המיידי הוא לא מספיק warps כשירים - כלומר occupancy נמוכה מדי או שרשראות תלויות ארוכות. העלו TLP (יותר warps) או שברו את התלות (יותר ILP, משתני-צבירה מרובים). זהירות מהכיוון ההפוך: מרגע שיש מספיק warps להסתרה, occupancy נוסף לא מוסיף (שיעור 8.1) - היעד הוא יעילות הנפקה גבוהה, לא occupancy מקסימלי.</p>
+<h3 id="4-">פתרון תרגיל 4 - מסלול הדיבוג המלא<a class="headerlink" href="#4-" title="Permanent link">&para;</a></h3>
+<p>המדידה על ה-kernel החולה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>  ./profile compute 1 256 40000
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    sm__cycles_active...elapsed              0.76  %   &lt;- layer 2: SM utilization
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    sm__inst_executed_pipe_fma...active     79.90  %   &lt;- layer 3: pipe (misleading!)
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    smsp__issue_active...active             71.40  %   &lt;- layer 4: issue
+</code></pre></div>
+<p>פסקת האבחנה: <code>nvidia-smi</code> הראה 100% ניצולת GPU (שכבה 1 עברה), אז ירדנו לשכבה 2 - וניצולת ה-SM היא 0.76% בלבד. <strong>כאן עוצרים בעץ ההחלטה.</strong> הצוואר הוא שה-grid מריץ block יחיד, כך ש-131 מתוך 132 ה-SM בטלים. אסור להיתפות ל-<code>fma</code> של 79.9%: הוא ממוצע רק על ה-SM היחיד שעובד ומחריג את 131 הבטלים (מלכודת "המחזורים הפעילים"), ולכן הוא נראה בריא בזמן שהמכונה כמעט כולה מובטלת. השורה הבאה שנשנה היא תצורת הlaunch - להגדיל את ה-grid.</p>
+<p>התיקון והמדידה החוזרת:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>ncu<span class="w"> </span>-s<span class="w"> </span><span class="m">1</span><span class="w"> </span>-c<span class="w"> </span><span class="m">1</span><span class="w"> </span>--metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>sm__cycles_active.avg.pct_of_peak_sustained_elapsed,<span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>sm__inst_executed_pipe_fma.avg.pct_of_peak_sustained_active,<span class="se">\</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>smsp__issue_active.avg.pct_of_peak_sustained_active<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span>./profile<span class="w"> </span>compute<span class="w"> </span><span class="m">1056</span><span class="w"> </span><span class="m">256</span><span class="w"> </span><span class="m">40000</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>    sm__cycles_active...elapsed             99.30  %   &lt;- layer 2 fixed
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    sm__inst_executed_pipe_fma...active     83.10  %
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    smsp__issue_active...active             95.80  %
+</code></pre></div>
+<p>השכבה שהשתפרה היא שכבה 2 - ניצולת ה-SM זינקה מ-0.76% ל-99.3%. עכשיו, כשכל ה-SM עובדים, מספר ה-fma סוף-סוף אמין (83%), ואפשר לרדת הלאה ולשאול אם 83% זה הגבול (שיעור 7.1, roofline).</p>
+<p>למה זה עבד: העץ אילץ אותנו לתקן את השכבה הגסה קודם. לו קפצנו ישר לשכבה 3 היינו "מתקנים" kernel שכבר הראה fma של 80% - ומבזבזים זמן על 1/132 מהמכונה. רק אחרי שהרווינו את ה-SM המספרים העמוקים יותר נהיו בעלי משמעות.</p>
+<p>איך להכליל: זה התהליך לכל kernel, תמיד באותו סדר - GPU util (nvidia-smi) -&gt; SM util -&gt; pipe util -&gt; issue efficiency. אל תרדו שכבה עד שהשכבה שמעליה גבוהה כמה שהיא יכולה. מדד עדין תמיד ממוצע רק על מה שהשכבה הגסה השאירה פעיל, ולכן קריאתו לפני שהשכבה הגסה תוקנה מטעה בהכרח.</p>
+<h3 id="5-nvidia-smi-ncu">פתרון תרגיל 5 (בונוס) - למה nvidia-smi ו-ncu לא מסכימים<a class="headerlink" href="#5-nvidia-smi-ncu" title="Permanent link">&para;</a></h3>
+<p>בזמן ש-<code>./profile compute 1 256 2000000 &amp;</code> רץ ברקע, <code>nvidia-smi --query-gpu=utilization.gpu --format=csv -l 1</code> מדווח:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>utilization.gpu [%]
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>99 %
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>100 %
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>99 %
+</code></pre></div>
+<p>ואילו <code>ncu</code> על אותו kernel נותן <code>sm__cycles_active...elapsed</code> = <strong>0.76%</strong>.</p>
+<p>ההסבר: השניים מודדים דברים שונים לחלוטין. <code>nvidia-smi</code> מדווח ניצולת GPU/kernel - מדד גס, כמעט בינארי, שדוגם "האם רץ kernel כלשהו בחלון הדגימה". block יחיד מספיק כדי שהתשובה תהיה "כן" בכל דגימה, ולכן הוא מראה ~100%. הוא <strong>לא</strong> מבחין בין SM אחד עובד ל-132 עובדים - זה מחוץ לרזולוציה שלו. <code>ncu</code> לעומתו סופר מחזורי-שעון ברמת כל SM וממצע על כל 132 ה-SM, ולכן הוא רואה ש-131 מהם בטלים ומדווח 0.76%. לכן <code>nvidia-smi</code> הוא כלי ניטור מערכת (שיעור 5.4) מצוין לבדיקת החיים "האם ה-GPU עובד או בטל" - הצעד הראשון בדיבוג - אבל הוא עיוור לניצול הפנימי, ולכן לעולם לא הצעד האחרון. את זה עושה profiler.</p>
+<p>למה זה עבד: הפער הוא ההדגמה החיה של שתי הקומות העליונות בהיררכיה - הקומה הגסה (<code>nvidia-smi</code>) משקרת ב-100%, והקומה השנייה (<code>ncu</code>) חושפת את האמת ב-0.76%. אותו kernel, שני מספרים שרחוקים פי 130, ושניהם "נכונים" - כי הם מודדים שאלות שונות.</p>
+<p>איך להכליל: אל תסמכו על <code>nvidia-smi</code> כדי לקבוע אם kernel יעיל. השתמשו בו כדי לענות "האם ה-GPU בטל?" (אם כן - הבעיה בhost/תזמון, שיעור 7.4), ורק אם הוא מראה עומס, רדו ל-<code>ncu</code> כדי למדוד את הניצולת האמיתית שכבה-שכבה.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

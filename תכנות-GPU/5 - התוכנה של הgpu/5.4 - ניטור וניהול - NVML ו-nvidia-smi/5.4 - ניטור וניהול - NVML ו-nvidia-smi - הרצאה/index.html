@@ -1,0 +1,2953 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="לאורך פרק 5 בנינו את מחסנית התוכנה שרצה בצד הhost (host, ה-CPU): ראינו את ה-CUDA Runtime API ואת libcudart.so שמממש אותו, את ה-CUDA Driver API ואת...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.4%20-%20%D7%A0%D7%99%D7%98%D7%95%D7%A8%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C%20-%20NVML%20%D7%95-nvidia-smi/5.4%20-%20%D7%A0%D7%99%D7%98%D7%95%D7%A8%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C%20-%20NVML%20%D7%95-nvidia-smi%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../5.3%20-%20Runtime%20API%2C%20streams%20%D7%95-events/5.3%20-%20Runtime%20API%2C%20streams%20%D7%95-events%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../5.4%20-%20%D7%A0%D7%99%D7%98%D7%95%D7%A8%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C%20-%20NVML%20%D7%95-nvidia-smi%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>5.4 - ניטור וניהול - NVML ו-nvidia-smi - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "5.4 - \u05e0\u05d9\u05d8\u05d5\u05e8 \u05d5\u05e0\u05d9\u05d4\u05d5\u05dc - NVML \u05d5-nvidia-smi - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.4%20-%20%D7%A0%D7%99%D7%98%D7%95%D7%A8%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C%20-%20NVML%20%D7%95-nvidia-smi/5.4%20-%20%D7%A0%D7%99%D7%98%D7%95%D7%A8%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C%20-%20NVML%20%D7%95-nvidia-smi%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="5.4 - ניטור וניהול - NVML ו-nvidia-smi - הרצאה - עמית טק" />
+<meta property="og:description" content="לאורך פרק 5 בנינו את מחסנית התוכנה שרצה בצד הhost (host, ה-CPU): ראינו את ה-CUDA Runtime API ואת libcudart.so שמממש אותו, את ה-CUDA Driver API ואת..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.4%20-%20%D7%A0%D7%99%D7%98%D7%95%D7%A8%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C%20-%20NVML%20%D7%95-nvidia-smi/5.4%20-%20%D7%A0%D7%99%D7%98%D7%95%D7%A8%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C%20-%20NVML%20%D7%95-nvidia-smi%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.4%20-%20%D7%A0%D7%99%D7%98%D7%95%D7%A8%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C%20-%20NVML%20%D7%95-nvidia-smi/5.4%20-%20%D7%A0%D7%99%D7%98%D7%95%D7%A8%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C%20-%20NVML%20%D7%95-nvidia-smi%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="5.4 - ניטור וניהול - NVML ו-nvidia-smi - הרצאה - עמית טק" />
+<meta property="twitter:description" content="לאורך פרק 5 בנינו את מחסנית התוכנה שרצה בצד הhost (host, ה-CPU): ראינו את ה-CUDA Runtime API ואת libcudart.so שמממש אותו, את ה-CUDA Driver API ואת..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.4%20-%20%D7%A0%D7%99%D7%98%D7%95%D7%A8%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C%20-%20NVML%20%D7%95-nvidia-smi/5.4%20-%20%D7%A0%D7%99%D7%98%D7%95%D7%A8%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C%20-%20NVML%20%D7%95-nvidia-smi%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-nvml" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              5.4 - ניטור וניהול - NVML ו-nvidia-smi - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_7" id="__nav_7_3_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    5   התוכנה של הgpu
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.1   Driver API מול Runtime API
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../5.2%20-%20%D7%94%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%20-%20nvidia.ko%20%D7%95-libcuda/5.2%20-%20%D7%94%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%20-%20nvidia.ko%20%D7%95-libcuda%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.2   הדרייבר   nvidia.ko ו libcuda
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../5.3%20-%20Runtime%20API%2C%20streams%20%D7%95-events/5.3%20-%20Runtime%20API%2C%20streams%20%D7%95-events%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.3   Runtime API, streams ו events
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_7_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_7_4" id="__nav_7_3_7_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.4   ניטור וניהול   NVML ו nvidia smi
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_7_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_7_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    5.4   ניטור וניהול   NVML ו nvidia smi
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.4 - ניטור וניהול - NVML ו-nvidia-smi - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.4 - ניטור וניהול - NVML ו-nvidia-smi - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-nvml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ספריית הניהול - NVML
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-nvidia-smi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        כלי שורת-הפקודה - nvidia-smi
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-query-dmon-pmon" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תשאול - query, dmon ו-pmon
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ניהול - שינוי מצב הכרטיס
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#xml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פלט XML ולמה לא לגרד טקסט
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-pynvml-nvml_wrapper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מעטפות שפה - pynvml ו-nvml_wrapper
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mig-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MIG וצוואר-בקבוק של הספק, תדר וחום
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../5.4%20-%20%D7%A0%D7%99%D7%98%D7%95%D7%A8%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C%20-%20NVML%20%D7%95-nvidia-smi%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.4 - ניטור וניהול - NVML ו-nvidia-smi - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../5.4%20-%20%D7%A0%D7%99%D7%98%D7%95%D7%A8%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C%20-%20NVML%20%D7%95-nvidia-smi%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.4 - ניטור וניהול - NVML ו-nvidia-smi - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../5.5%20-%20CUDA%20Graphs%20%D7%9C%D7%A6%D7%9E%D7%A6%D7%95%D7%9D%20overhead/5.5%20-%20CUDA%20Graphs%20%D7%9C%D7%A6%D7%9E%D7%A6%D7%95%D7%9D%20overhead%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.5   CUDA Graphs לצמצום overhead
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-nvml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ספריית הניהול - NVML
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-nvidia-smi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        כלי שורת-הפקודה - nvidia-smi
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-query-dmon-pmon" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תשאול - query, dmon ו-pmon
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ניהול - שינוי מצב הכרטיס
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#xml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פלט XML ולמה לא לגרד טקסט
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-pynvml-nvml_wrapper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מעטפות שפה - pynvml ו-nvml_wrapper
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mig-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MIG וצוואר-בקבוק של הספק, תדר וחום
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    5   התוכנה של הgpu
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    5.4   ניטור וניהול   NVML ו nvidia smi
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>5.4 - ניטור וניהול - NVML ו-nvidia-smi - הרצאה</h1>
+
+<p>לאורך פרק 5 בנינו את מחסנית התוכנה שרצה בצד הhost (host, ה-CPU): ראינו את ה-CUDA Runtime API ואת <code>libcudart.so</code> שמממש אותו, את ה-CUDA Driver API ואת <code>libcuda.so</code>, ואת ה-NVIDIA GPU Driver שמדבר עם החומרה בפועל. כל אלה נמצאים על <strong>מסלול החישוב</strong> - הם משיקים kernels ומזיזים זיכרון. בשיעור הזה נעבור למסלול השני, המקביל, שנמצא באותה שכבת host software אבל אחראי על משהו אחר לגמרי: <strong>הניטור והניהול</strong> (monitoring and management) של מצב ה-GPU. כמה חשמל הכרטיס מושך ברגע זה? מה הטמפרטורה שלו? כמה מהזיכרון מוקצה? האם הוא מווסת (throttling) בגלל תקרת הספק או חום? בשיעור נכיר את <strong>NVML</strong> (NVIDIA Management Library) - הספרייה עם ה-C API היציב שכל הכלים נשענים עליו - ואת <code>nvidia-smi</code>, כלי שורת-הפקודה המפורסם שיושב מעליה. נלמד לתשאל את הכרטיס, לצפות בטלמטריה חיה תוך כדי ריצת kernel, לשנות הגדרות כמו תקרת הספק ומצב מתמיד, ולמה <strong>אסור</strong> לגרד (scrape) את הפלט הטקסטואלי של <code>nvidia-smi</code> בכלים אמיתיים. הרעיון של החומרה כמערכת עם תקציב הספק וחום, שנגענו בו בשיעור 0.2, יחזור כאן ככוח שיכול לחסום ביצועים - נושא שנעמיק בו בפרק 7.1.</p>
+<h2 id="-nvml">ספריית הניהול - NVML<a class="headerlink" href="#-nvml" title="Permanent link">&para;</a></h2>
+<p>הדבר הראשון שחשוב להפריד: עד עכשיו כל ה-<code>.so</code> שראינו היו על מסלול החישוב. <code>libcudart.so</code> = ה-Runtime, <code>libcuda.so</code> = ה-Driver. עכשיו נכנס שחקן שלישי בשכבת ה-host software, ולו תפקיד שונה לחלוטין: <strong>NVML - NVIDIA Management Library</strong>, ספריית הניהול של NVIDIA. NVML היא, בלשון הגלוסרי, "ספרייה לניטור וניהול של מצב ה-GPU של NVIDIA". היא אינה משיקה kernels ואינה מקצה זיכרון גלובלי - היא <strong>קוראת ומשנה טלמטריה והגדרות</strong> של הכרטיס.</p>
+<p>מבחינת מיקום במחסנית, NVML יושבת בין ה-NVIDIA GPU Driver מתחת לבין הכלים והinterfaces מעל: היא מדברת עם ה-driver כדי לקרוא ולנהל את מצב ה-GPU, וחושפת את היכולות האלה כלפי מעלה. על לינוקס היא ממומשת על ידי הקובץ <code>libnvml.so</code> (בדיוק כמו ש-<code>libcudart.so</code> מממש את ה-Runtime API), וזוהי ספריית C סגורה (closed source).</p>
+<p>האטריביוטים המרכזיים ש-NVML חושפת - אלה שנשתמש בהם שוב ושוב:</p>
+<table>
+<thead>
+<tr>
+<th>אטריביוט</th>
+<th>מה זה מודד</th>
+<th>דוגמה על H100 SXM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>power draw</td>
+<td>הספק רגעי שהכרטיס מושך, בוואטים</td>
+<td>78 W בסרק, עד ~700 W בעומס</td>
+</tr>
+<tr>
+<td>temperature</td>
+<td>טמפרטורת ה-GPU, במעלות צלזיוס</td>
+<td>34 מעלות בסרק, 60-75 בעומס</td>
+</tr>
+<tr>
+<td>allocated memory</td>
+<td>כמה מה-VRAM מוקצה כרגע</td>
+<td>512 MiB מתוך 80 GiB</td>
+</tr>
+<tr>
+<td>power limit</td>
+<td>תקרת ההספק הנוכחית (ניתנת לשינוי)</td>
+<td>700 W (ברירת מחדל)</td>
+</tr>
+<tr>
+<td>power limiting state</td>
+<td>האם הכרטיס מווסת כרגע, ולמה</td>
+<td>Active: SW Power Cap</td>
+</tr>
+<tr>
+<td>clocks</td>
+<td>תדרי ה-SM והזיכרון</td>
+<td>1980 MHz (SM), 2619 MHz (mem)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>נקודת המפתח של השיעור כולו:</strong> NVML היא ה-<strong>API היציב</strong> לבנות עליו כלים. כל כלי ניטור אמיתי - dashboard, exporter ל-Prometheus, מתזמן שמחליט על אילו GPU להשיק job - צריך לפנות ל-C API של NVML (או לאחת מהמעטפות שלה), ולא לפרסר טקסט. נחזור לזה בהרחבה בסעיף על יציבות.</p>
+<p>מי צורך את NVML? שלושה ערוצים: (1) <code>nvidia-smi</code>, כלי שורת-הפקודה, שהוא נקודת הגישה האנושית העיקרית; (2) ישירות דרך ה-C API של <code>libnvml.so</code>, לתוכניות C/C++; (3) דרך מעטפות שפה - <strong>pynvml</strong> ל-Python ו-<strong>nvml_wrapper</strong> ל-Rust. נראה את שלושתם.</p>
+<h2 id="-nvidia-smi">כלי שורת-הפקודה - nvidia-smi<a class="headerlink" href="#-nvidia-smi" title="Permanent link">&para;</a></h2>
+<p>מעל NVML יושב <code>nvidia-smi</code> - NVIDIA System Management Interface, interface ניהול המערכת של NVIDIA. בלשון הגלוסרי הוא "כלי שורת-הפקודה לתשאול וניהול מצב ה-GPU שנחשף על ידי ספריות הניהול NVML". במילים אחרות: <code>nvidia-smi</code> הוא <strong>עטיפת CLI דקה מעל NVML</strong>. כל מספר שהוא מציג, וכל הגדרה שהוא משנה, עוברים דרך <code>libnvml.so</code>. הפלט שלו כה מוכר למשתמשי GPU עד שהגלוסרי מציין בחיוך שהוא נהפך ל"מם".</p>
+<p>הרצה יבשה של <code>nvidia-smi</code> מדפיסה את הטבלה הקלאסית:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>$ nvidia-smi
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>+-----------------------------------------------------------------------------------------+
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>| NVIDIA-SMI 550.54.15              Driver Version: 550.54.15      CUDA Version: 12.4      |
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>|-----------------------------------------+------------------------+----------------------+
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>|                                         |                        |               MIG M. |
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>|=========================================+========================+======================|
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>|   0  NVIDIA H100 80GB HBM3          On  | 00000000:1B:00.0 Off   |                    0 |
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>| N/A   34C    P0             78W / 700W  |     512MiB / 81559MiB  |      0%      Default |
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>|                                         |                        |             Disabled |
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>+-----------------------------------------+------------------------+----------------------+
+</code></pre></div>
+<p>בואו נפרק את השדות החשובים, כי כל אחד מהם מגיע היישר מ-NVML:</p>
+<ul>
+<li><strong>Persistence-M</strong> - מצב מתמיד (persistence mode). כשהוא <code>Off</code>, ה-driver נטען ונפרק בכל פעם שאין תהליך CUDA פעיל, מה שמוסיף השהיית אתחול של מאות מילישניות לlaunch הראשונה. <code>On</code> משאיר את ה-driver טעון תמיד.</li>
+<li><strong>Temp</strong> - טמפרטורת ה-GPU. <code>N/A</code> תחת Fan כי כרטיסי SXM בשרת מקוררים על ידי המארז, אין להם מאוורר עצמאי.</li>
+<li><strong>Perf</strong> - מצב הביצועים (performance state), מ-<code>P0</code> (הכי גבוה, בוסט מלא) עד <code>P12</code> (חיסכון עמוק). תחת עומס נצפה <code>P0</code>.</li>
+<li><strong>Pwr:Usage/Cap</strong> - שני מספרים: ההספק הרגעי (78W) מול <strong>תקרת ההספק</strong> (700W). היחס ביניהם הוא הסיפור המרכזי של השיעור: כשהעומס דוחף את ה-Usage אל ה-Cap, הכרטיס מתחיל לווסת תדרים.</li>
+<li><strong>Memory-Usage</strong> - הזיכרון המוקצה מול הכולל (512MiB מתוך ~80GiB).</li>
+<li><strong>GPU-Util</strong> - אחוז הזמן שבו רץ kernel כלשהו על הכרטיס. שימו לב למלכוד: זהו <strong>אחוז זמן העסוק</strong>, לא אחוז ניצול יחידות החישוב. 100% פירושו "משהו רץ כל הזמן", לא "כל ה-CUDA Cores עובדים". להערכת ניצול אמיתי צריך profiler (פרק 9.1).</li>
+<li><strong>Compute M.</strong> - מצב החישוב (compute mode): <code>Default</code> (ריבוי תהליכים), <code>Exclusive_Process</code>, או <code>Prohibited</code>.</li>
+<li><strong>MIG M.</strong> - האם ה-Multi-Instance GPU פעיל (נגיע לזה בסעיף נפרד).</li>
+</ul>
+<h2 id="-query-dmon-pmon">תשאול - query, dmon ו-pmon<a class="headerlink" href="#-query-dmon-pmon" title="Permanent link">&para;</a></h2>
+<p>הטבלה יפה לעין אדם, אבל לסקריפטים היא חסרת ערך. לתשאול ממוקד יש שלושה מנגנונים.</p>
+<p><strong>המנגנון הראשון - <code>--query-gpu</code></strong> עם פורמט CSV. אנחנו מבקשים בדיוק את השדות שאנחנו רוצים, ומקבלים שורות מכונה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>nvidia-smi<span class="w"> </span>--query-gpu<span class="o">=</span>name,power.draw,power.limit,temperature.gpu,utilization.gpu,memory.used,memory.total,clocks.sm,clocks.mem,pstate<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">           </span>--format<span class="o">=</span>csv
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>name, power.draw [W], power.limit [W], temperature.gpu, utilization.gpu [%], memory.used [MiB], memory.total [MiB], clocks.current.sm [MHz], clocks.current.memory [MHz], pstate
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>NVIDIA H100 80GB HBM3, 78.11, 700.00, 34, 0, 512, 81559, 345, 2619, P0
+</code></pre></div>
+<p>הדגל <code>--format=csv,noheader,nounits</code> נותן ערכים נקיים בלי כותרת ובלי יחידות - נוח לפרסור מהיר בסקריפט. עדיין, כפי שנראה, זה <strong>לא</strong> הכלי הנכון לכלי production; זה נוח ל-one-liner אינטראקטיבי.</p>
+<p><strong>המנגנון השני - <code>-q</code></strong> (query מלא), שמדפיס דוח מפורט של <strong>כל</strong> מה ש-NVML יודעת על הכרטיס. אפשר לצמצם לתחום מסוים עם <code>-d</code>. במיוחד שימושי הוא תחום הביצועים, שחושף את <strong>סיבות הוויסות (throttle reasons)</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>nvidia-smi<span class="w"> </span>-q<span class="w"> </span>-d<span class="w"> </span>PERFORMANCE
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>    Clocks Event Reasons
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>        Idle                              : Not Active
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>        Applications Clocks Setting       : Not Active
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>        SW Power Cap                      : Active
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>        HW Slowdown                       : Not Active
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>            HW Thermal Slowdown           : Not Active
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>            HW Power Brake Slowdown       : Not Active
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>        Sync Boost                        : Not Active
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>        SW Thermal Slowdown               : Not Active
+</code></pre></div>
+<p>השורה <code>SW Power Cap : Active</code> היא בדיוק ה-power limiting state מ-NVML: הכרטיס מוריד תדרים כרגע כי הוא נגע בתקרת ההספק. זהו האות הישיר לכך שה-workload power-bound ולא compute-bound טהור.</p>
+<p><strong>המנגנון השלישי - טלמטריה חיה</strong> בקצב של שנייה לשורה. <code>nvidia-smi dmon</code> נותן ניטור device-level (לכל הכרטיס), ו-<code>pmon</code> נותן ניטור per-process (לכל תהליך):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>nvidia-smi<span class="w"> </span>dmon<span class="w"> </span>-s<span class="w"> </span>puct<span class="w"> </span>-d<span class="w"> </span><span class="m">1</span>
+</code></pre></div>
+<p>הדגל <code>-s puct</code> בוחר קבוצות: <code>p</code>=power/temp, <code>u</code>=utilization, <code>c</code>=clocks, <code>t</code>=PCIe throughput. <code>-d 1</code> = דגימה כל שנייה. הפלט תוך כדי ריצת kernel כבד:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a># gpu   pwr gtemp mtemp    sm   mem   enc   dec   mclk   pclk
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a># Idx     W     C     C     %     %     %     %    MHz    MHz
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    0    79    35     -     0     0     0     0   2619    345
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    0   690    58     -    99    43     0     0   2619   1980
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    0   700    64     -    99    45     0     0   2619   1830
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    0   700    69     -    99    45     0     0   2619   1755
+</code></pre></div>
+<p>ראו את הסיפור מתגלגל: בשורה הראשונה סרק (79W, תדר SM 345 MHz). ברגע שה-kernel עולה, ההספק קופץ ל-690W ותדר ה-SM לבוסט מלא 1980 MHz. אבל בשורות הבאות ההספק נוגע ב-700W, ותדר ה-SM <strong>יורד</strong> ל-1830 ואז 1755 - זהו הוויסות בזמן אמת. ה-<code>pmon</code>, במקביל, מראה איזה תהליך אחראי:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>nvidia-smi<span class="w"> </span>pmon<span class="w"> </span>-s<span class="w"> </span>um<span class="w"> </span>-d<span class="w"> </span><span class="m">1</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a># gpu        pid  type    sm   mem   enc   dec   command
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a># Idx          #   C/G     %     %     %     %   name
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    0      48213     C    99    43     -     -   burn
+</code></pre></div>
+<h2 id="-">ניהול - שינוי מצב הכרטיס<a class="headerlink" href="#-" title="Permanent link">&para;</a></h2>
+<p>עד כה רק <strong>קראנו</strong>. אבל <code>nvidia-smi</code> יכול גם <strong>לשנות</strong> מצב, וכל שינוי כזה עובר דרך פונקציית set של NVML. רוב הפעולות דורשות הרשאות root ומצב מתמיד פעיל. הנה הפעולות המרכזיות:</p>
+<table>
+<thead>
+<tr>
+<th>פעולה</th>
+<th>דגל</th>
+<th>מה היא עושה</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>מצב מתמיד</td>
+<td><code>-pm 1</code></td>
+<td>משאיר את ה-driver טעון, מבטל השהיית אתחול</td>
+</tr>
+<tr>
+<td>מצב חישוב</td>
+<td><code>-c 2</code></td>
+<td>קובע compute mode (0=Default, 2=Prohibited, 3=Exclusive_Process)</td>
+</tr>
+<tr>
+<td>תקרת הספק</td>
+<td><code>-pl 500</code></td>
+<td>מגדיר את תקרת ההספק ל-500W</td>
+</tr>
+<tr>
+<td>שעונים קבועים</td>
+<td><code>-lgc 1500,1500</code></td>
+<td>נועל את תדר ה-GPU (lock GPU clocks)</td>
+</tr>
+<tr>
+<td>שעוני זיכרון</td>
+<td><code>-lmc 2619</code></td>
+<td>נועל את תדר הזיכרון (lock memory clocks)</td>
+</tr>
+<tr>
+<td>שעוני אפליקציה</td>
+<td><code>-ac 2619,1980</code></td>
+<td>קובע application clocks (mem,graphics)</td>
+</tr>
+<tr>
+<td>איפוס</td>
+<td><code>-r</code></td>
+<td>מבצע reset מלא לכרטיס</td>
+</tr>
+</tbody>
+</table>
+<p>לדוגמה, זרימת ההכנה הטיפוסית לפני benchmark - קיבוע תנאים כדי שהמדידות יהיו יציבות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>sudo<span class="w"> </span>nvidia-smi<span class="w"> </span>-pm<span class="w"> </span><span class="m">1</span><span class="w">                 </span><span class="c1"># persistence mode On</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>sudo<span class="w"> </span>nvidia-smi<span class="w"> </span>-lgc<span class="w"> </span><span class="m">1980</span>,1980<span class="w">        </span><span class="c1"># lock SM clock to 1980 MHz (no variable boost)</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># ... run the benchmark with repeated measurements ...</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>sudo<span class="w"> </span>nvidia-smi<span class="w"> </span>-rgc<span class="w">                  </span><span class="c1"># release the clock lock (reset GPU clocks)</span>
+</code></pre></div>
+<p><strong>למה נועלים תדרים לפני benchmark?</strong> כי אחרת התדר "צף": הכרטיס מתחיל בבוסט 1980 MHz, מתחמם, נוגע בתקרת ההספק, ומוריד תדר - ואותו kernel בדיוק ייתן GFLOP/s שונה בהרצה הראשונה מול העשירית. נעילת התדר מסירה את המשתנה הזה. נעמיק במתודולוגיית מדידה נכונה בפרק 9.1.</p>
+<p><strong>גוטצ'ה של תקרת ההספק.</strong> אי אפשר לקבוע תקרה שרירותית. לכל כרטיס יש טווח מותר (constraints); ל-H100 SXM זה בערך 200W עד 700W. <code>nvidia-smi -q -d POWER</code> מראה את <code>Min Power Limit</code> ו-<code>Max Power Limit</code>. ניסיון לקבוע מחוץ לטווח יידחה. בנוסף, על כרטיסי ענן/data-center משותפים ההרשאה לשנות תקרה לרוב חסומה - הפקודה תיכשל ב-<code>Insufficient Permissions</code>, וזה תקין.</p>
+<h2 id="xml">פלט XML ולמה לא לגרד טקסט<a class="headerlink" href="#xml" title="Permanent link">&para;</a></h2>
+<p>הגענו לנקודה המושגית החשובה ביותר של השיעור, וזו נקודה שהגלוסרי מדגיש במפורש: <strong>פורמט הפלט הטקסטואלי של <code>nvidia-smi</code> אינו מובטח כיציב.</strong> הטבלה היפה שראינו בתחילת השיעור עלולה להשתנות בין גרסאות driver - סדר שדות, רוחב עמודות, מחרוזות. הציטוט המדויק מהמקור: "אף שפורמט הפלט הטקסטואלי של nvidia-smi אינו מובטח כיציב, ספריית ה-C של NVML מציעה API יציב לפיתוח כלים".</p>
+<p>מכאן מסקנה מעשית חד-משמעית עם שלוש רמות של איכות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>   Worst  ─►  nvidia-smi | grep | awk     (parses free-form text - fragile, breaks on driver update)
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>   OK     ─►  nvidia-smi -x  (structured XML)  or  --query-gpu=...,--format=csv
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>   Best   ─►  C API of NVML  /  pynvml  /  nvml_wrapper   (the stable API, directly)
+</code></pre></div>
+<p>הפלט ב-XML (<code>-x</code>) הוא ביניים סביר - הוא לפחות מובנה, עם תגיות, אז פרסור שלו לא ישבר בגלל רוחב עמודה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>nvidia-smi<span class="w"> </span>-x<span class="w"> </span>-q<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-40
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="cp">&lt;?xml version=&quot;1.0&quot; ?&gt;</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nt">&lt;nvidia_smi_log&gt;</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">&lt;gpu</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;00000000:1B:00.0&quot;</span><span class="nt">&gt;</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span><span class="nt">&lt;product_name&gt;</span>NVIDIA<span class="w"> </span>H100<span class="w"> </span>80GB<span class="w"> </span>HBM3<span class="nt">&lt;/product_name&gt;</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span><span class="nt">&lt;gpu_power_readings&gt;</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">      </span><span class="nt">&lt;power_draw&gt;</span>78.11<span class="w"> </span>W<span class="nt">&lt;/power_draw&gt;</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">      </span><span class="nt">&lt;current_power_limit&gt;</span>700.00<span class="w"> </span>W<span class="nt">&lt;/current_power_limit&gt;</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="w">    </span><span class="nt">&lt;/gpu_power_readings&gt;</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">    </span><span class="nt">&lt;temperature&gt;</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="w">      </span><span class="nt">&lt;gpu_temp&gt;</span>34<span class="w"> </span>C<span class="nt">&lt;/gpu_temp&gt;</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="w">    </span><span class="nt">&lt;/temperature&gt;</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="w">  </span><span class="nt">&lt;/gpu&gt;</span>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="nt">&lt;/nvidia_smi_log&gt;</span>
+</code></pre></div>
+<p>אבל התשובה האמיתית לכלי production היא לדלג על <code>nvidia-smi</code> לגמרי ולפנות ל-C API של NVML. <code>nvidia-smi</code> הוא כלי אינטראקטיבי לבני אדם; הכלי שלכם צריך לדבר עם הספרייה שהוא עצמו מדבר איתה. זו בדיוק הסיבה שקיימות המעטפות pynvml ו-nvml_wrapper.</p>
+<h2 id="-pynvml-nvml_wrapper">מעטפות שפה - pynvml ו-nvml_wrapper<a class="headerlink" href="#-pynvml-nvml_wrapper" title="Permanent link">&para;</a></h2>
+<p>ל-Python יש <strong>pynvml</strong> (חבילת PyPI בשם <code>nvidia-ml-py</code>), שהיא binding דק וישיר מעל ה-C API של NVML - כל פונקציה <code>nvmlDeviceGet...</code> נחשפת כפונקציית Python. ל-Rust יש <strong>nvml_wrapper</strong>. שתיהן נותנות את היציבות של NVML בלי לפרסר טקסט.</p>
+<p>הנה סקריפט pynvml מלא שקורא הספק, טמפרטורה, ניצול וזיכרון - בדיוק חמשת האטריביוטים מהטבלה בתחילת השיעור:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># gpu_stats.py    install:  pip install nvidia-ml-py</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pynvml</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nv</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="n">nv</span><span class="o">.</span><span class="n">nvmlInit</span><span class="p">()</span>                                   <span class="c1"># loads libnvml.so</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>    <span class="n">h</span> <span class="o">=</span> <span class="n">nv</span><span class="o">.</span><span class="n">nvmlDeviceGetHandleByIndex</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>        <span class="c1"># handle to card 0</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>    <span class="n">name</span> <span class="o">=</span> <span class="n">nv</span><span class="o">.</span><span class="n">nvmlDeviceGetName</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>                 <span class="c1"># older versions return bytes</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>    <span class="n">power_w</span>  <span class="o">=</span> <span class="n">nv</span><span class="o">.</span><span class="n">nvmlDeviceGetPowerUsage</span><span class="p">(</span><span class="n">h</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1000.0</span>        <span class="c1"># comes in mW</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>    <span class="n">limit_w</span>  <span class="o">=</span> <span class="n">nv</span><span class="o">.</span><span class="n">nvmlDeviceGetPowerManagementLimit</span><span class="p">(</span><span class="n">h</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1000.0</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>    <span class="n">temp_c</span>   <span class="o">=</span> <span class="n">nv</span><span class="o">.</span><span class="n">nvmlDeviceGetTemperature</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">nv</span><span class="o">.</span><span class="n">NVML_TEMPERATURE_GPU</span><span class="p">)</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>    <span class="n">util</span>     <span class="o">=</span> <span class="n">nv</span><span class="o">.</span><span class="n">nvmlDeviceGetUtilizationRates</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>           <span class="c1"># .gpu, .memory</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>    <span class="n">mem</span>      <span class="o">=</span> <span class="n">nv</span><span class="o">.</span><span class="n">nvmlDeviceGetMemoryInfo</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>                 <span class="c1"># .used, .total (in bytes)</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>    <span class="n">sm_clock</span> <span class="o">=</span> <span class="n">nv</span><span class="o">.</span><span class="n">nvmlDeviceGetClockInfo</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">nv</span><span class="o">.</span><span class="n">NVML_CLOCK_SM</span><span class="p">)</span>
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Card:        </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Power:       </span><span class="si">{</span><span class="n">power_w</span><span class="si">:</span><span class="s2">6.1f</span><span class="si">}</span><span class="s2"> W  / limit </span><span class="si">{</span><span class="n">limit_w</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> W&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Temperature: </span><span class="si">{</span><span class="n">temp_c</span><span class="si">}</span><span class="s2"> C&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GPU util:    </span><span class="si">{</span><span class="n">util</span><span class="o">.</span><span class="n">gpu</span><span class="si">}</span><span class="s2">%   mem util: </span><span class="si">{</span><span class="n">util</span><span class="o">.</span><span class="n">memory</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Memory:      </span><span class="si">{</span><span class="n">mem</span><span class="o">.</span><span class="n">used</span><span class="o">&gt;&gt;</span><span class="mi">20</span><span class="si">}</span><span class="s2"> MiB / </span><span class="si">{</span><span class="n">mem</span><span class="o">.</span><span class="n">total</span><span class="o">&gt;&gt;</span><span class="mi">20</span><span class="si">}</span><span class="s2"> MiB&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SM clock:    </span><span class="si">{</span><span class="n">sm_clock</span><span class="si">}</span><span class="s2"> MHz&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a><span class="k">finally</span><span class="p">:</span>
+<a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a>    <span class="n">nv</span><span class="o">.</span><span class="n">nvmlShutdown</span><span class="p">()</span>                           <span class="c1"># always shut down</span>
+</code></pre></div>
+<p>שימו לב לפרטים החשובים: <code>nvmlInit()</code> טוענת את <code>libnvml.so</code>, כל <code>nvmlDeviceGet...</code> היא הפונקציה היציבה שגם <code>nvidia-smi</code> קורא לה, ההספק מגיע ב-<strong>מיליוואט</strong> (חילקנו ב-1000), הזיכרון ב-<strong>בתים</strong> (הזזנו 20 סיביות ל-MiB), ובסוף <code>nvmlShutdown()</code> בבלוק <code>finally</code> כדי לשחרר את הספרייה תמיד. אם נרצה לדגום לאורך זמן תוך כדי ריצת workload - בדיוק תרגיל 2 - נעטוף את גוף הקריאות בלולאה עם <code>time.sleep(0.1)</code> ונצבור מינימום/מקסימום/ממוצע.</p>
+<p>לקביעת הגדרות מ-Python (למשל תקרת הספק) יש את פונקציות ה-set המקבילות, שדורשות root:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">nv</span><span class="o">.</span><span class="n">nvmlDeviceGetPowerManagementLimitConstraints</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>   <span class="c1"># allowed range, in mW</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">nv</span><span class="o">.</span><span class="n">nvmlDeviceSetPowerManagementLimit</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="mi">500_000</span><span class="p">)</span>              <span class="c1"># 500W, in mW, requires root</span>
+</code></pre></div>
+<h2 id="mig-">MIG וצוואר-בקבוק של הספק, תדר וחום<a class="headerlink" href="#mig-" title="Permanent link">&para;</a></h2>
+<p>שני נושאים לסיום, ששניהם מתחברים לביצועים.</p>
+<p><strong>ריבוי מופעי GPU - MIG (Multi-Instance GPU).</strong> על כרטיסים מדור Ampere ומעלה (A100, H100) אפשר <strong>לחתוך</strong> GPU יחיד לכמה מופעים (instances) מבודדים חומרתית, שכל אחד מקבל פרוסה קבועה של SMs, זיכרון ו-cache. זה מאפשר להריץ כמה workloads נפרדים על אותו כרטיס פיזי בלי שיפריעו זה לזה - שימושי בענן ובשירותי inference. את MIG מפעילים דרך <code>nvidia-smi</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>sudo<span class="w"> </span>nvidia-smi<span class="w"> </span>-mig<span class="w"> </span><span class="m">1</span><span class="w">                    </span><span class="c1"># enables MIG mode (requires a reset)</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>sudo<span class="w"> </span>nvidia-smi<span class="w"> </span>mig<span class="w"> </span>-cgi<span class="w"> </span><span class="m">9</span><span class="w"> </span>-C<span class="w">             </span><span class="c1"># creates an instance and a compute profile</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>nvidia-smi<span class="w"> </span>-L<span class="w">                             </span><span class="c1"># shows the instances and their UUIDs</span>
+</code></pre></div>
+<p>שדה ה-<code>MIG M.</code> בטבלה הראשית מראה אם המצב פעיל, ו-NVML חושפת את מצב ה-MIG ואת המופעים דרך ה-API שלה. זהו כלי ניהול קלאסי - הוא לא משנה איך kernel רץ, אלא כיצד הכרטיס מחולק.</p>
+<p><strong>הספק, תדר וחום כצוואר-בקבוק.</strong> ראינו ב-<code>dmon</code> איך התדר יורד כשההספק נוגע בתקרה. זה לא ניואנס - זה יכול להיות <strong>החוסם המרכזי</strong> של הביצועים. מודל ה-Roofline (שנכיר בפרק 7) מניח תפוקת שיא קבועה, אבל בפועל תפוקת השיא עצמה <strong>דינמית</strong>: היא נקבעת על ידי כמה חשמל אפשר להכניס לשבב (power ingress) וכמה חום אפשר להוציא ממנו (heat egress). kernel שמריץ הרבה FMA צפוף יגיע במהירות לתקרת ה-700W, התדר יירד מ-1980 ל-1755 MHz, וה-TFLOPS בפועל יהיה נמוך מהשיא התיאורטי - לא כי החישוב לא יעיל, אלא כי אין מספיק תקציב הספק. בפרק 7.1 נראה איך power ingress ו-heat egress קובעים תקרה פיזית שאף אופטימיזציה של קוד לא תעקוף. NVML ו-<code>nvidia-smi</code> הם בדיוק העיניים שמאפשרות לזהות שזה מה שקורה: אם <code>SW Power Cap : Active</code> וה-<code>pclk</code> יורד תחת עומס, אתם power-bound, לא algorithm-bound.</p>
+<h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>NVML (NVIDIA Management Library)</strong> היא ספריית הניהול והניטור של NVIDIA, ממומשת על לינוקס ב-<code>libnvml.so</code>, ויושבת בשכבת ה-host software בין ה-GPU driver לכלים - היא קוראת ומשנה טלמטריה, לא משיקה kernels.</li>
+<li>האטריביוטים המרכזיים ש-NVML חושפת: power draw, temperature, allocated memory, power limit, ו-power limiting state (האם מווסת ולמה), וכן תדרי SM וזיכרון.</li>
+<li><strong><code>nvidia-smi</code></strong> הוא עטיפת CLI דקה מעל NVML: כל מספר שהוא מציג וכל הגדרה שהוא משנה עוברים דרך <code>libnvml.so</code>.</li>
+<li>לתשאול: <code>--query-gpu=...--format=csv</code> לשדות ממוקדים, <code>-q -d PERFORMANCE</code> לסיבות הוויסות, ו-<code>dmon</code>/<code>pmon</code> לטלמטריה חיה של שנייה-לשורה ברמת device ורמת תהליך.</li>
+<li>לניהול: <code>-pm</code> (מצב מתמיד), <code>-c</code> (מצב חישוב), <code>-pl</code> (תקרת הספק), <code>-ac</code>/<code>-lgc</code>/<code>-lmc</code> (נעילת תדרים), ו-<code>-r</code> (איפוס); רוב הפעולות דורשות root ומצב מתמיד.</li>
+<li><strong>אסור לגרד את הפלט הטקסטואלי של <code>nvidia-smi</code></strong> - הוא אינו מובטח כיציב; לכלים אמיתיים משתמשים ב-C API היציב של NVML (או ב-XML <code>-x</code> כפשרה מובנית).</li>
+<li>מעטפות השפה <strong>pynvml</strong> (Python) ו-<strong>nvml_wrapper</strong> (Rust) נותנות גישה ישירה ל-NVML; שימו לב שהספק מגיע ב-mW וזיכרון בבתים, ותמיד קוראים <code>nvmlShutdown()</code>.</li>
+<li><strong>MIG (Multi-Instance GPU)</strong> חותך GPU יחיד לכמה מופעים מבודדים חומרתית, מנוהל דרך <code>nvidia-smi -mig</code>, ומדווח בשדה <code>MIG M.</code> וב-NVML.</li>
+<li>הספק, תדר וחום הם צוואר-בקבוק אמיתי: כשההספק נוגע בתקרה התדר יורד, תפוקת השיא בפועל נמוכה מהתיאורטית, ו-<code>SW Power Cap : Active</code> הוא הסימן לכך - קשר שנעמיק בו בפרק 7.1.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

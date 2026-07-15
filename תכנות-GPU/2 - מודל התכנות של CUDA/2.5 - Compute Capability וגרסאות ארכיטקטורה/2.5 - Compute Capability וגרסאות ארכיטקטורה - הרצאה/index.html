@@ -1,0 +1,2910 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="לאורך פרק 2 בנינו את מודל התכנות של CUDA מלמעלה למטה: בשיעור 2.1 פגשנו את ה-thread (thread), את ה-warp (קבוצת 32 threads) ואת מודל ה-SIMT (Single...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.5%20-%20Compute%20Capability%20%D7%95%D7%92%D7%A8%D7%A1%D7%90%D7%95%D7%AA%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%94/2.5%20-%20Compute%20Capability%20%D7%95%D7%92%D7%A8%D7%A1%D7%90%D7%95%D7%AA%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../2.4%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%2C%20cooperative%20groups%20%D7%95-warpgroups/2.4%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%2C%20cooperative%20groups%20%D7%95-warpgroups%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../../../3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>2.5 - Compute Capability וגרסאות ארכיטקטורה - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "2.5 - Compute Capability \u05d5\u05d2\u05e8\u05e1\u05d0\u05d5\u05ea \u05d0\u05e8\u05db\u05d9\u05d8\u05e7\u05d8\u05d5\u05e8\u05d4 - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.5%20-%20Compute%20Capability%20%D7%95%D7%92%D7%A8%D7%A1%D7%90%D7%95%D7%AA%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%94/2.5%20-%20Compute%20Capability%20%D7%95%D7%92%D7%A8%D7%A1%D7%90%D7%95%D7%AA%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="2.5 - Compute Capability וגרסאות ארכיטקטורה - הרצאה - עמית טק" />
+<meta property="og:description" content="לאורך פרק 2 בנינו את מודל התכנות של CUDA מלמעלה למטה: בשיעור 2.1 פגשנו את ה-thread (thread), את ה-warp (קבוצת 32 threads) ואת מודל ה-SIMT (Single..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.5%20-%20Compute%20Capability%20%D7%95%D7%92%D7%A8%D7%A1%D7%90%D7%95%D7%AA%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%94/2.5%20-%20Compute%20Capability%20%D7%95%D7%92%D7%A8%D7%A1%D7%90%D7%95%D7%AA%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.5%20-%20Compute%20Capability%20%D7%95%D7%92%D7%A8%D7%A1%D7%90%D7%95%D7%AA%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%94/2.5%20-%20Compute%20Capability%20%D7%95%D7%92%D7%A8%D7%A1%D7%90%D7%95%D7%AA%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="2.5 - Compute Capability וגרסאות ארכיטקטורה - הרצאה - עמית טק" />
+<meta property="twitter:description" content="לאורך פרק 2 בנינו את מודל התכנות של CUDA מלמעלה למטה: בשיעור 2.1 פגשנו את ה-thread (thread), את ה-warp (קבוצת 32 threads) ואת מודל ה-SIMT (Single..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.5%20-%20Compute%20Capability%20%D7%95%D7%92%D7%A8%D7%A1%D7%90%D7%95%D7%AA%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%94/2.5%20-%20Compute%20Capability%20%D7%95%D7%92%D7%A8%D7%A1%D7%90%D7%95%D7%AA%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-compute-capability-versioning-the-isa" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              2.5 - Compute Capability וגרסאות ארכיטקטורה - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_4" id="__nav_7_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2   מודל התכנות של CUDA
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.1   Threads ו Warps   מודל SIMT
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../2.2%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94-threads%20-%20blocks%20%D7%95-grids/2.2%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94-threads%20-%20blocks%20%D7%95-grids%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.2   היררכיית ה threads   blocks ו grids
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../2.3%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20kernel%20-%20%D7%90%D7%99%D7%A0%D7%93%D7%95%D7%A7%D7%A1%20%D7%95-launch%20configuration/2.3%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20kernel%20-%20%D7%90%D7%99%D7%A0%D7%93%D7%95%D7%A7%D7%A1%20%D7%95-launch%20configuration%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.3   כתיבת kernel   אינדוקס ו launch configuration
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../2.4%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%2C%20cooperative%20groups%20%D7%95-warpgroups/2.4%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%2C%20cooperative%20groups%20%D7%95-warpgroups%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.4   סנכרון, cooperative groups ו warpgroups
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_4_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_4_5" id="__nav_7_3_4_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.5   Compute Capability וגרסאות ארכיטקטורה
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_4_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_4_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2.5   Compute Capability וגרסאות ארכיטקטורה
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.5 - Compute Capability וגרסאות ארכיטקטורה - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.5 - Compute Capability וגרסאות ארכיטקטורה - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-compute-capability-versioning-the-isa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הבעיה ש-Compute Capability פותרת - Versioning the ISA
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-compute_xx-sm_xx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ארכיטקטורה וירטואלית מול פיזית - compute_XX מול sm_XX
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-onion-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מודל הבצל - תאימות קדימה - The Onion Model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-a-f-the-a-and-f-suffixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חריגות מהבצל - הסיומות a ו-f - The a and f Suffixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-compute-capability-the-cc-to-architecture-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מפת ה-Compute Capability לארכיטקטורות - The CC-to-Architecture Map
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-compute-capability-reading-your-cc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איך לקרוא את ה-Compute Capability של הכרטיס - Reading Your CC
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-ptx-sass-ship-ptx-or-sass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה זה אומר בפועל - PTX מול SASS בזמן טעינה - Ship PTX or SASS
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-compute-capability-versioning-the-isa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הבעיה ש-Compute Capability פותרת - Versioning the ISA
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-compute_xx-sm_xx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ארכיטקטורה וירטואלית מול פיזית - compute_XX מול sm_XX
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-onion-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מודל הבצל - תאימות קדימה - The Onion Model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-a-f-the-a-and-f-suffixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חריגות מהבצל - הסיומות a ו-f - The a and f Suffixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-compute-capability-the-cc-to-architecture-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מפת ה-Compute Capability לארכיטקטורות - The CC-to-Architecture Map
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-compute-capability-reading-your-cc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איך לקרוא את ה-Compute Capability של הכרטיס - Reading Your CC
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-ptx-sass-ship-ptx-or-sass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה זה אומר בפועל - PTX מול SASS בזמן טעינה - Ship PTX or SASS
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    2   מודל התכנות של CUDA
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    2.5   Compute Capability וגרסאות ארכיטקטורה
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>2.5 - Compute Capability וגרסאות ארכיטקטורה - הרצאה</h1>
+
+<p>לאורך פרק 2 בנינו את מודל התכנות של CUDA מלמעלה למטה: בשיעור 2.1 פגשנו את ה-thread (thread), את ה-warp (קבוצת 32 threads) ואת מודל ה-SIMT (Single Instruction, Multiple Threads); בשיעור 2.2 ראינו איך block (בלוק) ו-grid (רשת) ממופים לחומרה; בשיעור 2.3 כתבנו kernel (קרנל, פונקציית ה-GPU) עם אינדוקס נכון ו-launch configuration; ובשיעור 2.4 סנכרנו threads עם barriers ו-cooperative groups. כל אלה הם הפשטות ניידות - הן לא מזכירות דגם כרטיס אחד. אבל בסופו של יום הקוד חייב לרוץ על שבב פיזי מסוים, וכאן נכנס המושג שסוגר את הפרק: ה-compute capability, מספר הגרסה שמחבר את הקוד שכתבנו לחומרה שתריץ אותו. בשיעור 1.2 כבר נגענו בו בקצרה כשדיברנו על ארכיטקטורת ה-SM; כאן נצלול אליו לעומק - נבין למה בכלל צריך מספר גרסה, מה ההבדל בין ארכיטקטורה וירטואלית לפיזית, איך עובד "מודל הבצל" של תאימות קדימה, מה שוברות הסיומות <code>a</code> ו-<code>f</code> החדשות, ואיך קוראים את ה-compute capability של הכרטיס שלכם בשלוש דרכים. את הטיפול המלא בדגלי הcompilation של nvcc (CUDA compiler) נשאיר לפרק 4, אבל התשתית המושגית נבנית כאן.</p>
+<h2 id="-compute-capability-versioning-the-isa">הבעיה ש-Compute Capability פותרת - Versioning the ISA<a class="headerlink" href="#-compute-capability-versioning-the-isa" title="Permanent link">&para;</a></h2>
+<p>בשיעורי פרק 4 נראה שכל kernel עובר בסוף שרשרת compilation לשתי שפות נמוכות: PTX (Parallel Thread Execution) - אסמבלי וירטואלי נייד, ו-SASS (Streaming Assembler) - קוד המכונה הילידי שה-SM (מעבד רב-זרמי) מריץ בפועל. הבעיה: <strong>פקודות ב-PTX תואמות רק לחלק מהכרטיסים הפיזיים.</strong> פקודת Tensor Core (ליבת טנזור) שקיימת ב-Hopper לא קיימת ב-Pascal; גודל ה-warp, מספר האוגרים, סוגי הפעולות - כולם משתנים בין דורות. אם הcompiler היה צריך להכיר כל שבב ושבב בשמו, כל שחרור כרטיס חדש היה שובר את כל שרשרת הכלים.</p>
+<p>הפתרון הוא שכבת הפשטה: <strong>מערכת מספור גרסאות שמפרידה את פרטי החומרה הפיזית מקבוצת הפקודות ומהcompiler.</strong> המערכת הזו נקראת compute capability. במקום לכוון לשבב ספציפי, הקוד מכוון ל<strong>משפחה</strong> של כרטיסים בעלי אותה יכולת. זו בדיוק ההגדרה מהמקור: "מערכת המספור שמשמשת להפשטת פרטי ה-GPU הפיזי מקבוצת הפקודות ומהcompiler נקראת Compute Capability". ה-compute capability הוא גבול ההפשטה בין שני העולמות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>    code you write                     abstraction boundary        physical hardware
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  +-------------------+          +----------------------+       +-------------+
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  |  CUDA C++ kernel  |          |                      |       |  H100  9.0  |
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  |     |             |  -----&gt;  |  Compute Capability  | ----&gt; |  A100  8.0  |
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  |     v             |          |   major.minor        |       |  RTX 4090   |
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  |  PTX  /  SASS      |          |  (7.0, 8.6, 9.0 ...) |       |     8.9     |
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  +-------------------+          +----------------------+       +-------------+
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        &quot;to which capability&quot;        not &quot;to which chip&quot;          &quot;which chips&quot;
+</code></pre></div>
+<p>הרעיון המרכזי: <strong>מכוונים ליכולת, לא לשבב.</strong> kernel שקומפל ליכולת 8.0 ירוץ על כל כרטיס Ampere בעל היכולת הזו - A100, A30, A10 - בלי לדעת דבר על הדגם המסוים. זו אותה תכונת מדרגיות שראינו ב-grid בשיעור 2.2, אבל במימד הזמן: לא רק "אותו קוד על GPU קטן וגדול", אלא "אותו קוד על דורות חומרה שונים".</p>
+<h2 id="-compute_xx-sm_xx">ארכיטקטורה וירטואלית מול פיזית - compute_XX מול sm_XX<a class="headerlink" href="#-compute_xx-sm_xx" title="Permanent link">&para;</a></h2>
+<p>הנקודה שהכי מבלבלת מתחילים היא שיש <strong>שני</strong> מספרי גרסה, לא אחד, והם נראים כמעט זהים. תיעוד nvcc קורא ל-compute capability "ארכיטקטורת GPU וירטואלית" (virtual GPU architecture), בניגוד ל"ארכיטקטורת GPU פיזית" (physical GPU architecture) שמבוטאת על ידי גרסת ה-SM. שני העולמות מקבלים תחביר משלהם:</p>
+<ul>
+<li><strong>ארכיטקטורה וירטואלית - <code>compute_XX</code>:</strong> היעד של ה-PTX. זו רמת היכולת המופשטת. <code>compute_90</code> אומר "PTX שמניח את היכולות של Hopper", בלי להתחייב לשבב.</li>
+<li><strong>ארכיטקטורה פיזית - <code>sm_XX</code>:</strong> היעד של ה-SASS. זהו קוד המכונה הילידי לגרסת SM ספציפית. <code>sm_90</code> אומר "SASS שרץ ישירות על SM בגרסה 9.0".</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>היבט</th>
+<th>ארכיטקטורה וירטואלית</th>
+<th>ארכיטקטורה פיזית</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>תחביר</td>
+<td><code>compute_XX</code></td>
+<td><code>sm_XX</code></td>
+</tr>
+<tr>
+<td>מכוונת אליה</td>
+<td>PTX</td>
+<td>SASS</td>
+</tr>
+<tr>
+<td>מהי</td>
+<td>רמת יכולת מופשטת</td>
+<td>קוד מכונה לגרסת SM</td>
+</tr>
+<tr>
+<td>מתי מתורגמת לחומרה</td>
+<td>בזמן טעינה (JIT)</td>
+<td>כבר מוכן, רץ ישירות</td>
+</tr>
+<tr>
+<td>ניידות קדימה</td>
+<td>כן (רצה על דורות חדשים)</td>
+<td>לא (קשורה לגרסה הראשית)</td>
+</tr>
+</tbody>
+</table>
+<p>היחס ביניהם: PTX (וירטואלי) הוא שלב ביניים; SASS (פיזי) הוא היעד הסופי. אפשר לכוון ל-PTX ולתת לדרייבר להשלים את הדרך ל-SASS בזמן ריצה, או לכוון ישירות ל-SASS ולחסוך את השלב הזה. <strong>התנהגות ברירת המחדל של nvcc:</strong> כשמכוונים ל-compute capability, הcompiler "גם מייצר SASS ממוטב עבור ארכיטקטורת ה-SM התואמת". כלומר, <code>-arch=sm_90</code> איננו רק "SASS ל-H100" - הוא בונה SASS ל-sm_90 <strong>וגם</strong> מטמיע PTX של compute_90 באותו artifact, כדי שתהיה גם ניידות קדימה. נפרק את המשמעות המעשית של זה בסעיף האחרון, ואת התחביר המלא של <code>-gencode</code> בפרק 4.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>   nvcc -arch=sm_90  foo.cu
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>         |
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>         +--&gt; compute_90  -&gt;  PTX   (virtual, forward-portable)  ---+
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>         |                                                          |--&gt; same fatbin
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>         +--&gt; sm_90       -&gt;  SASS  (physical, for H100, fast)  ----+
+</code></pre></div>
+<h2 id="-the-onion-model">מודל הבצל - תאימות קדימה - The Onion Model<a class="headerlink" href="#-the-onion-model" title="Permanent link">&para;</a></h2>
+<p>מה קורה כשמריצים artifact ישן על כרטיס חדש? כאן נכנס עקרון התאימות המרכזי. עבור גרסאות <strong>סטנדרטיות</strong> (בלי סיומת), NVIDIA "מבטיחה תאימות קדימה (קוד PTX ישן רץ על כרטיסים חדשים) גם בין גרסאות ראשיות וגם בין גרסאות משניות, לפי מודל שכבות הבצל". השם "בצל" קולע: כל גרסה חדשה עוטפת את הישנות כשכבה נוספת, וה-PTX של שכבה פנימית (ישנה) יכול לרוץ בכל שכבה חיצונית (חדשה) שעוטפת אותה.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>                The onion-layers model - PTX forward compatibility
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>        +---------------------------------------------------+
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>        |  Blackwell 12.0                                   |
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>        |   +-------------------------------------------+   |
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>        |   |  Hopper 9.0                               |   |
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        |   |   +-----------------------------------+   |   |
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>        |   |   |  Ampere 8.0                       |   |   |
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>        |   |   |   +---------------------------+   |   |   |
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        |   |   |   |  Volta 7.0  (old PTX)     |   |   |   |
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>        |   |   |   +---------------------------+   |   |   |
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>        |   |   +-----------------------------------+   |   |
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>        |   +-------------------------------------------+   |
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>        +---------------------------------------------------+
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>           PTX of compute_70  -&gt;  runs on 7.0, 8.0, 9.0, 12.0
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>           the arrow always points from inside out: old runs on new, never the other way
+</code></pre></div>
+<p>המנגנון שמאפשר את זה הוא <strong>קומפילציה בזמן ריצה (JIT - Just-In-Time)</strong> בתוך הדרייבר. כשטוענים artifact שמכיל PTX של compute_70 על כרטיס H100 (9.0), הדרייבר מזהה שאין SASS מתאים, לוקח את ה-PTX ומקמפל אותו ל-SASS של sm_90 ברגע הטעינה. התוצאה נשמרת ב-cache על הדיסק (ברירת המחדל: <code>~/.nv/ComputeCache</code>), כך שההרצה הבאה לא משלמת שוב את מחיר ה-JIT.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>   loading an artifact with PTX compute_70 on H100 (9.0)
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>   ------------------------------------------------
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>   [ is there SASS for sm_90? ]  --no--&gt;  [ driver compiles PTX -&gt; SASS for sm_90 ]
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>                                            |
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>                                            v
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>                                   [ saved in ~/.nv/ComputeCache ]
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>                                            |
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>                                            v
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>                                   [ run. subsequent runs: from the cache ]
+</code></pre></div>
+<p>שימו לב לכיוון: <strong>תאימות קדימה, לא אחורה.</strong> PTX ישן רץ על כרטיס חדש (JIT מעלה אותו), אבל SASS או PTX שנבנו ליכולת חדשה <strong>לא</strong> ירוצו על כרטיס ישן - הפקודות פשוט לא קיימות שם. אין דרך "להנמיך" יכולת.</p>
+<h2 id="-a-f-the-a-and-f-suffixes">חריגות מהבצל - הסיומות a ו-f - The a and f Suffixes<a class="headerlink" href="#-a-f-the-a-and-f-suffixes" title="Permanent link">&para;</a></h2>
+<p>הדורות האחרונים שברו את אחידות מודל הבצל בכוונה, כי חלק מהיכולות החדשות (בעיקר סביב ה-Tensor Cores) קשורות כל כך חזק לחומרה ספציפית עד שאי אפשר להבטיח עבורן ניידות קדימה. לכן נוספו שתי סיומות למספר הגרסה:</p>
+<ul>
+<li><strong>סיומת <code>a</code> - הוצגה עם Hopper (למשל <code>9.0a</code>):</strong> מסמנת יכולות ש<strong>חורגות ממודל הבצל.</strong> עבורן, "תאימות עתידית אינה מובטחת, אפילו בתוך אותה גרסה ראשית". אלה היכולות ה"מואצות" (architecture-specific), כמו פקודות ה-<code>wgmma</code> וה-TMA (Tensor Memory Accelerator) של Hopper. קוד שנבנה ל-<code>sm_90a</code> תפור ל-Hopper ואין שום ערובה שירוץ על דור עתידי כלשהו, גם לא על גרסה ראשית 9 אחרת.</li>
+<li><strong>סיומת <code>f</code> - הוצגה עם Blackwell (למשל <code>10.0f</code>):</strong> גם היא חורגת ממודל הבצל, אבל "קרובה יותר ל-SemVer": התאימות מובטחת <strong>בין גרסאות משניות</strong> אבל <strong>לא בין גרסאות ראשיות</strong>. כלומר <code>sm_100f</code> יהיה תואם על פני משפחת 10.x, אבל לא יקפוץ ל-12.x ולא יירד ל-9.x.</li>
+</ul>
+<p>הנה שלושת המשטרים זה מול זה:</p>
+<table>
+<thead>
+<tr>
+<th>משטר</th>
+<th>דוגמה</th>
+<th style="text-align: center;">תאימות בין גרסאות משניות</th>
+<th style="text-align: center;">תאימות בין גרסאות ראשיות</th>
+<th>הוצג בדור</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>סטנדרטי (בצל)</td>
+<td><code>sm_90</code>, <code>compute_80</code></td>
+<td style="text-align: center;">כן (קדימה)</td>
+<td style="text-align: center;">כן (קדימה)</td>
+<td>מאז ומתמיד</td>
+</tr>
+<tr>
+<td>סיומת <code>a</code></td>
+<td><code>sm_90a</code></td>
+<td style="text-align: center;">לא מובטח</td>
+<td style="text-align: center;">לא מובטח</td>
+<td>Hopper</td>
+</tr>
+<tr>
+<td>סיומת <code>f</code></td>
+<td><code>sm_100f</code></td>
+<td style="text-align: center;">כן</td>
+<td style="text-align: center;">לא</td>
+<td>Blackwell</td>
+</tr>
+</tbody>
+</table>
+<p>הלקח המעשי: <strong>אי אפשר יותר להניח "PTX ישן תמיד רץ בכל מקום".</strong> ברגע שאתם משתמשים ביכולת מואצת של דור מסוים (Tensor Cores מהדור החדש, TMA), אתם עוברים לתחום <code>a</code> או <code>f</code> ומאבדים חלק מהערובות של מודל הבצל. צריך להכיר את כללי הגרסה הספציפיים ולא לסמוך על אחידות שכבר לא קיימת. בפרק 4 נראה מתי nvcc מכריח אתכם לסיומת <code>a</code> (למשל, פקודות <code>wgmma</code> פשוט לא מתקמפלות תחת <code>sm_90</code> רגיל - רק תחת <code>sm_90a</code>).</p>
+<h2 id="-compute-capability-the-cc-to-architecture-map">מפת ה-Compute Capability לארכיטקטורות - The CC-to-Architecture Map<a class="headerlink" href="#-compute-capability-the-cc-to-architecture-map" title="Permanent link">&para;</a></h2>
+<p>עד כאן דיברנו על המבנה של המספר. עכשיו נחבר מספרים לשמות. <strong>אזהרה חשובה:</strong> עמוד המקור של ה-compute capability <strong>אינו</strong> מונה את המפה הזו - הוא מפנה למדריך התכנות של NVIDIA לטבלאות היכולות המלאות. המפה שלהלן היא ידע CUDA סטנדרטי שאנחנו מוסיפים לנוחותכם כתוספת חיצונית שימושית, לא ציטוט מהמקור:</p>
+<table>
+<thead>
+<tr>
+<th>Compute Capability</th>
+<th>משפחת ארכיטקטורה</th>
+<th>כרטיס לדוגמה</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>7.0 / 7.2</td>
+<td>Volta</td>
+<td>V100</td>
+</tr>
+<tr>
+<td>7.5</td>
+<td>Turing</td>
+<td>T4, RTX 2080</td>
+</tr>
+<tr>
+<td>8.0</td>
+<td>Ampere</td>
+<td>A100</td>
+</tr>
+<tr>
+<td>8.6 / 8.7</td>
+<td>Ampere</td>
+<td>RTX 3090, Orin</td>
+</tr>
+<tr>
+<td>8.9</td>
+<td>Ada Lovelace</td>
+<td>RTX 4090, L4</td>
+</tr>
+<tr>
+<td>9.0</td>
+<td>Hopper</td>
+<td>H100, H200</td>
+</tr>
+<tr>
+<td>10.x / 12.x</td>
+<td>Blackwell</td>
+<td>B200, RTX 5090</td>
+</tr>
+</tbody>
+</table>
+<p><strong>המלכודת החשובה ביותר בטבלה - שורות ה-8.x:</strong> הגרסה הראשית כמעט נרדפת למשפחת הארכיטקטורה (כל 7.x = Volta/Turing, כל 9.x = Hopper), אבל "כמעט" איננו "תמיד". Ampere משתמשת ב-8.0, 8.6, 8.7, ואילו <strong>Ada Lovelace משתמשת ב-8.9 - אותה גרסה ראשית (8) כמו Ampere, אבל משפחת ארכיטקטורה שונה לחלוטין.</strong> גרסה ראשית משותפת <strong>אינה מבטיחה</strong> אותה משפחה. אם תסתמכו על "major==8 אז זה Ampere", תיכשלו על כל RTX 4090. תמיד בדקו את המספר המלא <code>major.minor</code>, לא רק את הראשי.</p>
+<p>מהמפה הזו נגזרת גם דוגמת הריצה של הקורס: ה-H100 SXM שלנו הוא compute capability <strong>9.0</strong>, משפחת Hopper. כשנכתוב <code>sm_90</code> נכוון בדיוק אליו, וכשנרצה את היכולות המואצות של Hopper (Tensor Cores מהדור הרביעי, TMA) נכתוב <code>sm_90a</code>.</p>
+<h2 id="-compute-capability-reading-your-cc">איך לקרוא את ה-Compute Capability של הכרטיס - Reading Your CC<a class="headerlink" href="#-compute-capability-reading-your-cc" title="Permanent link">&para;</a></h2>
+<p>יש שלוש דרכים לגלות את ה-compute capability, לפי ההקשר שבו אתם נמצאים. כדאי להכיר את שלושתן.</p>
+<p><strong>דרך 1 - משורת הפקודה עם nvidia-smi.</strong> המהירה ביותר, בלי לכתוב שורת קוד:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>nvidia-smi<span class="w"> </span>--query-gpu<span class="o">=</span>name,compute_cap<span class="w"> </span>--format<span class="o">=</span>csv,noheader
+</code></pre></div>
+<p>על H100 נקבל:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>NVIDIA H100 80GB HBM3, 9.0
+</code></pre></div>
+<p><strong>דרך 2 - בזמן ריצה, מקוד ה-host (המארח) עם cudaGetDeviceProperties.</strong> כך תבחרו התנהגות דינמית לפי הכרטיס. שימו לב למקרו <code>CUDA_CHECK</code> שעוטף כל קריאת CUDA ומדפיס קובץ, שורה ושגיאה אם משהו נכשל - נשתמש בו בכל תוכנית host לאורך הקורס:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdio&gt;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdlib&gt;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cuda_runtime.h&gt;</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="cp">#define CUDA_CHECK(call)                                                    \</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="cp">    do {                                                                    \</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="cp">        cudaError_t err_ = (call);                                          \</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="cp">        if (err_ != cudaSuccess) {                                          \</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="cp">            fprintf(stderr, &quot;CUDA error at %s:%d\n  &#39;%s&#39;\n  -&gt; %s\n&quot;,       \</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="cp">                    __FILE__, __LINE__, #call, cudaGetErrorString(err_));   \</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="cp">            exit(EXIT_FAILURE);                                             \</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="cp">        }                                                                   \</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="cp">    } while (0)</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">dev</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="w">    </span><span class="n">cudaDeviceProp</span><span class="w"> </span><span class="n">p</span><span class="p">;</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaGetDeviceProperties</span><span class="p">(</span><span class="o">&amp;</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">dev</span><span class="p">));</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;GPU                : %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="p">);</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Compute Capability : %d.%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">major</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">minor</span><span class="p">);</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;SM arch target     : sm_%d%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">major</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">minor</span><span class="p">);</span>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="p">}</span>
+</code></pre></div>
+<p>הcompilation והרצה (החליפו את הארכיטקטורה בזו של הכרטיס שלכם):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>nvcc<span class="w"> </span>-O2<span class="w"> </span>-arch<span class="o">=</span>sm_90a<span class="w"> </span>-o<span class="w"> </span>ccquery<span class="w"> </span>ccquery.cu
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>./ccquery
+</code></pre></div>
+<p>הפלט על H100:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>GPU                : NVIDIA H100 80GB HBM3
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>Compute Capability : 9.0
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>SM arch target     : sm_90
+</code></pre></div>
+<p>השדות <code>p.major</code> ו-<code>p.minor</code> הם בדיוק שני חלקי ה-compute capability. זו הדרך המהימנה ביותר, כי היא שואלת את הכרטיס עצמו במקום לשנן.</p>
+<p><strong>דרך 3 - בזמן compilation, מקוד ה-device (ההתקן) עם <code>__CUDA_ARCH__</code>.</strong> בתוך kernel אפשר לבחור מסלול קוד שונה לכל יכולת. המקרו <code>__CUDA_ARCH__</code> מוגדר <strong>רק</strong> במעברי הcompilation של ה-device (בקוד ה-host הוא לא מוגדר), וערכו הוא <code>major*100 + minor*10</code>. עבור sm_90 הוא <code>900</code>, עבור sm_80 הוא <code>800</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">k</span><span class="p">(</span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="cp">#if __CUDA_ARCH__ &gt;= 900</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="c1">// Hopper and above path</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="n">out</span><span class="p">[</span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">9.0f</span><span class="p">;</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="cp">#elif __CUDA_ARCH__ &gt;= 800</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span><span class="c1">// Ampere path</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">    </span><span class="n">out</span><span class="p">[</span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">8.0f</span><span class="p">;</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="cp">#else</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">    </span><span class="c1">// common path for older generations</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">    </span><span class="n">out</span><span class="p">[</span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="cp">#endif</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="p">}</span>
+</code></pre></div>
+<p>עדינות שקשורה לסיומת <code>a</code>: כשמקמפלים ל-<code>sm_90a</code>, הערך של <code>__CUDA_ARCH__</code> נשאר <code>900</code> (זהה ל-sm_90 הרגיל), אבל nvcc מגדיר בנוסף מקרו נפרד, <code>__CUDA_ARCH_FEAT_SM90_ALL</code>, שמסמן שהיכולות המואצות זמינות. כך קוד שמשתמש ב-<code>wgmma</code> יכול לשמור על עצמו מפני compilation תחת <code>sm_90</code> רגיל, שבו הפקודות האלה כלל לא קיימות.</p>
+<h2 id="-ptx-sass-ship-ptx-or-sass">מה זה אומר בפועל - PTX מול SASS בזמן טעינה - Ship PTX or SASS<a class="headerlink" href="#-ptx-sass-ship-ptx-or-sass" title="Permanent link">&para;</a></h2>
+<p>נסגור עם ההשלכה המעשית שמנחה כל החלטת compilation, ושנעמיק בה בפרק 4 עם הטיפול המלא ב-<code>-gencode</code>. יש כאן פשרה (trade-off) חדה בין שתי גישות:</p>
+<p><strong>גישה א - לשלוח PTX (ניידות קדימה).</strong> אם ה-artifact מכיל PTX של compute_XX, הוא ירוץ על כל דור עתידי בזכות ה-JIT של הדרייבר. <strong>המחיר:</strong> בטעינה הראשונה על כל כרטיס חדש, הדרייבר עוצר ומקמפל את ה-PTX ל-SASS - זמן ה-JIT. עבור אפליקציה עם עשרות kernels זה יכול להוסיף שניות להפעלה הראשונה. בנוסף, ה-SASS שה-JIT מייצר אינו בהכרח ממוטב כמו SASS שנבנה ידנית לאותו sm, כי ה-JIT עובד תחת אילוצי זמן ומידע.</p>
+<p><strong>גישה ב - לכוון ל-<code>sm_XX</code> המדויק (ביצועים).</strong> אם ה-artifact מכיל SASS מוכן ל-sm_90, הטעינה על H100 מיידית - אין JIT, וה-SASS ממוטב היטב. <strong>המחיר:</strong> אין ניידות קדימה. אם אין PTX בתמונה, הרצה על כל גרסה ראשית אחרת פשוט תיכשל בטעינה.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>   the two ends of the trade-off
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>   -----------------------------------------------------------
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>   PTX only (compute_90)  |  SASS only (sm_90)  |  both (default -arch=sm_90)
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>   ---------------------|--------------------|----------------------------
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>   forward portability: yes |  portability: no    |  portability + speed (larger artifact)
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>   load cost: JIT           |  load cost: 0       |  0 on sm_90, JIT on newer generations
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>   performance: medium      |  performance: optimal |  optimal on sm_90
+</code></pre></div>
+<p>בגלל זה <strong>ברירת המחדל של nvcc מטמיעה את שניהם</strong> כשכותבים <code>-arch=sm_90</code>: SASS ל-sm_90 (מהיר ומיידי על ה-H100 שלכם עכשיו) ו-PTX של compute_90 (שיציל אתכם על כרטיס עתידי דרך JIT). זו הפשרה הסבירה כברירת מחדל. בפרק 4 נראה איך <code>-gencode</code> נותן שליטה מדויקת - להטמיע SASS למספר sm-ים בו-זמנית (fatbin), להשמיט את ה-PTX כשרוצים artifact קטן, או להוסיף PTX של יכולת גבוהה כרשת ביטחון קדימה. אם תרצו לכפות JIT לצורך בדיקה, אפשר עם משתנה הסביבה <code>CUDA_FORCE_PTX_JIT=1</code>, ולנקות את ה-cache עם <code>CUDA_CACHE_DISABLE=1</code>.</p>
+<h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>ה-compute capability הוא מערכת מספור גרסאות שמפשיטה את פרטי ה-GPU הפיזי מקבוצת הפקודות (PTX) ומהcompiler, כך שהקוד מכוון ל<strong>משפחת</strong> כרטיסים בעלת יכולת נתונה, לא לשבב מסוים.</li>
+<li>הפורמט הוא <code>major.minor</code> (למשל 7.0, 8.6, 9.0); יש להבחין בין ארכיטקטורה וירטואלית (<code>compute_XX</code>, היעד של ה-PTX) לארכיטקטורה פיזית (<code>sm_XX</code>, היעד של ה-SASS), וברירת המחדל של nvcc מייצרת גם SASS ממוטב ל-SM התואם.</li>
+<li>מודל שכבות הבצל מבטיח לגרסאות סטנדרטיות תאימות קדימה: PTX ישן רץ על כרטיסים חדשים יותר, בין גרסאות ראשיות ומשניות, באמצעות JIT בזמן טעינה בתוך הדרייבר, עם cache על הדיסק ב-<code>~/.nv/ComputeCache</code>.</li>
+<li>הכיוון הוא תאימות קדימה בלבד - PTX ישן עולה לחומרה חדשה, אבל קוד שנבנה ליכולת חדשה לעולם לא ירוץ על כרטיס ישן; אין הנמכת יכולת.</li>
+<li>הסיומת <code>a</code> (Hopper, למשל <code>9.0a</code>) מסמנת יכולות מואצות ששוברות את מודל הבצל ללא שום ערובת תאימות עתידית, אפילו בתוך אותה גרסה ראשית; הסיומת <code>f</code> (Blackwell, למשל <code>10.0f</code>) קרובה יותר ל-SemVer - תואמת בין גרסאות משניות אך לא בין ראשיות.</li>
+<li>מפת היכולות לארכיטקטורות (Volta 7.0, Turing 7.5, Ampere 8.0/8.6, Ada 8.9, Hopper 9.0, Blackwell 10.x/12.x) היא תוספת חיצונית שאינה מופיעה בעמוד המקור; המלכודת המרכזית בה היא ש-Ada (8.9) חולקת גרסה ראשית 8 עם Ampere אך היא משפחה נפרדת, ולכן חובה לבדוק <code>major.minor</code> מלא.</li>
+<li>קוראים את ה-compute capability בשלוש דרכים: <code>nvidia-smi --query-gpu=compute_cap</code> משורת הפקודה, <code>cudaGetDeviceProperties</code> (השדות <code>major</code>/<code>minor</code>) בקוד ה-host עטוף ב-<code>CUDA_CHECK</code>, ו-<code>__CUDA_ARCH__</code> (ערך <code>major*100+minor*10</code>) בקוד ה-device בזמן compilation.</li>
+<li>הפשרה המעשית: שליחת PTX נותנת ניידות קדימה אך גובה מחיר JIT בטעינה ו-SASS פחות ממוטב, בעוד כיוון ל-<code>sm_XX</code> המדויק נותן SASS מיטבי וטעינה מיידית אך ללא ניידות; את השליטה המלאה עם <code>-gencode</code> ותהליך ה-fatbin נלמד בפרק 4.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

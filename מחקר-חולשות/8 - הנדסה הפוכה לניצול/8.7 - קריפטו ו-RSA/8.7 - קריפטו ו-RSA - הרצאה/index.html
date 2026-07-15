@@ -1,0 +1,3300 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בפרק הזה עסקנו בreverse engineering ככלי לexploit, ועד עכשיו התוצר הסופי שלנו היה כמעט תמיד shell או דגל שמגיע מoverflow, מ-ROP או מבאג לוגי. בהרצאה הזו...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/8%20-%20%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C/8.7%20-%20%D7%A7%D7%A8%D7%99%D7%A4%D7%98%D7%95%20%D7%95-RSA/8.7%20-%20%D7%A7%D7%A8%D7%99%D7%A4%D7%98%D7%95%20%D7%95-RSA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../8.6%20-%20%D7%90%D7%AA%D7%92%D7%A8%D7%99%20%D7%9C%D7%95%D7%92%D7%99%D7%A7%D7%94/8.6%20-%20%D7%90%D7%AA%D7%92%D7%A8%D7%99%20%D7%9C%D7%95%D7%92%D7%99%D7%A7%D7%94%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../8.7%20-%20%D7%A7%D7%A8%D7%99%D7%A4%D7%98%D7%95%20%D7%95-RSA%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>8.7 - קריפטו ו-RSA - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "8.7 - \u05e7\u05e8\u05d9\u05e4\u05d8\u05d5 \u05d5-RSA - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/8%20-%20%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C/8.7%20-%20%D7%A7%D7%A8%D7%99%D7%A4%D7%98%D7%95%20%D7%95-RSA/8.7%20-%20%D7%A7%D7%A8%D7%99%D7%A4%D7%98%D7%95%20%D7%95-RSA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="8.7 - קריפטו ו-RSA - הרצאה - עמית טק" />
+<meta property="og:description" content="בפרק הזה עסקנו בreverse engineering ככלי לexploit, ועד עכשיו התוצר הסופי שלנו היה כמעט תמיד shell או דגל שמגיע מoverflow, מ-ROP או מבאג לוגי. בהרצאה הזו..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/8%20-%20%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C/8.7%20-%20%D7%A7%D7%A8%D7%99%D7%A4%D7%98%D7%95%20%D7%95-RSA/8.7%20-%20%D7%A7%D7%A8%D7%99%D7%A4%D7%98%D7%95%20%D7%95-RSA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/8%20-%20%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C/8.7%20-%20%D7%A7%D7%A8%D7%99%D7%A4%D7%98%D7%95%20%D7%95-RSA/8.7%20-%20%D7%A7%D7%A8%D7%99%D7%A4%D7%98%D7%95%20%D7%95-RSA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="8.7 - קריפטו ו-RSA - הרצאה - עמית טק" />
+<meta property="twitter:description" content="בפרק הזה עסקנו בreverse engineering ככלי לexploit, ועד עכשיו התוצר הסופי שלנו היה כמעט תמיד shell או דגל שמגיע מoverflow, מ-ROP או מבאג לוגי. בהרצאה הזו..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/8%20-%20%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C/8.7%20-%20%D7%A7%D7%A8%D7%99%D7%A4%D7%98%D7%95%20%D7%95-RSA/8.7%20-%20%D7%A7%D7%A8%D7%99%D7%A4%D7%98%D7%95%20%D7%95-RSA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-reverse-the-check-dont-break-the-crypto" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              8.7 - קריפטו ו-RSA - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר חולשות
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%95%D7%AA%D7%A9%D7%AA%D7%99%D7%AA/0.1%20-%20%D7%9E%D7%94%20%D7%96%D7%94%20%D7%9E%D7%97%D7%A7%D7%A8%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/0.1%20-%20%D7%9E%D7%94%20%D7%96%D7%94%20%D7%9E%D7%97%D7%A7%D7%A8%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה ותשתית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%A4%D7%A9%D7%95%D7%98%D7%95%D7%AA%20%D7%95%D7%91%D7%90%D7%92%D7%99%D7%9D%20%D7%9C%D7%95%D7%92%D7%99%D7%99%D7%9D/1.1%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%95%D7%90%D7%A8%D7%92%D7%95%D7%9E%D7%A0%D7%98%D7%99%D7%9D/1.1%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%95%D7%90%D7%A8%D7%92%D7%95%D7%9E%D7%A0%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   חולשות פשוטות ובאגים לוגיים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%92%D7%9C%D7%99%D7%A9%D7%AA%20%D7%97%D7%95%D7%A6%D7%A5%20%D7%A2%D7%9C%20%D7%94%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA/2.1%20-%20%D7%90%D7%A0%D7%98%D7%95%D7%9E%D7%99%D7%94%20%D7%A9%D7%9C%20%D7%92%D7%9C%D7%99%D7%A9%D7%94%20%D7%95%D7%A9%D7%9C%D7%99%D7%98%D7%94%20%D7%91RIP/2.1%20-%20%D7%90%D7%A0%D7%98%D7%95%D7%9E%D7%99%D7%94%20%D7%A9%D7%9C%20%D7%92%D7%9C%D7%99%D7%A9%D7%94%20%D7%95%D7%A9%D7%9C%D7%99%D7%98%D7%94%20%D7%91RIP%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   גלישת חוצץ על המחסנית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20Shellcode/3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99/3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   Shellcode
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A2%D7%A7%D7%99%D7%A4%D7%AA%20NX%20%D7%95ROP%20%D7%91%D7%A1%D7%99%D7%A1%D7%99/4.1%20-%20GOT%20%D7%95PLT%20%D7%9C%D7%A2%D7%95%D7%9E%D7%A7/4.1%20-%20GOT%20%D7%95PLT%20%D7%9C%D7%A2%D7%95%D7%9E%D7%A7%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   עקיפת NX וROP בסיסי
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%9E%D7%97%D7%A8%D7%95%D7%96%D7%AA%20%D7%A4%D7%95%D7%A8%D7%9E%D7%98/5.1%20-%20%D7%99%D7%A1%D7%95%D7%93%D7%95%D7%AA%20format%20string/5.1%20-%20%D7%99%D7%A1%D7%95%D7%93%D7%95%D7%AA%20format%20string%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   חולשות מחרוזת פורמט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20ROP%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/6.1%20-%20stack%20pivoting/6.1%20-%20stack%20pivoting%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ROP מתקדם
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc/7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   ניצול הHeap
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2_10" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2_10" id="__nav_7_2_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   הנדסה הפוכה לניצול
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_2_10_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    8   הנדסה הפוכה לניצול
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.1%20-%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%90%D7%A8%D7%95%D7%96%D7%99%D7%9D%20%D7%95-UPX/8.1%20-%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%90%D7%A8%D7%95%D7%96%D7%99%D7%9D%20%D7%95-UPX%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.1   קבצים ארוזים ו UPX
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.2%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%95%D7%AA%20ARM%20%D7%95-MIPS/8.2%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%95%D7%AA%20ARM%20%D7%95-MIPS%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.2   ארכיטקטורות ARM ו MIPS
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.3%20-%20%D7%91%D7%99%D7%A0%D7%90%D7%A8%D7%99%20%D7%96%D7%A2%D7%99%D7%A8/8.3%20-%20%D7%91%D7%99%D7%A0%D7%90%D7%A8%D7%99%20%D7%96%D7%A2%D7%99%D7%A8%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.3   בינארי זעיר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.4%20-%20%D7%99%D7%99%D7%A9%D7%95%D7%A8%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95-SSE/8.4%20-%20%D7%99%D7%99%D7%A9%D7%95%D7%A8%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95-SSE%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.4   יישור זיכרון ו SSE
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.5%20-%20%D7%9E%D7%A4%D7%A8%D7%A9%D7%99%D7%9D%20%D7%95%D7%9E%D7%9B%D7%95%D7%A0%D7%95%D7%AA%20%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%95%D7%AA/8.5%20-%20%D7%9E%D7%A4%D7%A8%D7%A9%D7%99%D7%9D%20%D7%95%D7%9E%D7%9B%D7%95%D7%A0%D7%95%D7%AA%20%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.5   מפרשים ומכונות וירטואליות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.6%20-%20%D7%90%D7%AA%D7%92%D7%A8%D7%99%20%D7%9C%D7%95%D7%92%D7%99%D7%A7%D7%94/8.6%20-%20%D7%90%D7%AA%D7%92%D7%A8%D7%99%20%D7%9C%D7%95%D7%92%D7%99%D7%A7%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.6   אתגרי לוגיקה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2_10_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2_10_7" id="__nav_7_2_10_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.7   קריפטו ו RSA
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_2_10_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2_10_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    8.7   קריפטו ו RSA
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.7 - קריפטו ו-RSA - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.7 - קריפטו ו-RSA - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-reverse-the-check-dont-break-the-crypto" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הלך הרוח - reverse the check, don't break the crypto
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#xor-the-xor-cipher" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הצפנה מבוססת xor - the xor cipher
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="הצפנה מבוססת xor - the xor cipher">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-inverting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        היפוך הטרנספורמציה - inverting
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#crypto1-pwnablekr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        האתגר crypto1 מ-pwnable.kr
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rsa-rsa-recap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הזכרת RSA - RSA recap
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-small-e-cube-root" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מלכודת ראשונה: מעריך קטן ושורש שלישי - small e cube-root
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מלכודת ראשונה: מעריך קטן ושורש שלישי - small e cube-root">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-hastad-broadcast" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        וריאציה: שידור לשלושה נמענים - Hastad broadcast
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-common-modulus-attack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מלכודת שנייה: מודולוס משותף - common modulus attack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d-n-recovering-d" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מלכודת שלישית: שחזור d על ידי פירוק n - recovering d
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-decryption-oracle-and-blinding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מלכודת רביעית: אורקל פענוח והסתרה - decryption oracle and blinding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-toolbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        כלים - the toolbox
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../8.7%20-%20%D7%A7%D7%A8%D7%99%D7%A4%D7%98%D7%95%20%D7%95-RSA%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.7 - קריפטו ו-RSA - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../8.7%20-%20%D7%A7%D7%A8%D7%99%D7%A4%D7%98%D7%95%20%D7%95-RSA%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.7 - קריפטו ו-RSA - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.8%20-%20%D7%A9%D7%99%D7%A8%D7%95%D7%AA%D7%99%20echo%20%D7%95heap%20%D7%9E%D7%A9%D7%95%D7%9C%D7%91/8.8%20-%20%D7%A9%D7%99%D7%A8%D7%95%D7%AA%D7%99%20echo%20%D7%95heap%20%D7%9E%D7%A9%D7%95%D7%9C%D7%91%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.8   שירותי echo וheap משולב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%95%D7%90%D7%AA%D7%92%D7%A8%D7%99%D7%9D%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%99%D7%9D/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   ניצול קרנל ואתגרים מתקדמים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../10%20-%20%D7%9E%D7%A6%D7%99%D7%90%D7%AA%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%90%D7%9E%D7%99%D7%AA%D7%99%D7%95%D7%AA/10.1%20-%20%D7%A1%D7%A7%D7%99%D7%A8%D7%AA%20%D7%A7%D7%95%D7%93%20%D7%9E%D7%A7%D7%95%D7%A8/10.1%20-%20%D7%A1%D7%A7%D7%99%D7%A8%D7%AA%20%D7%A7%D7%95%D7%93%20%D7%9E%D7%A7%D7%95%D7%A8%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10   מציאת חולשות אמיתיות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-reverse-the-check-dont-break-the-crypto" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הלך הרוח - reverse the check, don't break the crypto
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#xor-the-xor-cipher" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הצפנה מבוססת xor - the xor cipher
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="הצפנה מבוססת xor - the xor cipher">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-inverting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        היפוך הטרנספורמציה - inverting
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#crypto1-pwnablekr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        האתגר crypto1 מ-pwnable.kr
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rsa-rsa-recap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הזכרת RSA - RSA recap
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-small-e-cube-root" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מלכודת ראשונה: מעריך קטן ושורש שלישי - small e cube-root
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מלכודת ראשונה: מעריך קטן ושורש שלישי - small e cube-root">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-hastad-broadcast" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        וריאציה: שידור לשלושה נמענים - Hastad broadcast
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-common-modulus-attack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מלכודת שנייה: מודולוס משותף - common modulus attack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d-n-recovering-d" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מלכודת שלישית: שחזור d על ידי פירוק n - recovering d
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-decryption-oracle-and-blinding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מלכודת רביעית: אורקל פענוח והסתרה - decryption oracle and blinding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-toolbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        כלים - the toolbox
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר חולשות
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../8.1%20-%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%90%D7%A8%D7%95%D7%96%D7%99%D7%9D%20%D7%95-UPX/8.1%20-%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%90%D7%A8%D7%95%D7%96%D7%99%D7%9D%20%D7%95-UPX%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    8   הנדסה הפוכה לניצול
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    8.7   קריפטו ו RSA
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>8.7 - קריפטו ו-RSA - הרצאה</h1>
+
+<p>בפרק הזה עסקנו בreverse engineering ככלי לexploit, ועד עכשיו התוצר הסופי שלנו היה כמעט תמיד shell או דגל שמגיע מoverflow, מ-ROP או מבאג לוגי. בהרצאה הזו נעצור על משפחה קצת שונה של אתגרים - אתגרי קריפטו. כאן אין buffer overflow ואין דריסת return address. במקום זה יש בדיקה מתמטית שצריך לעבור: מנגנון הצפנה ביתי שאפשר להפוך, או מימוש RSA עם פרמטרים שבורים. המטרה שלנו כתוקפים היא לא "לשבור קריפטוגרפיה" במובן האקדמי הכבד, אלא לזהות את החולשה הספציפית ולנצל אותה בעזרת מעט מתמטיקה ופייתון.</p>
+<p>חשוב להבין את ההבחנה הזו מראש. קריפטוגרפיה חזקה, כשהיא מיושמת נכון, לא נשברת בתרגיל. מה שנשבר בפועל הוא <strong>המימוש</strong>: מפתח קבוע שנחשף, cipher ביתי שמישהו כתב לבד, מעריך <code>e</code> קטן מדי, מודולוס משותף, או שירות שבטעות משמש כאורקל. שני האתגרים שנפרק כאן - <code>crypto1</code> ו-<code>rsa calculator</code> מ-pwnable.kr - הם בדיוק זה: לא פריצה של אלגוריתם, אלא exploit של טעות במימוש.</p>
+<hr />
+<h2 id="-reverse-the-check-dont-break-the-crypto">הלך הרוח - reverse the check, don't break the crypto<a class="headerlink" href="#-reverse-the-check-dont-break-the-crypto" title="Permanent link">&para;</a></h2>
+<p>לפני שנצלול, בואו נסגור את הגישה. באתגר קריפטו טיפוסי מקבלים שלושה דברים: קוד מקור (או בינארי לreverse engineering), פלט כלשהו שהשירות מייצר, וקריטריון הצלחה. העבודה שלנו היא שרשרת של שלוש שאלות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>1. what exactly does the check require of me?   (which value needs to be produced)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>2. which transformation separates me            (cipher, hash, RSA, xor)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>   from that value?
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>3. is the transformation invertible, and how?   (find the input that produces the output)
+</code></pre></div>
+<p>כמעט תמיד הבאג הוא בשלב 3: המימוש בחר טרנספורמציה שקל להפוך אותה. חיבור פשוט הפכנו בשיעור ההתנגשות, xor נהפוך כאן, ו-RSA עם מעריך קטן נהפוך עם שורש שלישי. הכלל: <strong>אל תתקפו את החזק, תתקפו את החלש</strong>. חפשו את הפרמטר שמישהו בחר בו לא נכון.</p>
+<hr />
+<h2 id="xor-the-xor-cipher">הצפנה מבוססת xor - the xor cipher<a class="headerlink" href="#xor-the-xor-cipher" title="Permanent link">&para;</a></h2>
+<p>הפעולה הכי נפוצה ב-cipher-ים ביתיים היא xor. הסיבה פשוטה: קל לכתוב אותה, היא נראית "מבלבלת", והרבה מתכנתים בטעות חושבים שהיא מספקת אבטחה. היא לא. הנה שלוש התכונות שהופכות את xor למתנה בשביל תוקף:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>a ^ a = 0            xor of a value with itself zeroes out
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>a ^ 0 = a            xor with zero changes nothing
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>(a ^ k) ^ k = a      xor twice with the same key returns the original
+</code></pre></div>
+<p>התכונה השלישית היא הלב: xor הוא <strong>ההופכי של עצמו</strong>. אם הצפנתי <code>c = m ^ k</code>, אז כדי לחלץ את <code>m</code> אני פשוט מבצע <code>c ^ k</code> שוב. אין כאן "פונקציית פענוח" נפרדת - זו אותה פעולה בדיוק. וזה אומר שאם אני יודע שני מתוך שלושה (מקור, מפתח, טקסט מוצפן), אני מחלץ את השלישי מיד.</p>
+<p>בואו נראה cipher ביתי טיפוסי בסגנון שמופיע באתגרים. הבינארי שומר טקסט מוצפן קבוע, מקודד את הקלט שלנו, ומשווה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;string.h&gt;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;unistd.h&gt;</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1">// the ciphertext of the correct password, constant inside the binary</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">cipher</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="mh">0x7a</span><span class="p">,</span><span class="w"> </span><span class="mh">0x4d</span><span class="p">,</span><span class="w"> </span><span class="mh">0x62</span><span class="p">,</span><span class="w"> </span><span class="mh">0x01</span><span class="p">,</span><span class="w"> </span><span class="mh">0x50</span><span class="p">,</span><span class="w"> </span><span class="mh">0x40</span><span class="p">,</span><span class="w"> </span><span class="mh">0x0e</span><span class="p">,</span><span class="w"> </span><span class="mh">0x4c</span><span class="p">,</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span><span class="mh">0x6f</span><span class="p">,</span><span class="w"> </span><span class="mh">0x0a</span><span class="p">,</span><span class="w"> </span><span class="mh">0x4a</span><span class="p">,</span><span class="w"> </span><span class="mh">0x49</span><span class="p">,</span><span class="w"> </span><span class="mh">0xb4</span><span class="p">,</span><span class="w"> </span><span class="mh">0x0a</span><span class="p">,</span><span class="w"> </span><span class="mh">0xb7</span><span class="p">,</span><span class="w"> </span><span class="mh">0x44</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="p">};</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="kt">void</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">len</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">len</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">        </span><span class="c1">// homemade transformation: add the index then xor with a fixed key</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="w">        </span><span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">((</span><span class="n">in</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="o">^</span><span class="w"> </span><span class="mh">0x37</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="mh">0xff</span><span class="p">;</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="p">}</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">buf</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">0</span><span class="p">},</span><span class="w"> </span><span class="n">enc</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="w">    </span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="mi">16</span><span class="p">);</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="w">    </span><span class="n">encode</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="n">enc</span><span class="p">,</span><span class="w"> </span><span class="mi">16</span><span class="p">);</span>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">memcmp</span><span class="p">(</span><span class="n">enc</span><span class="p">,</span><span class="w"> </span><span class="n">cipher</span><span class="p">,</span><span class="w"> </span><span class="mi">16</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a><span class="w">        </span><span class="n">system</span><span class="p">(</span><span class="s">&quot;/bin/cat flag&quot;</span><span class="p">);</span>
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="w">    </span><span class="k">else</span>
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a><span class="w">        </span><span class="n">puts</span><span class="p">(</span><span class="s">&quot;wrong&quot;</span><span class="p">);</span>
+<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a><span class="p">}</span>
+</code></pre></div>
+<p>מה <code>encode</code> עושה לכל בית? קודם מוסיפה את האינדקס <code>i</code>, ואז עושה xor עם <code>0x37</code>. שימו לב לסדר, כי כשנהפוך צריך להפוך אותו הפוך. הבדיקה דורשת ש-<code>encode(buf) == cipher</code>. אנחנו לא יודעים את הסיסמה, אבל אנחנו יודעים את <code>cipher</code>, את המפתח <code>0x37</code> ואת הנוסחה - וזה כל מה שצריך.</p>
+<h3 id="-inverting">היפוך הטרנספורמציה - inverting<a class="headerlink" href="#-inverting" title="Permanent link">&para;</a></h3>
+<p>הצופן קידד עם <code>out = (in + i) ^ 0x37</code>. כדי לחלץ את <code>in</code> מכל <code>out</code>, מבצעים את הפעולות בסדר ההפוך ובפעולה ההופכית: קודם מבטלים את ה-xor (xor שוב באותו מפתח), ואז מבטלים את החיבור (חיסור):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>encode:  out = (in + i) ^ 0x37
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>invert:  in  = (out ^ 0x37) - i
+</code></pre></div>
+<p>זהו. עוברים על 16 הבתים של <code>cipher</code>, מפעילים את הנוסחה ההפוכה, ומקבלים את הקלט שיעבור את הבדיקה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">cipher</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">([</span><span class="mh">0x7a</span><span class="p">,</span><span class="mh">0x4d</span><span class="p">,</span><span class="mh">0x62</span><span class="p">,</span><span class="mh">0x01</span><span class="p">,</span><span class="mh">0x50</span><span class="p">,</span><span class="mh">0x40</span><span class="p">,</span><span class="mh">0x0e</span><span class="p">,</span><span class="mh">0x4c</span><span class="p">,</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>                <span class="mh">0x6f</span><span class="p">,</span><span class="mh">0x0a</span><span class="p">,</span><span class="mh">0x4a</span><span class="p">,</span><span class="mh">0x49</span><span class="p">,</span><span class="mh">0xb4</span><span class="p">,</span><span class="mh">0x0a</span><span class="p">,</span><span class="mh">0xb7</span><span class="p">,</span><span class="mh">0x44</span><span class="p">])</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">plain</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(((</span><span class="n">c</span> <span class="o">^</span> <span class="mh">0x37</span><span class="p">)</span> <span class="o">-</span> <span class="n">i</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xff</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cipher</span><span class="p">))</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">plain</span><span class="p">)</span>   <span class="c1"># b&#39;MyS3cr3tP4ssw0rd&#39; - the input that makes encode return exactly cipher</span>
+</code></pre></div>
+<p>הפעולה <code>&amp; 0xff</code> שם כדי לחקות את החשבון של <code>unsigned char</code> (מודולו 256), בדיוק כמו שהבינארי עושה. שימו לב שאם הטרנספורמציה הייתה כוללת גם ערבוב בין בתים (למשל בית שתלוי בבית הקודם, כמו במצב CBC), היינו צריכים להפוך גם את התלות הזו - אבל העיקרון זהה: פורקים את הצינור ומפעילים כל שלב הפוך.</p>
+<hr />
+<h2 id="crypto1-pwnablekr">האתגר crypto1 מ-pwnable.kr<a class="headerlink" href="#crypto1-pwnablekr" title="Permanent link">&para;</a></h2>
+<p>האתגר <code>crypto1</code> (בקטגוריית Rookiss) בנוי בדיוק על התבנית הזו. בדף האתגר מקבלים את קוד המקור וגישה למכונה. הצורה הכללית: התוכנית לוקחת את הקלט שלכם (בדרך כלל מזהה וסיסמה מקודדים ב-hex), מריצה אותם דרך שרשרת של פענוח hex ואז טרנספורמציה סימטרית, ומשווה לערך קבוע ששמור בבינארי. אם ההשוואה מתלכדת - מקבלים את הדגל.</p>
+<p>התהליך שלכם זהה למה שעשינו למעלה, רק עם עוד שלב או שניים של קידוד:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>your input --&gt; decode hex --&gt; transformation (xor/permutation) --&gt; compare to constant
+</code></pre></div>
+<p>כדי לפתור, קוראים את המקור בקפידה ומזהים כל שלב בצינור. אז הופכים את השרשרת מהסוף להתחלה: מתחילים מהערך הקבוע, מפעילים את ההופכי של כל שלב לפי הסדר ההפוך, ומגיעים לקלט. אם באמצע יש קידוד hex, זכרו להחזיר אותו ל-hex לפני ההזנה. מכיוון שהמימושים המדויקים באתגר משתנים מגרסה לגרסה, בתרגול נעבוד על בינארי דמו מקומי שמכיל את אותה מהות בדיוק, ותוכלו להעביר את אותה שיטה לאתגר עצמו.</p>
+<hr />
+<h2 id="rsa-rsa-recap">הזכרת RSA - RSA recap<a class="headerlink" href="#rsa-rsa-recap" title="Permanent link">&para;</a></h2>
+<p>עכשיו לחלק השני והכבד יותר: RSA. נזכיר בקצרה איך זה עובד, כי כל התקפה שנראה נשענת על שבירה של הנחה מסוימת בתהליך.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>key generation:
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  choose two large primes  p, q
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>  n = p * q                      (the modulus, public)
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>  phi = (p-1) * (q-1)            (Euler&#39;s function, secret)
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>  choose e such that gcd(e, phi) = 1  (the public exponent, usually 65537)
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>  d = e^(-1) mod phi             (the private exponent, secret)
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>encryption:  c = m^e mod n
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>decryption:  m = c^d mod n
+</code></pre></div>
+<p>הביטחון של RSA נשען על שתי הנחות: ש<strong>קשה לפרק את <code>n</code></strong> לגורמים <code>p</code> ו-<code>q</code>, וש<strong>המסר <code>m</code> באמת עובר את הצמצום מודולו <code>n</code></strong> (כלומר <code>m^e</code> באמת גדול מ-<code>n</code>). כל אחת מההתקפות שנראה שוברת את אחת ההנחות האלה. שימו לב לנקודה מרכזית: אם התוקף משיג את <code>phi</code>, הוא מיד מחשב <code>d = e^(-1) mod phi</code> ומפענח הכל. ולהשיג את <code>phi</code> שקול לפרק את <code>n</code>, כי <code>phi = (p-1)(q-1) = n - p - q + 1</code>.</p>
+<hr />
+<h2 id="-small-e-cube-root">מלכודת ראשונה: מעריך קטן ושורש שלישי - small e cube-root<a class="headerlink" href="#-small-e-cube-root" title="Permanent link">&para;</a></h2>
+<p>ההתקפה הראשונה, והנפוצה ביותר באתגרים, מנצלת מעריך פומבי קטן. נניח <code>e = 3</code>. ההצפנה היא <code>c = m^3 mod n</code>. מה קורה אם המסר <code>m</code> קטן, כך ש-<code>m^3</code> עצמו <strong>קטן מ-<code>n</code></strong>? אז הצמצום מודולו <code>n</code> פשוט לא קורה, כי <code>m^3</code> כבר קטן מהמודולוס:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>if  m^3 &lt; n   then   c = m^3 mod n = m^3   (no reduction)
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>so            m = the integer cube root of c
+</code></pre></div>
+<p>זה הכל. במקום לפרק את <code>n</code> הענק, אנחנו פשוט מוציאים שורש שלישי שלם מ-<code>c</code>. באתגרים זה קורה כל הזמן: מצפינים דגל קצר (עשרות בתים) עם <code>e=3</code> ומודולוס של 2048 ביט. הדגל כמספר הוא בערך <code>2^240</code>, אז <code>m^3</code> הוא בערך <code>2^720</code>, שקטן בהרבה מ-<code>n</code> שהוא <code>2^2048</code>. אין צמצום, והשורש השלישי מחזיר את המסר במדויק.</p>
+<p>איך מחשבים שורש שלישי שלם של מספר ענק? הכי נקי עם <code>gmpy2</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">gmpy2</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">Crypto.Util.number</span><span class="w"> </span><span class="kn">import</span> <span class="n">long_to_bytes</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">c</span> <span class="o">=</span> <span class="mi">0</span><span class="n">x</span><span class="o">....</span>        <span class="c1"># the ciphertext the service gave us</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="n">m</span><span class="p">,</span> <span class="n">exact</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">iroot</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>   <span class="c1"># integer cube root + flag if it&#39;s exact</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="k">assert</span> <span class="n">exact</span><span class="p">,</span> <span class="s2">&quot;m^3 is larger than n, this attack doesn&#39;t fit&quot;</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="nb">print</span><span class="p">(</span><span class="n">long_to_bytes</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="p">)))</span>
+</code></pre></div>
+<p>אם אין <code>gmpy2</code>, שורש שלישי שלם בחיפוש בינארי הוא כמה שורות בלבד:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">icbrt</span><span class="p">(</span><span class="n">c</span><span class="p">):</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="p">((</span><span class="n">c</span><span class="o">.</span><span class="n">bit_length</span><span class="p">()</span> <span class="o">//</span> <span class="mi">3</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="k">while</span> <span class="n">lo</span> <span class="o">&lt;</span> <span class="n">hi</span><span class="p">:</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>        <span class="n">mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">lo</span> <span class="o">+</span> <span class="n">hi</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>        <span class="k">if</span> <span class="n">mid</span><span class="o">**</span><span class="mi">3</span> <span class="o">&lt;</span> <span class="n">c</span><span class="p">:</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>            <span class="n">lo</span> <span class="o">=</span> <span class="n">mid</span> <span class="o">+</span> <span class="mi">1</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>            <span class="n">hi</span> <span class="o">=</span> <span class="n">mid</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>    <span class="k">return</span> <span class="n">lo</span>
+</code></pre></div>
+<h3 id="-hastad-broadcast">וריאציה: שידור לשלושה נמענים - Hastad broadcast<a class="headerlink" href="#-hastad-broadcast" title="Permanent link">&para;</a></h3>
+<p>מה אם המסר גדול, אבל אותו <code>m</code> נשלח לשלושה נמענים שונים עם <code>e=3</code> ושלושה מודולוסים <code>n1, n2, n3</code>? אז יש לנו שלוש משוואות <code>ci = m^3 mod ni</code>. לפי משפט השאריות הסיני - CRT - אפשר לשלב אותן למשוואה אחת מודולו <code>n1*n2*n3</code>, ומכיוון ש-<code>m^3 &lt; n1*n2*n3</code>, השורש השלישי של התוצאה המשולבת מחזיר את <code>m</code>. זו הכללה יפה של אותה מלכודת: מעריך קטן פוגש כמות מספיקה של טקסטים מוצפנים.</p>
+<hr />
+<h2 id="-common-modulus-attack">מלכודת שנייה: מודולוס משותף - common modulus attack<a class="headerlink" href="#-common-modulus-attack" title="Permanent link">&para;</a></h2>
+<p>התקפה אלגנטית שמופיעה בשירותי "מחשבון RSA": אותו מסר <code>m</code> מוצפן פעמיים עם <strong>אותו מודולוס <code>n</code></strong> אבל שני מעריכים שונים <code>e1, e2</code> שזרים זה לזה (<code>gcd(e1, e2) = 1</code>). זה קורה כשמשתמשים משתפים מפתח או כשהשירות מאפשר להצפין עם מעריך שהמשתמש בוחר.</p>
+<p>יש לנו <code>c1 = m^e1 mod n</code> ו-<code>c2 = m^e2 mod n</code>. מכיוון ש-<code>gcd(e1, e2) = 1</code>, אלגוריתם אוקלידס המורחב נותן מקדמים שלמים <code>a, b</code> כך ש:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>a * e1 + b * e2 = 1
+</code></pre></div>
+<p>עכשיו הקסם:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>c1^a * c2^b  =  (m^e1)^a * (m^e2)^b
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>             =  m^(a*e1 + b*e2)
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>             =  m^1
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>             =  m   (mod n)
+</code></pre></div>
+<p>חילצנו את <code>m</code> בלי לדעת את <code>d</code> ובלי לפרק את <code>n</code>. אחד מהמקדמים <code>a, b</code> יהיה שלילי, ומעריך שלילי מודולו <code>n</code> פירושו להעלות את ההופכי הכפלי בחזקה החיובית. בפייתון 3.8 ומעלה <code>pow</code> תומך במעריך שלילי עם מודולוס ישירות, אז הקוד קצר:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">egcd</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>    <span class="k">if</span> <span class="n">b</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>        <span class="k">return</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>    <span class="n">g</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">egcd</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">%</span> <span class="n">b</span><span class="p">)</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>    <span class="k">return</span> <span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">-</span> <span class="p">(</span><span class="n">a</span> <span class="o">//</span> <span class="n">b</span><span class="p">)</span> <span class="o">*</span> <span class="n">y</span><span class="p">)</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="n">g</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">egcd</span><span class="p">(</span><span class="n">e1</span><span class="p">,</span> <span class="n">e2</span><span class="p">)</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="k">assert</span> <span class="n">g</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;the exponents are not coprime, this attack doesn&#39;t apply as-is&quot;</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="nb">pow</span><span class="p">(</span><span class="n">c1</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="nb">pow</span><span class="p">(</span><span class="n">c2</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span> <span class="o">%</span> <span class="n">n</span>
+</code></pre></div>
+<hr />
+<h2 id="d-n-recovering-d">מלכודת שלישית: שחזור d על ידי פירוק n - recovering d<a class="headerlink" href="#d-n-recovering-d" title="Permanent link">&para;</a></h2>
+<p>לפעמים אין קיצור דרך חכם, ופשוט צריך לפרק את <code>n</code>. זה בלתי אפשרי כשהראשוניים נבחרו כמו שצריך - אבל באתגרים הם לרוב נבחרו רע. שלושה מקרים נפוצים:</p>
+<p><strong>מספר קטן.</strong> אם <code>n</code> קטן מספיק (עד בערך 70-80 ספרות עשרוניות), כלים כמו <code>sympy.factorint</code> או השירות <code>factordb.com</code> מפרקים אותו ישירות. תמיד שווה לנסות קודם את <code>factordb</code> - אם מישהו כבר פירק את <code>n</code>, קיבלתם את הגורמים בחינם.</p>
+<p><strong>ראשוניים קרובים - Fermat.</strong> אם <code>p</code> ו-<code>q</code> קרובים זה לזה (טעות נפוצה כשמייצרים אותם ברצף), פירוק Fermat מוצא אותם מהר. הרעיון: <code>n = a^2 - b^2 = (a-b)(a+b)</code>, אז מתחילים מ-<code>a = ceil(sqrt(n))</code> ומעלים את <code>a</code> עד ש-<code>a^2 - n</code> הוא ריבוע מושלם:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">gmpy2</span><span class="w"> </span><span class="kn">import</span> <span class="n">isqrt</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">fermat</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>    <span class="n">a</span> <span class="o">=</span> <span class="n">isqrt</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>        <span class="n">b2</span> <span class="o">=</span> <span class="n">a</span><span class="o">*</span><span class="n">a</span> <span class="o">-</span> <span class="n">n</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>        <span class="n">b</span> <span class="o">=</span> <span class="n">isqrt</span><span class="p">(</span><span class="n">b2</span><span class="p">)</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>        <span class="k">if</span> <span class="n">b</span><span class="o">*</span><span class="n">b</span> <span class="o">==</span> <span class="n">b2</span><span class="p">:</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>            <span class="k">return</span> <span class="n">a</span> <span class="o">-</span> <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>   <span class="c1"># p, q</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>        <span class="n">a</span> <span class="o">+=</span> <span class="mi">1</span>
+</code></pre></div>
+<p>ברגע שיש <code>p</code> ו-<code>q</code>, השאר מיידי:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="n">phi</span> <span class="o">=</span> <span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">q</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">d</span> <span class="o">=</span> <span class="nb">pow</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">phi</span><span class="p">)</span>          <span class="c1"># the inverse of e modulo phi</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="n">m</span> <span class="o">=</span> <span class="nb">pow</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>             <span class="c1"># full decryption</span>
+</code></pre></div>
+<p><strong>מעריך פרטי קטן - Wiener.</strong> אם דווקא <code>d</code> קטן (בערך <code>d &lt; n^(1/4)</code>), התקפת Wiener משחזרת אותו ישירות מ-<code>e</code> ו-<code>n</code>, בלי לפרק. היא מבוססת על כך ש-<code>e/n</code> קרוב מאוד ל-<code>k/d</code>, ואחד מ<strong>המקורבים - convergents</strong> של פיתוח שבר משולב של <code>e/n</code> הוא בדיוק <code>k/d</code>. המימוש המלא של Wiener נמצא בפתרון, כי הוא מעט ארוך, אבל העיקרון הזה - "מעריך פרטי קטן דולף דרך שברים משולבים" - שווה לזכור.</p>
+<hr />
+<h2 id="-decryption-oracle-and-blinding">מלכודת רביעית: אורקל פענוח והסתרה - decryption oracle and blinding<a class="headerlink" href="#-decryption-oracle-and-blinding" title="Permanent link">&para;</a></h2>
+<p>התבנית הכי מעניינת ב"מחשבון RSA" היא כשהשירות עצמו מוכן לפענח בשבילכם - חוץ מהטקסט המוצפן היחיד שאתם רוצים. כלומר יש טקסט מוצפן מטרה <code>c</code>, השירות מסרב לפענח בדיוק אותו, אבל מפענח כל דבר אחר. זה נקרא <strong>אורקל פענוח</strong>, והתכונה הכפלית של RSA הופכת אותו לחסר תועלת מבחינת ההגנה.</p>
+<p>הטריק נקרא <strong>הסתרה - blinding</strong>. מכיוון ש-RSA הומומורפי לכפל (<code>(x*y)^e = x^e * y^e</code>), אנחנו "מלבישים" את <code>c</code> בגורם אקראי, מבקשים לפענח את הגרסה המולבשת, ומורידים את הגורם בסוף:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>choose a random r
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>c&#39; = c * r^e mod n           the blinded ciphertext (different from c, so the service agrees)
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>m&#39; = (c&#39;)^d = m * r mod n    the oracle decrypts it for us
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>m  = m&#39; * r^(-1) mod n       remove r and get the original message
+</code></pre></div>
+<p>השירות אף פעם לא ראה את <code>c</code>, ובכל זאת פענחנו אותו. בקוד:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">r</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="n">c_blind</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="nb">pow</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span> <span class="o">%</span> <span class="n">n</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="n">m_blind</span> <span class="o">=</span> <span class="n">oracle_decrypt</span><span class="p">(</span><span class="n">c_blind</span><span class="p">)</span>          <span class="c1"># the service decrypts the blinded version</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="n">m_blind</span> <span class="o">*</span> <span class="nb">pow</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span> <span class="o">%</span> <span class="n">n</span>          <span class="c1"># r^(-1) mod n</span>
+</code></pre></div>
+<p>אותו רעיון בדיוק מאפשר <strong>לזייף חתימה</strong>: אם השירות חותם (מעלה בחזקת <code>d</code>) על כל הודעה חוץ מזו שאתם רוצים, מלבישים אותה, מבקשים חתימה, ומורידים את ההסתרה. RSA גולמי בלי padding כמו OAEP או padding חתימה נכון תמיד vulnerable להסתרה הזו.</p>
+<hr />
+<h2 id="-the-toolbox">כלים - the toolbox<a class="headerlink" href="#-the-toolbox" title="Permanent link">&para;</a></h2>
+<p>לאתגרי הקריפטו האלה, אלה הכלים שתרצו מותקנים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>pip<span class="w"> </span>install<span class="w"> </span>pycryptodome<span class="w"> </span>gmpy2<span class="w"> </span>sympy
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="c1"># pycryptodome: bytes_to_long, long_to_bytes, inverse, getPrime</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="c1"># gmpy2:        iroot (integer root), isqrt, fast operations on huge numbers</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="c1"># sympy:        factorint, primes, continued fractions</span>
+</code></pre></div>
+<p>הספרייה <code>pwntools</code> היא מה שמחבר אתכם לשירות רשת ומחלץ את הפרמטרים מהפלט. <code>SageMath</code> היא אלטרנטיבה כבדה שמכילה את הכל (פירוק, אלגברה, שבר משולב) ושווה להכיר, אבל לרוב האתגרים פייתון עם שלוש הספריות למעלה מספיק בהחלט.</p>
+<p>הנה שלד pwntools מלא שמתחבר לשירות RSA, מושך את <code>n, e, c</code>, ומריץ את התקפת השורש השלישי. זה בדיוק המבנה שתבנו עליו את הפתרון:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pwn</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">gmpy2</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">Crypto.Util.number</span><span class="w"> </span><span class="kn">import</span> <span class="n">long_to_bytes</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">grab_int</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="n">prefix</span><span class="p">):</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>    <span class="c1"># reads a line of the form &quot;name = 12345&quot; and returns the number</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>    <span class="n">line</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">recvline_startswith</span><span class="p">(</span><span class="n">prefix</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;=&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="n">io</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="mi">1337</span><span class="p">)</span>      <span class="c1"># or process([&#39;python3&#39;,&#39;rsa_service.py&#39;])</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="n">n</span> <span class="o">=</span> <span class="n">grab_int</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="s1">&#39;n&#39;</span><span class="p">)</span>
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="n">e</span> <span class="o">=</span> <span class="n">grab_int</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="s1">&#39;e&#39;</span><span class="p">)</span>
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a><span class="n">c</span> <span class="o">=</span> <span class="n">grab_int</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">)</span>
+<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;e = </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">, n has </span><span class="si">{</span><span class="n">n</span><span class="o">.</span><span class="n">bit_length</span><span class="p">()</span><span class="si">}</span><span class="s2"> bits&quot;</span><span class="p">)</span>
+<a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a>
+<a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a><span class="k">assert</span> <span class="n">e</span> <span class="o">==</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;this attack only fits a small exponent&quot;</span>
+<a id="__codelineno-18-17" name="__codelineno-18-17" href="#__codelineno-18-17"></a><span class="n">m</span><span class="p">,</span> <span class="n">exact</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">iroot</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<a id="__codelineno-18-18" name="__codelineno-18-18" href="#__codelineno-18-18"></a><span class="k">assert</span> <span class="n">exact</span><span class="p">,</span> <span class="s2">&quot;no exact cube root - try a different attack&quot;</span>
+<a id="__codelineno-18-19" name="__codelineno-18-19" href="#__codelineno-18-19"></a>
+<a id="__codelineno-18-20" name="__codelineno-18-20" href="#__codelineno-18-20"></a><span class="n">flag</span> <span class="o">=</span> <span class="n">long_to_bytes</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
+<a id="__codelineno-18-21" name="__codelineno-18-21" href="#__codelineno-18-21"></a><span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;flag: </span><span class="si">{</span><span class="n">flag</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-18-22" name="__codelineno-18-22" href="#__codelineno-18-22"></a><span class="n">io</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</code></pre></div>
+<p>שימו לב שהבדיקה <code>assert exact</code> היא רשת ביטחון: היא אומרת לכם מיד אם המסר גדול מדי והשורש השלישי לא ישים, כדי שתעברו להתקפה מתאימה אחרת במקום לרדוף אחרי תוצאה שגויה.</p>
+<hr />
+<h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>בהרצאה הזו למדנו איך ניגשים לאתגרי קריפטו בעולם ה-pwn:</p>
+<ul>
+<li><strong>הלך הרוח</strong>: לא שוברים קריפטו חזק, מזהים את הפרמטר שנבחר רע והופכים את הבדיקה. שלושת השלבים: מה נדרש, איזו טרנספורמציה חוסמת, איך הופכים אותה.</li>
+<li><strong>צופן מבוסס xor</strong> הפיך בטריוויאליות כי <code>(a ^ k) ^ k = a</code>. מפרקים את הצינור ומפעילים כל שלב בהיפוך, בסדר הפוך. זו הצורה של האתגר <code>crypto1</code>.</li>
+<li><strong>הצפנת RSA עם מעריך קטן</strong> ו-<code>m^3 &lt; n</code>: אין צמצום מודולרי, ולכן שורש שלישי שלם של <code>c</code> מחזיר את המסר. ההכללה לשלושה נמענים היא Hastad עם CRT.</li>
+<li><strong>מודולוס משותף</strong>: אותו <code>m</code> עם שני מעריכים זרים מאפשר לחלץ את <code>m</code> דרך אוקלידס המורחב, בלי <code>d</code> ובלי פירוק.</li>
+<li><strong>שחזור d</strong>: מפרקים את <code>n</code> כשהוא קטן (<code>factordb</code>, <code>sympy</code>), כשהראשוניים קרובים (Fermat), או משחזרים <code>d</code> קטן ישירות (Wiener). ואז <code>d = e^(-1) mod phi</code>.</li>
+<li><strong>אורקל פענוח</strong>: התכונה ההומומורפית של RSA מאפשרת הסתרה - <code>c' = c * r^e</code> - כדי לפענח או לזייף חתימה על טקסט שהשירות סירב לגעת בו.</li>
+<li><strong>הכלים</strong>: <code>pycryptodome</code>, <code>gmpy2</code>, <code>sympy</code>, ו-<code>pwntools</code> לחיבור לשירות. תמיד לאמת את התוצאה מול המודל של הקורבן לפני שמכריזים על הצלחה.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

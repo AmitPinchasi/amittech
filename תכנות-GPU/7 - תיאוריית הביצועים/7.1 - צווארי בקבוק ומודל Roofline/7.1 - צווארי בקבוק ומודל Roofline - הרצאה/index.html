@@ -1,0 +1,2939 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="עד כאן בנינו את הידע מלמטה למעלה: הכרנו את ארכיטקטורת החומרה (פרק 1), את מודל התכנות של CUDA (פרק 2), את היררכיית הזיכרון (פרק 3), את שפות הביניים...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.4%20-%20CuTe%20%D7%95-CuTe%20DSL%20-%20layouts%20%D7%95-tiles/6.4%20-%20CuTe%20%D7%95-CuTe%20DSL%20-%20layouts%20%D7%95-tiles%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="next" href="../7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>7.1 - צווארי בקבוק ומודל Roofline - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "7.1 - \u05e6\u05d5\u05d5\u05d0\u05e8\u05d9 \u05d1\u05e7\u05d1\u05d5\u05e7 \u05d5\u05de\u05d5\u05d3\u05dc Roofline - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="7.1 - צווארי בקבוק ומודל Roofline - הרצאה - עמית טק" />
+<meta property="og:description" content="עד כאן בנינו את הידע מלמטה למעלה: הכרנו את ארכיטקטורת החומרה (פרק 1), את מודל התכנות של CUDA (פרק 2), את היררכיית הזיכרון (פרק 3), את שפות הביניים..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="7.1 - צווארי בקבוק ומודל Roofline - הרצאה - עמית טק" />
+<meta property="twitter:description" content="עד כאן בנינו את הידע מלמטה למעלה: הכרנו את ארכיטקטורת החומרה (פרק 1), את מודל התכנות של CUDA (פרק 2), את היררכיית הזיכרון (פרק 3), את שפות הביניים..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-performance-is-the-product" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              7.1 - צווארי בקבוק ומודל Roofline - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_9" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_9" id="__nav_7_3_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    7   תיאוריית הביצועים
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_9_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_9_1" id="__nav_7_3_9_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.1   צווארי בקבוק ומודל Roofline
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_9_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_9_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    7.1   צווארי בקבוק ומודל Roofline
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.1 - צווארי בקבוק ומודל Roofline - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.1 - צווארי בקבוק ומודל Roofline - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-performance-is-the-product" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הביצועים הם המוצר - performance is the product
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-bottleneck-methodology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מתודולוגיית צוואר הבקבוק - the bottleneck methodology
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-roofline-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מודל ה-Roofline - הצירים והגגות
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-ridge-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        נקודת הרכס - the ridge point
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-roofline-h100-worked-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        בניית ה-Roofline של H100 - worked example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-arithmetic-intensity-kernel-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        עצימות אריתמטית - arithmetic intensity ומיקום kernel-ים
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-roofline-_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה ה-Roofline לא מראה - הגבול הקריטי
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-nsight-compute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        כל משאב יכול להיות צוואר בקבוק, וכלי האבחון - Nsight Compute
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-roofline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ההיסטוריה - למה נולד ה-Roofline
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.1 - צווארי בקבוק ומודל Roofline - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.1 - צווארי בקבוק ומודל Roofline - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.2%20-%20Compute-bound%2C%20memory-bound%20%D7%95-arithmetic%20intensity/7.2%20-%20Compute-bound%2C%20memory-bound%20%D7%95-arithmetic%20intensity%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.2   Compute bound, memory bound ו arithmetic intensity
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.3%20-%20%D7%A8%D7%95%D7%97%D7%91%D7%99%20%D7%A4%D7%A1%20%D7%95-peak%20rate/7.3%20-%20%D7%A8%D7%95%D7%97%D7%91%D7%99%20%D7%A4%D7%A1%20%D7%95-peak%20rate%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.3   רוחבי פס ו peak rate
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../7.4%20-%20Overhead%2C%20latency%20hiding%20%D7%95%D7%97%D7%95%D7%A7%20Little/7.4%20-%20Overhead%2C%20latency%20hiding%20%D7%95%D7%97%D7%95%D7%A7%20Little%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7.4   Overhead, latency hiding וחוק Little
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-performance-is-the-product" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הביצועים הם המוצר - performance is the product
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-bottleneck-methodology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מתודולוגיית צוואר הבקבוק - the bottleneck methodology
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-roofline-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מודל ה-Roofline - הצירים והגגות
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-ridge-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        נקודת הרכס - the ridge point
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-roofline-h100-worked-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        בניית ה-Roofline של H100 - worked example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-arithmetic-intensity-kernel-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        עצימות אריתמטית - arithmetic intensity ומיקום kernel-ים
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-roofline-_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה ה-Roofline לא מראה - הגבול הקריטי
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-nsight-compute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        כל משאב יכול להיות צוואר בקבוק, וכלי האבחון - Nsight Compute
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-roofline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ההיסטוריה - למה נולד ה-Roofline
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    7   תיאוריית הביצועים
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    7.1   צווארי בקבוק ומודל Roofline
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>7.1 - צווארי בקבוק ומודל Roofline - הרצאה</h1>
+
+<p>עד כאן בנינו את הידע מלמטה למעלה: הכרנו את ארכיטקטורת החומרה (פרק 1), את מודל התכנות של CUDA (פרק 2), את היררכיית הזיכרון (פרק 3), את שפות הביניים והcompiler (פרק 4), את מחסנית התוכנה בhost (פרק 5) ואת ספריות הביצועים (פרק 6). כל אלו לימדו אותנו איך <em>לכתוב</em> קוד GPU נכון. הפרק הזה פותח שאלה חדשה ושונה במהותה: איך יודעים אם הקוד <em>מהיר</em>, ולמה הוא לא מהיר יותר. בתכנות GPU, בניגוד לתכנות מסורתי, הביצועים אינם תוספת אופציונלית - הם המוצר עצמו. בשיעור הזה נבנה את מסגרת החשיבה המרכזית של כל פרקי הביצועים (7 עד 9): מתודולוגיית צוואר הבקבוק (bottleneck) של גולדראט, החלוקה של עבודת ה-GPU לחישוב, זיכרון וoverhead, ובעיקר מודל ה-Roofline - התרשים הוויזואלי שמכריע בהצצה אחת אם kernel compute-bound או memory-bound. נבנה את ה-Roofline של H100 ממספרי הספסיפיקציה, נגדיר את נקודת הרכס (ridge point), ונבין את המלכוד הקריטי: מה שהמודל <em>לא</em> מראה חשוב לא פחות ממה שהוא כן.</p>
+<h2 id="-performance-is-the-product">הביצועים הם המוצר - performance is the product<a class="headerlink" href="#-performance-is-the-product" title="Permanent link">&para;</a></h2>
+<p>לפני שנצלול לכלים, צריך להבין מדוע פרק שלם מוקדש לביצועים. תכנות GPU שונה מהותית מפיתוח תוכנה קונבנציונלי. אפליקציה רגילה - בסיס נתונים, שרת ווב - מציבה את ה<strong>נכונות</strong> (correctness) מעל הכל: תשובה שגויה היא באג, נקודה. קוד GPU, לעומת זאת, מגדיר נכונות לרוב רק "עד מספר מסוים של ביטים משמעותיים, או רק עבור תת-קבוצה לא-מוגדרת של קלטים 'מתנהגים יפה'". כלומר, נכונות מספרית ומקורבת היא לגיטימית ואף מצופה: אימון רשת נוירונים ב-BF16 מקבל שגיאות עיגול כחלק מהעסקה.</p>
+<p>מכאן נובע העיקרון המנחה של כל התחום, המיוחס לתרבות ההנדסית של NVIDIA: <strong>"הביצועים הם המוצר"</strong> (performance is the product). ביצועים מעולים אינם אופטימיזציה שנעשית "אם נשאר זמן" - הם <strong>תנאי הכרחי להצלחה</strong>. והמדדים הרלוונטיים אינם מופשטים אלא כלכליים: ביצועים <strong>לשנייה, לדולר, או לוואט</strong>. kernel שרץ פי שניים מהר יורד פי שניים בעלות הענן, מכפיל את התפוקה של מרכז הנתונים, וחוסך חצי מהחשמל. לכן, אחרי שלמדנו לכתוב קוד נכון, אנחנו מקדישים שלושה פרקים ללמוד לכתוב אותו מהיר - וזה מתחיל בכך שנדע לאבחן <em>למה</em> הוא איטי.</p>
+<h2 id="-the-bottleneck-methodology">מתודולוגיית צוואר הבקבוק - the bottleneck methodology<a class="headerlink" href="#-the-bottleneck-methodology" title="Permanent link">&para;</a></h2>
+<p>צוואר הבקבוק (performance bottleneck) הוא המשאב שמגביל את קצב השלמת המשימות. המטאפורה מילולית: צוואר הבקבוק הפיזי הוא שמגביל את קצב שפיכת הנוזל, לא גוף הבקבוק הרחב. בכל מערכת, המשאב הצר ביותר קובע את הקצב הכולל - וכל שיפור במשאב שאינו צוואר הבקבוק לא יזיז את הביצועים כלל.</p>
+<p>מכאן נגזרת מתודולוגיה בת שלושה שלבים, שמקורה ב<strong>תורת האילוצים</strong> (Theory of Constraints) של <strong>אליהו גולדראט</strong>, בהשראת שיטות הייצור של טויוטה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>   1. Locate the bottleneck        (what is the limiting resource?)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>   2. Elevate it                   (improve it until it no longer limits)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>   3. Repeat the process           (now a new bottleneck becomes the limiter)
+</code></pre></div>
+<p>הלולאה הזו אינסופית מטבעה: ברגע שפתרתם את צוואר הבקבוק הנוכחי, משאב אחר הופך למגביל, ומתחילים מחדש. זו הסיבה שאופטימיזציה אף פעם לא "נגמרת" - היא מתכנסת אל צוואר הבקבוק הבא.</p>
+<p><strong>החלוקה של עבודת ה-GPU לשלוש קטגוריות.</strong> כדי לדעת <em>היכן</em> לחפש את צוואר הבקבוק, מחלקים את כל עבודתו של kernel לשלושה סוגים (חלוקה המיוחסת להרצאה של Horace He):</p>
+<table>
+<thead>
+<tr>
+<th>קטגוריית עבודה</th>
+<th>מה קורה בפועל</th>
+<th>צוואר הבקבוק המתאים</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>חישוב - compute</td>
+<td>הרצת פעולות נקודה-צפה על CUDA Cores או Tensor Cores</td>
+<td>חסום-חישוב (compute-bound)</td>
+</tr>
+<tr>
+<td>זיכרון - memory</td>
+<td>הזזת נתונים דרך היררכיית הזיכרון</td>
+<td>חסום-זיכרון (memory-bound)</td>
+</tr>
+<tr>
+<td>תקורה - overhead</td>
+<td>כל השאר</td>
+<td>חסום-תקורה (overhead-bound)</td>
+</tr>
+</tbody>
+</table>
+<p>לכל קטגוריית עבודה מתאים מחלקה של צוואר בקבוק:</p>
+<ul>
+<li><strong>גרעין compute-bound - kernel</strong> - מוגבל ברוחב הפס האריתמטי (arithmetic bandwidth) של יחידות החישוב. דוגמה: כפל מטריצה-מטריצה גדול (GEMM).</li>
+<li><strong>גרעין memory-bound - kernel</strong> - מוגבל ברוחב הפס של תת-מערכת הזיכרון (memory bandwidth). דוגמה: כפל וקטור-וקטור גדול.</li>
+<li><strong>גרעין overhead-bound - kernel</strong> - מוגבל ב-latency (השהיה): ה-GPU יושב בטל ומחכה לעבודה. דוגמה: פעולות על מערכים קטנטנים.</li>
+</ul>
+<p><strong>הסתייגות חשובה.</strong> בעיקרון <em>כל</em> משאב יכול להיות צוואר בקבוק (נחזור לזה בהמשך - הספק וחום הם דוגמה), אבל, כלשון ה-glossary: "<strong>חישוב וזיכרון הם המשאבים החשובים ביותר וצווארי הבקבוק הנפוצים ביותר</strong>". לשם נפנה את עיקר המאמץ. וכאן נכנס הכלי המרכזי לאבחון: מודל ה-Roofline, שמפריד בהצצה אחת בין compute-bound לmemory-bound.</p>
+<h2 id="-roofline-">מודל ה-Roofline - הצירים והגגות<a class="headerlink" href="#-roofline-" title="Permanent link">&para;</a></h2>
+<p>מודל ה-Roofline הוא <strong>מודל ויזואלי ומפושט של ביצועים</strong>, שנועד לקבוע במהירות אם תוכנית bound ברוחב פס של זיכרון או ברוחב פס אריתמטי. שני צירים בונים אותו:</p>
+<ul>
+<li><strong>ציר ה-X - עצימות אריתמטית (arithmetic intensity):</strong> פעולות לכל בית (operations per byte). זהו יחס העבודה החישובית לתנועת הנתונים ב-kernel.</li>
+<li><strong>ציר ה-Y - ביצועים (performance):</strong> פעולות לשנייה (operations per second).</li>
+</ul>
+<p>על גבי הצירים האלה מציירים שני "גגות" (roofs), שניהם נגזרים מהחומרה בלבד:</p>
+<ol>
+<li><strong>גג החישוב - compute roof:</strong> קצב השיא (peak rate) של יחידות החישוב, כלומר רוחב הפס האריתמטי. הוא נצבע כ<strong>קו אופקי</strong> בגובה שווה לרוחב הפס האריתמטי (ב-FLOP/s). לא משנה כמה עצימה התוכנית - היא לא תעבור את גובה גג החישוב.</li>
+<li><strong>גג הזיכרון - memory roof:</strong> קצב השיא של תנועת הזיכרון, כלומר רוחב הפס של הזיכרון. הוא נצבע כ<strong>קו אלכסוני</strong> שה<strong>שיפוע</strong> שלו שווה לרוחב הפס של הזיכרון. שימו לב ליחידות: ביצועים חלקי arithmetic intensity = <code>[FLOP/s] / [FLOP/byte] = byte/s</code>, כלומר השיפוע הוא באמת רוחב פס (בתים לשנייה).</li>
+</ol>
+<p><strong>התקרה בת-ההשגה היא המינימום בין השניים.</strong> בכל arithmetic intensity נתונה, הביצועים המקסימליים האפשריים הם הנמוך מבין שני הגגות. גרפית, זהו קו שעולה אלכסונית מהראשית (גג הזיכרון), נפגש עם גג החישוב, ומשם ואילך משתטח לקו אופקי:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>  performance [FLOP/s]
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  (log scale)
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    ^
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    |                       compute roof (arithmetic BW)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>989T|........................__________________________  &lt;- horizontal line
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    |                      /:
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    |          memory roof /  :
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    |         (slope =   /   :
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    |          mem BW) /     :  compute-bound region
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    |                /       :  (below the horizontal roof)
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    |              /         :
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    |            /  region     :
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    |          /  memory-bound  :
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    |        /   (below the     :
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    |      /      diagonal roof) :
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    |    /                    :
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>    |  /                      :
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>    +-/-----------------------+-------------------------&gt; arithmetic intensity
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>                            ridge                        [FLOP/byte]
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>                            point (=295 for H100 BF16)
+</code></pre></div>
+<p><strong>סיווג לפי המיקום מתחת לגג:</strong></p>
+<ul>
+<li>נקודה מתחת לגג ה<strong>אופקי</strong> (מימין לנקודת הרכס) =&gt; <strong>compute-bound</strong>. הarithmetic intensity גבוהה, הרבה פעולות לכל בית.</li>
+<li>נקודה מתחת לגג ה<strong>אלכסוני</strong> (משמאל לנקודת הרכס) =&gt; <strong>memory-bound</strong>. הarithmetic intensity נמוכה, מעט פעולות לכל בית.</li>
+</ul>
+<p><strong>בדיקת מציאות.</strong> kernel-ים אמיתיים כמעט לעולם אינם נוגעים באף אחד מהגגות - הם יושבים <em>מתחת</em> לקו ה-Roofline בגלל אפקטים של overhead. הגג הוא התקרה התיאורטית; המרחק ממנו הוא בדיוק מה שיש לכם עוד לשפר.</p>
+<h2 id="-the-ridge-point">נקודת הרכס - the ridge point<a class="headerlink" href="#-the-ridge-point" title="Permanent link">&para;</a></h2>
+<p>הנקודה שבה הגג האלכסוני והגג האופקי נפגשים נקראת <strong>נקודת הרכס</strong> (ridge point), והיא המושג המרכזי של המודל. שיעור ה-X שלה הוא <strong>הarithmetic intensity המינימלית הדרושה כדי להיחלץ מצוואר הבקבוק של הזיכרון</strong>, כלומר להפוך לcompute-bound.</p>
+<p><strong>גזירת נקודת הרכס.</strong> הנקודה מוגדרת בדיוק היכן ששני הגגות שווים. הגג האלכסוני נותן ביצועים של <code>arithmetic_intensity * memory_BW</code>, והגג האופקי נותן <code>arithmetic_BW</code>. משווים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>   arithmetic_intensity * memory_BW = arithmetic_BW
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>=&gt; arithmetic_intensity = arithmetic_BW / memory_BW
+</code></pre></div>
+<p>וזוהי הנוסחה שכדאי לחרוט בזיכרון:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>   ridge point = arithmetic bandwidth / memory bandwidth   [FLOP/byte]
+</code></pre></div>
+<p>נקודת הרכס אינה תלויה ב-kernel כלל - היא תכונה של החומרה בלבד, יחס בין שני רוחבי הפס שלה.</p>
+<p><strong>שמאל מול ימין.</strong> מערכת שנקודת הרכס שלה <strong>שמאלה</strong> יותר קלה יותר להשגת ביצועי שיא: דרושה arithmetic intensity נמוכה יחסית כדי להפוך לcompute-bound ולנצל את מלוא כוח החישוב. לרוע המזל, "הסקיילינג הגרוע יחסית של הזיכרון לעומת החישוב דחף את נקודות הרכס של מערכות <strong>ימינה עם השנים</strong>". במילים אחרות: ככל שהחומרה מתקדמת, נעשה <strong>קשה יותר</strong> להיות compute-bound, כי כוח החישוב גדל מהר יותר מרוחב הפס של הזיכרון. נראה זאת מיד במספרים של שלושה דורות.</p>
+<h2 id="-roofline-h100-worked-example">בניית ה-Roofline של H100 - worked example<a class="headerlink" href="#-roofline-h100-worked-example" title="Permanent link">&para;</a></h2>
+<p>בואו נבנה Roofline קונקרטי מספרי הספסיפיקציה של H100 SXM, בשביל מסלול ה-Tensor Core ב-BF16 (קלט BF16, צבירה FP32) - מסלול החישוב הנפוץ באימון והסקה מודרניים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>   compute roof (arithmetic BW), Tensor Core BF16 :   989 TFLOP/s
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>   memory roof (memory BW),   HBM3               :   3.35 TB/s
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>   ---------------------------------------------------------
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>   ridge point = 989e12 / 3.35e12 = 295 FLOP/byte
+</code></pre></div>
+<p>כלומר: כדי ש-kernel על H100 ינצל את מלוא ליבות הטנזור ב-BF16, עליו לבצע לפחות <strong>295 פעולות נקודה-צפה לכל בית</strong> שהוא מזיז מהזיכרון. פחות מזה - הוא memory-bound, וליבות הטנזור היקרות מורעבות.</p>
+<p><strong>נקודות הרכס נעות ימינה לאורך הדורות.</strong> נשווה שלושה דורות של ליבות טנזור ב-BF16:</p>
+<table>
+<thead>
+<tr>
+<th>מערכת / דור</th>
+<th>רוחב פס אריתמטי (BF16)</th>
+<th>רוחב פס זיכרון</th>
+<th>נקודת רכס [FLOP/byte]</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A100 80GB SXM (Ampere, HBM2e)</td>
+<td>312 TFLOP/s</td>
+<td>2 TB/s</td>
+<td>156</td>
+</tr>
+<tr>
+<td>H100 SXM (Hopper, HBM3)</td>
+<td>989 TFLOP/s</td>
+<td>3.35 TB/s</td>
+<td>295</td>
+</tr>
+<tr>
+<td>B200 (Blackwell, HBM3e)</td>
+<td>2250 TFLOP/s</td>
+<td>8 TB/s</td>
+<td>281</td>
+</tr>
+</tbody>
+</table>
+<p>מ-Ampere ל-Hopper נקודת הרכס כמעט הכפילה את עצמה (156 -&gt; 295): כוח החישוב שולש בערך, בעוד רוחב הפס של הזיכרון גדל פחות. זהו "קיר הזיכרון" (memory wall) בפעולה, שנחזור אליו בהיסטוריה.</p>
+<p><strong>אותה חומרה, כמה Roofline-ים - per-subsystem rooflines.</strong> נקודה עדינה וקריטית: הגגות נגזרים <strong>פעם אחת לכל תת-מערכת</strong>, אך הם משתנים לפי תת-המערכת, לא רק לפי המערכת. אותו H100 פיזי, אבל מסלול חישוב שונה נותן גג חישוב שונה ולכן נקודת רכס שונה:</p>
+<table>
+<thead>
+<tr>
+<th>מסלול חישוב ב-H100 SXM</th>
+<th>רוחב פס אריתמטי</th>
+<th>נקודת רכס</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CUDA Cores, FP32</td>
+<td>~66.9 TFLOP/s</td>
+<td>~20</td>
+</tr>
+<tr>
+<td>Tensor Core, BF16</td>
+<td>989 TFLOP/s</td>
+<td>295</td>
+</tr>
+<tr>
+<td>Tensor Core, FP8</td>
+<td>1979 TFLOP/s</td>
+<td>592</td>
+</tr>
+</tbody>
+</table>
+<p>שלוש שורות, שלושה Roofline-ים שונים על אותו כרטיס. ליבות הטנזור מספקות הרבה יותר FLOPS מ-CUDA Cores, ולכן דורשות arithmetic intensity גבוהה בהרבה כדי להיות compute-bound. וירידה בדיוק הקלט (BF16 -&gt; FP8) מכפילה את רוחב הפס האריתמטי אך משאירה את רוחב פס הזיכרון קבוע - ולכן דוחפת את נקודת הרכס עוד ימינה. המסקנה המעשית: כשאתם משרטטים Roofline, <strong>בחרו את הגג שמתאים למסלול החישוב שאתם באמת מריצים</strong>. Roofline של ליבות טנזור אינו רלוונטי ל-kernel שרץ על CUDA Cores.</p>
+<h2 id="-arithmetic-intensity-kernel-">עצימות אריתמטית - arithmetic intensity ומיקום kernel-ים<a class="headerlink" href="#-arithmetic-intensity-kernel-" title="Permanent link">&para;</a></h2>
+<p>הarithmetic intensity היא ציר ה-X, והמספר היחיד שקובע באיזה צד של נקודת הרכס תיפול. היא מוגדרת כיחס הפעולות האריתמטיות לפעולות הזיכרון ב-kernel, ביחידות של FLOP לבית. הarithmetic intensity <strong>גבוהה</strong> אומרת הרבה פעולות לכל בית שנטען - וזה טוב, כי מודרני GPU-ים בעלי רוחב פס אריתמטי גבוה בהרבה מרוחב פס הזיכרון, כך שarithmetic intensity גבוהה מעסיקה את יחידות החישוב המהירות במקום להרעיב אותן על זיכרון איטי.</p>
+<p>הטבלה הבאה, הליבה של הנושא, מראה איך הarithmetic intensity מתנהגת עבור שלושה kernel-ים קלאסיים כפונקציה של גודל הבעיה <code>N</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Kernel</th>
+<th>FLOPs</th>
+<th>בתים שהוזזו</th>
+<th>הarithmetic intensity</th>
+<th>סקיילינג ב-N</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SAXPY (y = a·x + y)</td>
+<td>2N</td>
+<td>12N</td>
+<td>1/6</td>
+<td>O(1) - קבועה</td>
+</tr>
+<tr>
+<td>FFT ממשי דיוק-יחיד</td>
+<td>(5/2)·N·log(N)</td>
+<td>16N</td>
+<td>(5/32)·log(N)</td>
+<td>O(log N)</td>
+</tr>
+<tr>
+<td>SGEMM (C = A·B + C)</td>
+<td>2N³</td>
+<td>16N²</td>
+<td>N/8</td>
+<td>O(N) - לינארי</td>
+</tr>
+</tbody>
+</table>
+<p><strong>הפרשנות היא לב העניין.</strong> ה-SAXPY (פעולת וקטור) מחזיק arithmetic intensity קבועה ונמוכה מאוד (1/6 בערך 0.17 FLOP/byte) - כלומר הוא <strong>תמיד memory-bound</strong>, ללא תלות בגודל. ה-FFT גדל רק לוגריתמית. אבל ה-SGEMM (כפל מטריצות) הוא <strong>O(N) בarithmetic intensity</strong>: O(N³) פעולות מעל O(N²) בתים. הסקיילינג הנוח הזה הוא "קריטי להצלחת רשתות הנוירונים": מטריצות גדולות יותר =&gt; arithmetic intensity גבוהה יותר =&gt; קל יותר להיות compute-bound =&gt; ניצול יעיל של ליבות הטנזור.</p>
+<p><strong>חישוב עובד - מתי SGEMM הופך לcompute-bound על H100.</strong> נציב את arithmetic intensity ה-SGEMM, <code>N/8</code>, מול נקודת הרכס של H100 ב-BF16, 295:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>   to be compute-bound:  N/8 &gt;= 295
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>                          N   &gt;= 2360
+</code></pre></div>
+<p>כלומר, על H100 בליבות טנזור BF16, כפל מטריצות מרובעות הופך לcompute-bound רק סביב <code>N ~ 2360</code> ומעלה. מתחת לזה - אתם memory-bound, וליבות הטנזור אינן רוויות. זו בדיוק הסיבה שאימון והסקה של רשתות ענק אוהבים מטריצות ענק ו-batch-ים גדולים.</p>
+<p><strong>מיקום נקודה מתחת לגג.</strong> אם kernel memory-bound (משמאל לרכס), הביצועים בפועל שהוא ישיג הם <code>arithmetic_intensity * memory_BW</code>. למשל SAXPY על H100:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>   perf(SAXPY) = (1/6) * 3.35e12 = 0.56 TFLOP/s
+</code></pre></div>
+<p>כלומר, SAXPY על H100 יגיע ל-0.56 TFLOP/s בלבד, פחות מאלפית מ-989 TFLOP/s של גג החישוב. לא מפני שהחישוב איטי, אלא מפני שהarithmetic intensity נמוכה מדי; הכרטיס מבזבז את רוב זמנו בהמתנה לזיכרון. אין טעם לקנות GPU חזק יותר בחישוב עבור kernel כזה - צריך להעלות את הarithmetic intensity (לדוגמה, על ידי fusion של פעולות כדי לחלוק טעינות).</p>
+<p><strong>החלפת עבודת זיכרון בעבודת חישוב.</strong> כשאתם memory-bound, אפשר להזיז עבודה מתת-מערכת הזיכרון אל תת-מערכת החישוב - להעלות את הarithmetic intensity במכוון. שתי טכניקות קלאסיות: <strong>דחיסת נתונים</strong> (פחות בתים לתעבורה, במחיר חישוב פענוח) ו-<strong>gradient checkpointing</strong> (חישוב מחדש של ערכי ביניים במקום אחסונם בזיכרון גלובלי בזמן backpropagation, מה שמעלה את הarithmetic intensity). שתיהן סוחרות תעבורת זיכרון בחישוב - הגיוני בדיוק כשהזיכרון הוא צוואר הבקבוק.</p>
+<h2 id="-roofline-_1">מה ה-Roofline לא מראה - הגבול הקריטי<a class="headerlink" href="#-roofline-_1" title="Permanent link">&para;</a></h2>
+<p>וכאן המלכוד החשוב ביותר בכל השיעור, וזו הסיבה שהoverhead היא קטגוריית צוואר בקבוק נפרדת ושלישית. מודל ה-Roofline הוא "<strong>פשוט באופן מטעה</strong>" (deceptively simple). כלשון ה-glossary:</p>
+<blockquote>
+<p>"<strong>ה-latency של המערכת אינה מופיעה בשום מקום בתרשים - רק רוחבי פס ותפוקות.</strong>"</p>
+</blockquote>
+<p>חשבו על כך: שני הצירים הם FLOP/byte ו-FLOP/s, ושני הגגות הם רוחב פס אריתמטי ורוחב פס זיכרון. <strong>אין ציר, אין גג, ואין נקודה שמייצגים latency או overhead.</strong> לכן המודל <em>לא מסוגל</em> לאבחן מצב overhead-bound. הוא מפריד אך ורק בין compute-bound לmemory-bound.</p>
+<p><strong>מהי overhead בכלל.</strong> תקורה (overhead) היא "הזמן שבו לא מתבצעת עבודה שימושית". זו ההבחנה היסודית: בזמן צוואר בקבוק של חישוב או זיכרון, ה-GPU עובד <strong>הכי מהר שהוא יכול</strong> - הוא פשוט מוגבל. בזמן overhead, ה-GPU <strong>יושב בטל ומחכה</strong> לקבל עבודה או הוראות. הoverhead היא זמן-סרק, לא עבודה איטית. דוגמאות:</p>
+<ul>
+<li><strong>הoverhead קריאת CUDA API:</strong> בערך <strong>10 מיקרו-שניות לכל dispatch kernel</strong>. אם ה-kernel עצמו רץ 5 מיקרו-שניות, מחצית מהזמן בזבוז טהור.</li>
+<li><strong>קבלת החלטות של framework</strong> (PyTorch/TensorFlow) שבוחר איזה kernel לdispatch: מיקרו-שניות רבות.</li>
+<li><strong>הoverhead תקשורת</strong> בהעברת נתונים בין CPU-GPU או GPU-GPU.</li>
+</ul>
+<p><strong>למה זה מסביר את "מתחת לגג".</strong> זו בדיוק הסיבה ש-kernel-ים אמיתיים יושבים מתחת ל-Roofline: הoverhead גוזלת זמן שאינו מופיע במודל. ה-Roofline יגיד לכם "אתה יכול תיאורטית להגיע לגג הזה", אבל אם ה-kernel overhead-bound, תישארו הרחק מתחתיו, וה-Roofline לבדו לעולם לא יסביר למה. לשם צריך כלים אחרים: חוק ליטל (Little's Law) להסתרת latency, פרופיילינג של זמני-סרק, ו-CUDA Graphs לצמצום overhead הdispatch (שכבר ראינו בשיעור 5.5). דוגמה קלאסית ל-kernel overhead-bound: פעולה על מערך קטנטן - dispatch של 10 מיקרו-שניות עבור עבודה של מיקרו-שנייה. ב-Roofline הוא יופיע כנקודה נמוכה מאוד, בלי שום דרך להבחין אם הנמיכות נובעת מזיכרון או מoverhead. זה תמיד מזכיר לנו: <strong>ה-Roofline הוא כלי חד-ממדי לאבחון דו-דרכי (חישוב מול זיכרון); הoverhead היא הממד השלישי, ולה כלים משלה.</strong></p>
+<h2 id="-nsight-compute">כל משאב יכול להיות צוואר בקבוק, וכלי האבחון - Nsight Compute<a class="headerlink" href="#-nsight-compute" title="Permanent link">&para;</a></h2>
+<p>אמרנו שחישוב וזיכרון הם צווארי הבקבוק הנפוצים, אבל <strong>כל משאב יכול להיות צוואר בקבוק</strong> - וכדאי לדעת אילו עוד קיימים, כי לפעמים הם המפתיעים:</p>
+<ul>
+<li><strong>כניסת הספק ופליטת חום</strong> יכולות לחסום GPU <strong>מתחת</strong> למקסימום התיאורטי שלו. אם אין מספיק חשמל להזין את כל הטרנזיסטורים בו-זמנית, או אם החום לא נפלט מהר מספיק, הכרטיס מוריד תדר (throttling) והביצועים צונחים - בלי קשר לחישוב או לזיכרון.</li>
+<li><strong>חברת NVIDIA השיגה שיפור ביצועים של 4% מקצה-לקצה על ידי ניתוב הספק מcache ה-L2 אל ה-SMs.</strong> מספר קונקרטי ומאלף: אותו סיליקון בדיוק, אותו חישוב, אבל חלוקה שונה של תקציב ההספק נתנה 4% - הוכחה שהספק הוא משאב אמיתי שאפשר לחסום עליו.</li>
+<li><strong>ביצועי כפל מטריצות משתנים לפי הנתונים עצמם:</strong> דפוסי ביט שונים גורמים לפעילות מיתוג שונה של טרנזיסטורים =&gt; צריכת הספק שונה =&gt; ביצועים שונים. אותו kernel על אותו כרטיס יכול לרוץ בקצב שונה תלוי בקלט.</li>
+</ul>
+<p>זו הסיבה שהמתודולוגיה של גולדראט חשובה: לא מניחים מראש מהו צוואר הבקבוק, <strong>מודדים</strong> אותו. וכלי המדידה הסטנדרטי לרמת ה-kernel הוא <strong>Nsight Compute</strong> (הפקודה <code>ncu</code>), הפרופיילר של NVIDIA. הוא <strong>מבצע אוטומטית ניתוח Roofline</strong> עבור kernel-ים שהוא מפרופל - מציב את הנקודה שלכם ביחס לגגות, ומראה מיד באיזה צד של נקודת הרכס אתם ובכמה אתם רחוקים מהתקרה. בפרקים 8 ו-9 נעבוד עם <code>ncu</code> באופן שוטף; כאן די שנדע שה-Roofline אינו רק תרגיל עיפרון-ונייר אלא פלט אמיתי של כלי, ושהעיקרון הראשון שלנו הוא: מדוד, אל תנחש.</p>
+<h2 id="-roofline">ההיסטוריה - למה נולד ה-Roofline<a class="headerlink" href="#-roofline" title="Permanent link">&para;</a></h2>
+<p>מודל ה-Roofline לא נפל מהשמיים; הוא נולד ב-<strong>2008</strong> במאמר של <strong>Samuel Williams, Andrew Waterman ו-David Patterson</strong>, כתשובה לשלוש מגמות חומרה שהתבררו בעשור שקדם לו. הבנת המגמות האלה מסבירה למה כל התחום התכנס ל"arithmetic intensity מול רוחב פס".</p>
+<p><strong>1. קיר הזיכרון - the memory wall (Wulf ו-McKee, 1994).</strong> תת-מערכות החישוב (ליבות מעבד) שיפרו את ביצועיהן הרבה יותר מהר מתת-מערכות הזיכרון (caches ו-DRAM). הפער הזה, שגדל אקספוננציאלית, נקרא "קיר הזיכרון": ככל שהחישוב מזנק, הזיכרון נשאר מאחור, והוא הופך יותר ויותר לצוואר הבקבוק. ראינו את זה במספרים - נקודת הרכס נעה מ-156 ב-A100 ל-295 ב-H100 בדיוק בגלל הפער הזה.</p>
+<p><strong>2. ה-latency מפגר אחרי רוחב הפס - latency lags bandwidth (Patterson, 2004).</strong> תצפית של Patterson: היסטורית, "<strong>שיפור לינארי ב-latency לווה בשיפור ריבועי ברוחב הפס</strong>". כלומר, רוחב הפס משתפר הרבה יותר מהר מה-latency. ההשלכה: מערכות ייהפכו מוכוונות-תפוקה (throughput-oriented) - נתכנן אותן להזרים המון עבודה במקביל כדי להסתיר את ה-latency הגבוה. ה-GPU הוא ההתגלמות המושלמת של הרעיון הזה.</p>
+<p><strong>3. קץ סקיילינג דנארד - the end of Dennard scaling (תחילת שנות ה-2000).</strong> דנארד סקיילינג היה הכלל שאיפשר להעלות תדר שעון בהספק קבוע ככל שהטרנזיסטורים מתכווצים. הוא הסתיים בעיקר בגלל <strong>זרם הדליפה הקבוע של הטרנזיסטורים</strong>, שיצר בעיות של צריכת הספק ופיזור חום. הקץ הזה <em>לא</em> לווה בהאטה של חוק מור (עדיין קיבלנו יותר טרנזיסטורים), וזה דחף ל<strong>התמחות חומרתית</strong> (hardware specialization): פירוק המחשב לרכיבים המתמחים כל אחד במשימה נפרדת. ליבות הטנזור הן בדיוק זה - חומרה ייעודית לכפל מטריצות.</p>
+<p><strong>הפאנץ' שהמגמות האלה ייצרו.</strong> מערכות העתיד יהיו מוכוונות-תפוקה, ומבין כל רוחבי הפס, <strong>רוחב הפס של הזיכרון יהיה צוואר הבקבוק המרכזי</strong>. לכן, אפליקציות שרוצות ביצועי שיא חייבות להחזיק <strong>arithmetic intensity גבוהה</strong> עבור הפעולות המתמחות של החומרה - במקרה של GPU, arithmetic intensity עבור ליבות הטנזור, כלומר <strong>כפל מטריצות גדול מאוד</strong>. כך שלושת המגמות של 2008 מסבירות ישירות למה, ב-2026, אנחנו מאמנים מודלים עם מטריצות ענק על ליבות טנזור - ולמה נקודת הרכס ממשיכה לנוע ימינה בכל דור.</p>
+<h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>בתכנות GPU הביצועים הם המוצר: הנכונות לרוב מקורבת (עד מספר ביטים), והמדדים הם ביצועים לשנייה, לדולר או לוואט; לכן אבחון וכיוונון ביצועים הם מיומנות ליבה, לא תוספת.</li>
+<li>מתודולוגיית צוואר הבקבוק של גולדראט (תורת האילוצים): אתר את צוואר הבקבוק, הרם אותו, וחזור על התהליך על צוואר הבקבוק החדש - לולאה שלעולם אינה נגמרת.</li>
+<li>עבודת ה-GPU מתחלקת לשלושה: חישוב (CUDA/Tensor Cores), זיכרון (הזזת נתונים) וoverhead (כל השאר), ובהתאמה שלוש מחלקות צוואר בקבוק: compute-bound, memory-bound וoverhead-bound.</li>
+<li>מודל ה-Roofline: ציר X הוא arithmetic intensity (FLOP/byte), ציר Y הוא ביצועים (FLOP/s); גג החישוב אופקי בגובה רוחב הפס האריתמטי, גג הזיכרון אלכסוני בשיפוע רוחב הפס של הזיכרון, והתקרה בת-ההשגה היא הנמוך מביניהם.</li>
+<li>נקודת הרכס (ridge point) היא היכן שהגגות נפגשים, ושיעור ה-X שלה = arithmetic BW / memory BW = הarithmetic intensity המינימלית להיות compute-bound; ל-H100 ב-BF16 היא 295 FLOP/byte.</li>
+<li>נקודות הרכס נעות ימינה עם הדורות (A100 156 -&gt; H100 295) בגלל קיר הזיכרון, וכל תת-מערכת (CUDA Cores מול Tensor Cores, BF16 מול FP8) נותנת Roofline ונקודת רכס שונים על אותו כרטיס.</li>
+<li>כפל מטריצות (SGEMM) הוא O(N) בarithmetic intensity ולכן הופך לcompute-bound ככל שהמטריצה גדלה (על H100 BF16, סביב N=2360); פעולות וקטור כמו SAXPY הן O(1) בarithmetic intensity (1/6) ולכן תמיד memory-bound.</li>
+<li>המלכוד הקריטי: ה-latency והoverhead אינם מופיעים ב-Roofline (רק רוחבי פס ותפוקות), ולכן kernel overhead-bound אינו ניתן לאבחון ממנו - זו הסיבה ש-kernel-ים אמיתיים יושבים מתחת לגגות ושהoverhead היא קטגוריה שלישית עם כלים משלה.</li>
+<li>כל משאב יכול לחסום (הספק וחום - NVIDIA הרוויחה 4% מהעברת הספק מ-L2 ל-SMs), אך חישוב וזיכרון הם הנפוצים; לכן מודדים ולא מנחשים, ו-Nsight Compute (<code>ncu</code>) מייצר Roofline אוטומטי.</li>
+<li>מודל ה-Roofline נולד ב-2008 (Williams-Waterman-Patterson) בתגובה לשלוש מגמות: קיר הזיכרון (Wulf-McKee 1994), ה-latency שמפגר אחרי רוחב הפס (Patterson 2004) וקץ סקיילינג דנארד שדחף להתמחות חומרתית - שלושתן מובילות למסקנה שרוחב פס הזיכרון הוא צוואר הבקבוק המרכזי, ולכן צריך arithmetic intensity גבוהה.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

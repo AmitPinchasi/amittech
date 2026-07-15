@@ -1,0 +1,148 @@
+/* ============================================================
+   ZONE 0 - The Terminal Wastes
+   Introduction to Programming: print, variables, arithmetic,
+   f-strings, type conversion, input()
+   ============================================================ */
+
+window.ZONE_0 = {
+  id: 0,
+  name: "שממת הטרמינל",
+  subtitle: "מבוא לתכנות",
+  color: "#06b6d4",
+  boss: "רוח ההגדרה",
+  encounters: [
+    {
+      id: 0,
+      name: "אור ראשון - התעוררות הטרמינל",
+      isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/1 - פייתון בסיסי/1.2 - בסיס הבסיס/1.2 - בסיס הבסיס - הרצאה/",
+      challenges: [
+        {
+          type: "output_oracle",
+          narrative: "טרמינל מאיר מהבהב לפניך. מה הוא אומר?",
+          code: 'print("Hello, World!")',
+          options: ["Hello, World!", "hello, world!", "\"Hello, World!\"", "Error"],
+          correct: 0,
+          explanation: "הפונקציה print() מדפיסה את הארגומנט שלה לקונסולה, ללא המרכאות. הכתיב המדויק והסימנים נשמרים.",
+          hint: "הפונקציה print() מציגה את התוכן שבתוך הסוגריים בדיוק כפי שנכתב, ללא המרכאות.",
+        },
+        {
+          type: "output_oracle",
+          narrative: "מספרים מדברים אל מי שמקשיב. מה מגלה הקוד הזה?",
+          code: 'print(5 + 3)\nprint(10 - 4)\nprint(3 * 7)',
+          options: ["8\n6\n21", "8 6 21", "5+3\n10-4\n3*7", "53\n104\n37"],
+          correct: 0,
+          explanation: "פייתון מחשב ביטויים אריתמטיים לפני הדפסה. כל קריאה ל-print() מדפיסה בשורה חדשה. 5+3=8, 10-4=6, 3*7=21.",
+          hint: "כל print() נמצא בשורה משלו, ופייתון מחשב את החשבון בתוך print() לפני הצגת התוצאה.",
+        },
+        {
+          type: "spell_completion",
+          narrative: "אמור את שמה העתיק של פונקציית הפלט.",
+          codeTemplate: '___(\"Hello, Realm!\")',
+          answers: ["print"],
+          explanation: "הפונקציה print() היא הפונקציה המובנית של פייתון להצגת פלט. היא תמיד באותיות קטנות בפייתון 3.",
+          hint: "זוהי פונקציית הפלט הבסיסית ביותר של פייתון. היא תמיד באותיות קטנות.",
+        },
+        {
+          type: "corruption_scan",
+          narrative: "משהו לא בסדר בקוד הזה. מצא את הבאג.",
+          code: 'Print("Welcome to Python")',
+          options: [
+            "Print should be lowercase: print",
+            "The string needs double quotes only",
+            "Missing a semicolon at the end",
+            "Nothing is wrong",
+          ],
+          correct: 0,
+          explanation: "פייתון רגיש לאותיות גדולות וקטנות. הפונקציה המובנית print חייבת להיות באותיות קטנות: print(). המילה 'Print' עם P גדולה אינה מוגדרת.",
+          hint: "פייתון רגיש לאותיות גדולות וקטנות. פונקציות מובנות משתמשות באותיות קטנות.",
+        },
+      ],
+    },
+    {
+      id: 1,
+      name: "מקדש המשתנים - קישור שמות לערכים",
+      isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/1 - פייתון בסיסי/1.3 - מבני נתונים/1.3 - מבני נתונים - הרצאה/",
+      challenges: [
+        {
+          type: "output_oracle",
+          narrative: "משתנים קושרים שמות לאתר. מה מגלה קישור זה?",
+          code: 'x = 42\ny = 8\nprint(x + y)\nprint(x - y)',
+          options: ["50\n34", "42\n8", "x + y\nx - y", "50 34"],
+          correct: 0,
+          explanation: "x מכיל 42, y מכיל 8. print(x + y) נותן 50, print(x - y) נותן 34. כל print() בשורה חדשה.",
+          hint: "משתנים מאחסנים ערכים. השתמש בשמותיהם בביטויים בדיוק כמו במספרים עצמם.",
+        },
+        {
+          type: "spell_completion",
+          narrative: "יצור את ה-f-string כדי לברך את המטייל.",
+          codeTemplate: 'name = "Shir"\nprint(f"Hello, {___}!")',
+          answers: ["name"],
+          explanation: "ב-f-string (מוקדם עם f), סוגריים מסולסלים {} משמשים להטמעת ערכי משתנים. {name} מכניס את הערך של המשתנה 'name'.",
+          hint: "בתוך הסוגריים המסולסלים של f-string, כותבים את שם המשתנה, לא את ערכו.",
+        },
+        {
+          type: "output_oracle",
+          narrative: "שרשור מחרוזות ממזג שני טקסטים. מה צומח מהמיזוג הזה?",
+          code: 'print("5" + "3")',
+          options: ["53", "8", "\"5\" + \"3\"", "Error"],
+          correct: 0,
+          explanation: "כאשר משתמשים ב-+ עם מחרוזות, פייתון משרשר (מחבר) אותן, לא מחבר אותן כמספרים. \"5\" + \"3\" מייצר את המחרוזת \"53\".",
+          hint: "האופרטור + על מחרוזות מחבר אותן יחד, הוא לא מחבר מספרים.",
+        },
+        {
+          type: "name_binding",
+          narrative: "הטקסטים העתיקים מדברים על מושגים יסודיים. קשר כל מונח למשמעותו.",
+          pairs: [
+            { term: "algorithm", definition: "A step-by-step procedure for solving a problem" },
+            { term: "interpreter", definition: "A program that executes source code line by line" },
+            { term: "runtime error", definition: "An error that occurs while the program is running" },
+            { term: "source code", definition: "Human-readable instructions written in a programming language" },
+          ],
+          explanation: "אלו הם מושגי מחשוב מרכזיים. אלגוריתם הוא נוהל, המפרש מריץ קוד שורה אחר שורה, שגיאות זמן ריצה קורות בזמן הריצה, וקוד מקור הוא מה שמתכנתים כותבים.",
+          hint: "חשוב מתי כל דבר קורה: לפני, במהלך, או מתאר את הקוד עצמו.",
+        },
+      ],
+    },
+    {
+      id: 2,
+      name: "בוס - רוח ההגדרה",
+      isBoss: true,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/1 - פייתון בסיסי/1.4 - פונקציות מובנות/1.4 - פונקציות מובנות - הרצאה/",
+      challenges: [
+        {
+          type: "output_oracle",
+          narrative: "הרוח מזמנת מלכודת המרת טיפוסים. מה הפלט האמיתי?",
+          code: 'age = "25"\nprint(type(age))\nprint(int(age) + 5)',
+          options: ["<class 'str'>\n30", "<class 'int'>\n30", "25\n30", "Error"],
+          correct: 0,
+          explanation: "age מקבל את המחרוזת \"25\", ולכן type(age) הוא <class 'str'>. הפונקציה int(age) ממירה אותה למספר השלם 25, ואז +5 נותן 30.",
+          hint: "משתנים שהוקצו עם מרכאות הם מחרוזות. type() מגלה את סוג הנתונים. int() ממיר מחרוזות למספרים שלמים.",
+        },
+        {
+          type: "spell_completion",
+          narrative: "השלם את קוד המרת הטיפוסים.",
+          codeTemplate: 'user_input = input("Enter a number: ")\nnumber = ___(user_input)\nprint(number * 2)',
+          answers: ["int"],
+          explanation: "הפונקציה input() תמיד מחזירה מחרוזת. כדי להשתמש בה כמספר, יש להמיר אותה עם int() (או float() לעשרוניות). ללא המרה, * 2 יחזור על המחרוזת פעמיים.",
+          hint: "הפונקציה input() תמיד נותנת לך מחרוזת. כדי לבצע חשבון, יש להמיר אותה לסוג מספרי.",
+        },
+        {
+          type: "corruption_scan",
+          narrative: "הרוח קיללה את האריתמטיקה הזו. מצא מה מכאיב לה.",
+          code: 'width = 10\nheight = "5"\narea = width * height\nprint(area)',
+          options: [
+            "height is a string, cannot multiply with int for area",
+            "area should use + not *",
+            "width needs to be a float",
+            "print needs parentheses around area",
+          ],
+          correct: 0,
+          explanation: "height = \"5\" הוא מחרוזת, לא מספר. כפל של int במחרוזת בפייתון חוזר על המחרוזת (10 * \"5\" = \"5555555555\"), שאינו החשבון המיועד. height צריך להיות int(\"5\") או פשוט 5.",
+          hint: "בדוק את סוגי הנתונים של כל המשתנים לפני ביצוע פעולות אריתמטיות.",
+        },
+      ],
+    },
+  ],
+};

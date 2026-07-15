@@ -1,0 +1,148 @@
+/* ============================================================
+   ZONE 1 - Valley of Variables
+   Basic Python: variables, assignment operators, int/str/float/bool,
+   f-strings, input(), type(), modulo, floor division, exponents
+   ============================================================ */
+
+window.ZONE_1 = {
+  id: 1,
+  name: "עמק המשתנים",
+  subtitle: "פייתון בסיסי",
+  color: "#22c55e",
+  boss: "אימת הטיפוסים",
+  encounters: [
+    {
+      id: 0,
+      name: "עומקי האריתמטיקה",
+      isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/1 - פייתון בסיסי/1.2 - בסיס הבסיס/1.2 - בסיס הבסיס - הרצאה/",
+      challenges: [
+        {
+          type: "output_oracle",
+          narrative: "רצפת העמק מכוסה בסמלים מתמטיים עתיקים. קרא את הפלט שלהם.",
+          code: 'x = 10\nx += 5\nprint(x)',
+          options: ["15", "10", "5", "x += 5"],
+          correct: 0,
+          explanation: "x מתחיל ב-10. x += 5 הוא קיצור של x = x + 5, כך ש-x הופך ל-15. print(x) מציג 15.",
+          hint: "+= הוא השמה מוגברת. x += 5 פירושו x = x + 5.",
+        },
+        {
+          type: "output_oracle",
+          narrative: "סמלי החילוק העתיקים מסתירים שני סודות. מה הם מגלים?",
+          code: 'print(17 % 5)\nprint(17 // 5)',
+          options: ["2\n3", "3\n2", "3.4\n3", "2\n3.0"],
+          correct: 0,
+          explanation: "% הוא אופרטור המודולו - הוא נותן את השארית. 17 % 5 = 2 (17 = 5*3 + 2). // הוא חילוק רצפה - הוא נותן את המנה השלמה. 17 // 5 = 3.",
+          hint: "% נותן את השארית לאחר חילוק. // נותן את החלק השלם של החילוק.",
+        },
+        {
+          type: "output_oracle",
+          narrative: "כוח חשמלי זורם דרך העמק. מה עוצמת החזקה הזו?",
+          code: 'print(2 ** 10)',
+          options: ["1024", "20", "2010", "512"],
+          correct: 0,
+          explanation: "** הוא אופרטור החזקה. 2 ** 10 פירושו 2 בחזקת 10, שהוא 1024.",
+          hint: "** הוא אופרטור החזקה של פייתון. 2**10 פירושו 2 כפול עצמו 10 פעמים.",
+        },
+        {
+          type: "spell_completion",
+          narrative: "השלם את קוד ההשמה המוגברת כדי להפחית את נקודות החיים של הלוחם.",
+          codeTemplate: 'hp = 100\nhp ___ 25\nprint(hp)',
+          answers: ["-="],
+          explanation: "-= הוא אופרטור חיסור עם השמה. hp -= 25 הוא קיצור של hp = hp - 25, ומביא לתוצאה 75.",
+          hint: "השמות מוגברות משלבות פעולה עם השמה. חסר והקצה בסמל אחד.",
+        },
+      ],
+    },
+    {
+      id: 1,
+      name: "פונדק הטיפוסים",
+      isBoss: false,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/1 - פייתון בסיסי/1.3 - מבני נתונים/1.3 - מבני נתונים - הרצאה/",
+      challenges: [
+        {
+          type: "output_oracle",
+          narrative: "מטייל, נסה לזהות את הטיפוסים האמיתיים של הערכים הקשורים האלה.",
+          code: 'a = 42\nb = 3.14\nc = "hello"\nd = True\nprint(type(a))\nprint(type(b))\nprint(type(c))\nprint(type(d))',
+          options: [
+            "<class 'int'>\n<class 'float'>\n<class 'str'>\n<class 'bool'>",
+            "int\nfloat\nstr\nbool",
+            "<class 'number'>\n<class 'decimal'>\n<class 'string'>\n<class 'boolean'>",
+            "42\n3.14\nhello\nTrue",
+          ],
+          correct: 0,
+          explanation: "הפונקציה type() מחזירה את אובייקט הטיפוס. עבור מספרים שלמים זה <class 'int'>, עשרוניות <class 'float'>, טקסט <class 'str'>, ו-True/False <class 'bool'>.",
+          hint: "הפונקציה type() של פייתון מחזירה את שם המחלקה המלא בפורמט <class 'typename'>.",
+        },
+        {
+          type: "corruption_scan",
+          narrative: "מ冒険חאי צעיר ניסה להוסיף לקלט משתמש. הבאגים עדינים.",
+          code: 'age = input("Enter your age: ")\nresult = age + 10\nprint(result)',
+          options: [
+            "input() returns a string, age must be converted with int() before adding 10",
+            "The variable should be called user_age",
+            "print needs the f prefix",
+            "10 should be \"10\" as a string",
+          ],
+          correct: 0,
+          explanation: "הפונקציה input() תמיד מחזירה מחרוזת. לא ניתן להוסיף מספר שלם (10) למחרוזת. התיקון הוא: age = int(input(\"Enter your age: \"))",
+          hint: "הפונקציה input() תמיד מחזירה מחרוזת. איזו פונקציה ממירה מחרוזת למספר שלם?",
+        },
+        {
+          type: "spell_completion",
+          narrative: "יצור את ה-f-string כדי לייצר: 'Player: Shir, Score: 42'",
+          codeTemplate: 'player = "Shir"\nscore = 42\nprint(f"Player: ___, Score: {score}")',
+          answers: ["{player}"],
+          explanation: "ב-f-strings, משתנים מוטמעים תוך שימוש בתחביר {variable_name}. הקידומת f לפני המרכאות מאפשרת את תכונת האינטרפולציה הזו.",
+          hint: "F-strings משתמשות ב-{variable_name} להכנסת ערכי משתנים. אל תשכח את הסוגריים המסולסלים.",
+        },
+        {
+          type: "name_binding",
+          narrative: "התאם כל סוג נתונים לייצוג שלו בפייתון.",
+          pairs: [
+            { term: "int", definition: "Whole numbers like -3, 0, 42, 100" },
+            { term: "float", definition: "Decimal numbers like 3.14, -0.5, 2.0" },
+            { term: "str", definition: "Text enclosed in quotes like 'hello' or \"world\"" },
+            { term: "bool", definition: "A value that is either True or False" },
+          ],
+          explanation: "לפייתון יש ארבעה סוגי נתונים פרימיטיביים: int למספרים שלמים, float לעשרוניות, str לטקסט, ו-bool ללוגיקת True/False.",
+          hint: "חשוב על מה כל טיפוס מאחסן: מספרים ללא עשרוניות, מספרים עם עשרוניות, טקסט, או ערכי כן/לא.",
+        },
+      ],
+    },
+    {
+      id: 2,
+      name: "בוס - אימת הטיפוסים",
+      isBoss: true,
+      lectureUrl: "https://amittech.dev/תכנות-בסיסי/1 - פייתון בסיסי/1.2 - בסיס הבסיס/1.2 - בסיס הבסיס - הרצאה/",
+      challenges: [
+        {
+          type: "output_oracle",
+          narrative: "האימה שואגת עם פעולות מורכבות. עקוב אחר ערך x.",
+          code: 'x = 5\nx *= 3\nx -= 4\nx //= 2\nprint(x)',
+          options: ["5", "4", "7", "11"],
+          correct: 0,
+          explanation: "התחלה: x=5. x*=3 -> x=15. x-=4 -> x=11. x//=2 -> x=5 (חילוק רצפה). פלט סופי: 5.",
+          hint: "עקוב אחר כל פעולה בסדר. *= כופל ומקצה, -= מחסיר ומקצה, //= מחלק ברצפה ומקצה.",
+        },
+        {
+          type: "output_oracle",
+          narrative: "האימה בוחנת את ידיעתך בלוגיקה בוליאנית.",
+          code: 'x = 10\nprint(x > 5)\nprint(x == 10)\nprint(x != 10)',
+          options: ["True\nTrue\nFalse", "True\nFalse\nTrue", "False\nTrue\nFalse", "10\n10\n10"],
+          correct: 0,
+          explanation: "x=10. x>5 הוא True (10 גדול מ-5). x==10 הוא True (10 שווה ל-10). x!=10 הוא False (10 אינו לא-שווה ל-10).",
+          hint: "> בודק גדול מ-, == בודק שוויון, != בודק אי-שוויון.",
+        },
+        {
+          type: "spell_completion",
+          narrative: "השלם את ה-f-string הרב-שורתי להצגת נתוני הגיבור.",
+          codeTemplate: 'name = "Rylan"\nlevel = 7\nhp = 85\nprint(f"{name} | Level {___} | HP: {hp}")',
+          answers: ["level"],
+          explanation: "F-strings יכולים להכיל מספר הפניות למשתנים. {level} מכניס את ערך המשתנה level. הפלט יהיה: Rylan | Level 7 | HP: 85",
+          hint: "כל {variable} ב-f-string מוחלף בערך של אותו משתנה.",
+        },
+      ],
+    },
+  ],
+};

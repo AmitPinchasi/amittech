@@ -1,0 +1,2920 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בפרק 1 הכרנו את החומרה מלמטה: בשיעור 1.6 פירקנו את מדרג הזיכרון הפיזי של ה-GPU - קובץ האוגרים (register file) המהיר שבתוך כל SM, cache ה-L1 שחולק את אותו...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../../2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.5%20-%20Compute%20Capability%20%D7%95%D7%92%D7%A8%D7%A1%D7%90%D7%95%D7%AA%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%94/2.5%20-%20Compute%20Capability%20%D7%95%D7%92%D7%A8%D7%A1%D7%90%D7%95%D7%AA%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="next" href="../3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>3.1 - היררכיית הזיכרון הלוגית - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "3.1 - \u05d4\u05d9\u05e8\u05e8\u05db\u05d9\u05d9\u05ea \u05d4\u05d6\u05d9\u05db\u05e8\u05d5\u05df \u05d4\u05dc\u05d5\u05d2\u05d9\u05ea - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="3.1 - היררכיית הזיכרון הלוגית - הרצאה - עמית טק" />
+<meta property="og:description" content="בפרק 1 הכרנו את החומרה מלמטה: בשיעור 1.6 פירקנו את מדרג הזיכרון הפיזי של ה-GPU - קובץ האוגרים (register file) המהיר שבתוך כל SM, cache ה-L1 שחולק את אותו..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="3.1 - היררכיית הזיכרון הלוגית - הרצאה - עמית טק" />
+<meta property="twitter:description" content="בפרק 1 הכרנו את החומרה מלמטה: בשיעור 1.6 פירקנו את מדרג הזיכרון הפיזי של ה-GPU - קובץ האוגרים (register file) המהיר שבתוך כל SM, cache ה-L1 שחולק את אותו..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-threads" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              3.1 - היררכיית הזיכרון הלוגית - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_5" id="__nav_7_3_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    3   זיכרון וניהול
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_5_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_5_1" id="__nav_7_3_5_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.1   היררכיית הזיכרון הלוגית
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_5_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_5_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    3.1   היררכיית הזיכרון הלוגית
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.1 - היררכיית הזיכרון הלוגית - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.1 - היררכיית הזיכרון הלוגית - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-threads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        עיקרון-העל - זיכרון שמשקף את היררכיית ה-threads
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-registers-thread" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        רגיסטרים - Registers (פרטיים ל-thread)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-shared-memory-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        זיכרון משותף - Shared Memory (משותף ל-block)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-global-memory-grid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        זיכרון גלובלי - Global Memory (משותף ל-grid)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-local-memory-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        זיכרון מקומי - Local Memory (המלכוד של ה-scope)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-constant-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        זיכרון קבוע - Constant Memory (לקריאה בלבד)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-global-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מלכוד ה-global - הבלבול המפורסם
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-memory-spaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        טבלת מרחבי הזיכרון - the memory spaces
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-h100" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        התמונה המלאה - מהלוגי לפיזי על H100
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.1 - היררכיית הזיכרון הלוגית - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.1 - היררכיית הזיכרון הלוגית - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../3.2%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%9E%D7%94%D7%9E%D7%90%D7%A8%D7%97/3.2%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%9E%D7%94%D7%9E%D7%90%D7%A8%D7%97%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.2   ניהול זיכרון מהמארח
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../3.3%20-%20Shared%20memory%20%D7%95-tiling/3.3%20-%20Shared%20memory%20%D7%95-tiling%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.3   Shared memory ו tiling
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../3.4%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%A7%D7%91%D7%95%D7%A2%20%D7%95%D7%98%D7%A7%D7%A1%D7%98%D7%95%D7%A8%D7%94/3.4%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%A7%D7%91%D7%95%D7%A2%20%D7%95%D7%98%D7%A7%D7%A1%D7%98%D7%95%D7%A8%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.4   זיכרון קבוע וטקסטורה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../3.5%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20%D7%9B%D7%A4%D7%9C%20%D7%9E%D7%98%D7%A8%D7%99%D7%A6%D7%95%D7%AA%20tiled/3.5%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20-%20%D7%9B%D7%A4%D7%9C%20%D7%9E%D7%98%D7%A8%D7%99%D7%A6%D7%95%D7%AA%20tiled%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3.5   פרויקט   כפל מטריצות tiled
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-threads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        עיקרון-העל - זיכרון שמשקף את היררכיית ה-threads
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-registers-thread" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        רגיסטרים - Registers (פרטיים ל-thread)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-shared-memory-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        זיכרון משותף - Shared Memory (משותף ל-block)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-global-memory-grid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        זיכרון גלובלי - Global Memory (משותף ל-grid)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-local-memory-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        זיכרון מקומי - Local Memory (המלכוד של ה-scope)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-constant-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        זיכרון קבוע - Constant Memory (לקריאה בלבד)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-global-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מלכוד ה-global - הבלבול המפורסם
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-memory-spaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        טבלת מרחבי הזיכרון - the memory spaces
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-h100" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        התמונה המלאה - מהלוגי לפיזי על H100
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    3   זיכרון וניהול
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    3.1   היררכיית הזיכרון הלוגית
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>3.1 - היררכיית הזיכרון הלוגית - הרצאה</h1>
+
+<p>בפרק 1 הכרנו את החומרה מלמטה: בשיעור 1.6 פירקנו את מדרג הזיכרון הפיזי של ה-GPU - קובץ האוגרים (register file) המהיר שבתוך כל SM, cache ה-L1 שחולק את אותו SRAM עם ה-shared memory (ב-H100 - 256 KiB לכל SM), ובתחתית ה-GPU RAM האיטי (ב-H100 - 80 GiB של HBM3). בפרק 2 בנינו את היררכיית ה-threads מלמעלה: thread בודד, שנארז ב-block, שנארז ב-grid (רשת). השיעור הזה פותח את פרק הזיכרון ומחבר את שני הקצוות: הוא מציג את <strong>היררכיית הזיכרון הלוגית</strong> של מודל התכנות של CUDA, ומראה שהיא לא שרירותית אלא <strong>מראָה מדויקת של היררכיית ה-threads</strong>. לכל רמה בהיררכיית ה-threads יש בלוק זיכרון משלה, שמשותף לכל הthreads באותה רמה: register לכל thread, shared memory לכל block, global memory לכל grid. הרעיון המכריע שילווה אותנו בכל הפרק הוא שהזיכרון הזה <strong>מנוהל בידי המתכנת</strong> (scratchpad), לא בידי החומרה - בשונה מהותי מcache ה-CPU השקוף. בשיעור זה נבנה את המפה הלוגית; בשיעורים 3.2 עד 3.4 נצלול לכל רמה בקוד רץ.</p>
+<h2 id="-threads">עיקרון-העל - זיכרון שמשקף את היררכיית ה-threads<a class="headerlink" href="#-threads" title="Permanent link">&para;</a></h2>
+<p>מודל הזיכרון של CUDA בנוי סביב טענה אחת חדה: <strong>לכל רמה בהיררכיית ה-threads יש גישה לבלוק זיכרון נפרד, שמשותף לכל הthreads שבקבוצה באותה רמה.</strong> ההיררכיה הלוגית לא הומצאה בנפרד מהיררכיית החישוב - היא תוכננה בכוונה כתמונת ראי שלה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>   thread hierarchy               memory hierarchy
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>   ─────────────────             ─────────────────
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>   thread            ───────►    registers      (private to thread)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>      │                             │
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>   block (CTA)       ───────►    shared memory  (shared by block)
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>      │                             │
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>   grid              ───────►    global memory  (shared by the whole grid)
+</code></pre></div>
+<p>ככל שעולים בהיררכיה, הקבוצה גדֵלה, ההיקף (scope) של הזיכרון מתרחב, הקיבולת גדֵלה - והמהירות יורדת. register פרטי ל-thread בודד והוא המהיר ביותר; shared memory משותף ל-block שלם ואיטי יותר; global memory משותף לכל ה-grid, ענק ואיטי בהרבה. שימו לב שההכלה היא חד-כיוונית וברורה: מה ש-thread רואה ב-register שלו איש מלבדו לא רואה; מה ש-block כותב ב-shared memory שלו רואים רק חבריו ל-block; ורק את ה-global memory רואים כולם.</p>
+<p>ההבדל העמוק ביותר מ-CPU הוא לא במבנה אלא ב<strong>ניהול</strong>. בcache של CPU החומרה מחליטה, באופן שקוף ואוטומטי, מה נשאר קרוב ומה מפונה - המתכנת לא נוגע בזה. ב-GPU, לעומת זאת, ה-shared memory הוא <strong>scratchpad מפורש</strong>: אתם, המתכנתים, מחליטים אילו נתונים לטעון אליו, מתי, ומתי לפַנות. כפי שראינו בשיעור 1.6, אפילו בשפה עילית כמו CUDA C האזור הזה של L1/shared הוא "mostly programmer-managed". זו לא נוחות - זו אחריות: המהירות של kernel טוב תלויה כמעט כולה במידה שבה ניצלתם נכון את ה-scratchpad הזה.</p>
+<h2 id="-registers-thread">רגיסטרים - Registers (פרטיים ל-thread)<a class="headerlink" href="#-registers-thread" title="Permanent link">&para;</a></h2>
+<p>בתחתית ההיררכיה, המהירים והקטנים ביותר, נמצאים ה-registers (רגיסטרים, אוגרים). הם מאחסנים את המידע שבו מטפל <strong>thread בודד</strong>, ופיזית הם יושבים ב<strong>קובץ האוגרים - register file</strong> של ה-SM. כפי שראינו בשיעור 1.6, קובץ האוגרים מהיר בערך בסדר גודל (פי 10) מcache ה-L1, ובנוי מ-SRAM שמסוגל "לעמוד בקצב" של ליבות החישוב, כך שהוא לא צוואר בקבוק לחשבון עצמו.</p>
+<p>בקוד CUDA C רגיל, ה-registers כמעט בלתי-נראים. משתנה סקלרי מקומי בתוך kernel - <code>int i</code>, <code>float sum</code> - יושב בדרך כלל ב-register, בלי שתכתבו על כך מילה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">demo</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">g</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="kt">int</span><span class="w">   </span><span class="n">i</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span><span class="w">  </span><span class="c1">// register</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">acc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span><span class="w">                                   </span><span class="c1">// register</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">4</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">k</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">        </span><span class="n">acc</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">g</span><span class="p">[</span><span class="n">i</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">k</span><span class="p">];</span><span class="w">   </span><span class="c1">// g[...] comes from global; acc accumulates in register</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">acc</span><span class="p">;</span><span class="w">   </span><span class="c1">// write back to global</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">}</span>
+</code></pre></div>
+<p>הרגיסטרים נהיים מפורשים רק כשיורדים מתחת ל-CUDA C. כפי שראינו בשיעור על שרשרת הכלים, ב-PTX (הייצוג הווירטואלי) הם מופיעים כ<strong>רגיסטרים וירטואליים</strong> בני 32 סיביות (למשל הצהרה כמו <code>.reg .f32 %f&lt;7&gt;;</code> שמכריזה על שבעה אוגרי נקודה-צפה), וב-SASS (אסמבלר זורם, קוד המכונה של ה-GPU) הם הופכים ל<strong>אוגרים פיזיים</strong> - <code>R0</code>, <code>R7</code> וכן הלאה. את ההקצאה הפיזית עושה ה-<code>ptxas</code>, הcompiler שמתרגם PTX ל-SASS.</p>
+<p>כאן נכנס אחד המתחים המרכזיים של כל הקורס - <strong>registers מול occupancy (תפוסה)</strong>. קובץ האוגרים של כל SM הוא משאב סופי (ב-H100, כ-65,536 אוגרים בני 32 סיביות לכל SM, ולכל היותר 255 אוגרים ל-thread). ככל שכל thread צורך יותר registers, כך פחות threads יכולים לשבת (resident) על ה-SM בו-זמנית, כי צריך לחלק ביניהם את אותו קובץ אוגרים. פחות warps תושבים פירושו פחות יכולת להסתיר latency (השהיה) - יש פחות warps להחליף אליהם כשאחד תקוע בהמתנה לזיכרון. לכן היעד של הcompiler הוא דווקא <strong>להגביל</strong> את מספר האוגרים ל-thread כדי שיותר blocks ייכנסו ל-SM. הכלל הלא-אינטואיטיבי: יותר registers ל-thread לא שווה מהיר יותר; לעיתים דווקא הגבלת האוגרים מעלה את התפוקה הכוללת.</p>
+<p><strong>החריג ל"רגיסטר הוא פרטי ל-thread".</strong> ברירת המחדל של CUDA היא שאוגר שייך ל-thread אחד בלבד. אבל על חומרה מודרנית זה לא כלל מוחלט: פקודות ה-MMA (matrix-multiply-accumulate) של ה-Tensor Cores (ליבות טנזור) חולקות את אוגרי הקלט והפלט שלהן <strong>בין כל 32 הthreads של ה-warp</strong>. כפי שראינו בפרק על ה-Tensor Cores, פקודת <code>wmma</code> יחידה מבוצעת בשיתוף בידי warp שלם, והtile של המטריצה פרוס על פני האוגרים של 32 הthreads. אז "register פרטי ל-thread" הוא המצב הרגיל - אבל לא אמת מוחלטת בכל מסלולי החומרה.</p>
+<h2 id="-shared-memory-block">זיכרון משותף - Shared Memory (משותף ל-block)<a class="headerlink" href="#-shared-memory-block" title="Permanent link">&para;</a></h2>
+<p>הרמה שמעל הרגיסטרים היא ה-shared memory (זיכרון משותף), והיא מתאימה בדיוק ל<strong>רמת ה-block</strong> בהיררכיית ה-threads. הוא קטן בהרבה מ-global memory אבל מהיר בהרבה ממנו - גם ב-throughput (תפוקה) וגם ב-latency. פיזית, כפי שהדגשנו בשיעור 1.6, ה-shared memory <strong>יושב באותו SRAM של cache ה-L1</strong> בתוך כל SM (ב-H100 - 256 KiB לכל SM, שמתחלקים בין L1 ל-shared). ההיקף שלו הוא ה-block: כל הthreads של אותו block - מה שנקרא רשמית <strong>cooperative thread array (CTA)</strong> - רואים אותו וחולקים אותו, ואף thread מ-block אחר לא נוגע בו.</p>
+<p>מכריזים על shared memory במילת המפתח <code>__shared__</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">stage</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">g</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="n">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">tile</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span><span class="w">      </span><span class="c1">// 256 floats = 1 KiB, shared by the block</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="n">tile</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">g</span><span class="p">[</span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t</span><span class="p">];</span><span class="w">  </span><span class="c1">// 1. load from global to shared</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="n">__syncthreads</span><span class="p">();</span><span class="w">                            </span><span class="c1">// 2. barrier: everyone finished loading</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span><span class="w">                             </span><span class="c1">// 3. compute on shared</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">k</span><span class="p">)</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">tile</span><span class="p">[</span><span class="n">k</span><span class="p">];</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">t</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">out</span><span class="p">[</span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">s</span><span class="p">;</span><span class="w">            </span><span class="c1">// 4. write back to global</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="p">}</span>
+</code></pre></div>
+<p>התבנית הזו היא לב הליבה של כתיבת kernels מהירים, וכדאי לחקוק אותה: <strong>global -&gt; shared -&gt; חישוב -&gt; global.</strong> טוענים בלוק נתונים פעם אחת מה-global האיטי אל ה-shared המהיר, מבצעים עליו כמה שיותר פעולות אריתמטיות בזמן שהוא "חם" ב-SRAM, ורק בסוף כותבים תוצאה חזרה ל-global. הניסוח של הגלוסרי חד: הניהול הקפדני של ה-scratchpad הזה - טעינת נתונים כך שיאפשרו את <strong>המספר המרבי של פעולות אריתמטיות לפני שצריך לטעון נתונים חדשים</strong> - הוא "המפתח לאמנות של תכנון kernels בעלי ביצועים גבוהים ב-CUDA".</p>
+<p>הסיבה שהתבנית עובדת היא כלכלית. גישה ל-global עולה יקר; גישה ל-shared זולה בסדרי גודל. אם טענו איבר פעם אחת ל-shared ואז השתמשנו בו 20 פעם, "פרסנו" (amortized) את עלות הטעינה האיטית על פני 20 פעולות מהירות. המדד לזה - <strong>arithmetic intensity (עצימות אריתמטית)</strong>, יחס הפעולות האריתמטיות לבתים שנטענו - הוא בדיוק מה שה-shared memory בא להגדיל. את המסגרת הפורמלית (מודל ה-Roofline) נפתח בפרק על ביצועים; כאן מספיק להבין את התפקיד: ה-shared memory הוא <strong>שכבת הביניים המבוימת (staging tier)</strong> שממירה תעבורת global איטית לחישוב מהיר.</p>
+<h2 id="-global-memory-grid">זיכרון גלובלי - Global Memory (משותף ל-grid)<a class="headerlink" href="#-global-memory-grid" title="Permanent link">&para;</a></h2>
+<p>בקצה העליון של ההיררכיה נמצא ה-global memory (זיכרון גלובלי). ההגדרה של הגלוסרי מדויקת ושווה שינון: <strong>הוא גלובלי גם בהיקפו וגם בזמן-חייו.</strong> בהיקף - הוא נגיש לכל thread בכל ה-grid. בזמן-חיים - הוא חי כל עוד התוכנית רצה, ולא נעלם כש-kernel מסתיים. פיזית הוא ה-GPU RAM (ב-H100 - 80 GiB של HBM3), התחתית של המדרג הפיזי: הכי גדול, הכי איטי, והכי רחב-היקף. את ה-global memory מקצים <strong>מהhost</strong> (ה-CPU) דרך מקצי הזיכרון של ה-CUDA Runtime API או ה-Driver API - זהו בדיוק ה-<code>cudaMalloc</code> שהכרנו בשיעור 0.3.</p>
+<p>מכיוון שכל הthreads בכל ה-grid ניגשים אליו, ה-global memory מצריך <strong>תיאום (synchronization)</strong>, וכאן שני מנגנונים נפרדים לחלוטין שאסור לבלבל ביניהם:</p>
+<ul>
+<li><strong>פעולות אטומיות - atomics.</strong> פעולה אטומית (כמו <code>atomicAdd</code>) מבטיחה שקריאה-שינוי-כתיבה על כתובת ב-global תתבצע ללא הפרעה. אטומיים עובדים <strong>בין כל הthreads ב-grid</strong>, בדיוק כמו זיכרון משותף בין ליבות CPU. זהו המנגנון היחיד לתיאום בטוח <strong>בין blocks שונים</strong>.</li>
+<li><strong>מחסומים - barriers.</strong> מחסום כמו <code>__syncthreads()</code> מסנכרן threads, אבל <strong>רק בתוך block יחיד (CTA)</strong>. הוא ממתין עד שכל threads ה-block הגיעו לנקודה, ואז משחרר את כולם. מחסום כזה <strong>אינו</strong> מסנכרן בין blocks שונים.</li>
+</ul>
+<p>וכאן האזהרה הקריטית ביותר של השיעור: <strong>סדר הביצוע בין blocks אינו דטרמיניסטי (indeterminate).</strong> החומרה מתזמנת blocks ל-SMs בסדר שאינו מובטח, ולא כל ה-blocks בהכרח תושבים בו-זמנית - block עשוי להמתין בתור עד ש-block אחר יסיים. מכאן נובע כלל ברזל:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>   legal:      every block updates a shared global counter with atomicAdd,
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>               without assuming anything about which one runs before which.
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>   forbidden:  block 0 spin-waits until block 1 writes a flag to global.
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>               If block 1 hasn&#39;t been scheduled to an SM yet (or is
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>               waiting for block 0 to free up space), this is a deadlock.
+</code></pre></div>
+<p>ההשלכה המעשית: <strong>אי אפשר לסנכרן את כל ה-grid מתוך kernel רגיל.</strong> אם אתם צריכים ש"כל ה-blocks יסיימו שלב א' לפני שמישהו יתחיל שלב ב'", הדרך הבטוחה היא <strong>לסיים את ה-kernel ולהשיק kernel שני</strong> - גבול ה-kernel הוא נקודת סנכרון גלובלית טבעית. (קיים גם מנגנון <code>grid.sync()</code> של cooperative groups, אבל הוא דורש launch מיוחדת ותנאים שמבטיחים שכל ה-blocks תושבים; נעסוק בו בפרק מתקדם.) את התיאום התוך-block, לעומת זאת, עושים בזול עם <code>__syncthreads()</code>.</p>
+<h2 id="-local-memory-scope">זיכרון מקומי - Local Memory (המלכוד של ה-scope)<a class="headerlink" href="#-local-memory-scope" title="Permanent link">&para;</a></h2>
+<p>עכשיו למלכוד שמפיל מתחילים רבים. לצד register, shared ו-global קיים מרחב רביעי שנקרא <strong>local memory (זיכרון מקומי)</strong> - והשם שלו מטעה לחלוטין. "local" כאן הוא <strong>scope (היקף), לא שכבת מהירות.</strong> local memory הוא פרטי ל-thread בדיוק כמו register, אבל פיזית הוא <strong>יושב ב-GPU RAM האיטי</strong> - אותו DRAM/HBM שבו יושב ה-global memory. במילים אחרות: "local" נשמע קרוב ומהיר, אבל בפועל הוא רחוק ואיטי כמו global.</p>
+<p>מתי משתנה של thread נופל ל-local memory במקום ל-register? בשלושה מקרים עיקריים:</p>
+<ol>
+<li><strong>גלישת רגיסטרים - register spilling.</strong> כש-thread צריך יותר registers ממה שזמין בקובץ האוגרים, הcompiler "שופך" (spills) את העודף ל-local memory שב-GPU RAM. כפי שראינו בשיעור 1.6, הגלישה הזו מגיעה עם "קנס ביצועים משמעותי".</li>
+<li><strong>מערכים מקומיים באינדוקס דינמי.</strong> מערך אוטומטי בתוך kernel שניגשים אליו באינדקס שאינו ידוע בזמן קומפילציה לא יכול לשבת באוגרים (לאוגרים אין כתובות שאפשר לחשב בזמן ריצה), ולכן הוא נוחת ב-local memory.</li>
+<li><strong>מבנים או מערכים גדולים מדי</strong> מכדי להיכנס לתקציב האוגרים.</li>
+</ol>
+<p>הנה דוגמה שכמעט מבטיחה גלישה - מערך גדול באינדוקס דינמי:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">spills</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="o">*</span><span class="w"> </span><span class="n">idx</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">scratch</span><span class="p">[</span><span class="mi">64</span><span class="p">];</span><span class="w">               </span><span class="c1">// large; likely to spill to local memory</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="p">;</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">64</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">k</span><span class="p">)</span><span class="w"> </span><span class="n">scratch</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="n">scratch</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">64</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">;</span><span class="w">    </span><span class="c1">// dynamic index -&gt; not possible in registers</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">scratch</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">64</span><span class="p">];</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="p">}</span>
+</code></pre></div>
+<p>הסכנה בגלישה היא שהיא <strong>שקטה</strong>: ה-kernel נכון לחלוטין, פשוט איטי, כי כל גישה ל-<code>scratch</code> נעשית עכשיו מול DRAM ולא מול אוגר. בתרגול נחשוף גלישה כזו במפורש - נספור אוגרים עם <code>nvcc --ptxas-options=-v</code> ונראה שורת <code>lmem</code> (local memory) גדֵלה. שימו לב שאין מילת מפתח <code>__local__</code> שכותבים ידנית: local memory תמיד נוצר בעקיפין, בהחלטת הcompiler. הלקח: <strong>"local" הוא scope פרטי ל-thread, לא הבטחת מהירות.</strong></p>
+<h2 id="-constant-memory">זיכרון קבוע - Constant Memory (לקריאה בלבד)<a class="headerlink" href="#-constant-memory" title="Permanent link">&para;</a></h2>
+<p>מרחב חמישי, שנעסוק בו לעומק בשיעור 3.4, הוא <strong>constant memory (זיכרון קבוע)</strong>. גם הוא בהיקף ה-grid כולו, אבל עם שלוש תכונות ייחודיות: הוא <strong>לקריאה בלבד</strong> מנקודת מבט ה-kernel (הhost כותב אליו לפני הlaunch), הוא <strong>ממוטמן (cached)</strong> בcache constant ייעודי בכל SM, והוא <strong>ממוטב לשידור (broadcast).</strong> המשמעות של broadcast: כשכל 32 הthreads של warp קוראים את <strong>אותה כתובת</strong> בדיוק, החומרה משרתת את כולם בקריאה אחת, בעלות של גישה יחידה. מכריזים עליו עם <code>__constant__</code>, וגודלו מוגבל (כ-64 KB בסך הכל). זה הופך אותו מושלם לפרמטרים שכל הthreads קוראים אותם יחד - מקדמים, קבועי מסנן, מטריצות טרנספורמציה. את הפרטים, כולל מה קורה כשthreads באותו warp קוראים כתובות שונות (אז השידור מתפצל וההטבה נעלמת), נראה בשיעור 3.4.</p>
+<h2 id="-global-">מלכוד ה-<strong>global</strong> - הבלבול המפורסם<a class="headerlink" href="#-global-" title="Permanent link">&para;</a></h2>
+<p>לפני הטבלה המסכמת, צריך לפרק פעם נוספת את הבלבול שהזכרנו כבר בשיעור 0.3, כי הוא חוזר ומכשיל: <strong>למילת המפתח <code>__global__</code> אין שום קשר ל-global memory.</strong></p>
+<ul>
+<li><code>__global__</code> היא מסמן (qualifier) של <strong>פונקציה</strong>. היא מסמנת <strong>kernel</strong> - פונקציה שמושקת מהhost ומורצת על הdevice. זה שם של סוג פונקציה.</li>
+<li><code>global memory</code> הוא <strong>מרחב זיכרון</strong> - ה-DRAM שיושב על ה-GPU, ה-80 GiB של ה-H100. זה שם של מקום.</li>
+</ul>
+<p>השניים חולקים את המילה "global" במקרה גמור. אחד ממעצבי CUDA המוקדמים אמר בבדיחות הדעת שהשם נבחר "כדי למקסם בלבול אצל המפתחים". שימו לב שאף לא אחד ממסמני הפונקציות של CUDA מתאר מרחב זיכרון: <code>__global__</code> = kernel, <code>__device__</code> = פונקציה שרצה על הdevice ונקראת מהdevice, <code>__host__</code> = פונקציה של הhost. לעומתם, מסמני <strong>המשתנים</strong> הם אלה שמתארים זיכרון: <code>__shared__</code>, <code>__constant__</code>, <code>__device__</code> (על משתנה גלובלי - global scope ב-global memory). זכרו את ההפרדה: מסמן על פונקציה מדבר על <strong>היכן הפונקציה רצה</strong>; מסמן על משתנה מדבר על <strong>היכן הזיכרון יושב</strong>.</p>
+<h2 id="-the-memory-spaces">טבלת מרחבי הזיכרון - the memory spaces<a class="headerlink" href="#-the-memory-spaces" title="Permanent link">&para;</a></h2>
+<p>הנה כל ההיררכיה הלוגית בטבלה אחת. זו מפת הדרכים של כל פרק הזיכרון - חזרו אליה בכל פעם שאתם לא בטוחים היכן משתנה חי:</p>
+<table>
+<thead>
+<tr>
+<th>מרחב</th>
+<th>היקף (scope)</th>
+<th>זמן-חיים</th>
+<th>מיקום פיזי</th>
+<th>מהירות</th>
+<th>מילת מפתח</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>register</td>
+<td>thread בודד</td>
+<td>ה-thread</td>
+<td>register file ב-SM</td>
+<td>הכי מהיר</td>
+<td>(אין; משתנה מקומי)</td>
+</tr>
+<tr>
+<td>local</td>
+<td>thread בודד</td>
+<td>ה-thread</td>
+<td>GPU RAM</td>
+<td>איטי (כמו global)</td>
+<td>(אין; גלישה/מערך)</td>
+</tr>
+<tr>
+<td>shared</td>
+<td>block (CTA)</td>
+<td>ה-block</td>
+<td>L1/SRAM ב-SM</td>
+<td>מהיר מאוד</td>
+<td><code>__shared__</code></td>
+</tr>
+<tr>
+<td>constant</td>
+<td>grid כולו</td>
+<td>התוכנית</td>
+<td>GPU RAM + cache constant</td>
+<td>מהיר בקריאת-שידור</td>
+<td><code>__constant__</code></td>
+</tr>
+<tr>
+<td>global</td>
+<td>grid כולו</td>
+<td>התוכנית</td>
+<td>GPU RAM (HBM)</td>
+<td>איטי, גדול</td>
+<td><code>__device__</code> / <code>cudaMalloc</code></td>
+</tr>
+</tbody>
+</table>
+<p>שתי שורות שמלמדות את כל הסיפור: <strong>register ו-local חולקים היקף זהה (thread בודד) אבל מיקום פיזי הפוך</strong> - האחד ה-SRAM המהיר ביותר, השני ה-DRAM האיטי ביותר; המרחק ביניהם הוא כל ההבדל בין kernel מהיר ל-kernel שגולש. ו<strong>shared ו-global חולקים את אותה מטרה - שיתוף נתונים - בשתי רמות היררכיה שונות</strong>: shared משתף בזול בתוך block, global משתף ביוקר על פני grid, וה-scratchpad שביניהם הוא מה שממיר את היוקר לזול.</p>
+<p>מפה זו לוגית בלבד. את המספרים הפיזיים המדויקים - קיבולת קובץ האוגרים, פיצול L1/shared, רוחב הפס של ה-HBM3 - ראינו בשיעור 1.6, והם שנותנים לכל שורה כאן את ה"מחיר" האמיתי שלה. בשיעורים 3.2 עד 3.4 נרד לכל אחד מהמרחבים האלה בקוד: 3.2 ל-global וניהול הזיכרון, 3.3 ל-shared ולתבנית ה-tiling, 3.4 ל-constant ולזיכרונות המיוחדים.</p>
+<h2 id="-h100">התמונה המלאה - מהלוגי לפיזי על H100<a class="headerlink" href="#-h100" title="Permanent link">&para;</a></h2>
+<p>בואו נניח את המפה הלוגית של השיעור הזה על גבי המדרג הפיזי של שיעור 1.6, כדי לראות למה כל רמה "עולה" מה שהיא עולה. הנה ה-H100 מלמעלה למטה, עם המרחב הלוגי לצד המבנה הפיזי והמספרים הקונקרטיים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>   logical space     physical structure (H100)        relative speed
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>   ─────────────     ──────────────────────────       ──────────────
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>   register    ◄──   register file in every SM         fastest
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>                     (~65,536 32-bit registers/SM)     (&quot;keeps pace with the cores&quot;)
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>                          │  ~10x faster than L1
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>   shared      ◄──   L1 / SRAM in every SM             very fast
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>                     (256 KiB per SM, 33 MiB aggregate) (~10x slower than the cores)
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>                          │
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>                     L2 cache (shared by all SMs)
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>                          │
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>   local  ─┐
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>   global ─┴──►      GPU RAM - HBM3                    slow, huge
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>   constant          (80 GiB aggregate)                (DRAM, ~3.35 TB/s bandwidth)
+</code></pre></div>
+<p>שלוש תובנות שהתמונה הזו מבהירה. ראשית, <strong>local ו-global יושבים באותו DRAM פיזי</strong> - זו הסיבה שגלישה ל-local כואבת כמו גישה ל-global, למרות שה-scope שלה פרטי ל-thread. שנית, <strong>shared ו-L1 חולקים את אותם 256 KiB של SRAM לכל SM</strong> - כשאתם מקצים יותר <code>__shared__</code>, נשאר פחות L1 אוטומטי, וזה tradeoff שנכוונן בשיעור 3.3. שלישית, ההפרשים אינם ליניאריים: קובץ האוגרים מהיר בערך פי 10 מ-L1, וה-L1 עצמו איטי בערך פי 10 מהליבות - כך שגישה ל-register מהירה בסדרי גודל מגישה ל-DRAM. כל תכנון kernel טוב הוא במהותו מאבק לדחוף כמה שיותר מהעבודה למעלה בפירמידה הזו: לשמור נתונים חמים באוגרים, לביים ב-shared, ולמזער את המגע עם ה-DRAM למטה.</p>
+<h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>היררכיית הזיכרון הלוגית של CUDA היא מראָה של היררכיית ה-threads: register לכל thread, shared memory לכל block, global memory לכל grid; ככל שעולים, הקבוצה וההיקף גדֵלים והמהירות יורדת.</li>
+<li>הזיכרון הזה מנוהל בידי המתכנת (scratchpad) ולא בידי החומרה - זה ההבדל המהותי מcache CPU שקוף, וזו האחריות שקובעת את ביצועי ה-kernel.</li>
+<li>register פרטי ל-thread, יושב בקובץ האוגרים של ה-SM, הכי מהיר; יותר registers ל-thread שווה occupancy נמוכה יותר; החריג הוא MMA של Tensor Cores, שחולק אוגרים על פני ה-warp.</li>
+<li>shared memory משותף ל-block, יושב פיזית ב-L1, והוא שכבת הביום; אמנות ה-kernel המהיר היא למקסם את מספר הפעולות האריתמטיות לכל טעינה אליו (התבנית global -&gt; shared -&gt; חישוב -&gt; global).</li>
+<li>global memory גלובלי בהיקף (כל ה-grid) ובזמן-חיים (כל התוכנית), יושב ב-GPU RAM; מתאמים אותו עם atomics (בין כל הthreads) ועם barriers (רק בתוך block); סדר הביצוע בין blocks אינו דטרמיניסטי.</li>
+<li>מכיוון שאין סדר מובטח בין blocks, אסור ש-block ימתין ל-block אחר בתוך אותו kernel; סנכרון גלובלי אמיתי מושג על ידי סיום ה-kernel וlaunch של kernel חדש.</li>
+<li>local memory הוא scope פרטי ל-thread, לא שכבה מהירה: פיזית הוא ב-GPU RAM האיטי ונוצר מגלישת registers או ממערכים מקומיים באינדוקס דינמי - והגלישה שקטה ויקרה.</li>
+<li>constant memory לקריאה בלבד, ממוטמן וממוטב לשידור כשכל ה-warp קורא אותה כתובת (טיפול מלא ב-3.4).</li>
+<li><code>__global__</code> מסמן kernel (פונקציה שמושקת מהhost ורצה על הdevice) ואין לו שום קשר ל-global memory; מסמני פונקציה מתארים היכן הקוד רץ, מסמני משתנה (<code>__shared__</code>, <code>__constant__</code>) מתארים היכן הזיכרון יושב.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

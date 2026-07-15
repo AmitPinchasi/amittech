@@ -1,0 +1,2937 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="בשיעורים 2.1 ו-2.2 בנינו את המודל התיאורטי של CUDA - היררכיית ה-threads (thread, block, grid), הכלל שבלוקים חייבים להיות עצמאיים, והמיפוי של block שלם...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.3%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20kernel%20-%20%D7%90%D7%99%D7%A0%D7%93%D7%95%D7%A7%D7%A1%20%D7%95-launch%20configuration/2.3%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20kernel%20-%20%D7%90%D7%99%D7%A0%D7%93%D7%95%D7%A7%D7%A1%20%D7%95-launch%20configuration%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../2.2%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94-threads%20-%20blocks%20%D7%95-grids/2.2%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94-threads%20-%20blocks%20%D7%95-grids%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../2.3%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20kernel%20-%20%D7%90%D7%99%D7%A0%D7%93%D7%95%D7%A7%D7%A1%20%D7%95-launch%20configuration%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>2.3 - כתיבת kernel - אינדוקס ו-launch configuration - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "2.3 - \u05db\u05ea\u05d9\u05d1\u05ea kernel - \u05d0\u05d9\u05e0\u05d3\u05d5\u05e7\u05e1 \u05d5-launch configuration - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.3%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20kernel%20-%20%D7%90%D7%99%D7%A0%D7%93%D7%95%D7%A7%D7%A1%20%D7%95-launch%20configuration/2.3%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20kernel%20-%20%D7%90%D7%99%D7%A0%D7%93%D7%95%D7%A7%D7%A1%20%D7%95-launch%20configuration%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="2.3 - כתיבת kernel - אינדוקס ו-launch configuration - הרצאה - עמית טק" />
+<meta property="og:description" content="בשיעורים 2.1 ו-2.2 בנינו את המודל התיאורטי של CUDA - היררכיית ה-threads (thread, block, grid), הכלל שבלוקים חייבים להיות עצמאיים, והמיפוי של block שלם..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.3%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20kernel%20-%20%D7%90%D7%99%D7%A0%D7%93%D7%95%D7%A7%D7%A1%20%D7%95-launch%20configuration/2.3%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20kernel%20-%20%D7%90%D7%99%D7%A0%D7%93%D7%95%D7%A7%D7%A1%20%D7%95-launch%20configuration%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.3%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20kernel%20-%20%D7%90%D7%99%D7%A0%D7%93%D7%95%D7%A7%D7%A1%20%D7%95-launch%20configuration/2.3%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20kernel%20-%20%D7%90%D7%99%D7%A0%D7%93%D7%95%D7%A7%D7%A1%20%D7%95-launch%20configuration%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="2.3 - כתיבת kernel - אינדוקס ו-launch configuration - הרצאה - עמית טק" />
+<meta property="twitter:description" content="בשיעורים 2.1 ו-2.2 בנינו את המודל התיאורטי של CUDA - היררכיית ה-threads (thread, block, grid), הכלל שבלוקים חייבים להיות עצמאיים, והמיפוי של block שלם..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.3%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20kernel%20-%20%D7%90%D7%99%D7%A0%D7%93%D7%95%D7%A7%D7%A1%20%D7%95-launch%20configuration/2.3%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20kernel%20-%20%D7%90%D7%99%D7%A0%D7%93%D7%95%D7%A7%D7%A1%20%D7%95-launch%20configuration%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-kernel-__global__" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              2.3 - כתיבת kernel - אינדוקס ו-launch configuration - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_4" id="__nav_7_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2   מודל התכנות של CUDA
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.1   Threads ו Warps   מודל SIMT
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../2.2%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94-threads%20-%20blocks%20%D7%95-grids/2.2%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94-threads%20-%20blocks%20%D7%95-grids%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.2   היררכיית ה threads   blocks ו grids
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_4_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_4_3" id="__nav_7_3_4_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.3   כתיבת kernel   אינדוקס ו launch configuration
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_4_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2.3   כתיבת kernel   אינדוקס ו launch configuration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.3 - כתיבת kernel - אינדוקס ו-launch configuration - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.3 - כתיבת kernel - אינדוקס ו-launch configuration - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-kernel-__global__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אנטומיה של ה-kernel - פונקציית __global__
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-full-launch-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תצורת ההרצה המלאה - the full launch configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-1d-2d-and-3d-indexing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חישוב אינדקס - 1D, 2D and 3D indexing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-block-choosing-the-block-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        בחירת גודל ה-block - choosing the block size
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-naive-matmul-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        כפל מטריצות נאיבי - the naive matmul kernel
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-memory-bandwidth-wall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קיר רוחב הפס - the memory bandwidth wall
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-raising-arithmetic-intensity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        כיוון הפתרון - raising arithmetic intensity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#grid-stride-portability-for-any-n" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        לולאת grid-stride - portability for any N
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2.3%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20kernel%20-%20%D7%90%D7%99%D7%A0%D7%93%D7%95%D7%A7%D7%A1%20%D7%95-launch%20configuration%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.3 - כתיבת kernel - אינדוקס ו-launch configuration - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2.3%20-%20%D7%9B%D7%AA%D7%99%D7%91%D7%AA%20kernel%20-%20%D7%90%D7%99%D7%A0%D7%93%D7%95%D7%A7%D7%A1%20%D7%95-launch%20configuration%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.3 - כתיבת kernel - אינדוקס ו-launch configuration - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../2.4%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%2C%20cooperative%20groups%20%D7%95-warpgroups/2.4%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%2C%20cooperative%20groups%20%D7%95-warpgroups%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.4   סנכרון, cooperative groups ו warpgroups
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../2.5%20-%20Compute%20Capability%20%D7%95%D7%92%D7%A8%D7%A1%D7%90%D7%95%D7%AA%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%94/2.5%20-%20Compute%20Capability%20%D7%95%D7%92%D7%A8%D7%A1%D7%90%D7%95%D7%AA%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2.5   Compute Capability וגרסאות ארכיטקטורה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-kernel-__global__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אנטומיה של ה-kernel - פונקציית __global__
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-full-launch-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        תצורת ההרצה המלאה - the full launch configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-1d-2d-and-3d-indexing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חישוב אינדקס - 1D, 2D and 3D indexing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-block-choosing-the-block-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        בחירת גודל ה-block - choosing the block size
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-naive-matmul-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        כפל מטריצות נאיבי - the naive matmul kernel
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-the-memory-bandwidth-wall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קיר רוחב הפס - the memory bandwidth wall
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-raising-arithmetic-intensity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        כיוון הפתרון - raising arithmetic intensity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#grid-stride-portability-for-any-n" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        לולאת grid-stride - portability for any N
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    2   מודל התכנות של CUDA
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    2.3   כתיבת kernel   אינדוקס ו launch configuration
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>2.3 - כתיבת kernel - אינדוקס ו-launch configuration - הרצאה</h1>
+
+<p>בשיעורים 2.1 ו-2.2 בנינו את המודל התיאורטי של CUDA - היררכיית ה-threads (thread, block, grid), הכלל שבלוקים חייבים להיות עצמאיים, והמיפוי של block שלם ל-SM (מעבד רב-זרמי) יחיד. בשיעור 0.3 אפילו כתבנו kernel רץ ראשון, חיבור וקטורים חד-ממדי. עכשיו נסגור את הפער בין התיאוריה לקוד: נלמד לכתוב ולהשיק kernel נכון - את תצורת ההרצה המלאה בת ארבעת הפרמטרים, את תבניות האינדוקס לבעיות חד-ממדיות, דו-ממדיות ותלת-ממדיות, ואת לולאת ה-grid-stride שהופכת kernel לנייד לכל גודל בעיה. ואז נכתוב את ה-kernel שילווה אותנו לאורך כל הקורס: כפל המטריצות (matmul) הנאיבי. הוא יעבוד, ייתן תוצאה נכונה, ובכל זאת ינצל שבריר זעום מכוח ה-GPU. הוא ילמד אותנו את השיעור הכי חשוב בביצועי GPU - <strong>קיר רוחב הפס</strong> - שבו נבין למה עצם הרצת חישוב על ה-GPU אינה מבטיחה שום דבר, ומאיזה כיוון מגיע התיקון. זה השיעור שמכין את הקרקע לכל פרק 3.</p>
+<h2 id="-kernel-__global__">אנטומיה של ה-kernel - פונקציית <code>__global__</code><a class="headerlink" href="#-kernel-__global__" title="Permanent link">&para;</a></h2>
+<p>נחזור על ההגדרה המדויקת של kernel, כי כל טעות עליה מתגלגלת הלאה. ה-kernel הוא פונקציית C++ רגילה, המסומנת במילת המפתח <code>__global__</code>, עם שלושה מאפיינים מחייבים:</p>
+<ul>
+<li><strong>טיפוס ההחזרה הוא תמיד <code>void</code>.</strong> kernel לא מחזיר ערך. אם כתבתם <code>__global__ int foo(...)</code>, ה-nvcc יסרב לקמפל. התוצר היחיד של kernel הוא תופעת הלוואי שלו - כתיבות לזיכרון.</li>
+<li><strong>התקשורת היא דרך מצביעים ל-global memory</strong> (זיכרון גלובלי). הhost (ה-CPU) מעביר ל-kernel כתובות של זיכרון שיושב על ה-GPU, וה-kernel קורא וכותב דרכן. אין ערך מוחזר; יש רק מצביעים ש"מְשַנים זיכרון".</li>
+<li><strong>מושק פעם אחת, מבוצע פעמים רבות.</strong> זו האמירה המגדירה של CUDA. קריאה אחת ל-kernel (launch) יוצרת grid שלם של threads, וכל אחד מהם מריץ את אותו גוף קוד בדיוק. בעולם ה-CPU קריאה אחת = הרצה אחת; ב-CUDA launch אחת = אלפי הרצות מקבילות.</li>
+</ul>
+<p>הנה השלד:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">myKernel</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="c1">// body executed by each of many threads; distinguished from one another by index</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">}</span>
+</code></pre></div>
+<p>מלכוד שמות שחשוב לחזור עליו: המילה <code>__global__</code> <strong>אין לה שום קשר</strong> ל-global memory. היא מסמנת "פונקציה שמושקת מהhost ורצה על הdevice". אחד ממעצבי CUDA אמר בבדיחות הדעת שהשם נבחר כדי למקסם בלבול. זכרו: <code>__global__</code> = kernel; global memory = ה-RAM של הכרטיס. שני מושגים שונים לגמרי שחולקים מילה במקרה. (למען השלמות: <code>__device__</code> מסמן פונקציה שרצה על הdevice ונקראת רק מתוך device code, ו-<code>__host__</code> היא ברירת המחדל של host code. <code>__global__</code> הוא הגשר היחיד ביניהם - host code שמפעיל device code.)</p>
+<h2 id="-the-full-launch-configuration">תצורת ההרצה המלאה - the full launch configuration<a class="headerlink" href="#-the-full-launch-configuration" title="Permanent link">&para;</a></h2>
+<p>בשיעור 0.3 השקנו kernel עם שני פרמטרים בסוגריים המשולשים: <code>&lt;&lt;&lt;numBlocks, blockSize&gt;&gt;&gt;</code>. זו הצורה המקוצרת. הצורה המלאה כוללת <strong>ארבעה</strong> פרמטרים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">myKernel</span><span class="o">&lt;&lt;&lt;</span><span class="n">gridDim</span><span class="p">,</span><span class="w"> </span><span class="n">blockDim</span><span class="p">,</span><span class="w"> </span><span class="n">sharedBytes</span><span class="p">,</span><span class="w"> </span><span class="n">stream</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">args</span><span class="p">...);</span>
+</code></pre></div>
+<p>נפרק אותם אחד-אחד:</p>
+<table>
+<thead>
+<tr>
+<th>פרמטר</th>
+<th>טיפוס</th>
+<th>משמעות</th>
+<th>ברירת מחדל</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gridDim</code></td>
+<td><code>dim3</code></td>
+<td>מבנה ה-grid: כמה בלוקים, ובאילו ממדים</td>
+<td>חובה</td>
+</tr>
+<tr>
+<td><code>blockDim</code></td>
+<td><code>dim3</code></td>
+<td>מבנה כל block: כמה threads, ובאילו ממדים</td>
+<td>חובה</td>
+</tr>
+<tr>
+<td><code>sharedBytes</code></td>
+<td><code>size_t</code></td>
+<td>כמות ה-shared memory הדינמי לכל block, בבתים</td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>stream</code></td>
+<td><code>cudaStream_t</code></td>
+<td>הזרם שאליו הlaunch נכנסת (סדר הביצוע)</td>
+<td>0 (הזרם הראשי)</td>
+</tr>
+</tbody>
+</table>
+<p>שני הפרמטרים הראשונים הם מטיפוס <code>dim3</code> - מבנה בן שלושה שדות <code>x</code>, <code>y</code>, <code>z</code>. אפשר לאתחל אותו בממד אחד, בשניים או בשלושה; שדות שלא צוינו מקבלים 1:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">dim3</span><span class="w"> </span><span class="nf">a</span><span class="p">(</span><span class="mi">256</span><span class="p">);</span><span class="w">            </span><span class="c1">// a.x=256, a.y=1, a.z=1   (one-dimensional)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">dim3</span><span class="w"> </span><span class="nf">b</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="mi">16</span><span class="p">);</span><span class="w">         </span><span class="c1">// b.x=16,  b.y=16, b.z=1  (two-dimensional, 256 threads)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">dim3</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="p">);</span><span class="w">        </span><span class="c1">// 512 threads in three dimensions</span>
+</code></pre></div>
+<p>כשמעבירים מספר שלם פשוט כמו ב-<code>&lt;&lt;&lt;numBlocks, blockSize&gt;&gt;&gt;</code>, הקומפיילר עוטף אותו אוטומטית ל-<code>dim3</code> חד-ממדי. לכן הצורה מ-0.3 היא בסך הכל מקרה פרטי של הצורה המלאה, עם <code>sharedBytes = 0</code> ו-<code>stream = 0</code>.</p>
+<ul>
+<li><strong><code>sharedBytes</code></strong> קובע כמה shared memory (זיכרון משותף) דינמי יוקצה לכל block. זה רלוונטי רק ל-kernel שמשתמש ב-<code>extern __shared__</code>; נעמיק בזה בפרק 3. עד אז נשאיר אותו 0 (או נשמיט).</li>
+<li><strong><code>stream</code></strong> קובע לאיזה זרם (stream) הlaunch שייכת. פעולות באותו זרם מבוצעות בסדר; פעולות בזרמים שונים יכולות לחפוף. הזרם 0 הוא ברירת המחדל. את הזרמים והחפיפה בין העברות זיכרון לחישוב נלמד בפרק על ריצה אסינכרונית.</li>
+</ul>
+<p>מגבלות חומרה שכדאי לזכור: המכפלה <code>blockDim.x * blockDim.y * blockDim.z</code> חייבת להיות <strong>עד 1024</strong> threads ל-block. ממדי ה-<code>gridDim</code> מוגבלים ל-<code>2^31 - 1</code> בציר x, ו-65535 בצירים y ו-z. חריגה מכל אלה נותנת <code>cudaErrorInvalidConfiguration</code> כבר בlaunch.</p>
+<h2 id="-1d-2d-and-3d-indexing">חישוב אינדקס - 1D, 2D and 3D indexing<a class="headerlink" href="#-1d-2d-and-3d-indexing" title="Permanent link">&para;</a></h2>
+<p>השקנו grid של אלפי threads שמריצים אותו קוד; איך כל thread יודע על איזה נתון לעבוד? התשובה, כפי שראינו ב-2.1, היא <strong>אינדוקס מבוסס מזהים</strong>. כל thread רואה ארבעה משתני מבנה מובנים - <code>threadIdx</code>, <code>blockIdx</code>, <code>blockDim</code>, <code>gridDim</code> - כל אחד עם שדות <code>.x</code>, <code>.y</code>, <code>.z</code>, ומהם הוא גוזר את מיקומו.</p>
+<p><strong>המקרה החד-ממדי (1D)</strong> - למערכים, כפי שראינו בחיבור וקטורים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+</code></pre></div>
+<p><strong>המקרה הדו-ממדי (2D)</strong> - למטריצות ותמונות. שני צירים בלתי תלויים, כל אחד עם אותה נוסחה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kt">int</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span><span class="w">   </span><span class="c1">// column index</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kt">int</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">y</span><span class="p">;</span><span class="w">   </span><span class="c1">// row index</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kt">int</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">width</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">col</span><span class="p">;</span><span class="w">                        </span><span class="c1">// flatten to a 1D array in memory</span>
+</code></pre></div>
+<p>שימו לב לנקודה שמבלבלת מתחילים: הזיכרון תמיד חד-ממדי. מטריצה <code>N x N</code> שמורה כמערך רציף של <code>N*N</code> איברים בסדר שורות (row-major); האיבר <code>(row, col)</code> יושב באינדקס <code>row * N + col</code>. הצירים הדו-ממדיים של ה-grid הם רק דרך נוחה למספֵּר threads; הגישה לזיכרון עדיין דורשת שיטוח ידני.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>   2D grid of 16x16 blocks, covering an NxN matrix
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>   ┌──────────┬──────────┬──────────┐
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>   │ block    │ block    │ block    │   blockIdx.y = 0
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>   │ (0,0)    │ (1,0)    │ (2,0)    │
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>   ├──────────┼──────────┼──────────┤
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>   │ block    │ block    │ block    │   blockIdx.y = 1
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>   │ (0,1)    │ (1,1)    │ (2,1)    │
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>   └──────────┴──────────┴──────────┘
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>     each block contains 16x16 = 256 threads;
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>     thread (tx,ty) within block (bx,by) handles
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>     col = bx*16 + tx ,  row = by*16 + ty
+</code></pre></div>
+<p><strong>המקרה התלת-ממדי (3D)</strong> - לנפחים (סימולציות פיזיקליות, וידאו). אותו רעיון, ציר שלישי:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kt">int</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kt">int</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="kt">int</span><span class="w"> </span><span class="n">z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">z</span><span class="p">;</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="kt">int</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">z</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">height</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">y</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">width</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">x</span><span class="p">;</span>
+</code></pre></div>
+<p>בכל שלושת המקרים, כמו בחיבור הווקטורים, נדרש <strong>שומר גבולות</strong> (bounds guard) כי ה-grid כמעט אף פעם לא מחלק בדיוק את מידות הבעיה: <code>if (row &lt; N &amp;&amp; col &lt; N)</code>. הthreads העודפים בשוליים חייבים לצאת בלי לגעת בזיכרון.</p>
+<h2 id="-block-choosing-the-block-size">בחירת גודל ה-block - choosing the block size<a class="headerlink" href="#-block-choosing-the-block-size" title="Permanent link">&para;</a></h2>
+<p>כמה threads לשים ב-block? יש שני שיקולים, אחד מחייב ואחד של כיוונון:</p>
+<p><strong>כלל מחייב: כפולה של 32.</strong> בחומרה, הthreads מתבצעים בקבוצות של 32 הנקראות warp (קבוצת 32 threads המבצעים אותה פקודה יחד, כפי שראינו ב-2.2). block שאינו כפולה של 32 יגרור warp אחרון חלקי, שבו חלק מנתיבי החישוב פשוט מושבתים ומתבזבזים. לכן <code>blockDim</code> (המכפלה הכוללת) צריך תמיד להיות כפולה של 32.</p>
+<p><strong>כיוונון: 128 עד 256 בדרך כלל.</strong> ערכים נפוצים הם 128, 256 ו-512. 256 הוא ברירת מחדל טובה שכמעט תמיד סבירה. בבעיות דו-ממדיות בלוק של <code>16 x 16 = 256</code> הוא הבחירה הקלאסית, וגם <code>32 x 8 = 256</code> או <code>32 x 32 = 1024</code> נפוצים.</p>
+<p>הסיבה לטווח הזה קשורה ל-<strong>occupancy</strong> (תפוסה) - כמה warps יכולים לשבת (resident) בו-זמנית על SM. ב-H100 כל SM מחזיק עד 2048 threads תושבים (64 warps) ועד 32 בלוקים תושבים. אם ה-block קטן מדי (נניח 32 threads), מגבלת ה-32 בלוקים תחסום אתכם ל-<code>32 * 32 = 1024</code> threads בלבד - חצי תפוסה. אם ה-block גדול (1024), מכסת ה-threads מאפשרת רק 2 בלוקים לכל SM, מה שמקשה על החומרה להסתיר latency (השהיה) כשבלוק תקוע בהמתנה לזיכרון. block בטווח 128-256 מאזן בין השניים: מספיק בלוקים כדי למלא את ה-SM, מספיק threads בכל אחד כדי לארוז warps שלמים. את החישוב המדויק של occupancy - איך registers ו-shared memory מגבילים אותה - נעשה בפרק 8.1; כאן די בכלל האצבע.</p>
+<h2 id="-the-naive-matmul-kernel">כפל מטריצות נאיבי - the naive matmul kernel<a class="headerlink" href="#-the-naive-matmul-kernel" title="Permanent link">&para;</a></h2>
+<p>עכשיו נכתוב את ה-kernel המרכזי של הקורס. הבעיה: בהינתן שתי מטריצות מרובעות <code>A</code> ו-<code>B</code> בגודל <code>N x N</code>, לחשב את מכפלתן <code>C = A * B</code>, כאשר</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>C[row][col] = sum over k of  A[row][k] * B[k][col]
+</code></pre></div>
+<p>ההקבלה הטבעית ל-CUDA: <strong>thread אחד לכל איבר של <code>C</code>.</strong> כל thread מזהה את השורה והעמודה שלו לפי האינדוקס הדו-ממדי, ומריץ לולאה על <code>k</code> שסוכמת את המכפלה. זהו ה-kernel כפי שהוא מופיע ב-glossary:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">mm</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">A</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">B</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">C</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">N</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">row</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">            </span><span class="n">sum</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">A</span><span class="p">[</span><span class="n">row</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">k</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">B</span><span class="p">[</span><span class="n">k</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">col</span><span class="p">];</span><span class="w">   </span><span class="c1">// multiply-add on two global elements</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">        </span><span class="p">}</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">        </span><span class="n">C</span><span class="p">[</span><span class="n">row</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">col</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sum</span><span class="p">;</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="p">}</span>
+</code></pre></div>
+<p>והlaunch, עם block דו-ממדי ו-grid דו-ממדי שמכסה את <code>C</code> בעיגול כלפי מעלה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">dim3</span><span class="w"> </span><span class="nf">block</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="mi">16</span><span class="p">);</span><span class="w">                              </span><span class="c1">// 256 threads</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">dim3</span><span class="w"> </span><span class="n">grid</span><span class="p">((</span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">block</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">block</span><span class="p">.</span><span class="n">x</span><span class="p">,</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">          </span><span class="p">(</span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">block</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">block</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">mm</span><span class="o">&lt;&lt;&lt;</span><span class="n">grid</span><span class="p">,</span><span class="w"> </span><span class="n">block</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">d_A</span><span class="p">,</span><span class="w"> </span><span class="n">d_B</span><span class="p">,</span><span class="w"> </span><span class="n">d_C</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">);</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaGetLastError</span><span class="p">());</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaDeviceSynchronize</span><span class="p">());</span>
+</code></pre></div>
+<p>נזכיר את מקרו הבדיקה <code>CUDA_CHECK</code> מ-0.3, כי נשתמש בו לאורך כל הקורס. הוא לוכד את קוד השגיאה שכל קריאת Runtime API מחזירה, מדפיס קובץ, שורה, הקריאה וההודעה, ויוצא:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="cp">#define CUDA_CHECK(call)                                                      \</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="cp">    do {                                                                      \</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="cp">        cudaError_t err_ = (call);                                           \</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="cp">        if (err_ != cudaSuccess) {                                           \</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="cp">            fprintf(stderr, &quot;CUDA error at %s:%d\n  &#39;%s&#39;\n  -&gt; %s\n&quot;,         \</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="cp">                    __FILE__, __LINE__, #call, cudaGetErrorString(err_));    \</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="cp">            exit(EXIT_FAILURE);                                              \</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="cp">        }                                                                   \</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="cp">    } while (0)</span>
+</code></pre></div>
+<p>ה-kernel נכון. אם תריצו אותו מול רפרנס CPU תקבלו התאמה מלאה (עד רעש נקודה צפה זעום). קמפלו עם <code>nvcc -O2 -arch=sm_90a -o matmul matmul.cu</code> והריצו - הוא יעבוד. ובכל זאת, אנחנו עומדים לגלות שהוא אסון ביצועים.</p>
+<h2 id="-the-memory-bandwidth-wall">קיר רוחב הפס - the memory bandwidth wall<a class="headerlink" href="#-the-memory-bandwidth-wall" title="Permanent link">&para;</a></h2>
+<p>בואו נספור את התעבורה מול הזיכרון בלולאה הפנימית, איטרציה אחת:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>   sum += A[row*N + k] * B[k*N + col];
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>          └── global read ──┘   └── global read ──┘
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>          2 reads (8 bytes)  ,  2 FLOPs (multiply + add)
+</code></pre></div>
+<p>בכל איטרציה אנחנו קוראים איבר אחד מ-<code>A</code> ואיבר אחד מ-<code>B</code> - <strong>שתי קריאות מ-global memory, 8 בתים</strong> - ומבצעים כפל וחיבור, כלומר <strong>שתי FLOPs</strong>. היחס:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>   arithmetic intensity = 2 FLOPs / 8 bytes = 0.25 FLOP per byte
+</code></pre></div>
+<p>זו <strong>arithmetic intensity</strong> נמוכה באופן קיצוני. גרוע מזה: אין כאן שום ניצול-חוזר (reuse). כל <code>N</code> ה-threads שמחשבים שורה נתונה של <code>C</code> קוראים את <strong>אותה שורה</strong> של <code>A</code> - אבל כל אחד קורא אותה מ-global memory מחדש, בנפרד. אותו נתון נשלף מה-HBM3 שוב ושוב. מטריצה <code>N x N</code> מבצעת <code>2*N^3</code> FLOPs ומחוללת בסדר גודל של <code>2*N^3</code> קריאות global.</p>
+<p>עכשיו נשווה לחומרה. ב-H100 SXM:</p>
+<ul>
+<li>שיא ה-FP32 (ללא Tensor Cores) הוא כ-<strong>66.9 TFLOPS</strong> = <code>66.9e12</code> FLOP בשנייה.</li>
+<li>רוחב הפס של ה-HBM3 הוא כ-<strong>3.35 TB/s</strong> = <code>3.35e12</code> בתים בשנייה.</li>
+</ul>
+<p>הכלי לחבר בין השניים הוא <strong>מודל ה-Roofline</strong>. הוא מגדיר את <strong>נקודת המפנה</strong> (ridge point) - הarithmetic intensity שבה החישוב עובר מלהיות memory-bound לcompute-bound:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>   ridge point = peak compute / bandwidth
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>              = 66.9e12 FLOP/s / 3.35e12 bytes/s
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>              ≈ 20 FLOP per byte
+</code></pre></div>
+<p>כלומר: כדי <strong>לא</strong> להיות memory-bound על H100, חישוב חייב לבצע לפחות כ-20 FLOPs על כל בית שהוא קורא. וה-matmul הנאיבי מספק <strong>0.25</strong>. הוא רחוק <strong>פי 80</strong> מנקודת המפנה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>        memory-bound          │      compute-bound
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>   ─────────────────────────┼──────────────────────►  arithmetic intensity (FLOP/byte)
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>   0.25          4        20 (ridge point, H100)
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>    ▲            ▲         ▲
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>   naive      tiled(16)   from here on the CUDA Cores are the bottleneck
+</code></pre></div>
+<p>מה זה אומר על המהירות המקסימלית האפשרית? באזור הmemory-bound, המהירות המושגת חסומה על ידי <code>arithmetic intensity * רוחב פס</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>   naive ceiling = 0.25 FLOP/byte * 3.35e12 bytes/s
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>              = 0.84e12 FLOP/s = 0.84 TFLOPS
+</code></pre></div>
+<p>גם אם ננצל את <strong>מלוא</strong> רוחב הפס של ה-HBM3, ה-kernel הנאיבי חסום ל-0.84 TFLOPS - כ-1.25% בלבד מ-66.9 TFLOPS השיא. זו בדיוק האזהרה שה-glossary מנסח בחדות: <strong>"לעולם לא תנצלו כך את כל ה-GPU, כי רוחב הפס האריתמטי של ה-CUDA Cores ב-FLOPs/s גבוה בהרבה מרוחב הפס בין ה-GPU RAM ל-SMs."</strong> יחידות החישוב מורעבות; הן מחכות לזיכרון. בפועל, בגלל L1/L2 caches שקולטים חלק מהקריאות החוזרות, נמדוד סביב 300 GFLOP/s - בערך שליש מהתקרה הmemory-bound, ועדיין פי 200 מתחת לשיא ה-FP32.</p>
+<h2 id="-raising-arithmetic-intensity">כיוון הפתרון - raising arithmetic intensity<a class="headerlink" href="#-raising-arithmetic-intensity" title="Permanent link">&para;</a></h2>
+<p>אם הבעיה היא arithmetic intensity נמוכה, הפתרון חייב להיות להעלות אותה: לקרוא כל נתון מ-global memory <strong>פעם אחת</strong>, להניח אותו במחסן מהיר על ה-SM, ולסחוט ממנו כמה שיותר FLOPs לפני שזורקים אותו. המחסן הזה הוא ה-<strong>shared memory</strong>, והשיטה נקראת <strong>tiling</strong> (חלוקה-לאריחים):</p>
+<ul>
+<li>מחלקים את <code>C</code> לtiles בגודל <code>TILE_WIDTH x TILE_WIDTH</code>, block אחד לכל tile.</li>
+<li>ה-block טוען tile של <code>A</code> וtile של <code>B</code> ל-shared memory <strong>פעם אחת</strong>, ואז כל ה-threads שלו מחשבים מתוך המחסן המהיר.</li>
+<li>כל איבר טעון מנוצל <code>TILE_WIDTH</code> פעמים במקום פעם אחת.</li>
+</ul>
+<p>התוצאה: הarithmetic intensity מזנקת מ-1 FLOP לקריאה ל-<code>TILE_WIDTH</code> FLOPs לקריאה. ל-<code>TILE_WIDTH = 16</code> מקבלים 16 FLOPs לקריאה, כלומר <code>16 FLOP / 4 בתים = 4 FLOP/בית</code> - פי 16 מהנאיבי, וכבר קרוב יותר לנקודת המפנה (עדיין מתחתיה, ולכן עדיין קצת memory-bound, אבל הרבה פחות). ל-<code>TILE_WIDTH = 32</code> מגיעים ל-8 FLOP/בית. את המימוש המלא של ה-kernel המרוצף, על שני מחסומי ה-<code>__syncthreads()</code> שלו, נכתוב בפרק 3 (שיעור 3.3), והוא ייתן קפיצת מהירות של פי 10 עד פי 15.</p>
+<p>ואפילו זה אינו התקרה. גם ה-kernel המרוצף רץ על CUDA Cores. ה-matmul המהיר ביותר רץ על <strong>Tensor Cores</strong> (ליבות טנזור), שרוחב הפס האריתמטי שלהן גבוה בסדר גודל, ומגיע לעשרות אלפי GFLOP/s. את זה נראה בפרויקט 3.5 ובפרק על Tensor Cores. הרעיון המרכזי שכדאי לקחת מכאן: <strong>עצם הרצת חישוב על ה-GPU לא אומרת כלום.</strong> מה שקובע הוא היחס בין חישוב לתעבורת זיכרון, ואת היחס הזה מעלים בעבודה מודעת עם היררכיית הזיכרון.</p>
+<h2 id="grid-stride-portability-for-any-n">לולאת grid-stride - portability for any N<a class="headerlink" href="#grid-stride-portability-for-any-n" title="Permanent link">&para;</a></h2>
+<p>ל-kernel הנאיבי שכתבנו יש הנחה סמויה: ה-grid חייב להיות גדול מספיק כדי לתת thread אחד לכל איבר של <code>C</code>. עבור <code>N</code> ענק, או כשרוצים לקבע את מספר הבלוקים למספר ה-SMs במקום ל-<code>N</code>, ההנחה הזו מגבילה. הפתרון הנקי, כפי שראינו במקרה החד-ממדי ב-0.3, הוא <strong>לולאת grid-stride</strong> - וכאן היא דו-ממדית:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">mmStride</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">A</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">B</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">C</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">N</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">col0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">row0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockIdx</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threadIdx</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">strideX</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">gridDim</span><span class="p">.</span><span class="n">x</span><span class="p">;</span><span class="w">   </span><span class="c1">// total threads on the x axis</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">strideY</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blockDim</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">gridDim</span><span class="p">.</span><span class="n">y</span><span class="p">;</span><span class="w">   </span><span class="c1">// total threads on the y axis</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">row0</span><span class="p">;</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="p">;</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">strideY</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">col0</span><span class="p">;</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="p">;</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">strideX</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="w">            </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="o">++</span><span class="p">)</span>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="w">                </span><span class="n">sum</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">A</span><span class="p">[</span><span class="n">row</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">k</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">B</span><span class="p">[</span><span class="n">k</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">col</span><span class="p">];</span>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="w">            </span><span class="n">C</span><span class="p">[</span><span class="n">row</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">col</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sum</span><span class="p">;</span>
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="w">        </span><span class="p">}</span>
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="p">}</span>
+</code></pre></div>
+<p>הרעיון: כל thread לא מטפל באיבר בודד אלא <strong>מדלג</strong> על פני מטריצת התוצאה בצעדים בגודל ה-grid כולו, בשני הצירים, ומטפל בכל האיברים שנופלים על סריגו. שני התנאים <code>row &lt; N</code> ו-<code>col &lt; N</code> משמשים גם כשומרי גבולות, כך שאין צורך ב-<code>if</code> נפרד. היתרונות:</p>
+<ul>
+<li><strong>גמישות מלאה בגודל.</strong> אותו kernel נכון לכל <code>N</code> - קטן, ענק, לא כפולה של גודל ה-block - בלי לגעת בתצורת הlaunch.</li>
+<li><strong>ניתוק ה-grid מהבעיה.</strong> אפשר לבחור <code>gridDim</code> שממקסם occupancy (למשל כפולה של 132 ה-SMs של ה-H100) במקום להיגרר אחרי <code>N</code>.</li>
+<li><strong>בדיקת נכונות קלה.</strong> אפשר להריץ את אותו kernel עם grid זעום במכוון - אפילו block יחיד <code>&lt;&lt;&lt;1, dim3(16,16)&gt;&gt;&gt;</code> - ולוודא שהוא נכון לפני שמגדילים.</li>
+</ul>
+<p>בתרגול תממשו את שתי הגרסאות, תמדדו את הנאיבית ותחשבו GFLOP/s, תאשרו במספרים שהיא memory-bound מול נקודת המפנה של ה-H100, ותהפכו אותה ל-grid-stride נייד.</p>
+<h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>ה-kernel מסומן ב-<code>__global__</code>, מחזיר תמיד <code>void</code>, מתקשר רק דרך מצביעים ל-global memory, ומושק פעם אחת אך מבוצע בידי grid שלם של threads; <code>__global__</code> אין לו קשר ל-global memory.</li>
+<li>תצורת ההרצה המלאה היא <code>&lt;&lt;&lt;gridDim, blockDim, sharedBytes, stream&gt;&gt;&gt;</code>: שני הראשונים מטיפוס <code>dim3</code> (ממדי ה-grid וה-block), השלישי הוא בתי shared memory דינמי (ברירת מחדל 0), הרביעי הוא הזרם (ברירת מחדל 0).</li>
+<li><code>dim3</code> הוא מבנה בן שלושה שדות שממלא 1 בממדים שלא צוינו; מספר שלם פשוט בlaunch נעטף אוטומטית ל-<code>dim3</code> חד-ממדי.</li>
+<li>האינדקס נגזר מ-<code>blockIdx.* * blockDim.* + threadIdx.*</code> בכל ציר; בעיות 1D/2D/3D משתמשות באותה נוסחה לכל ציר, אך הזיכרון תמיד חד-ממדי ודורש שיטוח ידני (<code>row * N + col</code>) ושומר גבולות.</li>
+<li>בוחרים <code>blockDim</code> ככפולה של 32 (בגלל ה-warp), בטווח טיפוסי של 128-256, כדי לאזן בין מספר הבלוקים למספר ה-threads ולמקסם occupancy; block קטן מדי או גדול מדי פוגע בתפוסה.</li>
+<li>ה-matmul הנאיבי מקצה thread אחד לכל איבר של <code>C</code> ומריץ לולאת <code>k</code> על global memory; הוא נכון אך מבצע כ-2 FLOPs לכל 8 בתים - arithmetic intensity של 0.25 FLOP/בית, בלי שום ניצול-חוזר.</li>
+<li>נקודת המפנה (ridge point) של ה-H100 היא <code>66.9 TFLOPS / 3.35 TB/s ≈ 20 FLOP/בית</code>; הarithmetic intensity הנאיבית 0.25 רחוקה פי 80 מתחתיה, ולכן ה-kernel memory-bound וחסום לתקרה של כ-0.84 TFLOPS - כ-1.25% מהשיא.</li>
+<li>הכיוון לתיקון הוא להעלות את הarithmetic intensity עם tiling דרך shared memory (מגיע ל-<code>TILE_WIDTH</code> FLOPs לקריאה, פרק 3.3), והתקרה המוחלטת היא Tensor Cores; עצם ההרצה על GPU אינה מבטיחה ביצועים.</li>
+<li>לולאת grid-stride דו-ממדית (<code>for row += blockDim.y*gridDim.y</code>, <code>for col += blockDim.x*gridDim.x</code>) מנתקת את ה-grid מגודל הבעיה, נכונה לכל <code>N</code> ולכל תצורת launch, וניתנת להרצה עם block יחיד לבדיקת נכונות.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

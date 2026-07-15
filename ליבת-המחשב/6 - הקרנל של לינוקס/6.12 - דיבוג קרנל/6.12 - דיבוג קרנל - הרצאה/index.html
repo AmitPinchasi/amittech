@@ -1,0 +1,4627 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="דיבוג קוד קרנל הוא סיפור שונה לגמרי מדיבוג תוכניות ב-user space. אי אפשר פשוט להריץ gdb ./kernel ולשים breakpoint (טוב, בעצם אפשר, אבל זה מורכב). הקרנל רץ...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C/6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../6.11%20-%20%D7%90%D7%91%D7%98%D7%97%D7%94%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.11%20-%20%D7%90%D7%91%D7%98%D7%97%D7%94%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>דיבוג קרנל - kernel debugging - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "\u05d3\u05d9\u05d1\u05d5\u05d2 \u05e7\u05e8\u05e0\u05dc - kernel debugging",
+            "item": "https://amittech.dev/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C/6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="דיבוג קרנל - kernel debugging - עמית טק" />
+<meta property="og:description" content="דיבוג קוד קרנל הוא סיפור שונה לגמרי מדיבוג תוכניות ב-user space. אי אפשר פשוט להריץ gdb ./kernel ולשים breakpoint (טוב, בעצם אפשר, אבל זה מורכב). הקרנל רץ..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C/6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C/6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="דיבוג קרנל - kernel debugging - עמית טק" />
+<meta property="twitter:description" content="דיבוג קוד קרנל הוא סיפור שונה לגמרי מדיבוג תוכניות ב-user space. אי אפשר פשוט להריץ gdb ./kernel ולשים breakpoint (טוב, בעצם אפשר, אבל זה מורכב). הקרנל רץ..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/6%20-%20%D7%94%D7%A7%D7%A8%D7%A0%D7%9C%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C/6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-kernel-debugging" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              דיבוג קרנל - kernel debugging
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_1" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_1" id="__nav_7_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    ליבת המחשב
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%90%D7%A8%D7%92%D7%95%D7%9F%20%D7%94%D7%9E%D7%97%D7%A9%D7%91/0.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94/0.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   ארגון המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%2016%20%D7%91%D7%99%D7%98/1.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94/1.1%20-%20%D7%A4%D7%AA%D7%99%D7%97%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   אסמבלי 16 ביט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%2032%20%D7%91%D7%99%D7%98/2.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/2.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   אסמבלי 32 ביט
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%A9%D7%A4%D7%AA%20C/3.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/3.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   שפת C
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%99%D7%AA%20libc/4.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/4.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   ספריית libc
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%9C%D7%99%D7%A0%D7%95%D7%A7%D7%A1/5.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/5.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   לינוקס
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_1_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_1_8" id="__nav_7_1_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   הקרנל של לינוקס
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_1_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_1_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    6   הקרנל של לינוקס
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C/6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.1   הקדמה לקרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.2%20-%20%D7%94syscall%20%D7%9E%D7%91%D7%A4%D7%A0%D7%99%D7%9D/6.2%20-%20%D7%94syscall%20%D7%9E%D7%91%D7%A4%D7%A0%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.2   הsyscall מבפנים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.3%20-%20%D7%9E%D7%AA%D7%96%D7%9E%D7%9F%20%D7%94%D7%AA%D7%94%D7%9C%D7%99%D7%9B%D7%99%D7%9D/6.3%20-%20%D7%9E%D7%AA%D7%96%D7%9E%D7%9F%20%D7%94%D7%AA%D7%94%D7%9C%D7%99%D7%9B%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.3   מתזמן התהליכים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.4%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F/6.4%20-%20%D7%A0%D7%99%D7%94%D7%95%D7%9C%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.4   ניהול זכרון
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.5%20-%20%D7%9E%D7%A2%D7%A8%D7%9B%D7%AA%20%D7%94%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%94%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/6.5%20-%20%D7%9E%D7%A2%D7%A8%D7%9B%D7%AA%20%D7%94%D7%A7%D7%91%D7%A6%D7%99%D7%9D%20%D7%94%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.5   מערכת הקבצים הוירטואלית
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.6%20-%20%D7%94%D7%A7%D7%A6%D7%90%D7%AA%20%D7%96%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.6   הקצאת זכרון בקרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions/6.7%20-%20%D7%A4%D7%A1%D7%99%D7%A7%D7%95%D7%AA%20%D7%95-exceptions%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.7   פסיקות ו exceptions
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.8%20-%20%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%D7%99%D7%9D/6.8%20-%20%D7%93%D7%A8%D7%99%D7%99%D7%91%D7%A8%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.8   דרייברים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.9%20-%20%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA%20%D7%94%D7%A8%D7%A9%D7%AA/6.9%20-%20%D7%9E%D7%97%D7%A1%D7%A0%D7%99%D7%AA%20%D7%94%D7%A8%D7%A9%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.9   מחסנית הרשת
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.10%20-%20%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.10   סנכרון בקרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.11%20-%20%D7%90%D7%91%D7%98%D7%97%D7%94%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C/6.11%20-%20%D7%90%D7%91%D7%98%D7%97%D7%94%20%D7%91%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.11   אבטחה בקרנל
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_1_8_12" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_1_8_12" id="__nav_7_1_8_12_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.12   דיבוג קרנל
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_1_8_12_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_1_8_12">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    6.12   דיבוג קרנל
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דיבוג קרנל - kernel debugging
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דיבוג קרנל - kernel debugging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מבוא
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#printk-printf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        printk - ה-printf של הקרנל
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="printk - ה-printf של הקרנל">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שימוש בסיסי
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        רמות לוג
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מאקרואים נוחים
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        לאן הולכות ההודעות
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dynamic-debug" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dynamic Debug
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kernel-oops-panic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kernel oops ו-panic
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Kernel oops ו-panic">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#oops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה זה oops?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#panic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה זה panic?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oops_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קריאת הודעת oops
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פענוח כתובות
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kgdb-gdb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KGDB - דיבוג עם GDB
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="KGDB - דיבוג עם GDB">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איך זה עובד
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הפעלה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שימוש
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#qemu-gdb-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        QEMU + GDB - הדרך הפרקטית ביותר
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="QEMU + GDB - הדרך הפרקטית ביותר">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-qemu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הרצת הקרנל ב-QEMU
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gdb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חיבור GDB
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דיבוג מודולים
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ftrace-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ftrace - מערכת מעקב מובנית
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Ftrace - מערכת מעקב מובנית">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הinterface בסיסי
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function_graph-tracer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function_graph tracer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trace_printk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        trace_printk
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#perf-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Perf - ניתוח ביצועים
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Perf - ניתוח ביצועים">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פקודות בסיסיות
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hardware-performance-counters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hardware Performance Counters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bpfebpf-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BPF/eBPF - המהפכה בדיבוג קרנל
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="BPF/eBPF - המהפכה בדיבוג קרנל">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ebpf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        למה eBPF מיוחד
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bpftrace-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        bpftrace - שורות-אחת לדיבוג
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bcc-tools-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        bcc tools - כלים מוכנים
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        כלים נוספים
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="כלים נוספים">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prockallsyms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /proc/kallsyms
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crash-utility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        crash utility
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום - מתי להשתמש במה
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דיבוג קרנל - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../6.12%20-%20%D7%93%D7%99%D7%91%D7%95%D7%92%20%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דיבוג קרנל - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../6.13%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A1%D7%99%D7%9B%D7%95%D7%9D/6.13%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%20%D7%A1%D7%99%D7%9B%D7%95%D7%9D%20-%20%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6.13   פרויקט סיכום
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94/7.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94/7.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%94%D7%A0%D7%93%D7%A1%D7%94%20%D7%94%D7%A4%D7%95%D7%9B%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   הנדסה הפוכה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../8%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%9E%D7%A2%D7%91%D7%93/8.1%20-%20%D7%A6%D7%99%D7%A0%D7%95%D7%A8%20%D7%94%D7%94%D7%95%D7%A8%D7%90%D7%95%D7%AA/8.1%20-%20%D7%A6%D7%99%D7%A0%D7%95%D7%A8%20%D7%94%D7%94%D7%95%D7%A8%D7%90%D7%95%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   ארכיטקטורת מעבד
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%9C%D7%A6%D7%99%D7%94%20%D7%95%D7%9C%D7%99%D7%A0%D7%A7%D7%95%D7%92/9.1%20-%20%D7%A9%D7%9C%D7%91%D7%99%20%D7%94%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%9C%D7%A6%D7%99%D7%94/9.1%20-%20%D7%A9%D7%9C%D7%91%D7%99%20%D7%94%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%9C%D7%A6%D7%99%D7%94%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   קומפילציה ולינקוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../10%20-%20C%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9D/10.1%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%20%D7%91%D7%AA%D7%95%D7%9A%20C/10.1%20-%20%D7%90%D7%A1%D7%9E%D7%91%D7%9C%D7%99%20%D7%91%D7%AA%D7%95%D7%9A%20C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10   C מתקדם
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../11%20-%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A8%D7%A9%D7%AA/11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D/11.1%20-%20%D7%A1%D7%95%D7%A7%D7%98%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    11   תכנות רשת
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../12%20-%20%D7%9E%D7%A7%D7%91%D7%99%D7%9C%D7%99%D7%95%D7%AA%20%D7%9E%D7%AA%D7%A7%D7%93%D7%9E%D7%AA/12.1%20-%20%D7%93%D7%A4%D7%95%D7%A1%D7%99%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%9E%D7%A7%D7%91%D7%99%D7%9C%D7%99/12.1%20-%20%D7%93%D7%A4%D7%95%D7%A1%D7%99%20%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%9E%D7%A7%D7%91%D7%99%D7%9C%D7%99%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    12   מקביליות מתקדמת
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מבוא
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#printk-printf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        printk - ה-printf של הקרנל
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="printk - ה-printf של הקרנל">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שימוש בסיסי
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        רמות לוג
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מאקרואים נוחים
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        לאן הולכות ההודעות
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dynamic-debug" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dynamic Debug
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kernel-oops-panic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kernel oops ו-panic
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Kernel oops ו-panic">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#oops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה זה oops?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#panic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מה זה panic?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oops_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קריאת הודעת oops
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פענוח כתובות
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kgdb-gdb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KGDB - דיבוג עם GDB
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="KGDB - דיבוג עם GDB">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        איך זה עובד
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הפעלה
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שימוש
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#qemu-gdb-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        QEMU + GDB - הדרך הפרקטית ביותר
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="QEMU + GDB - הדרך הפרקטית ביותר">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-qemu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הרצת הקרנל ב-QEMU
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gdb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        חיבור GDB
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דיבוג מודולים
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ftrace-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ftrace - מערכת מעקב מובנית
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Ftrace - מערכת מעקב מובנית">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        הinterface בסיסי
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function_graph-tracer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function_graph tracer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trace_printk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        trace_printk
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#perf-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Perf - ניתוח ביצועים
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Perf - ניתוח ביצועים">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        פקודות בסיסיות
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hardware-performance-counters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hardware Performance Counters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bpfebpf-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BPF/eBPF - המהפכה בדיבוג קרנל
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="BPF/eBPF - המהפכה בדיבוג קרנל">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ebpf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        למה eBPF מיוחד
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bpftrace-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        bpftrace - שורות-אחת לדיבוג
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bcc-tools-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        bcc tools - כלים מוכנים
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        כלים נוספים
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="כלים נוספים">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prockallsyms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /proc/kallsyms
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crash-utility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        crash utility
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום - מתי להשתמש במה
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    ליבת המחשב
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C/6.1%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94%20%D7%9C%D7%A7%D7%A8%D7%A0%D7%9C%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    6   הקרנל של לינוקס
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    6.12   דיבוג קרנל
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="-kernel-debugging">דיבוג קרנל - kernel debugging<a class="headerlink" href="#-kernel-debugging" title="Permanent link">&para;</a></h1>
+<h2 id="_1">מבוא<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>דיבוג קוד קרנל הוא סיפור שונה לגמרי מדיבוג תוכניות ב-user space. אי אפשר פשוט להריץ <code>gdb ./kernel</code> ולשים breakpoint (טוב, בעצם אפשר, אבל זה מורכב). הקרנל רץ על הברזל עצמו, מנהל את כל המשאבים, ואין שכבה מתחתיו שתספק שירותי דיבוג.</p>
+<p>עם זאת, לינוקס מספק סט מרשים של כלי דיבוג - חלקם פשוטים כמו printk, וחלקם מתקדמים כמו eBPF. בואו נלמד את כולם.</p>
+<hr />
+<h2 id="printk-printf">printk - ה-printf של הקרנל<a class="headerlink" href="#printk-printf" title="Permanent link">&para;</a></h2>
+<p>הכלי הבסיסי והנפוץ ביותר. כמו <code>printf</code>, אבל עם כמה הבדלים חשובים.</p>
+<h3 id="_2">שימוש בסיסי<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;linux/kernel.h&gt;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">printk</span><span class="p">(</span><span class="n">KERN_INFO</span><span class="w"> </span><span class="s">&quot;Module loaded, value = %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">);</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">printk</span><span class="p">(</span><span class="n">KERN_ERR</span><span class="w"> </span><span class="s">&quot;Failed to allocate memory!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="_3">רמות לוג<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<p>לכל הודעה יש רמת חשיבות:</p>
+<table>
+<thead>
+<tr>
+<th>רמה</th>
+<th>מאקרו</th>
+<th>מספר</th>
+<th>משמעות</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>חירום</td>
+<td>KERN_EMERG</td>
+<td>0</td>
+<td>המערכת לא שמישה</td>
+</tr>
+<tr>
+<td>התראה</td>
+<td>KERN_ALERT</td>
+<td>1</td>
+<td>פעולה נדרשת מיד</td>
+</tr>
+<tr>
+<td>קריטי</td>
+<td>KERN_CRIT</td>
+<td>2</td>
+<td>מצב קריטי</td>
+</tr>
+<tr>
+<td>שגיאה</td>
+<td>KERN_ERR</td>
+<td>3</td>
+<td>שגיאה</td>
+</tr>
+<tr>
+<td>אזהרה</td>
+<td>KERN_WARNING</td>
+<td>4</td>
+<td>אזהרה</td>
+</tr>
+<tr>
+<td>הודעה</td>
+<td>KERN_NOTICE</td>
+<td>5</td>
+<td>מצב תקין אבל משמעותי</td>
+</tr>
+<tr>
+<td>מידע</td>
+<td>KERN_INFO</td>
+<td>6</td>
+<td>מידע כללי</td>
+</tr>
+<tr>
+<td>דיבוג</td>
+<td>KERN_DEBUG</td>
+<td>7</td>
+<td>הודעות דיבוג</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_4">מאקרואים נוחים<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<p>במקום לכתוב <code>printk(KERN_INFO ...)</code> בכל פעם, יש מאקרואים קצרים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">pr_emerg</span><span class="p">(</span><span class="s">&quot;Emergency: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">msg</span><span class="p">);</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">pr_alert</span><span class="p">(</span><span class="s">&quot;Alert: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">msg</span><span class="p">);</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">pr_crit</span><span class="p">(</span><span class="s">&quot;Critical: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">msg</span><span class="p">);</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">pr_err</span><span class="p">(</span><span class="s">&quot;Error: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">msg</span><span class="p">);</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="n">pr_warn</span><span class="p">(</span><span class="s">&quot;Warning: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">msg</span><span class="p">);</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="n">pr_notice</span><span class="p">(</span><span class="s">&quot;Notice: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">msg</span><span class="p">);</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">pr_info</span><span class="p">(</span><span class="s">&quot;Info: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">msg</span><span class="p">);</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="n">pr_debug</span><span class="p">(</span><span class="s">&quot;Debug: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">msg</span><span class="p">);</span>
+</code></pre></div>
+<p>לדרייברים יש גם <code>dev_info()</code>, <code>dev_err()</code> וכו' שמוסיפים אוטומטית את שם ההתקן:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">dev_err</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pdev</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Failed to initialize device</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1">// [  123.456] my_device 0000:00:1f.0: Failed to initialize device</span>
+</code></pre></div>
+<h3 id="_5">לאן הולכות ההודעות<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<p>הודעות printk הולכות ל-<strong>kernel ring buffer</strong> - מאגר מעגלי בזיכרון הקרנל.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># reading the ring buffer:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>dmesg
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>dmesg<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-20<span class="w">          </span><span class="c1"># the last 20 messages</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>dmesg<span class="w"> </span>-w<span class="w">                  </span><span class="c1"># real-time follow (like tail -f)</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>dmesg<span class="w"> </span>-T<span class="w">                  </span><span class="c1"># with readable timestamps</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># direct read:</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>cat<span class="w"> </span>/proc/kmsg<span class="w">            </span><span class="c1"># blocks and waits for new messages</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># clear:</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>sudo<span class="w"> </span>dmesg<span class="w"> </span>-c<span class="w">             </span><span class="c1"># reads and clears</span>
+</code></pre></div>
+<h3 id="dynamic-debug">Dynamic Debug<a class="headerlink" href="#dynamic-debug" title="Permanent link">&para;</a></h3>
+<p>מה אם יש אלפי הודעות <code>pr_debug</code> בקרנל, ואתם רוצים להפעיל רק חלק מהן? Dynamic Debug מאפשר הפעלה/כיבוי בזמן ריצה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># enable debug in a specific file:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;file my_driver.c +p&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>/sys/kernel/debug/dynamic_debug/control
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># enable debug in a specific function:</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;func my_init_func +p&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>/sys/kernel/debug/dynamic_debug/control
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># enable debug in an entire module:</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;module my_module +p&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>/sys/kernel/debug/dynamic_debug/control
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="c1"># disable:</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;file my_driver.c -p&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>/sys/kernel/debug/dynamic_debug/control
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="c1"># view all available debug points:</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>cat<span class="w"> </span>/sys/kernel/debug/dynamic_debug/control
+</code></pre></div>
+<hr />
+<h2 id="kernel-oops-panic">Kernel oops ו-panic<a class="headerlink" href="#kernel-oops-panic" title="Permanent link">&para;</a></h2>
+<h3 id="oops">מה זה oops?<a class="headerlink" href="#oops" title="Permanent link">&para;</a></h3>
+<p>כשהקרנל מזהה שגיאה (למשל, גישה לכתובת NULL), הוא מייצר <strong>oops</strong> - הודעת שגיאה מפורטת. Oops לא בהכרח הורג את המערכת - הקרנל מנסה להמשיך (אבל המערכת עלולה להיות לא יציבה).</p>
+<h3 id="panic">מה זה panic?<a class="headerlink" href="#panic" title="Permanent link">&para;</a></h3>
+<p><strong>Panic</strong> = שגיאה בלתי הפיכה. המערכת נעצרת. זה קורה כאשר:<br />
+- Oops קורה ב-interrupt context (אין process שאפשר להרוג)<br />
+- Oops קורה בprocess init (PID 1)<br />
+- <code>panic_on_oops</code> מוגדר (ממיר כל oops ל-panic)<br />
+- קריאה ישירה ל-<code>panic("message")</code></p>
+<h3 id="oops_1">קריאת הודעת oops<a class="headerlink" href="#oops_1" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>BUG: unable to handle page fault for address: 0000000000001234
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>#PF: supervisor read access in kernel mode
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>#PF: error_code(0x0000) - not-present page
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>PGD 0 P4D 0
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>Oops: 0000 [#1] SMP NOPTI
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>CPU: 2 PID: 1842 Comm: my_program Not tainted 5.15.0 #1
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>Hardware name: QEMU Standard PC
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>RIP: 0010:my_buggy_function+0x42/0x100 [my_module]
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>Code: 48 8b 07 48 85 c0 74 12 ...
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>RSP: 0018:ffffc90000123abc EFLAGS: 00010246
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>RAX: 0000000000001234 RBX: ffff888100123000 RCX: 0000000000000000
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>RDX: 0000000000000001 RSI: ffff888100456000 RDI: 0000000000001234
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>...
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>Call Trace:
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a> &lt;TASK&gt;
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a> caller_function+0x28/0x50 [my_module]
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a> another_function+0x15/0x30 [my_module]
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a> do_syscall_64+0x3b/0x90
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a> entry_SYSCALL_64_after_hwframe+0x44/0xae
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a> &lt;/TASK&gt;
+</code></pre></div>
+<p><strong>איך לקרוא את זה:</strong></p>
+<ol>
+<li><strong>שורה ראשונה</strong> - סוג הבעיה: page fault בכתובת <code>0x1234</code> (נראה כמו NULL pointer + offset)</li>
+<li><strong>RIP</strong> - ה-instruction pointer: <code>my_buggy_function+0x42</code> - הפונקציה שבה קרתה השגיאה, 0x42 בייטים מתחילת הפונקציה</li>
+<li><strong>רגיסטרים</strong> - RAX=0x1234, זו כנראה הכתובת שניסינו לגשת אליה</li>
+<li><strong>RDI=0x1234</strong> - הארגומנט הראשון של הפונקציה (אולי מצביע NULL שקיבלנו)</li>
+<li><strong>Call Trace</strong> - שרשרת הקריאות שהובילה לשגיאה</li>
+</ol>
+<h3 id="_6">פענוח כתובות<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># convert addresses to file name and line:</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>scripts/decode_stacktrace.sh<span class="w"> </span>vmlinux<span class="w"> </span>&lt;<span class="w"> </span>oops_message.txt
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># or manually with addr2line:</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>addr2line<span class="w"> </span>-e<span class="w"> </span>my_module.ko<span class="w"> </span>0x42
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># or with gdb:</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>gdb<span class="w"> </span>my_module.ko
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span>list<span class="w"> </span>*<span class="o">(</span>my_buggy_function+0x42<span class="o">)</span>
+</code></pre></div>
+<p>חשוב: צריך שהקרנל/מודול קומפלו עם <code>CONFIG_DEBUG_INFO</code> (debug symbols) כדי שזה יעבוד.</p>
+<hr />
+<h2 id="kgdb-gdb">KGDB - דיבוג עם GDB<a class="headerlink" href="#kgdb-gdb" title="Permanent link">&para;</a></h2>
+<p>KGDB מאפשר דיבוג אינטראקטיבי מלא של הקרנל, כולל breakpoints, single-step, ובדיקת זיכרון.</p>
+<h3 id="_7">איך זה עובד<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<p>KGDB צריך <strong>ערוץ תקשורת</strong> בין המכונה המדובגת למכונה שמריצה GDB:<br />
+- חיבור סריאלי (RS-232)<br />
+- KDB (keyboard-based - על אותה מכונה)<br />
+- רשת (kgdboe - KGDB over Ethernet)</p>
+<h3 id="_8">הפעלה<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># in the kernel parameter line:</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nv">kgdboc</span><span class="o">=</span>ttyS0,115200<span class="w">    </span><span class="c1"># serial connection</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>kgdbwait<span class="w">               </span><span class="c1"># wait for a GDB connection before boot</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1"># or at runtime:</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="nb">echo</span><span class="w"> </span>ttyS0<span class="w"> </span>&gt;<span class="w"> </span>/sys/module/kgdboc/parameters/kgdboc
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="nb">echo</span><span class="w"> </span>g<span class="w"> </span>&gt;<span class="w"> </span>/proc/sysrq-trigger<span class="w">    </span><span class="c1"># sends the kernel to KGDB</span>
+</code></pre></div>
+<h3 id="_9">שימוש<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># on the debugging machine:</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>gdb<span class="w"> </span>vmlinux
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span>target<span class="w"> </span>remote<span class="w"> </span>/dev/ttyS0
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span><span class="k">break</span><span class="w"> </span>my_function
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span><span class="k">continue</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="c1"># ... when the breakpoint is hit ...</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span>bt<span class="w">                    </span><span class="c1"># backtrace</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span>print<span class="w"> </span>my_variable
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span>next<span class="w">                  </span><span class="c1"># step over</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span>step<span class="w">                  </span><span class="c1"># step into</span>
+</code></pre></div>
+<hr />
+<h2 id="qemu-gdb-">QEMU + GDB - הדרך הפרקטית ביותר<a class="headerlink" href="#qemu-gdb-" title="Permanent link">&para;</a></h2>
+<p>בפועל, הדרך הנוחה ביותר לדבג קרנל היא <strong>להריץ אותו ב-QEMU</strong> ולחבר GDB.</p>
+<h3 id="-qemu">הרצת הקרנל ב-QEMU<a class="headerlink" href="#-qemu" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># compile with debug info:</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>make<span class="w"> </span>menuconfig
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># enable: Kernel hacking -&gt; Compile-time checks and compiler options -&gt; Debug info</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="c1"># run with debugging:</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>qemu-system-x86_64<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">    </span>-kernel<span class="w"> </span>arch/x86/boot/bzImage<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">    </span>-initrd<span class="w"> </span>rootfs.cpio.gz<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">    </span>-append<span class="w"> </span><span class="s2">&quot;console=ttyS0 nokaslr&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">    </span>-nographic<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">    </span>-s<span class="w"> </span><span class="se">\ </span><span class="w">      </span><span class="c1"># open a GDB server on port 1234</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="w">    </span>-S<span class="w">         </span><span class="c1"># stop at the start (wait for GDB)</span>
+</code></pre></div>
+<p>הדגל <code>nokaslr</code> חשוב - בלעדיו KASLR ישנה את כתובות הקרנל וה-symbols לא יתאימו.</p>
+<h3 id="gdb">חיבור GDB<a class="headerlink" href="#gdb" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># in a separate terminal:</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>gdb<span class="w"> </span>vmlinux
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span>target<span class="w"> </span>remote<span class="w"> </span>:1234
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span><span class="k">break</span><span class="w"> </span>start_kernel<span class="w">        </span><span class="c1"># breakpoint at the start of the kernel</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span><span class="k">continue</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="c1"># when it stops:</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span>list<span class="w">                       </span><span class="c1"># show source code</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span>info<span class="w"> </span>registers<span class="w">             </span><span class="c1"># registers</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span>print<span class="w"> </span>init_task.comm<span class="w">       </span><span class="c1"># name of the first process</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span>x/20i<span class="w"> </span><span class="nv">$rip</span><span class="w">                 </span><span class="c1"># 20 instructions from the current location</span>
+</code></pre></div>
+<h3 id="_10">דיבוג מודולים<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
+<p>מודולים נטענים דינמית, אז GDB לא יודע את הכתובות שלהם מראש:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># inside the VM - find the module&#39;s addresses:</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>cat<span class="w"> </span>/sys/module/my_module/sections/.text
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="c1"># 0xffffffffa0001000</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>cat<span class="w"> </span>/sys/module/my_module/sections/.data
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="c1"># 0xffffffffa0003000</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1"># in GDB:</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span>add-symbol-file<span class="w"> </span>my_module.ko<span class="w"> </span>0xffffffffa0001000<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="w">      </span>-s<span class="w"> </span>.data<span class="w"> </span>0xffffffffa0003000
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span><span class="k">break</span><span class="w"> </span>my_module_function
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="o">(</span>gdb<span class="o">)</span><span class="w"> </span><span class="k">continue</span>
+</code></pre></div>
+<hr />
+<h2 id="ftrace-">Ftrace - מערכת מעקב מובנית<a class="headerlink" href="#ftrace-" title="Permanent link">&para;</a></h2>
+<p>Ftrace (Function Tracer) היא מערכת מעקב חזקה שמובנית בקרנל. היא מאפשרת לעקוב אחרי קריאות פונקציות, אירועים, ועוד - ללא צורך בכלים חיצוניים.</p>
+<h3 id="interface">הinterface בסיסי<a class="headerlink" href="#interface" title="Permanent link">&para;</a></h3>
+<p>הכל דרך <code>/sys/kernel/debug/tracing/</code> (צריך debugfs מורכב):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># enable the function tracer:</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nb">echo</span><span class="w"> </span><span class="k">function</span><span class="w"> </span>&gt;<span class="w"> </span>/sys/kernel/debug/tracing/current_tracer
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># limit to specific functions:</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;schedule*&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>/sys/kernel/debug/tracing/set_ftrace_filter
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="c1"># start tracing:</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="nb">echo</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>&gt;<span class="w"> </span>/sys/kernel/debug/tracing/tracing_on
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="c1"># read the results:</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>cat<span class="w"> </span>/sys/kernel/debug/tracing/trace
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="c1"># disable:</span>
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="nb">echo</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>&gt;<span class="w"> </span>/sys/kernel/debug/tracing/tracing_on
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="nb">echo</span><span class="w"> </span>nop<span class="w"> </span>&gt;<span class="w"> </span>/sys/kernel/debug/tracing/current_tracer
+</code></pre></div>
+<h3 id="function_graph-tracer">function_graph tracer<a class="headerlink" href="#function_graph-tracer" title="Permanent link">&para;</a></h3>
+<p>מציג את עץ הקריאות עם זמני כניסה ויציאה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nb">echo</span><span class="w"> </span>function_graph<span class="w"> </span>&gt;<span class="w"> </span>/sys/kernel/debug/tracing/current_tracer
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="nb">echo</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>&gt;<span class="w"> </span>/sys/kernel/debug/tracing/tracing_on
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1"># ... do something ...</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>cat<span class="w"> </span>/sys/kernel/debug/tracing/trace
+</code></pre></div>
+<p>הפלט נראה כך:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a> 2)               |  do_sys_open() {
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a> 2)               |    getname() {
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a> 2)               |      kmem_cache_alloc() {
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a> 2)   0.345 us    |        _cond_resched();
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a> 2)   1.234 us    |      }
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a> 2)   2.345 us    |    }
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a> 2)               |    do_filp_open() {
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a> 2)               |      path_openat() {
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a> ...
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a> 2) + 15.678 us   |  }
+</code></pre></div>
+<p>אפשר לראות בדיוק כמה זמן כל פונקציה לקחה ואילו פונקציות היא קראה.</p>
+<h3 id="trace_printk">trace_printk<a class="headerlink" href="#trace_printk" title="Permanent link">&para;</a></h3>
+<p>כמו printk, אבל הפלט הולך ל-trace buffer של ftrace (הרבה יותר מהיר מ-printk):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">trace_printk</span><span class="p">(</span><span class="s">&quot;my_function called with arg=%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">arg</span><span class="p">);</span>
+</code></pre></div>
+<p><strong>חשוב:</strong> <code>trace_printk</code> מיועד לדיבוג בלבד, לא לקוד production. הקרנל ידפיס אזהרה אם מודול טעון עם trace_printk.</p>
+<hr />
+<h2 id="perf-">Perf - ניתוח ביצועים<a class="headerlink" href="#perf-" title="Permanent link">&para;</a></h2>
+<p>perf הוא הכלי הראשי לניתוח ביצועים בלינוקס. הוא משתמש ב-hardware performance counters של ה-CPU וב-tracepoints של הקרנל.</p>
+<h3 id="_11">פקודות בסיסיות<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># real-time profiling - shows the functions consuming the most CPU:</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>sudo<span class="w"> </span>perf<span class="w"> </span>top
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># record a profile of a command:</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>sudo<span class="w"> </span>perf<span class="w"> </span>record<span class="w"> </span>-g<span class="w"> </span>./my_program
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>sudo<span class="w"> </span>perf<span class="w"> </span>report
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="c1"># record the whole system for 10 seconds:</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>sudo<span class="w"> </span>perf<span class="w"> </span>record<span class="w"> </span>-a<span class="w"> </span>-g<span class="w"> </span>sleep<span class="w"> </span><span class="m">10</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>sudo<span class="w"> </span>perf<span class="w"> </span>report
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="c1"># trace syscalls (like strace but faster):</span>
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a>sudo<span class="w"> </span>perf<span class="w"> </span>trace<span class="w"> </span>ls
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>
+<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="c1"># trace a specific event:</span>
+<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a>sudo<span class="w"> </span>perf<span class="w"> </span>stat<span class="w"> </span>-e<span class="w"> </span>cache-misses,cache-references,instructions,cycles<span class="w"> </span>./my_program
+</code></pre></div>
+<h3 id="hardware-performance-counters">Hardware Performance Counters<a class="headerlink" href="#hardware-performance-counters" title="Permanent link">&para;</a></h3>
+<p>ה-CPU מספק מוני חומרה שסופרים אירועים ברמה נמוכה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>sudo<span class="w"> </span>perf<span class="w"> </span>stat<span class="w"> </span>-e<span class="w"> </span>cycles,instructions,cache-misses,branch-misses<span class="w"> </span>./my_program
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="c1">#  Performance counter stats for &#39;./my_program&#39;:</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="c1">#</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="c1">#      1,234,567,890      cycles</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="c1">#        987,654,321      instructions     #    0.80  insn per cycle</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="c1">#          2,345,678      cache-misses     #    5.23% of all cache refs</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="c1">#            123,456      branch-misses    #    1.23% of all branches</span>
+</code></pre></div>
+<hr />
+<h2 id="bpfebpf-">BPF/eBPF - המהפכה בדיבוג קרנל<a class="headerlink" href="#bpfebpf-" title="Permanent link">&para;</a></h2>
+<p>eBPF (Extended Berkeley Packet Filter) הוא מכונה וירטואלית בתוך הקרנל שמאפשרת להריץ תוכניות מוגדרות-משתמש בצורה בטוחה. זה שינה את הדרך שבה אנשים מדבגים ומנטרים את הקרנל.</p>
+<h3 id="ebpf">למה eBPF מיוחד<a class="headerlink" href="#ebpf" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>בטוח</strong> - verifier בודק כל תוכנית לפני טעינה (אין לולאות אינסופיות, אין גישה לזיכרון לא חוקי)</li>
+<li><strong>מהיר</strong> - קוד BPF מקומפל ל-native code ע"י JIT</li>
+<li><strong>לא דורש שינוי בקרנל</strong> - אפשר להוסיף probes בלי לקמפל מודול</li>
+</ul>
+<h3 id="bpftrace-">bpftrace - שורות-אחת לדיבוג<a class="headerlink" href="#bpftrace-" title="Permanent link">&para;</a></h3>
+<p>bpftrace הוא שפת סקריפטים ל-eBPF, בהשראת DTrace:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># trace all files that are opened:</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>sudo<span class="w"> </span>bpftrace<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;tracepoint:syscalls:sys_enter_openat {</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="s1">    printf(&quot;%s %s\n&quot;, comm, str(args-&gt;filename));</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="s1">}&#39;</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="c1"># read time statistics per process:</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>sudo<span class="w"> </span>bpftrace<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;tracepoint:syscalls:sys_enter_read {</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="s1">    @start[tid] = nsecs;</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="s1">}</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="s1">tracepoint:syscalls:sys_exit_read /@start[tid]/ {</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="s1">    @us[comm] = hist((nsecs - @start[tid]) / 1000);</span>
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="s1">    delete(@start[tid]);</span>
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a><span class="s1">}&#39;</span>
+<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a>
+<a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a><span class="c1"># count syscalls by type:</span>
+<a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a>sudo<span class="w"> </span>bpftrace<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;tracepoint:raw_syscalls:sys_enter {</span>
+<a id="__codelineno-18-17" name="__codelineno-18-17" href="#__codelineno-18-17"></a><span class="s1">    @[comm, args-&gt;id] = count();</span>
+<a id="__codelineno-18-18" name="__codelineno-18-18" href="#__codelineno-18-18"></a><span class="s1">}&#39;</span>
+<a id="__codelineno-18-19" name="__codelineno-18-19" href="#__codelineno-18-19"></a>
+<a id="__codelineno-18-20" name="__codelineno-18-20" href="#__codelineno-18-20"></a><span class="c1"># trace memory allocations in the kernel:</span>
+<a id="__codelineno-18-21" name="__codelineno-18-21" href="#__codelineno-18-21"></a>sudo<span class="w"> </span>bpftrace<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;kprobe:kmalloc { @bytes = hist(arg0); }&#39;</span>
+</code></pre></div>
+<h3 id="bcc-tools-">bcc tools - כלים מוכנים<a class="headerlink" href="#bcc-tools-" title="Permanent link">&para;</a></h3>
+<p>bcc (BPF Compiler Collection) מספק עשרות כלים מוכנים:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># trace files that are opened:</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>sudo<span class="w"> </span>opensnoop
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="c1"># trace programs that are executed:</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>sudo<span class="w"> </span>execsnoop
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="c1"># trace TCP connections:</span>
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>sudo<span class="w"> </span>tcplife
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="c1"># trace disk latency:</span>
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>sudo<span class="w"> </span>biolatency
+<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>
+<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a><span class="c1"># trace page faults:</span>
+<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a>sudo<span class="w"> </span>drsnoop
+<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a>
+<a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a><span class="c1"># off-CPU profiling (what threads do when they&#39;re not running):</span>
+<a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a>sudo<span class="w"> </span>offcputime
+</code></pre></div>
+<hr />
+<h2 id="_12">כלים נוספים<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
+<h3 id="prockallsyms">/proc/kallsyms<a class="headerlink" href="#prockallsyms" title="Permanent link">&para;</a></h3>
+<p>כתובות כל הסמלים (symbols) בקרנל:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>sudo<span class="w"> </span>cat<span class="w"> </span>/proc/kallsyms<span class="w"> </span><span class="p">|</span><span class="w"> </span>head
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="c1"># ffffffff81000000 T _text</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="c1"># ffffffff81000000 T startup_64</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># ...</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="c1"># search for a specific function:</span>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>sudo<span class="w"> </span>cat<span class="w"> </span>/proc/kallsyms<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s1">&#39; T do_sys_open&#39;</span>
+</code></pre></div>
+<p>שימושי לדיבוג ידני - אם יש לכם כתובת מ-oops, אפשר לחפש אותה כאן.</p>
+<p><strong>הערה אבטחתית:</strong> ברירת המחדל (<code>kptr_restrict=1</code>) מחביאה את הכתובות ממשתמשים רגילים (מציגה 0). רק root רואה את הכתובות האמיתיות.</p>
+<h3 id="crash-utility">crash utility<a class="headerlink" href="#crash-utility" title="Permanent link">&para;</a></h3>
+<p>כלי לניתוח kernel crash dumps (קבצי core של הקרנל):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># analyze crash dump:</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>sudo<span class="w"> </span>crash<span class="w"> </span>vmlinux<span class="w"> </span>/var/crash/vmcore
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>crash&gt;<span class="w"> </span>bt<span class="w">                  </span><span class="c1"># backtrace of the process that caused the crash</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>crash&gt;<span class="w"> </span>ps<span class="w">                  </span><span class="c1"># list of processes at the time of the crash</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>crash&gt;<span class="w"> </span>files<span class="w"> </span>&lt;pid&gt;<span class="w">         </span><span class="c1"># open files</span>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a>crash&gt;<span class="w"> </span>kmem<span class="w"> </span>-i<span class="w">             </span><span class="c1"># memory info</span>
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>crash&gt;<span class="w"> </span>log<span class="w">                 </span><span class="c1"># kernel log</span>
+<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a>crash&gt;<span class="w"> </span>struct<span class="w"> </span>task_struct<span class="w"> </span>&lt;address&gt;<span class="w">  </span><span class="c1"># display a data structure</span>
+</code></pre></div>
+<p>כדי ליצור crash dumps, צריך להגדיר kdump (kernel crash dump):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># installation (Ubuntu):</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>linux-crashdump
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>kdump-tools
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="c1"># after a crash, the dump is saved in:</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>ls<span class="w"> </span>/var/crash/
+</code></pre></div>
+<hr />
+<h2 id="-">סיכום - מתי להשתמש במה<a class="headerlink" href="#-" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>כלי</th>
+<th>מתי</th>
+<th>יתרון</th>
+<th>חיסרון</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>printk</td>
+<td>דיבוג מהיר ופשוט</td>
+<td>תמיד זמין</td>
+<td>מאט, הרבה פלט</td>
+</tr>
+<tr>
+<td>dynamic debug</td>
+<td>דיבוג ממוקד</td>
+<td>הפעלה/כיבוי בזמן ריצה</td>
+<td>רק הודעות pr_debug</td>
+</tr>
+<tr>
+<td>QEMU + GDB</td>
+<td>פיתוח מודולים</td>
+<td>דיבוג אינטראקטיבי מלא</td>
+<td>רק ב-VM</td>
+</tr>
+<tr>
+<td>ftrace</td>
+<td>מעקב אחרי זרימת קוד</td>
+<td>מובנה, מהיר</td>
+<td>הinterface מורכב</td>
+</tr>
+<tr>
+<td>perf</td>
+<td>ניתוח ביצועים</td>
+<td>hardware counters</td>
+<td>דורש הבנה עמוקה</td>
+</tr>
+<tr>
+<td>eBPF/bpftrace</td>
+<td>דיבוג production</td>
+<td>בטוח, מהיר, גמיש</td>
+<td>קרנל 4.x+ נדרש</td>
+</tr>
+<tr>
+<td>crash</td>
+<td>ניתוח post-mortem</td>
+<td>ניתוח אחרי קריסה</td>
+<td>צריך crash dump</td>
+</tr>
+</tbody>
+</table>
+<p><strong>הכלל שלי:</strong> התחילו עם printk. אם זה לא מספיק, עברו ל-ftrace. אם צריכים דיבוג אינטראקטיבי, השתמשו ב-QEMU+GDB. ואם צריכים לדבג מערכת production, eBPF הוא הבחירה.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>

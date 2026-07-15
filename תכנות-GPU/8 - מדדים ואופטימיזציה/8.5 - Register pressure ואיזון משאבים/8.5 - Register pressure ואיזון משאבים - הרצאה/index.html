@@ -1,0 +1,2902 @@
+
+<!doctype html>
+<html lang="he" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="לאורך פרק 8 בנינו את מדע ה-occupancy (תפוסה). בשיעור 8.1 חישבנו occupancy תיאורטי מתצורת הlaunch ומגבלות ה-SM, וראינו שהמשאבים הסופיים של ה-SM - קובץ...">
+      
+      
+        <meta name="author" content="עמית פנחסי">
+      
+      
+        <link rel="canonical" href="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D/8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/">
+      
+      
+        <link rel="prev" href="../../8.4%20-%20Coalescing%20%D7%95-bank%20conflicts/8.4%20-%20Coalescing%20%D7%95-bank%20conflicts%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/">
+      
+      
+        <link rel="next" href="../8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/">
+      
+      
+        
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS הזנת" href="../../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="הזנת RSS של תוכן מעודכן" href="../../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../../favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>8.5 - Register pressure ואיזון משאבים - הרצאה - עמית טק</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Heebo";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/themes.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+
+  <!-- Primary Meta Tags (name="description" is rendered by base.html from page.meta.description;
+       og:type/title/description/url and twitter:card/title/description are injected per-page by
+       the built-in social plugin - see material/plugins/social/templates/default.yml) -->
+  <meta name="author" content="עמית פנחסי">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="עמית טק">
+
+  
+  
+
+  <!-- Organization / WebSite structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://amittech.dev/#organization",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "logo": "https://amittech.dev/amittech.png",
+        "founder": {
+          "@type": "Person",
+          "name": "עמית פנחסי"
+        },
+        "sameAs": ["https://discord.gg/ef5PQAAca2"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://amittech.dev/#website",
+        "name": "עמית טק",
+        "url": "https://amittech.dev/",
+        "description": "קורסי סייבר, תכנות, IT ומחשבים בחינם בעברית - מעל 2000 שעות לימוד עם תרגול מעשי. מתאים למתחילים ולמתקדמים.",
+        "inLanguage": "he",
+        "publisher": { "@id": "https://amittech.dev/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "עמית טק",
+            "item": "https://amittech.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "8.5 - Register pressure \u05d5\u05d0\u05d9\u05d6\u05d5\u05df \u05de\u05e9\u05d0\u05d1\u05d9\u05dd - \u05d4\u05e8\u05e6\u05d0\u05d4",
+            "item": "https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D/8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Apply saved theme before first paint (prevents flash of default theme) -->
+  <script>
+    (function () {
+      /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
+      var DARK = {
+        midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
+        matrix: 1, amber: 1, synthwave: 1, ocean: 1, emerald: 1, rose: 1, violet: 1
+      };
+      var id;
+      try { id = localStorage.getItem("am-theme"); } catch (e) { id = null; }
+      if (!id) id = "light";
+      var root = document.documentElement;
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-md-color-scheme", DARK[id] ? "slate" : "default");
+    })();
+  </script>
+
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="8.5 - Register pressure ואיזון משאבים - הרצאה - עמית טק" />
+<meta property="og:description" content="לאורך פרק 8 בנינו את מדע ה-occupancy (תפוסה). בשיעור 8.1 חישבנו occupancy תיאורטי מתצורת הlaunch ומגבלות ה-SM, וראינו שהמשאבים הסופיים של ה-SM - קובץ..." />
+<meta property="og:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D/8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://amittech.dev/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D/8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="8.5 - Register pressure ואיזון משאבים - הרצאה - עמית טק" />
+<meta property="twitter:description" content="לאורך פרק 8 בנינו את מדע ה-occupancy (תפוסה). בשיעור 8.1 חישבנו occupancy תיאורטי מתצורת הlaunch ומגבלות ה-SM, וראינו שהמשאבים הסופיים של ה-SM - קובץ..." />
+<meta property="twitter:image" content="https://amittech.dev/assets/images/social/%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-GPU/8%20-%20%D7%9E%D7%93%D7%93%D7%99%D7%9D%20%D7%95%D7%90%D7%95%D7%A4%D7%98%D7%99%D7%9E%D7%99%D7%96%D7%A6%D7%99%D7%94/8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D/8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94.png" />
+</head>
+  
+  
+    <body dir="rtl">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-register-pressure" class="md-skip">
+          לדלג לתוכן
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="כותרת עליונה">
+    <a href="../../../.." title="עמית טק" class="md-header__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            עמית טק
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              8.5 - Register pressure ואיזון משאבים - הרצאה
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="חיפוש" placeholder="חיפוש" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="חיפוש">
+        
+        <button type="reset" class="md-search__icon md-icon" title="ניקוי" aria-label="ניקוי" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            אתחול חיפוש
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="לשוניות" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  דף הבית
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  מי אני
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  בלוג
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  תכנות
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  רשתות ומערכות הפעלה
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  אבטחת מידע וסייבר
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  מחקר ו-Low Level
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="ניווט" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="עמית טק" class="md-nav__button md-logo" aria-label="עמית טק" data-md-component="logo">
+      
+  <img src="../../../../amittech.png" alt="logo">
+
+    </a>
+    עמית טק
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    דף הבית
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מי אני
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../blog/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    בלוג
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%AA%D7%9B%D7%A0%D7%95%D7%AA-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%95%D7%95%D7%99%D7%A0%D7%93%D7%95%D7%A1-%D7%91%D7%A1%D7%99%D7%A1%D7%99/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    רשתות ומערכות הפעלה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../../%D7%A4%D7%A8%D7%99%D7%A6%D7%AA-%D7%90%D7%AA%D7%A8%D7%99%D7%9D/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    אבטחת מידע וסייבר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר ו-Low Level
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    מחקר ו-Low Level
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ליבת המחשב
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../%D7%9E%D7%97%D7%A7%D7%A8-%D7%97%D7%95%D7%9C%D7%A9%D7%95%D7%AA/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    מחקר חולשות
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    תכנות GPU
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    תכנות GPU
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../0%20-%20%D7%94%D7%A7%D7%93%D7%9E%D7%94/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU/0.1%20-%20%D7%9C%D7%9E%D7%94%20GPU%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0   הקדמה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../1%20-%20%D7%90%D7%A8%D7%9B%D7%99%D7%98%D7%A7%D7%98%D7%95%D7%A8%D7%AA%20%D7%94%D7%97%D7%95%D7%9E%D7%A8%D7%94/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM/1.1%20-%20%D7%9E%D7%91%D7%A0%D7%94%20%D7%94-GPU%20-%20GPC%2C%20TPC%20%D7%95-SM%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1   ארכיטקטורת החומרה
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../2%20-%20%D7%9E%D7%95%D7%93%D7%9C%20%D7%94%D7%AA%D7%9B%D7%A0%D7%95%D7%AA%20%D7%A9%D7%9C%20CUDA/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT/2.1%20-%20Threads%20%D7%95-Warps%20-%20%D7%9E%D7%95%D7%93%D7%9C%20SIMT%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2   מודל התכנות של CUDA
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../3%20-%20%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA/3.1%20-%20%D7%94%D7%99%D7%A8%D7%A8%D7%9B%D7%99%D7%99%D7%AA%20%D7%94%D7%96%D7%99%D7%9B%D7%A8%D7%95%D7%9F%20%D7%94%D7%9C%D7%95%D7%92%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3   זיכרון וניהול
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../4%20-%20%D7%A9%D7%A4%D7%95%D7%AA%20%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%95%D7%A7%D7%95%D7%9E%D7%A4%D7%99%D7%99%D7%9C%D7%A8/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA/4.1%20-%20PTX%20-%20%D7%A9%D7%A4%D7%AA%20%D7%94%D7%91%D7%99%D7%A0%D7%99%D7%99%D7%9D%20%D7%94%D7%95%D7%95%D7%99%D7%A8%D7%98%D7%95%D7%90%D7%9C%D7%99%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4   שפות ביניים וקומפיילר
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../5%20-%20%D7%94%D7%AA%D7%95%D7%9B%D7%A0%D7%94%20%D7%A9%D7%9C%20%D7%94gpu/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API/5.1%20-%20Driver%20API%20%D7%9E%D7%95%D7%9C%20Runtime%20API%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5   התוכנה של הgpu
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../6%20-%20%D7%A1%D7%A4%D7%A8%D7%99%D7%95%D7%AA%20%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA/6.1%20-%20cuBLAS%20-%20%D7%90%D7%9C%D7%92%D7%91%D7%A8%D7%94%20%D7%9C%D7%99%D7%A0%D7%90%D7%A8%D7%99%D7%AA%20%D7%9E%D7%95%D7%90%D7%A6%D7%AA%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6   ספריות ביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../7%20-%20%D7%AA%D7%99%D7%90%D7%95%D7%A8%D7%99%D7%99%D7%AA%20%D7%94%D7%91%D7%99%D7%A6%D7%95%D7%A2%D7%99%D7%9D/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline/7.1%20-%20%D7%A6%D7%95%D7%95%D7%90%D7%A8%D7%99%20%D7%91%D7%A7%D7%91%D7%95%D7%A7%20%D7%95%D7%9E%D7%95%D7%93%D7%9C%20Roofline%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7   תיאוריית הביצועים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_10" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_10" id="__nav_7_3_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8   מדדים ואופטימיזציה
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_3_10_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    8   מדדים ואופטימיזציה
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.1   Occupancy ומצבי warp
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency/8.2%20-%20%D7%A0%D7%99%D7%A6%D7%95%D7%9C%D7%AA%20-%20SM%2C%20pipe%20%D7%95-issue%20efficiency%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.2   ניצולת   SM, pipe ו issue efficiency
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls/8.3%20-%20Warp%20divergence%20%D7%95-scoreboard%20stalls%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.3   Warp divergence ו scoreboard stalls
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../8.4%20-%20Coalescing%20%D7%95-bank%20conflicts/8.4%20-%20Coalescing%20%D7%95-bank%20conflicts%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.4   Coalescing ו bank conflicts
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3_10_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3_10_5" id="__nav_7_3_10_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.5   Register pressure ואיזון משאבים
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_7_3_10_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3_10_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    8.5   Register pressure ואיזון משאבים
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.5 - Register pressure ואיזון משאבים - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.5 - Register pressure ואיזון משאבים - הרצאה
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-register-pressure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        לחץ אוגרים - register pressure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-ptxas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אוגרים וירטואליים מול פיזיים - ה-ptxas ממפה ביניהם
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-h100-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קובץ האוגרים של ה-H100 - החשבון
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-ptxas-v" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מדידה - קריאת הפלט של ptxas -v
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-register-spilling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דליפה לזיכרון מקומי - register spilling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-launch_bounds-maxrregcount" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שליטה בקומפיילר - launch_bounds ו-maxrregcount
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ההקלה מהחומרה - הזזת נתונים מהאוגרים
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        המאזן - למצוא את הנקודה המיטבית
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D%20-%20%D7%A4%D7%AA%D7%A8%D7%95%D7%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.5 - Register pressure ואיזון משאבים - פתרון
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../8.5%20-%20Register%20pressure%20%D7%95%D7%90%D7%99%D7%96%D7%95%D7%9F%20%D7%9E%D7%A9%D7%90%D7%91%D7%99%D7%9D%20-%20%D7%AA%D7%A8%D7%92%D7%95%D7%9C/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8.5 - Register pressure ואיזון משאבים - תרגול
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../../9%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20%D7%95%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute/9.1%20-%20%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%99%D7%9C%D7%99%D7%A0%D7%92%20-%20Nsight%20Systems%20%D7%95-Nsight%20Compute%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9   פרופיילינג ופרויקטים
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="תוכן העניינים">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      תוכן העניינים
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#-register-pressure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        לחץ אוגרים - register pressure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-ptxas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        אוגרים וירטואליים מול פיזיים - ה-ptxas ממפה ביניהם
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-h100-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        קובץ האוגרים של ה-H100 - החשבון
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-ptxas-v" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        מדידה - קריאת הפלט של ptxas -v
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-register-spilling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        דליפה לזיכרון מקומי - register spilling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-launch_bounds-maxrregcount" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        שליטה בקומפיילר - launch_bounds ו-maxrregcount
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ההקלה מהחומרה - הזזת נתונים מהאוגרים
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        המאזן - למצוא את הנקודה המיטבית
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        סיכום
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="ניווט" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    דף הבית
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../../%D7%9C%D7%99%D7%91%D7%AA-%D7%94%D7%9E%D7%97%D7%A9%D7%91/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    מחקר ו-Low Level
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    תכנות GPU
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp/8.1%20-%20Occupancy%20%D7%95%D7%9E%D7%A6%D7%91%D7%99%20warp%20-%20%D7%94%D7%A8%D7%A6%D7%90%D7%94/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    8   מדדים ואופטימיזציה
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    8.5   Register pressure ואיזון משאבים
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>8.5 - Register pressure ואיזון משאבים - הרצאה</h1>
+
+<p>לאורך פרק 8 בנינו את מדע ה-occupancy (תפוסה). בשיעור 8.1 חישבנו occupancy תיאורטי מתצורת הlaunch ומגבלות ה-SM, וראינו שהמשאבים הסופיים של ה-SM - קובץ האוגרים (register file) וה-shared memory - הם שקובעים כמה warps תושבים נכנסים. בשיעור 1.6 הכרנו את קובץ האוגרים כחומרה: זיכרון SRAM מהיר פי עשרה מה-L1, שמחזיק את האופרנדים בזמן שהליבות מחשבות עליהם, ושמחולק בין כל ה-threads התושבים על ה-SM. בשיעור הזה נסגור את הפרק ואת המעגל: נראה מה קורה כשקובץ האוגרים עצמו הופך לצוואר-הבקבוק - התופעה שנקראת בשם הציורי <strong>register pressure</strong> (לחץ אוגרים). נבין מדוע כל אוגר נוסף שכל thread צורך גובה מחיר ב-occupancy, מדוע דליפה (spilling) של אוגרים לזיכרון היא אסון שקט, ובעיקר - איך מודדים ושולטים בכל זה עם <code>nvcc -Xptxas -v</code>, עם <code>__launch_bounds__</code> ועם <code>-maxrregcount</code>. התובנה המרכזית, שתלווה אותנו עד הסוף, היא שאין כאן "יותר זה תמיד יותר טוב": יותר אוגרים ל-thread מאיצים thread בודד אבל מורידים occupancy, ונקודת האיזון נמצאת רק במדידה, לא בנוסחה.</p>
+<h2 id="-register-pressure">לחץ אוגרים - register pressure<a class="headerlink" href="#-register-pressure" title="Permanent link">&para;</a></h2>
+<p>ה-glossary מגדיר את המונח במשפט אחד קולע: <strong>register pressure הוא ביטוי ציורי לכך שקובץ האוגרים הוא צוואר-הבקבוק.</strong> זהו לא באג ולא שגיאה - זו מתיחות מובנית בארכיטקטורה. מצד אחד, כל thread רוצה כמה שיותר אוגרים: אוגר הוא האחסון המהיר ביותר בהיררכיה, וככל שיש לו יותר אוגרים כך הוא יכול להחזיק יותר ערכי-ביניים "חמים" בלי לחשב אותם מחדש ובלי לגשת לזיכרון. מצד שני, קובץ האוגרים של ה-SM הוא <strong>סופי</strong>, והוא מחולק בין <strong>כל</strong> ה-threads התושבים בו-זמנית. כל אוגר שאתם מבזבזים על thread אחד מוכפל במספר ה-threads התושבים, ומכרסם בתקציב שקובע כמה warps בכלל נכנסים.</p>
+<p>שרשרת הסיבתיות, שראינו את קצה שלה כבר ב-1.6, היא הלב של השיעור:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>   more registers per thread
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>        │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>        ▼
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>   more registers per warp  -&gt;  fewer warps fit in the register file
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        │
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        ▼
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>   fewer resident warps  -&gt;  lower occupancy
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        │
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        ▼
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>   fewer eligible warps to issue  -&gt;  weaker latency hiding
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>        │
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>        ▼
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>   the warp scheduler runs out of work  -&gt;  execution units sit idle
+</code></pre></div>
+<p>זה בדיוק ההיפוך של חוק Little משיעור 7.4: שם הראינו שצריך <strong>מספיק</strong> warps כדי להסתיר את ה-latency; register pressure הוא הכוח שמונע מכם להגיע למספר הזה. כשכל thread תאב-אוגרים, פשוט לא נכנסים מספיק warps כדי להזין את ה-scheduler, וה-latency שהיה אמור להיות מוסתר מתגלה כזמן-בטלה גלוי.</p>
+<h2 id="-ptxas">אוגרים וירטואליים מול פיזיים - ה-ptxas ממפה ביניהם<a class="headerlink" href="#-ptxas" title="Permanent link">&para;</a></h2>
+<p>כדי להבין מאיפה נקבע מספר האוגרים ל-thread, צריך להיזכר בשני המישורים של הקוד משיעורים 4.x. ב-<strong>PTX</strong> (הרצת שרשורים מקבילית, ה-IR הווירטואלי), האוגרים הם <strong>וירטואליים ובלתי-מוגבלים</strong>. כשראיתם בשיעור 4.2 הצהרה כמו <code>.reg .f32 %f&lt;7&gt;</code>, המספר <code>7</code> הוא רק כמה אוגרים וירטואליים ה-compiler החליט להשתמש בהם בקטע הזה - ואין שום תקרה עליו. PTX הוא מכונה מופשטת; הוא יכול "לדמיין" אלפי אוגרים.</p>
+<p>ב-<strong>SASS</strong> (אסמבלר זורם, קוד המכונה האמיתי של ה-SM), לעומת זאת, האוגרים הם <strong>פיזיים ומוגבלים</strong> - הם מתייחסים לתאים ממשיים בקובץ האוגרים של ה-SM. מי שמגשר בין שני העולמות הוא ה-<strong>ptxas</strong>, הcompiler שמתרגם PTX ל-SASS (הכרנו אותו בשיעור 4.4). ה-ptxas לוקח את האוגרים הווירטואליים הבלתי-מוגבלים וממפה אותם על מספר סופי של אוגרים פיזיים - בדיוק כמו שcompiler על CPU עושה register allocation. וכמו על CPU, כשאין מספיק אוגרים פיזיים, משהו חייב "לדלוף" (על כך בהמשך).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>   CUDA C++            PTX (virtual)           SASS (physical)
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>   ────────            ──────────────          ───────────
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>   float x = ...;      .reg .f32 %f&lt;7&gt;;        R0..R31  (real registers
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>   float y = ...;      (unbounded)       ptxas              in the register file)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        │                   │           ────►        │
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>   nvcc frontend       nvcc / -O          mapping     limit: 255 per thread
+</code></pre></div>
+<p>שתי מסקנות שנגזרות מכאן, וחשוב להפנים אותן:</p>
+<ol>
+<li><strong>מספר האוגרים ל-thread נקבע על-ידי ה-SASS</strong>, כלומר על-ידי ה-ptxas, ולא על-ידי מה שכתבתם ב-CUDA C++ ישירות. אתם משפיעים עליו בעקיפין - דרך מבנה הקוד ודרך דגלים - אבל ההחלטה הסופית היא של ה-compiler.</li>
+<li><strong>מכיוון שכל ה-threads של block מתוזמנים לאותו SM</strong>, סך האוגרים שה-block צורך הוא מספר-האוגרים-ל-thread כפול מספר ה-threads-ל-block. לכן register pressure תלוי גם בקוד (SASS) <strong>וגם</strong> בתצורת הlaunch (threads/block). אותו kernel בדיוק, עם block של 128 threads מול block של 512 threads, יוצר לחץ שונה לגמרי על ה-SM.</li>
+</ol>
+<h2 id="-h100-">קובץ האוגרים של ה-H100 - החשבון<a class="headerlink" href="#-h100-" title="Permanent link">&para;</a></h2>
+<p>עכשיו נכניס מספרים אמיתיים. שיעור 1.6 השאיר לנו מכוון את הקווים הכלליים; הנה הקבועים הקונקרטיים של ה-H100 (compute capability 9.0):</p>
+<ul>
+<li><strong>קובץ האוגרים: 65,536 אוגרים של 32 סיביות לכל SM.</strong> זהו התקציב הקשיח שמתחלק בין כל ה-threads התושבים.</li>
+<li><strong>מגבלת חומרה ל-thread: 255 אוגרים.</strong> אף thread לא יכול להשתמש ביותר, גם אם ירצה - ה-ISA מקצה 8 סיביות למספר האוגר.</li>
+<li><strong>מקסימום 64 warps (2,048 threads) תושבים ל-SM</strong> - התקרה שהכרנו ב-8.1.</li>
+<li><strong>הקצאה בגרנולריות של warp, ביחידות של 256 אוגרים.</strong> ה-SM לא מקצה אוגרים ל-thread בודד אלא ל-warp שלם (32 threads), ומעגל את הכמות כלפי מעלה לכפולה של 256.</li>
+</ul>
+<p>מכאן נגזר החשבון המרכזי של השיעור. אם thread צורך <code>R</code> אוגרים, warp צורך <code>32 x R</code> אוגרים, מעוגל כלפי מעלה לכפולה של 256. מספר ה-warps שנכנסים הוא <code>65536 / (אוגרים-ל-warp)</code>, חסום ב-64. נציב כמה ערכים:</p>
+<table>
+<thead>
+<tr>
+<th>אוגרים ל-thread (R)</th>
+<th>אוגרים ל-warp (מעוגל ל-256)</th>
+<th>warps מקסימלי</th>
+<th>occupancy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>32</td>
+<td>1,024</td>
+<td>64</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>40</td>
+<td>1,280</td>
+<td>51</td>
+<td>80%</td>
+</tr>
+<tr>
+<td>48</td>
+<td>1,536</td>
+<td>42</td>
+<td>66%</td>
+</tr>
+<tr>
+<td>64</td>
+<td>2,048</td>
+<td>32</td>
+<td>50%</td>
+</tr>
+<tr>
+<td>96</td>
+<td>3,072</td>
+<td>21</td>
+<td>33%</td>
+</tr>
+<tr>
+<td>128</td>
+<td>4,096</td>
+<td>16</td>
+<td>25%</td>
+</tr>
+<tr>
+<td>255</td>
+<td>8,192</td>
+<td>8</td>
+<td>12.5%</td>
+</tr>
+</tbody>
+</table>
+<p>הטבלה הזו היא כל הסיפור בתמצית. שימו לב לסף המכריע: <strong>32 אוגרים ל-thread הם בדיוק המספר שמאפשר occupancy מלא של 100%</strong> ב-H100 (<code>32 x 32 = 1024</code> אוגרים ל-warp, ו-<code>65536 / 1024 = 64</code> warps). כל אוגר מעבר ל-32 מתחיל לגזול warps. ב-64 אוגרים - כפליים - ה-occupancy כבר צנח לחצי. וב-255 האוגרים המקסימליים, נכנסים רק 8 warps ל-SM, occupancy של 12.5% בלבד. זו המשמעות המדויקת של register pressure: כל אוגר עולה occupancy, והמחיר לא ליניארי אלא מדרגתי (בגלל העיגול ל-256).</p>
+<p>חשוב לזכור: occupancy מוגבל על-ידי <strong>המשאב הצר ביותר</strong>. האוגרים הם רק אחד משלושה חסמים אפשריים - יחד עם shared memory ל-block ועם התקרה של 64 warps / 32 blocks ל-SM. ה-occupancy בפועל הוא המינימום על פני כל החסמים. בשיעור הזה אנחנו מתמקדים בחסם האוגרים, אבל בכל ניתוח אמיתי בודקים את שלושתם.</p>
+<h2 id="-ptxas-v">מדידה - קריאת הפלט של ptxas -v<a class="headerlink" href="#-ptxas-v" title="Permanent link">&para;</a></h2>
+<p>אי אפשר לאזן מה שלא מודדים, והכלי הבסיסי כאן חינמי ומיידי: הדגל <code>-v</code> (verbose) של ה-ptxas. מעבירים אותו דרך ה-nvcc באחת משתי צורות שקולות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>nvcc<span class="w"> </span>-O2<span class="w"> </span>-arch<span class="o">=</span>sm_90a<span class="w"> </span>-Xptxas<span class="w"> </span>-v<span class="w"> </span>-c<span class="w"> </span>kernel.cu<span class="w"> </span>-o<span class="w"> </span>kernel.o
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># fully equivalent:</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>nvcc<span class="w"> </span>-O2<span class="w"> </span>-arch<span class="o">=</span>sm_90a<span class="w"> </span>--ptxas-options<span class="o">=</span>-v<span class="w"> </span>-c<span class="w"> </span>kernel.cu<span class="w"> </span>-o<span class="w"> </span>kernel.o
+</code></pre></div>
+<p>הפלט מודפס ל-stderr, שורה לכל kernel, ונראה כך עבור kernel "רגיל" בלי בעיות:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>ptxas info    : Compiling entry function &#39;_Z5lightPKfPfi&#39; for &#39;sm_90a&#39;
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>ptxas info    : Function properties for _Z5lightPKfPfi
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>ptxas info    : Used 16 registers, 372 bytes cmem[0]
+</code></pre></div>
+<p>שלושת המספרים שאתם קוראים בכל פעם:</p>
+<ul>
+<li><strong><code>Used N registers</code></strong> - מספר האוגרים ל-thread (<code>N</code>). זה המספר שמזין ישירות את טבלת ה-occupancy מהסעיף הקודם. כאן 16 אוגרים -&gt; occupancy מלא בקלות.</li>
+<li><strong><code>smem</code></strong> (אם מופיע, למשל <code>8192 bytes smem</code>) - כמות ה-shared memory ל-block. זהו החסם השני על ה-occupancy.</li>
+<li><strong><code>spill stores</code> / <code>spill loads</code></strong> - כמות הדליפה (בבייטים). בפלט למעלה שניהם 0 - מצוין. כשהם גדולים מ-0, יש לכם צרה, וזה נושא הסעיף הבא.</li>
+</ul>
+<p>(ה-<code>cmem[k]</code> הוא constant memory - בעיקר הארגומנטים של ה-kernel ו-<code>__constant__</code>; הוא כמעט אף פעם לא צוואר-בקבוק, אז לרוב מתעלמים ממנו.) הרגל הזהב: הריצו <code>-Xptxas -v</code> על כל kernel חם, והסתכלו על שלושת המספרים לפני כל אופטימיזציה אחרת.</p>
+<h2 id="-register-spilling">דליפה לזיכרון מקומי - register spilling<a class="headerlink" href="#-register-spilling" title="Permanent link">&para;</a></h2>
+<p>מה קורה כשה-ptxas צריך יותר מ-255 אוגרים ל-thread (או כשהגבלתם אותו למספר נמוך יותר)? הוא לא יכול להמציא אוגרים פיזיים, אז הוא <strong>דולף</strong> (spills): הוא מוציא חלק מהערכים מהאוגרים ומאחסן אותם ב-<strong>local memory</strong> (זיכרון מקומי). וכאן המלכודת הגדולה: השם "local" מטעה. <strong>local memory הוא לא זיכרון מהיר על ה-SM - הוא פשוט אזור פרטי-ל-thread בתוך ה-GPU RAM (זיכרון גלובלי, DRAM/HBM).</strong> הוא "מקומי" רק במובן הלוגי שהוא פרטי ל-thread; פיזית, גישה אליו יורדת עד לתחתית ההיררכיה שראינו ב-1.6 (עם cache ב-L1/L2, אבל בעיקרון latency של מאות מחזורים).</p>
+<p>לכן דליפה היא כה יקרה, ולכן היא כה מסוכנת: <strong>היא שקטה.</strong> הקוד נשאר נכון לחלוטין; שום דבר לא נשבר; שום אזהרה לא קופצת בזמן ריצה. פשוט, כל ערך שדלף הופך גישת אוגר (בעצם חינם) לגישת זיכרון גלובלי (מאות מחזורים). kernel יכול להיות איטי פי כמה בגלל דליפה, ואתם לא תדעו - אלא אם הרצתם <code>-Xptxas -v</code>. הנה איך נראה הפלט כשיש דליפה:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>ptxas info    : Function properties for _Z5heavyPKfPfi
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    336 bytes stack frame, 328 bytes spill stores, 412 bytes spill loads
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>ptxas info    : Used 128 registers, 372 bytes cmem[0]
+</code></pre></div>
+<p><code>spill stores</code> ו-<code>spill loads</code> גדולים מ-0 = דגל אדום. ה-<code>stack frame</code> גם הוא סימן: הוא ה-local memory שה-frame של ה-thread תופס. שימו לב לדינמיקה הלא-אינטואיטיבית: אם תגבילו את מספר האוגרים ל-thread נמוך <strong>מדי</strong> (כדי להעלות occupancy), אתם עלולים דווקא <strong>לגרום</strong> לדליפה - ואז שילמתם פעמיים: גם occupancy נמוך יותר לא הרווחתם ריאלית, וגם כל thread עכשיו נכנס-ויוצא מהזיכרון. זו בדיוק המתיחות: לא מעט מדי אוגרים ולא יותר מדי.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>   too many registers            too few registers
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>   ────────────────               ────────────────
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>   low occupancy                  spilling to local memory
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>   fewer warps to hide latency    memory accesses instead of registers
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>        │                              │
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        └──────► the balance point ◄───────┘
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>              (found only by measuring)
+</code></pre></div>
+<h2 id="-launch_bounds-maxrregcount">שליטה בקומפיילר - launch_bounds ו-maxrregcount<a class="headerlink" href="#-launch_bounds-maxrregcount" title="Permanent link">&para;</a></h2>
+<p>יש לנו שני מנופים עיקריים להנחות את ה-ptxas כמה אוגרים להקצות. הראשון, המומלץ, הוא <strong><code>__launch_bounds__</code></strong> - תכונה (attribute) שמצמידים להגדרת ה-kernel עצמו:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">__launch_bounds__</span><span class="p">(</span><span class="n">maxThreadsPerBlock</span><span class="p">,</span><span class="w"> </span><span class="n">minBlocksPerSM</span><span class="p">)</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">myKernel</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* ... */</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<p>שני הפרמטרים אומרים ל-compiler:</p>
+<ul>
+<li><strong><code>maxThreadsPerBlock</code></strong> - הבטחה שלכם שלא תשיקו את ה-kernel עם block גדול יותר. זה מאפשר ל-compiler לדעת את גבול ה-block.</li>
+<li><strong><code>minBlocksPerSM</code></strong> (רשות) - כמה blocks לפחות אתם רוצים שיֵשבו על SM בו-זמנית. ה-compiler מחשב מזה תקרת-אוגרים ומכוון אליה.</li>
+</ul>
+<p>הדוגמה הקונקרטית על H100: <code>__launch_bounds__(256, 8)</code> אומר "block של עד 256 threads, לפחות 8 blocks ל-SM". החשבון של ה-compiler: <code>256 threads x 8 blocks = 2048 threads = 64 warps</code> - occupancy מלא. תקציב האוגרים ל-thread שנגזר: <code>65536 / 2048 = 32 אוגרים ל-thread</code>. אז ה-ptxas ינסה בכל כוחו לרדת ל-32 אוגרים (בדיוק סף ה-100% מהטבלה), וידלוף רק אם באמת אין ברירה.</p>
+<p>המנוף השני, הגס יותר, הוא הדגל <strong><code>-maxrregcount=N</code></strong> (או <code>--maxrregcount N</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>nvcc<span class="w"> </span>-O2<span class="w"> </span>-arch<span class="o">=</span>sm_90a<span class="w"> </span>-maxrregcount<span class="o">=</span><span class="m">32</span><span class="w"> </span>-Xptxas<span class="w"> </span>-v<span class="w"> </span>kernel.cu<span class="w"> </span>-o<span class="w"> </span>kernel
+</code></pre></div>
+<p>הוא כופה תקרה קשיחה של <code>N</code> אוגרים ל-thread על <strong>כל</strong> ה-kernels ביחידת הקומפילציה. זו גם החולשה שלו: הוא גלובלי וחסר-אבחנה, בעוד ש-<code>__launch_bounds__</code> מכוון לכל kernel בנפרד. לכן ההמלצה: העדיפו <code>__launch_bounds__</code> לכל kernel, ושמרו את <code>-maxrregcount</code> לניסויי-סריקה מהירים (כמו שנעשה בתרגול, לסרוק ערכי-אוגרים ולמצוא את המיטבי בלי לגעת בקוד).</p>
+<p>ההבנה המהותית לגבי שני המנופים: <strong>שניהם מחליפים דליפה ב-occupancy.</strong> כשמורידים את תקרת האוגרים, מרוויחים warps (occupancy עולה) אבל מסתכנים בדליפה. זו לא "אופטימיזציה" חד-כיוונית - זו סחר-חליפין. הכיוון הנכון תלוי ב-kernel הספציפי, ומתגלה רק במדידה.</p>
+<h2 id="-">ההקלה מהחומרה - הזזת נתונים מהאוגרים<a class="headerlink" href="#-" title="Permanent link">&para;</a></h2>
+<p>עד כאן שיחקנו רק עם ה-compiler. אבל NVIDIA זיהו את register pressure כצוואר-בקבוק ארכיטקטוני, וכמה מהתכונות המרכזיות של הדורות האחרונים נועדו במפורש <strong>להקל עליו</strong> - כולן על-ידי הזזת נתונים אל מחוץ לאוגרים או אל מחוץ למסלול-החישוב. ה-glossary מונה שלוש, אחת לכל דור, וכל אחת מהן הכרנו בפרקים קודמים:</p>
+<ul>
+<li><strong>דור Ampere - העתקה א-סינכרונית (async copy).</strong> במקום שכל thread ישאב נתון מהזיכרון הגלובלי דרך אוגר (load-to-register ואז store-to-shared), ה-<code>cp.async</code> מעביר ישירות מ-global ל-shared memory ומדלג על האוגרים. פחות אוגרים תפוסים בהחזקת נתונים-בדרך = פחות register pressure.</li>
+<li><strong>דור Hopper - מאיץ זיכרון הטנזור - TMA (Tensor Memory Accelerator).</strong> ראינו אותו בשיעור 1.x: יחידה ייעודית שמעתיקה מערכים רב-ממדיים מ-GPU RAM ל-shared memory, מחשבת את כתובות-הגישה האפיניות (<code>addr = width x base + offset</code>) <strong>בחומרה</strong>, ועוקפת את קובץ האוגרים לגמרי. שני רווחים ל-register pressure: לא צריך אוגרים להחזקת אינדקסים וכתובות, ולא צריך אוגרים להחזקת הנתונים בדרך.</li>
+<li><strong>דור Blackwell - זיכרון הטנזור (Tensor Memory).</strong> מאגר ייעודי על ה-SM שמחזיק את האופרנדים - ובעיקר את הצוברים (accumulators) - של ה-Tensor Cores, במקום להחזיק אותם בקובץ האוגרים הכללי. matmul גדול היה מציף את קובץ האוגרים בצוברים; Blackwell מוציא אותם לזיכרון נפרד, ומשחרר את קובץ האוגרים לשאר העבודה.</li>
+</ul>
+<p>הקו המשותף בולט: <strong>ככל שיותר תנועת-נתונים יורדת מהאוגרים ומהליבות אל יחידות ייעודיות, כך register pressure יורד וה-occupancy יכול לעלות</strong> - בלי לוותר על מהירות ה-thread הבודד. זו בעצם דרך שלישית לפתור את המתיחות, מעבר לשני מנופי-ה-compiler: לא לאזן טוב יותר בין אוגרים ל-occupancy, אלא להוריד את הביקוש לאוגרים מלכתחילה. (SemiAnalysis כתבו מאמר מצוין המנתח בדיוק את הקשרים האלה, וה-glossary מפנה אליו.)</p>
+<h2 id="-_1">המאזן - למצוא את הנקודה המיטבית<a class="headerlink" href="#-_1" title="Permanent link">&para;</a></h2>
+<p>נחבר הכל לכלל-פעולה. register pressure הוא לא בעיה שיש לה "פתרון" חד-משמעי; הוא <strong>סחר-חליפין</strong> שיש לו נקודה מיטבית, והנקודה שונה מ-kernel ל-kernel. שני הכיוונים:</p>
+<ul>
+<li><strong>יותר אוגרים ל-thread</strong> מאיצים thread בודד: פחות חישובים-מחדש, פחות דליפות, יותר ערכים חמים באחסון המהיר ביותר. המחיר: פחות warps, occupancy נמוך, הסתרת latency חלשה יותר.</li>
+<li><strong>פחות אוגרים ל-thread</strong> מעלים occupancy: יותר warps להסתרת latency. המחיר: אם ירדתם נמוך מדי - דליפה, וכל thread עכשיו איטי יותר.</li>
+</ul>
+<p>והנה הנקודה הכי חשובה, שסוגרת גם את הפרק וגם את שיעור 7.4: <strong>המטרה היא throughput מרבי, לא occupancy מרבי.</strong> ראינו בחוק Little שצריך רק <strong>מספיק</strong> warps כדי להסתיר את ה-latency - למשל, שרשרת load אופיינית מוסתרת כבר ב-occupancy צנוע של כ-20%. מעבר לזה, occupancy נוסף לא קונה כלום, ואם הוא בא במחיר של פחות אוגרים ל-thread (ואולי דליפה) - הוא אפילו <strong>מזיק</strong>. לכן קורה לא-אחת שה-kernel הכי מהיר הוא זה עם occupancy <strong>בינוני</strong>: מספיק warps כדי להסתיר latency, אבל מספיק אוגרים כדי שכל thread ירוץ בלי דליפות ובלי חישובים מיותרים. אין נוסחה שנותנת את הנקודה הזו. יש רק את הלולאה: לשנות את מספר האוגרים (עם <code>__launch_bounds__</code> או <code>-maxrregcount</code>), למדוד occupancy ו-runtime, ולחזור - עד שמוצאים את מספר-האוגרים שממקסם throughput. את הלולאה הזו נתרגל בדיוק בתרגול.</p>
+<h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>ה-register pressure (לחץ אוגרים) הוא המצב שבו קובץ האוגרים הוא צוואר-הבקבוק: כל אוגר שכל thread צורך מוכפל במספר ה-threads התושבים ומכרסם בתקציב שקובע כמה warps נכנסים ל-SM.</li>
+<li>אוגרים ב-PTX הם וירטואליים ובלתי-מוגבלים, אוגרי ה-SASS פיזיים ומוגבלים, וה-ptxas ממפה בין השניים; מספר האוגרים ל-thread נקבע על-ידי ה-SASS יחד עם תצורת הlaunch (threads/block), כי כל ה-threads של block יושבים על אותו SM.</li>
+<li>ל-H100 יש 65,536 אוגרים של 32 סיביות לכל SM, מגבלת חומרה של 255 אוגרים ל-thread, והקצאה בגרנולריות של warp ביחידות של 256; מכאן ש-32 אוגרים ל-thread נותנים occupancy מלא (64 warps), 64 אוגרים נותנים 50%, ו-255 אוגרים נותנים 12.5% בלבד.</li>
+<li>הדגל <code>nvcc -Xptxas -v</code> (או <code>--ptxas-options=-v</code>) מדפיס לכל kernel את מספר האוגרים, את ה-shared memory, ואת בייטי הדליפה (spill stores / spill loads) - שלושת המספרים שקוראים לפני כל אופטימיזציה.</li>
+<li>דליפה (spilling) מוציאה אוגרים ל-local memory, שהוא למעשה אזור פרטי-ל-thread בתוך ה-GPU RAM (זיכרון גלובלי איטי) - לא זיכרון מהיר על ה-SM; הדליפה שקטה (הקוד נכון אבל איטי) ולכן מסוכנת, ומתגלה רק ב-<code>-Xptxas -v</code>.</li>
+<li><code>__launch_bounds__(maxThreadsPerBlock, minBlocksPerSM)</code> מנחה את ה-compiler לכל kernel בנפרד (מומלץ), ו-<code>-maxrregcount=N</code> כופה תקרה גלובלית קשיחה; שניהם מחליפים דליפה ב-occupancy, ולהוריד את התקרה נמוך מדי דווקא גורם לדליפה.</li>
+<li>תכונות חומרה שמקלות על register pressure על-ידי הזזת נתונים מהאוגרים: העתקה א-סינכרונית ב-Ampere, ה-TMA ב-Hopper (עוקף את קובץ האוגרים ומחשב כתובות בחומרה), וזיכרון הטנזור ב-Blackwell (מחזיק צוברים מחוץ לקובץ האוגרים).</li>
+<li>האיזון הוא סחר-חליפין: יותר אוגרים מאיצים thread בודד אך מורידים occupancy, פחות אוגרים מעלים occupancy אך מסתכנים בדליפה; אין נוסחה לנקודה המיטבית, רק מדידה.</li>
+<li>המטרה היא throughput מרבי, לא occupancy מרבי: חוק Little (7.4) מלמד שצריך רק מספיק warps כדי להסתיר latency, ולכן ה-kernel הכי מהיר הוא לרוב בעל occupancy בינוני - מספיק warps להסתרה, מספיק אוגרים כדי להימנע מדליפה.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="עדכון אחרון">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="15 ביולי 2026 19:14:25 UTC">2026-07-15 19:14:25</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  חזרה למעלה
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["navigation.tabs", "navigation.indexes", "navigation.top", "navigation.prune", "navigation.path", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u05d4\u05d5\u05e2\u05ea\u05e7 \u05dc\u05dc\u05d5\u05d7", "clipboard.copy": "\u05d4\u05e2\u05ea\u05e7\u05d4 \u05dc\u05dc\u05d5\u05d7", "search.result.more.one": "\u05e2\u05d5\u05d3 \u05d0\u05d7\u05d3 \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.more.other": "\u05e2\u05d5\u05d3 # \u05d1\u05d3\u05e3 \u05d4\u05d6\u05d4", "search.result.none": "\u05d0\u05d9\u05df \u05de\u05e1\u05de\u05db\u05d9\u05dd \u05ea\u05d5\u05d0\u05de\u05d9\u05dd", "search.result.one": "\u05de\u05e1\u05de\u05da1 \u05ea\u05d5\u05d0\u05dd", "search.result.other": "# \u05de\u05e1\u05de\u05da \u05ea\u05d5\u05d0\u05dd", "search.result.placeholder": "\u05d9\u05e9 \u05dc\u05d4\u05e7\u05dc\u05d9\u05d3 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc \u05dc\u05d7\u05e4\u05e9", "search.result.term.missing": "\u05d7\u05e1\u05e8", "select.version": "\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05e8\u05e1\u05d4"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/progress.js"></script>
+      
+        <script src="../../../../javascripts/tabs-dropdown.js"></script>
+      
+        <script src="../../../../javascripts/theme-switcher.js"></script>
+      
+        <script src="../../../../javascripts/recent-posts.js"></script>
+      
+    
+  </body>
+</html>
