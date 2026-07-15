@@ -194,21 +194,34 @@
     else if (secOk) fire('section');
   }
 
-  function fire(level) {
-    if (typeof confetti !== 'function') return;
+  /* Confetti only ever fires on course pages (isInCourse() gates every
+     caller of fire()), so the library is loaded on demand here instead of
+     as a global <script> - that was shipping ~11KB plus a third-party CDN
+     request to every page on the site, including the 1000+ that can never
+     trigger it. */
+  function withConfetti(run) {
+    if (typeof confetti === 'function') { run(); return; }
+    var script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js';
+    script.onload = run;
+    document.head.appendChild(script);
+  }
 
-    if (level === 'course') {
-      var end = Date.now() + 5000;
-      (function f() {
-        confetti({ particleCount: 7, angle: 60, spread: 80, origin: { x: 0, y: 0.7 } });
-        confetti({ particleCount: 7, angle: 120, spread: 80, origin: { x: 1, y: 0.7 } });
-        if (Date.now() < end) requestAnimationFrame(f);
-      })();
-      toast('\u05db\u05dc \u05d4\u05db\u05d1\u05d5\u05d3! \u05e1\u05d9\u05d9\u05de\u05ea \u05d0\u05ea \u05d4\u05e7\u05d5\u05e8\u05e1!');
-    } else {
-      confetti({ particleCount: 150, spread: 100, origin: { y: 0.7 } });
-      toast('\u05db\u05dc \u05d4\u05db\u05d1\u05d5\u05d3! \u05e1\u05d9\u05d9\u05de\u05ea \u05d0\u05ea \u05d4\u05e4\u05e8\u05e7!');
-    }
+  function fire(level) {
+    withConfetti(function() {
+      if (level === 'course') {
+        var end = Date.now() + 5000;
+        (function f() {
+          confetti({ particleCount: 7, angle: 60, spread: 80, origin: { x: 0, y: 0.7 } });
+          confetti({ particleCount: 7, angle: 120, spread: 80, origin: { x: 1, y: 0.7 } });
+          if (Date.now() < end) requestAnimationFrame(f);
+        })();
+        toast('\u05db\u05dc \u05d4\u05db\u05d1\u05d5\u05d3! \u05e1\u05d9\u05d9\u05de\u05ea \u05d0\u05ea \u05d4\u05e7\u05d5\u05e8\u05e1!');
+      } else {
+        confetti({ particleCount: 150, spread: 100, origin: { y: 0.7 } });
+        toast('\u05db\u05dc \u05d4\u05db\u05d1\u05d5\u05d3! \u05e1\u05d9\u05d9\u05de\u05ea \u05d0\u05ea \u05d4\u05e4\u05e8\u05e7!');
+      }
+    });
   }
 
   function toast(text) {
