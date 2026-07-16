@@ -19,6 +19,7 @@ _HTML_TAG = re.compile(r"<[^>]+>")
 # A single "*"/"-" followed by whitespace is a list bullet; "**bold**" is not, so
 # this must not match on a bare startswith("*") or every bolded lead-in gets skipped.
 _SKIP_LINE = re.compile(r"^([-*+>]\s|\||!\[|\d+[.)]\s)")
+_HR = re.compile(r"^(-{3,}|\*{3,}|_{3,})$")
 
 
 def _clean(line):
@@ -28,24 +29,41 @@ def _clean(line):
     return line.strip()
 
 
+def _finish_paragraph(lines):
+    if not lines:
+        return None
+    text = _clean(" ".join(lines))
+    if len(text) < 40:
+        return None
+    if len(text) <= _MAX_LEN:
+        return text
+    return text[:_MAX_LEN].rsplit(" ", 1)[0] + "..."
+
+
 def _extract_description(markdown):
     in_code = False
+    paragraph = []
     for raw_line in markdown.splitlines():
-        if _CODE_FENCE.match(raw_line):
+        # Fences nested under a list item are indented (tabs/spaces), so the
+        # check must strip first or those code blocks leak into descriptions.
+        if _CODE_FENCE.match(raw_line.strip()):
             in_code = not in_code
             continue
         if in_code:
             continue
         line = raw_line.strip()
-        if not line or _HEADING.match(line) or _SKIP_LINE.match(line):
+        # This site follows a one-sentence-per-line convention (see AGENTS.md),
+        # so a paragraph's continuation sentences live on the next physical
+        # lines with no blank line between them - they must be joined before
+        # measuring, or the description cuts off after just the first sentence.
+        if not line or _HEADING.match(line) or _SKIP_LINE.match(line) or _HR.match(line):
+            result = _finish_paragraph(paragraph)
+            if result:
+                return result
+            paragraph = []
             continue
-        text = _clean(line)
-        if len(text) < 40:
-            continue
-        if len(text) <= _MAX_LEN:
-            return text
-        return text[:_MAX_LEN].rsplit(" ", 1)[0] + "..."
-    return None
+        paragraph.append(line)
+    return _finish_paragraph(paragraph)
 
 
 def on_page_markdown(markdown, *, page, config, files):
