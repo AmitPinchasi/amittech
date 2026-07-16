@@ -13,13 +13,15 @@ import re
 _MAX_LEN = 155
 _CODE_FENCE = re.compile(r"^```")
 _HEADING = re.compile(r"^#{1,6}\s")
+_HR = re.compile(r"^(-{3,}|\*{3,}|_{3,})$")
 _MD_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
 _MD_INLINE = re.compile(r"[*_`]+")
 _HTML_TAG = re.compile(r"<[^>]+>")
-# A single "*"/"-" followed by whitespace is a list bullet; "**bold**" is not, so
-# this must not match on a bare startswith("*") or every bolded lead-in gets skipped.
-_SKIP_LINE = re.compile(r"^([-*+>]\s|\||!\[|\d+[.)]\s)")
-_HR = re.compile(r"^(-{3,}|\*{3,}|_{3,})$")
+# Never include: images and table rows carry no standalone prose.
+_SKIP_LINE = re.compile(r"^(\||!\[)")
+# A single "*"/"-" followed by whitespace is a list marker; "**bold**" is not, so
+# this must not match on a bare startswith("*") or every bolded lead-in strips.
+_LIST_MARKER = re.compile(r"^([-*+>]\s+|\d+[.)]\s+)")
 
 
 def _clean(line):
@@ -52,17 +54,24 @@ def _extract_description(markdown):
         if in_code:
             continue
         line = raw_line.strip()
-        # This site follows a one-sentence-per-line convention (see AGENTS.md),
-        # so a paragraph's continuation sentences live on the next physical
-        # lines with no blank line between them - they must be joined before
-        # measuring, or the description cuts off after just the first sentence.
-        if not line or _HEADING.match(line) or _SKIP_LINE.match(line) or _HR.match(line):
+        # Headings/rules start a new section, so whatever came before them
+        # must be finalized now - never carried into an unrelated section.
+        if _HEADING.match(line) or _HR.match(line):
             result = _finish_paragraph(paragraph)
             if result:
                 return result
             paragraph = []
             continue
-        paragraph.append(line)
+        # A short lead-in sentence introducing a list ("X:\n\n- a\n- b") is
+        # common on exercise/solution pages and often falls under the 40-char
+        # floor alone. Blank lines and list markers are soft breaks: strip the
+        # marker and keep folding the text in, so the lead-in plus its list
+        # items become one real description instead of being discarded.
+        if not line or _SKIP_LINE.match(line):
+            continue
+        line = _LIST_MARKER.sub("", line).strip()
+        if line:
+            paragraph.append(line)
     return _finish_paragraph(paragraph)
 
 
