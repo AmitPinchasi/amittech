@@ -1,0 +1,37 @@
+{
+  "title": "תרשים המראה כיצד המעבד משווה את רמת ההרשאה הנוכחית מול שדה ה-DPL שבטבלת ה-GDT ומחליט אם לאפשר את הגישה",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "code", "type": "code", "values": ["mov ds, 0x2b", "jmp 0x08:kernel_entry"] },
+    { "id": "read", "type": "box", "label": "המעבד לוקח את האינדקס מהסלקטור וקורא את השורה בטבלה" },
+    { "id": "regs", "type": "dynamic", "values": [
+      "CPL = 3",
+      "CPL = 3, DPL = 3",
+      "CPL = 3, DPL = 0"
+    ] },
+    { "id": "cond", "type": "diamond", "values": ["CPL <= DPL", "3 <= 3", "3 <= 0"] },
+    { "id": "deny", "type": "box", "label": "המעבד חוסם את הגישה" },
+    { "id": "allow", "type": "box", "label": "הגישה מתבצעת כרגיל" }
+  ],
+  "connections": [
+    { "from": "code", "to": "read" },
+    { "from": "read", "to": "regs" },
+    { "from": "regs", "to": "cond" },
+    { "from": "cond", "to": "deny", "label": "לא", "side": "right" },
+    { "from": "cond", "to": "allow", "label": "כן" }
+  ],
+  "animation": {
+    "step_seconds": 1.8,
+    "steps": [
+      { "active": ["code"], "set": { "code": 0, "regs": 0, "cond": 0 } },
+      { "active": ["read"], "edges": [0] },
+      { "active": ["regs"], "edges": [1, 2], "set": { "regs": 1 } },
+      { "active": ["cond"], "set": { "cond": 1 } },
+      { "active": ["allow"], "edges": [4] },
+      { "active": ["code"], "set": { "code": 1, "regs": 2, "cond": 0 } },
+      { "active": ["regs"], "edges": [0, 1, 2] },
+      { "active": ["cond"], "set": { "cond": 2 } },
+      { "active": ["deny"], "edges": [3] }
+    ]
+  }
+}

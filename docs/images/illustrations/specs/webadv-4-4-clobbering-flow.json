@@ -1,0 +1,34 @@
+{
+  "title": "שיבוש DOM ל-XSS: הזרקת אלמנט a עם id דורסת משתנה גלובלי, toString מחזיר את ה-href והוא נטען כסקריפט, אלא אם נבדק שהערך אינו אלמנט",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "inject", "type": "code", "label": "<a id=config href=//evil>" },
+    { "id": "named", "type": "box", "label": "המשתנה window.config מצביע לאלמנט" },
+    { "id": "typeq", "type": "diamond", "label": "הערך אינו אלמנט?" },
+    { "id": "tostr", "type": "box", "label": "הפונקציה toString מחזירה את ה-href" },
+    { "id": "sink", "type": "code", "label": "s.src = config" },
+    { "id": "xss", "type": "box", "label": "סקריפט זדוני נטען - XSS" },
+    { "id": "safe", "type": "box", "label": "הערך נדחה" }
+  ],
+  "connections": [
+    { "from": "inject", "to": "named" },
+    { "from": "named", "to": "typeq" },
+    { "from": "typeq", "to": "tostr", "label": "לא" },
+    { "from": "tostr", "to": "sink" },
+    { "from": "sink", "to": "xss" },
+    { "from": "typeq", "to": "safe", "label": "כן", "side": "right" }
+  ],
+  "animation": {
+    "step_seconds": 1.7,
+    "steps": [
+      { "active": ["inject"] },
+      { "active": ["named"], "edges": [0] },
+      { "active": ["typeq"], "edges": [1] },
+      { "active": ["safe"], "edges": [5] },
+      { "active": ["typeq"] },
+      { "active": ["tostr"], "edges": [2] },
+      { "active": ["sink"], "edges": [3] },
+      { "active": ["xss"], "edges": [4] }
+    ]
+  }
+}

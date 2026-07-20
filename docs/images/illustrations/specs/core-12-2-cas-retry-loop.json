@@ -1,0 +1,39 @@
+{
+  "title": "לולאת CAS: הניסיון הראשון נכשל כי thread אחר שינה את המונה, והמשתנה old מתעדכן לערך החדש",
+  "layout": { "type": "stack" },
+  "components": [
+    { "id": "code", "type": "code", "values": [
+      "old = atomic_load(val);",
+      "compare_exchange_weak(val, &old, old + 1) -> false",
+      "compare_exchange_weak(val, &old, old + 1) -> true"
+    ] },
+    { "id": "shared", "type": "dynamic", "values": [
+      "counter = 5",
+      "counter = 6",
+      "counter = 7"
+    ] },
+    { "id": "mine", "type": "dynamic", "values": [
+      "old = 5, desired = 6",
+      "old = 6, desired = 7"
+    ] },
+    { "id": "note", "type": "box", "values": [
+      "התהליכון קורא את הערך הנוכחי ומחשב ממנו את הערך הרצוי",
+      "תהליכון אחר הספיק להעלות את המונה, ולכן הערך במשתנה כבר לא חמש",
+      "הפעולה נכשלת כי הערך בזיכרון שונה מהערך שציפינו לו",
+      "המשתנה old מתעדכן אוטומטית לערך הנוכחי, ולכן הניסיון הבא מחושב מחדש",
+      "הניסיון השני מצליח כי אף אחד לא שינה את המונה בינתיים"
+    ] },
+    { "id": "cap", "type": "text", "label": "כישלון של פעולת CAS תמיד אומר שתהליכון אחר התקדם, ולכן המערכת כולה מתקדמת גם בלי נעילות" }
+  ],
+  "connections": [],
+  "animation": {
+    "step_seconds": 1.9,
+    "steps": [
+      { "active": ["code", "mine"], "set": { "code": 0, "shared": 0, "mine": 0, "note": 0 } },
+      { "active": ["shared"], "set": { "shared": 1, "note": 1 } },
+      { "active": ["code"], "set": { "code": 1, "note": 2 } },
+      { "active": ["mine"], "set": { "mine": 1, "note": 3 } },
+      { "active": ["code", "shared"], "set": { "code": 2, "shared": 2, "note": 4 } }
+    ]
+  }
+}

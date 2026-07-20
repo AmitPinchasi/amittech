@@ -1,0 +1,30 @@
+{
+  "title": "כיצד ערך len חתום שווה מינוס אחד עוקף את בדיקת הגבול: התנאי len גדול מ-64 מחזיר שקר ולכן ממשיכים, אך memcpy מפרש את len כטיפוס size_t לא חתום שהופך לערך ענק, וכך נוצרת גלישה עצומה על המחסנית",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "inp", "type": "box", "label": "התוקף שולח len", "values": ["התוקף שולח len", "len = -1 (int חתום)"] },
+    { "id": "chk", "type": "diamond", "label": "len > 64", "values": ["len > 64", "-1 > 64 = false"] },
+    { "id": "ret", "type": "box", "label": "return - הגישה נחסמת" },
+    { "id": "size", "type": "box", "label": "size_t(len)", "values": ["size_t(len)", "size_t(-1) = ערך ענק"] },
+    { "id": "mc", "type": "box", "label": "memcpy(buf, src, len)", "values": ["memcpy(buf, src, len)", "מעתיק כ-4 מיליארד בתים"] },
+    { "id": "res", "type": "box", "label": "char buf[64]", "values": ["char buf[64]", "גלישה עצומה ודריסת המחסנית"] }
+  ],
+  "connections": [
+    { "from": "inp", "to": "chk" },
+    { "from": "chk", "to": "ret", "label": "כן", "side": "right" },
+    { "from": "chk", "to": "size", "label": "לא, ממשיכים" },
+    { "from": "size", "to": "mc" },
+    { "from": "mc", "to": "res" }
+  ],
+  "animation": {
+    "step_seconds": 1.9,
+    "steps": [
+      { "active": ["inp"], "set": { "inp": 0, "chk": 0, "size": 0, "mc": 0, "res": 0 } },
+      { "active": ["inp"], "set": { "inp": 1 } },
+      { "active": ["chk"], "edges": [0], "set": { "chk": 1 } },
+      { "active": ["size"], "edges": [2], "set": { "size": 1 } },
+      { "active": ["mc"], "edges": [3], "set": { "mc": 1 } },
+      { "active": ["res"], "edges": [4], "set": { "res": 1 } }
+    ]
+  }
+}

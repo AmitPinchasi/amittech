@@ -1,0 +1,45 @@
+{
+  "title": "תרשים מסכם המראה את כל הדרך מהדלקת המחשב, דרך ה-bootloader והקרנל, ועד להרצת תוכנה ביוזר מוד",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "bios", "type": "box", "label": "המחשב נדלק והמעבד מריץ את ה-BIOS ב-Real Mode" },
+    { "id": "mbr", "type": "box", "label": "ה-BIOS טוען 512 בתים מהדיסק לכתובת 0x7C00 וקופץ אליהם" },
+    { "id": "loader", "type": "box", "label": "ה-bootloader טוען את הקרנל מהדיסק לזיכרון" },
+    { "id": "pm", "type": "code", "lines": ["lgdt [gdt_ptr]", "or eax, 1", "mov cr0, eax"] },
+    { "id": "init", "type": "box", "label": "הקרנל מאתחל את ה-IDT, את ה-TSS ואת טבלאות ה-paging" },
+    { "id": "pg", "type": "code", "lines": ["mov cr3, eax", "or eax, 0x80000000", "mov cr0, eax"] },
+    { "id": "sched", "type": "box", "label": "הקרנל יוצר process ראשון ומפעיל את ה-Scheduler" },
+    { "id": "jump", "type": "code", "label": "jmp 0x23:user_entry" },
+    { "id": "user", "type": "box", "label": "התוכנה רצה ב-Ring 3 ופונה לקרנל רק דרך int 0x80" },
+    { "id": "state", "type": "dynamic", "values": [
+      "Real Mode, no paging",
+      "Protected Mode, no paging",
+      "Protected Mode, paging on",
+      "Protected Mode, paging on, Ring 3"
+    ] }
+  ],
+  "connections": [
+    { "from": "bios", "to": "mbr" },
+    { "from": "mbr", "to": "loader" },
+    { "from": "loader", "to": "pm" },
+    { "from": "pm", "to": "init" },
+    { "from": "init", "to": "pg" },
+    { "from": "pg", "to": "sched" },
+    { "from": "sched", "to": "jump" },
+    { "from": "jump", "to": "user" }
+  ],
+  "animation": {
+    "step_seconds": 1.8,
+    "steps": [
+      { "active": ["bios"], "set": { "state": 0 } },
+      { "active": ["mbr"], "edges": [0] },
+      { "active": ["loader"], "edges": [1] },
+      { "active": ["pm"], "edges": [2], "set": { "state": 1 } },
+      { "active": ["init"], "edges": [3] },
+      { "active": ["pg"], "edges": [4], "set": { "state": 2 } },
+      { "active": ["sched"], "edges": [5] },
+      { "active": ["jump"], "edges": [6], "set": { "state": 3 } },
+      { "active": ["user"], "edges": [7] }
+    ]
+  }
+}
