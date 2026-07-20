@@ -1,0 +1,32 @@
+{
+  "title": "המודל הלא-חוסם של Node: הThread הראשי שולח פעולה אסינכרונית וממשיך, וכשהיא מסתיימת הCallback נכנס לתור וה-Event Loop מריץ אותו",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "op", "type": "code", "label": "fs.readFile(path, cb)" },
+    { "id": "thread", "type": "box", "label": "הThread הראשי שולח את הפעולה",
+      "values": ["הThread הראשי שולח את הפעולה", "הThread הראשי ממשיך לעבוד - לא חוסם", "הThread הראשי מריץ את הCallback"] },
+    { "id": "bg", "type": "box", "label": "הפעולה האיטית רצה ומסתיימת ברקע" },
+    { "id": "q", "type": "dynamic",
+      "values": ["Callback Queue: []", "Callback Queue: [cb]", "Callback Queue: []"] },
+    { "id": "el", "type": "box", "label": "Event Loop ממתין לCallback",
+      "values": ["Event Loop ממתין לCallback", "Event Loop מריץ את הCallback"] }
+  ],
+  "connections": [
+    { "from": "op", "to": "thread", "label": "פעולה אסינכרונית" },
+    { "from": "thread", "to": "bg", "label": "בינתיים רץ ברקע" },
+    { "from": "bg", "to": "q", "label": "הCallback נכנס לתור" },
+    { "from": "q", "to": "el" },
+    { "from": "el", "to": "thread", "loop": true, "label": "מריץ אותו" }
+  ],
+  "animation": {
+    "step_seconds": 1.9,
+    "steps": [
+      { "active": ["op"], "set": { "thread": 0, "q": 0, "el": 0 } },
+      { "active": ["thread"], "edges": [0], "set": { "thread": 1 } },
+      { "active": ["bg"], "edges": [1] },
+      { "active": ["q"], "edges": [2], "set": { "q": 1 } },
+      { "active": ["el"], "edges": [3], "set": { "el": 0 } },
+      { "active": ["thread", "el"], "edges": [4], "set": { "el": 1, "thread": 2, "q": 2 } }
+    ]
+  }
+}
