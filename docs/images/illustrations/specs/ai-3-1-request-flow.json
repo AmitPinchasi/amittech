@@ -1,0 +1,36 @@
+{
+  "title": "מעקב אחר בקשת HTTP בארכיטקטורה שכבתית: הבקשה עוברת מרouter לcontroller לservice, ואז פעולה כבדה נדחפת לתור worker אסינכרוני בזמן שהמסלול הרגיל ממשיך לPrisma ולPostgreSQL",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "req", "type": "box", "label": "בקשת HTTP" },
+    { "id": "router", "type": "box", "label": "router" },
+    { "id": "ctrl", "type": "box", "label": "controller" },
+    { "id": "svc", "type": "box", "label": "service - לוגיקה עסקית" },
+    { "id": "heavy", "type": "diamond", "label": "פעולה כבדה?" },
+    { "id": "prisma", "type": "box", "label": "Prisma - שכבת נתונים" },
+    { "id": "pg", "type": "box", "label": "PostgreSQL" },
+    { "id": "queue", "type": "box", "label": "תור worker נפרד" }
+  ],
+  "connections": [
+    { "from": "req", "to": "router" },
+    { "from": "router", "to": "ctrl" },
+    { "from": "ctrl", "to": "svc" },
+    { "from": "svc", "to": "heavy" },
+    { "from": "heavy", "to": "prisma", "label": "לא" },
+    { "from": "prisma", "to": "pg" },
+    { "from": "heavy", "to": "queue", "label": "כן - אסינכרוני", "side": "right" }
+  ],
+  "animation": {
+    "step_seconds": 1.6,
+    "steps": [
+      { "active": ["req"] },
+      { "active": ["router"], "edges": [0] },
+      { "active": ["ctrl"], "edges": [1] },
+      { "active": ["svc"], "edges": [2] },
+      { "active": ["heavy"], "edges": [3] },
+      { "active": ["prisma"], "edges": [4] },
+      { "active": ["pg"], "edges": [5] },
+      { "active": ["queue"], "edges": [6] }
+    ]
+  }
+}
