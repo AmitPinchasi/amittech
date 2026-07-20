@@ -55,6 +55,29 @@ class TestAnimation(unittest.TestCase):
         svg = render.render_spec(load("2-2-for-list.json"))
         self.assertIn("#el-lst-c1{animation-name:k-lst-1", svg)
 
+    def test_move_slides_edge_group_with_target(self):
+        svg = render.render_spec(load("2-2-for-list.json"))
+        self.assertIn('<g id="eg-0">', svg)
+        self.assertIn("translateX", svg)
+        self.assertIn("#eg-0{animation-name:k-mv-0", svg)
+        # the moved group contains both the arrow and the value box
+        group = svg.split('<g id="eg-0">')[1].split("</g>")[0]
+        self.assertIn('id="edge-0"', group)
+        self.assertIn('id="el-val"', group)
+
+    def test_component_values_render_variants(self):
+        svg = render.render_spec(load("2-1-if-else-flow.json"))
+        for cls in ("dyn-input-0", "dyn-input-1", "dyn-cond-0", "dyn-cond-1"):
+            self.assertIn(cls, svg)
+
+    def test_step_seconds_floor(self):
+        spec = load("2-1-if-else-flow.json")
+        spec["animation"]["step_seconds"] = 0.2
+        svg = render.render_spec(spec)
+        m = re.search(r"animation-duration:([\d.]+)s", svg)
+        self.assertIsNotNone(m)
+        self.assertGreaterEqual(float(m.group(1)), 5 * 1.5)
+
 
 if __name__ == "__main__":
     unittest.main()

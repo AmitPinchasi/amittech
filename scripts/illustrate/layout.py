@@ -83,8 +83,9 @@ def _normalize(p):
     return p
 
 
-def _edge(points, label=None, label_pos=None, anchor="middle", loop=False):
-    return {"points": points, "label": label, "label_pos": label_pos,
+def _edge(ci, points, label=None, label_pos=None, anchor="middle", loop=False):
+    # ci is the connection's index in the spec - stable id for animation targeting
+    return {"ci": ci, "points": points, "label": label, "label_pos": label_pos,
             "label_anchor": anchor, "loop": loop}
 
 
@@ -93,8 +94,8 @@ def layout_flow(spec):
     conns = spec.get("connections", [])
     sizes = {cid: size_component(c) for cid, c in comps.items()}
 
-    side_conns = [c for c in conns if c.get("side")]
-    side_targets = {c["to"] for c in side_conns}
+    side_conns = [(i, c) for i, c in enumerate(conns) if c.get("side")]
+    side_targets = {c["to"] for _, c in side_conns}
     main = [c["id"] for c in spec["components"] if c["id"] not in side_targets]
     outgoing = {}
     for c in conns:
@@ -108,7 +109,7 @@ def layout_flow(spec):
         p.rects[cid] = (cx - w / 2, y, w, h)
         branch_bottom = y + h
         # hang side branches off this component (normally a diamond)
-        for conn in side_conns:
+        for ci, conn in side_conns:
             if _split_ref(conn["from"])[0] != cid:
                 continue
             tid = conn["to"]
@@ -123,7 +124,7 @@ def layout_flow(spec):
                 p.rects[tid] = (bcx - tw / 2, y + h, tw, th)
                 branch_bottom = max(branch_bottom, y + h + th)
                 p.edges.append(_edge(
-                    [(spx, spy), (bcx, spy), (bcx, y + h)],
+                    ci, [(spx, spy), (bcx, spy), (bcx, y + h)],
                     conn.get("label"), ((spx + bcx) / 2, spy - 12)))
             else:
                 tx = spx + sign * SIDE_OFF
@@ -132,12 +133,12 @@ def layout_flow(spec):
                 p.rects[tid] = (tx, spy - th / 2, tw, th)
                 end_x = tx if sign > 0 else tx + tw
                 p.edges.append(_edge(
-                    [(spx, spy), (end_x, spy)],
+                    ci, [(spx, spy), (end_x, spy)],
                     conn.get("label"), ((spx + end_x) / 2, spy - 12)))
         y = branch_bottom + GAP
 
     # remaining edges: main-axis, merges, loops
-    for conn in conns:
+    for ci, conn in enumerate(conns):
         if conn.get("side"):
             continue
         src, _ = _split_ref(conn["from"])
@@ -150,17 +151,17 @@ def layout_flow(spec):
             dcy = dy_ + dh / 2
             pts = [(sx, sy + sh / 2), (lx, sy + sh / 2), (lx, dcy), (dx_, dcy)]
             p.edges.append(_edge(
-                pts, conn.get("label"), ((lx + dx_) / 2, dcy - 12), loop=True))
+                ci, pts, conn.get("label"), ((lx + dx_) / 2, dcy - 12), loop=True))
         elif src in side_targets:
             # merge edge: branch box down, then horizontally into target's side
             dcy = dy_ + dh / 2
             enter_x = dx_ + dw if scx > dcx else dx_
             pts = [(scx, sy + sh), (scx, dcy), (enter_x, dcy)]
-            p.edges.append(_edge(pts, conn.get("label"),
+            p.edges.append(_edge(ci, pts, conn.get("label"),
                                  (scx + 14, (sy + sh + dcy) / 2), anchor="start"))
         else:
             pts = [(scx, sy + sh), (scx, dy_)]
-            p.edges.append(_edge(pts, conn.get("label"),
+            p.edges.append(_edge(ci, pts, conn.get("label"),
                                  (scx + 14, (sy + sh + dy_) / 2 + 4), anchor="start"))
 
     _check_collisions(p.rects)
@@ -193,7 +194,7 @@ def layout_stack(spec):
         x_, y_, w_, h_ = p.rects[tid]
         p.rects[tid] = (ccx - w_ / 2, y_, w_, h_)
 
-    for conn in conns:
+    for ci, conn in enumerate(conns):
         src, sidx = _split_ref(conn["from"])
         dst, _ = _split_ref(conn["to"])
         sx, sy, sw, sh = p.rects[src]
@@ -203,7 +204,7 @@ def layout_stack(spec):
         else:
             start_x = sx + sw / 2
         pts = [(start_x, sy + sh), (start_x, dy_)]
-        p.edges.append(_edge(pts, conn.get("label"),
+        p.edges.append(_edge(ci, pts, conn.get("label"),
                              (start_x + 12, (sy + sh + dy_) / 2 + 4), anchor="start"))
 
     _check_collisions(p.rects)
