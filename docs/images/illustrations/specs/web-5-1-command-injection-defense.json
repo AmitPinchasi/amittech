@@ -1,0 +1,36 @@
+{
+  "title": "מנגנון command injection מול הגנת escapeshellarg: קלט עם ; whoami שמוזרק לתוך פקודת system, וכיצד עטיפת הקלט במרכאות מונעת את הפרשנות כמפריד פקודות",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "input", "type": "box", "label": "קלט: 127.0.0.1; whoami" },
+    { "id": "check", "type": "diamond", "label": "עטוף ב-escapeshellarg?" },
+    {
+      "id": "rawCmd",
+      "type": "code",
+      "values": [
+        "system(\"ping -c 4 \" . $ip)",
+        "ping -c 4 127.0.0.1; whoami"
+      ]
+    },
+    { "id": "leak", "type": "box", "label": "; מפריד פקודות - whoami חושף משתמש שרת" },
+    { "id": "safeCmd", "type": "box", "label": "מרכאות מקיפות הקלט - הפקודה רצה בבטחה" }
+  ],
+  "connections": [
+    { "from": "input", "to": "check" },
+    { "from": "check", "to": "rawCmd", "label": "לא" },
+    { "from": "rawCmd", "to": "leak" },
+    { "from": "check", "to": "safeCmd", "label": "כן", "side": "right" }
+  ],
+  "animation": {
+    "step_seconds": 1.7,
+    "steps": [
+      { "active": ["input"] },
+      { "active": ["check"], "edges": [0] },
+      { "active": ["safeCmd"], "edges": [3] },
+      { "active": ["check"] },
+      { "active": ["rawCmd"], "edges": [1], "set": { "rawCmd": 0 } },
+      { "active": ["rawCmd"], "set": { "rawCmd": 1 } },
+      { "active": ["leak"], "edges": [2] }
+    ]
+  }
+}

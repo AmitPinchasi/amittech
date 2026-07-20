@@ -1,0 +1,32 @@
+{
+  "title": "הברחת HTTP/2 דרך downgrade: השרת החזיתי מתרגם את הבקשה ל-HTTP/1.1 ומעביר איתה transfer-encoding שהופכת לבקשה מוברחת בשרת האחורי",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "cli", "type": "box", "label": "לקוח שולח HTTP/2 (framing בינארי)" },
+    { "id": "h2", "type": "code", "lines": [
+      ":method: POST",
+      "transfer-encoding: chunked",
+      "",
+      "0",
+      "",
+      "GET /admin HTTP/1.1"
+    ] },
+    { "id": "fe", "type": "box", "label": "שרת חזיתי מתרגם ל-HTTP/1.1",
+      "values": ["שרת חזיתי מתרגם ל-HTTP/1.1", "downgrade: transfer-encoding מועברת כמות שהיא"] },
+    { "id": "be", "type": "box", "label": "שרת אחורי קורא chunked, '0' = סוף, GET /admin בקשה חדשה" }
+  ],
+  "connections": [
+    { "from": "cli", "to": "h2" },
+    { "from": "h2", "to": "fe" },
+    { "from": "fe", "to": "be" }
+  ],
+  "animation": {
+    "step_seconds": 1.9,
+    "steps": [
+      { "active": ["cli"] },
+      { "active": ["h2"], "edges": [0] },
+      { "active": ["fe"], "edges": [1], "set": { "fe": 1 } },
+      { "active": ["be"], "edges": [2] }
+    ]
+  }
+}

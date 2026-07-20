@@ -1,0 +1,36 @@
+{
+  "title": "תרשים המראה כיצד אותה קריאה read מגיעה דרך שכבת ה-VFS למימושים שונים לגמרי, לפי מערכת הקבצים שהקובץ שייך אליה",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "call", "type": "code", "label": "n = read(fd, buf, 100);" },
+    { "id": "find", "type": "box", "label": "הקרנל מוצא את ה-struct file לפי המספר בטבלת הקבצים" },
+    { "id": "fop", "type": "code", "label": "file->f_op->read(...)" },
+    { "id": "cond", "type": "diamond", "values": ["which filesystem ?", "ext4", "procfs"] },
+    { "id": "ext4", "type": "box", "label": "המימוש של ext4 קורא בלוקים מהדיסק" },
+    { "id": "proc", "type": "box", "label": "המימוש של procfs מייצר את התוכן ממבני הנתונים של הקרנל" },
+    { "id": "ret", "type": "box", "label": "התהליך מקבל בתים בלי לדעת מי מימש את הקריאה" }
+  ],
+  "connections": [
+    { "from": "call", "to": "find" },
+    { "from": "find", "to": "fop" },
+    { "from": "fop", "to": "cond" },
+    { "from": "cond", "to": "ext4", "label": "ext4", "side": "right" },
+    { "from": "ext4", "to": "ret" },
+    { "from": "cond", "to": "proc", "label": "procfs" },
+    { "from": "proc", "to": "ret" }
+  ],
+  "animation": {
+    "step_seconds": 1.8,
+    "steps": [
+      { "active": ["call"], "set": { "cond": 0 } },
+      { "active": ["find"], "edges": [0] },
+      { "active": ["fop"], "edges": [1] },
+      { "active": ["cond"], "edges": [2], "set": { "cond": 1 } },
+      { "active": ["ext4"], "edges": [3] },
+      { "active": ["ret"], "edges": [4] },
+      { "active": ["cond"], "set": { "cond": 2 } },
+      { "active": ["proc"], "edges": [5] },
+      { "active": ["ret"], "edges": [6] }
+    ]
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "title": "איור זכרון משותף עם mmap ו-MAP_SHARED: האב והבן ממופים לאותו דף פיזי, ולכן הערך שהאב כותב נראה מיד גם בבן",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "code", "type": "code", "lines": [
+      "int *shared = mmap(NULL, 4,",
+      "    PROT_READ | PROT_WRITE,",
+      "    MAP_SHARED | MAP_ANONYMOUS, -1, 0);"
+    ] },
+    { "id": "init", "type": "code", "label": "*shared = 0;" },
+    { "id": "fork", "type": "box", "label": "הקריאה fork יוצרת בן, ושני התהליכים ממופים לאותו דף פיזי" },
+    { "id": "page", "type": "box", "label": "הדף הפיזי המשותף מחזיק את הערך 0",
+      "values": ["הדף הפיזי המשותף מחזיק את הערך 0", "הדף הפיזי המשותף מחזיק את הערך 42"] },
+    { "id": "par", "type": "code", "label": "*shared = 42;" },
+    { "id": "chi", "type": "box", "label": "הבן קורא את shared",
+      "values": ["הבן קורא את shared ורואה 0", "הבן קורא את shared ורואה 42"] }
+  ],
+  "connections": [
+    { "from": "code", "to": "init" },
+    { "from": "init", "to": "fork" },
+    { "from": "fork", "to": "page" },
+    { "from": "page", "to": "par" },
+    { "from": "par", "to": "chi" }
+  ],
+  "animation": {
+    "step_seconds": 1.8,
+    "steps": [
+      { "active": ["code"], "set": { "page": 0, "chi": 0 } },
+      { "active": ["init"], "edges": [0] },
+      { "active": ["fork"], "edges": [1] },
+      { "active": ["page"], "edges": [2] },
+      { "active": ["par"], "edges": [3] },
+      { "active": ["page"], "set": { "page": 1 } },
+      { "active": ["chi"], "edges": [4], "set": { "chi": 1 } }
+    ]
+  }
+}

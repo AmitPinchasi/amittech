@@ -1,0 +1,35 @@
+{
+  "title": "מספר קריאות המערכת לכל פעולת קלט פלט: קריאה חוסמת מול epoll מול io_uring במצב SQPOLL",
+  "layout": { "type": "stack" },
+  "components": [
+    { "id": "code", "type": "code", "values": [
+      "read(fd, buf, size);",
+      "epoll_wait(...); read(fd, buf, size);",
+      "io_uring_submit(&ring); io_uring_wait_cqe(&ring, &cqe);",
+      "SQPOLL: write sqe to the shared ring"
+    ] },
+    { "id": "n", "type": "dynamic", "values": [
+      "syscalls per operation = 1",
+      "syscalls per operation = 2",
+      "syscalls per operation = 1 for a whole batch",
+      "syscalls per operation = 0"
+    ] },
+    { "id": "note", "type": "box", "values": [
+      "קריאה חוסמת עולה מעבר אחד לקרנל, אבל היא עוצרת את התהליכון",
+      "בגישת epoll משלמים גם על ההמתנה לאירוע וגם על הפעולה עצמה",
+      "בio_uring אפשר לצבור הרבה בקשות ולהגיש את כולן בקריאה אחת",
+      "במצב SQPOLL תהליכון קרנל סורק את הטבעת, ולכן אין קריאת מערכת בכלל"
+    ] },
+    { "id": "cap", "type": "text", "label": "כל קריאת מערכת עולה מעבר בין מצבי הרצה, ולכן חיסכון בקריאות הוא החיסכון המרכזי של io_uring" }
+  ],
+  "connections": [],
+  "animation": {
+    "step_seconds": 1.9,
+    "steps": [
+      { "active": ["code", "n"], "set": { "code": 0, "n": 0, "note": 0 } },
+      { "active": ["code", "n"], "set": { "code": 1, "n": 1, "note": 1 } },
+      { "active": ["code", "n"], "set": { "code": 2, "n": 2, "note": 2 } },
+      { "active": ["code", "n"], "set": { "code": 3, "n": 3, "note": 3 } }
+    ]
+  }
+}
