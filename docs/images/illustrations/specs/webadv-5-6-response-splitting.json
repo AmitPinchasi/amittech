@@ -1,0 +1,32 @@
+{
+  "title": "פיצול תגובות להרעלת מטמון: הזרקת CRLF יוצרת תגובה שנייה מזויפת, ה-proxy משייך אותה לבקשה ל-main.js והמטמון שומר סקריפט זדוני",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "reqs", "type": "box", "label": "תוקף שולח 2 בקשות בחיבור אחד" },
+    { "id": "payload", "type": "code", "lines": [
+      "GET /redirect?url=x",
+      "%0d%0a%0d%0a",
+      "HTTP/1.1 200 OK",
+      "<script>alert(1)</script>"
+    ] },
+    { "id": "split", "type": "box", "label": "תגובה אחת מתפצלת ל-2: 302 ואז 200 מזויפת" },
+    { "id": "match", "type": "box", "label": "proxy משייך /static/main.js לתגובה המזויפת" },
+    { "id": "cache", "type": "box", "label": "מטמון שומר: main.js = <script>alert(1)</script>" }
+  ],
+  "connections": [
+    { "from": "reqs", "to": "payload" },
+    { "from": "payload", "to": "split" },
+    { "from": "split", "to": "match" },
+    { "from": "match", "to": "cache" }
+  ],
+  "animation": {
+    "step_seconds": 1.9,
+    "steps": [
+      { "active": ["reqs"] },
+      { "active": ["payload"], "edges": [0] },
+      { "active": ["split"], "edges": [1] },
+      { "active": ["match"], "edges": [2] },
+      { "active": ["cache"], "edges": [3] }
+    ]
+  }
+}
