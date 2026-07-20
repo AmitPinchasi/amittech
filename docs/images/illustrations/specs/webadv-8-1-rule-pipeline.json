@@ -1,0 +1,30 @@
+{
+  "title": "צינור התאמת חוק ב-WAF: הקלט עובר שלבי טרנספורמציה - פענוח URL ואז המרה לאותיות קטנות - ורק על הצורה הקנונית מורצת התאמת ה-regex שחוסמת את הבקשה",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "raw", "type": "code", "label": "q=%3Cscript%3E" },
+    { "id": "ud", "type": "box", "label": "t:urlDecode", "values": ["t:urlDecode", "t:urlDecode -> <script>"] },
+    { "id": "lc", "type": "box", "label": "t:lowercase", "values": ["t:lowercase", "t:lowercase -> <script>"] },
+    { "id": "rx", "type": "diamond", "label": "regex: <script> ?" },
+    { "id": "deny", "type": "box", "label": "deny - 403" },
+    { "id": "pass", "type": "box", "label": "מעבר לשרת" },
+    { "id": "note", "type": "text", "label": "הלקח ההגנתי: לפענח ולנרמל לפני התאמת החוק, אחרת קידוד פשוט חומק" }
+  ],
+  "connections": [
+    { "from": "raw", "to": "ud" },
+    { "from": "ud", "to": "lc" },
+    { "from": "lc", "to": "rx" },
+    { "from": "rx", "to": "deny", "label": "התאמה", "side": "right" },
+    { "from": "rx", "to": "pass", "label": "אין התאמה" }
+  ],
+  "animation": {
+    "step_seconds": 1.8,
+    "steps": [
+      { "active": ["raw"] },
+      { "active": ["ud"], "edges": [0], "set": { "ud": 1 } },
+      { "active": ["lc"], "edges": [1], "set": { "lc": 1 } },
+      { "active": ["rx"], "edges": [2] },
+      { "active": ["deny"], "edges": [3] }
+    ]
+  }
+}
