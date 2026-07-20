@@ -1,0 +1,35 @@
+{
+  "title": "פירוק חבילה שהתקבלה בסוקט גולמי לשכבות: Ethernet ואז IP ואז TCP",
+  "layout": { "type": "stack" },
+  "components": [
+    { "id": "recv", "type": "code", "label": "n = recvfrom(sockfd, buffer, 65536, 0, NULL, NULL);" },
+    { "id": "lay", "type": "table", "cells": ["Ethernet 14", "IP 20", "TCP 20", "payload"] },
+    { "id": "ptr", "type": "dynamic", "values": [
+      "buffer = 1500 bytes",
+      "eth = buffer",
+      "ip = buffer + 14",
+      "tcp = buffer + 14 + ip->ihl * 4",
+      "payload = tcp + tcp->doff * 4"
+    ] },
+    { "id": "note", "type": "box", "values": [
+      "הסוקט הגולמי מקבל את החבילה השלמה כפי שהיא הגיעה לכרטיס הרשת",
+      "שכבת הקישור נמצאת בתחילת הבאפר ומכילה כתובות MAC וסוג הפרוטוקול הבא",
+      "כותרת הIP מתחילה אחרי ארבעה עשר בתים ומכילה כתובות, TTL, ומספר פרוטוקול",
+      "שדה האורך בכותרת הIP מלמד היכן מתחילה שכבת התחבורה",
+      "מכותרת הTCP קוראים את הפורטים ואת הדגלים של החיבור"
+    ] },
+    { "id": "cap", "type": "text", "label": "כל שכבה מגלה היכן מתחילה השכבה הבאה, ולכן הפירוק נעשה תמיד מהשכבה החיצונית אל הפנימית" }
+  ],
+  "connections": [],
+  "animation": {
+    "step_seconds": 1.9,
+    "steps": [
+      { "active": ["recv"], "set": { "ptr": 0, "note": 0 } },
+      { "active": ["lay.0"], "set": { "ptr": 1, "note": 1 } },
+      { "active": ["lay.1"], "set": { "ptr": 2, "note": 2 } },
+      { "active": ["lay.1"], "set": { "note": 3 } },
+      { "active": ["lay.2"], "set": { "ptr": 3, "note": 4 } },
+      { "active": ["lay.3"], "set": { "ptr": 4 } }
+    ]
+  }
+}
