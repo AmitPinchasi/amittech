@@ -33,18 +33,24 @@ def _is_code_text(s):
 def size_component(comp):
     ctype = comp.get("type")
     if ctype == "box":
-        w = max(MIN_W, metrics.text_width(comp["label"], FONT) + 2 * PAD_X)
+        texts = comp.get("values") or [comp["label"]]
+        w = max(MIN_W, max(metrics.text_width(t, FONT) for t in texts) + 2 * PAD_X)
         return w, BOX_H
     if ctype == "code":
-        lines = comp.get("lines") or [comp["label"]]
+        lines = comp.get("values") or comp.get("lines") or [comp["label"]]
         w = max(
             MIN_W,
             max(metrics.text_width(l, CODE_FONT, mono=True) for l in lines) + 2 * 18,
         )
-        return w, 16 + CODE_LINE_H * len(lines)
+        n_rows = len(comp["lines"]) if comp.get("lines") else 1
+        return w, 16 + CODE_LINE_H * n_rows
     if ctype == "diamond":
-        mono = _is_code_text(comp["label"])
-        tw = metrics.text_width(comp["label"], CODE_FONT if mono else FONT, mono=mono)
+        texts = comp.get("values") or [comp["label"]]
+        tw = max(
+            metrics.text_width(
+                t, CODE_FONT if _is_code_text(t) else FONT, mono=_is_code_text(t))
+            for t in texts
+        )
         w = max(160, 2.2 * tw)
         return w, max(84, 0.5 * w)
     if ctype == "table":
@@ -62,6 +68,10 @@ def size_component(comp):
 
 
 def _text(x, y, cls, s, anchor="middle", extra=""):
+    # pure-ASCII content must not inherit the RTL base direction of Hebrew
+    # text classes, or tokens like "a = 5" render reversed
+    if _is_code_text(s) and "code" not in cls.split():
+        extra += ' style="direction:ltr"'
     return '<text class="%s" x="%.1f" y="%.1f" text-anchor="%s"%s>%s</text>' % (
         cls, x, y, anchor, extra, escape(s)
     )
@@ -78,26 +88,40 @@ def emit_component(comp, x, y, w, h):
             '<rect class="n-box shp" x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="8"/>'
             % (x, y, w, h)
         )
-        parts.append(_text(cx, y + h / 2 + 5, "t", comp["label"]))
+        if comp.get("values"):
+            for i, v in enumerate(comp["values"]):
+                parts.append(_text(cx, y + h / 2 + 5,
+                                   "t dyn-%s-%d" % (escape(cid), i), v))
+        else:
+            parts.append(_text(cx, y + h / 2 + 5, "t", comp["label"]))
 
     elif ctype == "code":
-        lines = comp.get("lines") or [comp["label"]]
         parts.append(
             '<rect class="n-code-bg shp" x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="7"/>'
             % (x, y, w, h)
         )
         ty = y + 16 + CODE_LINE_H / 2
-        for line in lines:
-            parts.append(_text(cx, ty, "code", line))
-            ty += CODE_LINE_H
+        if comp.get("values"):
+            for i, v in enumerate(comp["values"]):
+                parts.append(_text(cx, ty, "code dyn-%s-%d" % (escape(cid), i), v))
+        else:
+            for line in comp.get("lines") or [comp["label"]]:
+                parts.append(_text(cx, ty, "code", line))
+                ty += CODE_LINE_H
 
     elif ctype == "diamond":
         pts = "%.1f,%.1f %.1f,%.1f %.1f,%.1f %.1f,%.1f" % (
             cx, y, x + w, y + h / 2, cx, y + h, x, y + h / 2
         )
         parts.append('<polygon class="n-dia shp" points="%s"/>' % pts)
-        cls = "code" if _is_code_text(comp["label"]) else "t"
-        parts.append(_text(cx, y + h / 2 + 5, cls, comp["label"]))
+        if comp.get("values"):
+            for i, v in enumerate(comp["values"]):
+                cls = "code" if _is_code_text(v) else "t"
+                parts.append(_text(cx, y + h / 2 + 5,
+                                   "%s dyn-%s-%d" % (cls, escape(cid), i), v))
+        else:
+            cls = "code" if _is_code_text(comp["label"]) else "t"
+            parts.append(_text(cx, y + h / 2 + 5, cls, comp["label"]))
 
     elif ctype == "table":
         cells = comp["cells"]

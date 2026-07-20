@@ -64,18 +64,29 @@ The renderer fails loudly on invalid specs - fix and re-run.
 
 ```json
 "animation": {
-  "step_seconds": 1.2,
+  "step_seconds": 1.8,
   "steps": [
-    { "active": ["cond"], "edges": [1], "set": { "val": 2 } }
+    { "active": ["cond"], "edges": [1], "set": { "val": 2 }, "move": { "0": "lst.2" } }
   ]
 }
 ```
 
-- Each step lasts `step_seconds`; the sequence loops forever with a short hold.
+- Each step lasts `step_seconds` (floor: 1.5s - slower is calmer; the renderer
+  adds smooth fade/slide ramps automatically, never abrupt ticks).
 - `active`: component ids (or table cells `"lst.0"`) highlighted this step.
-- `edges`: connection indices highlighted this step.
-- `set`: switch a `dynamic` component to variant index; carries forward until changed.
+- `edges`: connection indices (spec order) highlighted this step.
+- `set`: switch a component to variant index; carries forward until changed.
+- ANY `box`, `code`, or `diamond` may declare `"values": [...]` variants in
+  addition to `label` - use this to SHOW STATE: the input value arriving, a
+  counter incrementing (`"count = 0"`, `"count = 1"`, ...), a condition
+  evaluating with real numbers (`"age >= 18"`, `"25 >= 18"`). Strongly
+  preferred for any animation about changing values.
+- `move` (stack layout): slides a cell-anchored arrow, together with its
+  label and target component, to start under another cell - use for "current
+  item" pointers walking a list.
 - The final step's state is what static/reduced-motion viewers see.
+- Bidi is handled by the renderer: pure-ASCII text is automatically LTR, so
+  never insert LRM/LRE control characters in labels or values.
 - Use animation for stateful concepts (loops, branch walks, iteration, state
   machines); use static for structure (architecture, comparisons, tables).
 
