@@ -1,0 +1,32 @@
+{
+  "title": "תרשים חלוקת הטיפול בפסיקה לחצי עליון קצר שרץ כשהפסיקות חסומות ולחצי תחתון שמבצע את העיבוד הכבד אחרי שהפסיקות נפתחו מחדש",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "irq", "type": "box", "label": "כרטיס הרשת מקבל חבילה ושולח IRQ למעבד" },
+    { "id": "save", "type": "box", "label": "המעבד שומר RFLAGS, CS ו-RIP וקופץ לכניסה המתאימה ב-IDT" },
+    { "id": "flag", "type": "code", "values": ["IF = 1", "IF = 0", "IF = 1"] },
+    { "id": "top", "type": "box", "label": "החצי העליון מאשר לחומרה, שומר את החבילה בתור, ומתזמן את החצי התחתון" },
+    { "id": "iret", "type": "code", "label": "iretq" },
+    { "id": "bottom", "type": "box", "label": "החצי התחתון בודק headers ומעביר את החבילה ל-socket המתאים" },
+    { "id": "note", "type": "text", "label": "החצי העליון חייב להסתיים במיקרו-שניות ואסור לו לישון, כי כל עוד הוא רץ פסיקות נוספות חסומות" }
+  ],
+  "connections": [
+    { "from": "irq", "to": "save" },
+    { "from": "save", "to": "flag" },
+    { "from": "flag", "to": "top" },
+    { "from": "top", "to": "iret" },
+    { "from": "iret", "to": "bottom" }
+  ],
+  "animation": {
+    "step_seconds": 1.8,
+    "steps": [
+      { "active": ["irq"], "set": { "flag": 0 } },
+      { "active": ["save"], "edges": [0] },
+      { "active": ["flag"], "edges": [1], "set": { "flag": 1 } },
+      { "active": ["top"], "edges": [2] },
+      { "active": ["iret"], "edges": [3] },
+      { "active": ["flag"], "set": { "flag": 2 } },
+      { "active": ["bottom"], "edges": [4] }
+    ]
+  }
+}

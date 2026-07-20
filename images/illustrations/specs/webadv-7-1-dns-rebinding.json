@@ -1,0 +1,32 @@
+{
+  "title": "DNS Rebinding: בשלב הבדיקה הדומיין נפתר לכתובת חיצונית ועובר, ובשלב השליחה עם TTL אפס הוא נפתר מחדש לכתובת פנימית ומגיע ל-SSRF",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "inp", "type": "code", "lines": ["url = http://attacker.com", "TTL = 0"] },
+    { "id": "chk", "type": "box", "label": "שלב הבדיקה - פותר DNS",
+      "values": ["שלב הבדיקה - פותר DNS", "התשובה: 1.2.3.4 כתובת חיצונית"] },
+    { "id": "dec", "type": "diamond", "label": "כתובת פנימית?" },
+    { "id": "blocked", "type": "box", "label": "נחסם" },
+    { "id": "snd", "type": "box", "label": "שלב השליחה - פותר DNS שוב",
+      "values": ["שלב השליחה - פותר DNS שוב", "התשובה: 127.0.0.1 כתובת פנימית"] },
+    { "id": "out", "type": "box", "label": "הבקשה נשלחת ל-127.0.0.1 - SSRF" },
+    { "id": "cap", "type": "text", "label": "ההגנה בדקה כתובת אחת אבל הבקשה נשלחה לכתובת אחרת" }
+  ],
+  "connections": [
+    { "from": "inp", "to": "chk" },
+    { "from": "chk", "to": "dec" },
+    { "from": "dec", "to": "blocked", "label": "כן", "side": "right" },
+    { "from": "dec", "to": "snd", "label": "לא" },
+    { "from": "snd", "to": "out" }
+  ],
+  "animation": {
+    "step_seconds": 1.9,
+    "steps": [
+      { "active": ["inp"] },
+      { "active": ["chk"], "edges": [1], "set": { "chk": 1 } },
+      { "active": ["dec"], "edges": [3] },
+      { "active": ["snd"], "set": { "snd": 1 } },
+      { "active": ["out"], "edges": [4] }
+    ]
+  }
+}

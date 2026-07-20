@@ -1,0 +1,31 @@
+{
+  "title": "המתנה על משתנה תנאי בתוך לולאת while: אחרי כל התעוררות בודקים את התנאי מחדש",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "lock", "type": "box", "label": "נעילת הmutex" },
+    { "id": "cond", "type": "diamond", "label": "count == 0",
+      "values": ["count == 0", "0 == 0", "0 == 0", "1 == 0"] },
+    { "id": "wait", "type": "box", "label": "שחרור הmutex ושינה - pthread_cond_wait" },
+    { "id": "take", "type": "box", "label": "הוצאת פריט ושחרור הmutex" }
+  ],
+  "connections": [
+    { "from": "lock", "to": "cond" },
+    { "from": "cond", "to": "wait", "label": "כן" },
+    { "from": "wait", "to": "cond", "loop": true, "label": "התעוררנו ובודקים שוב" },
+    { "from": "cond", "to": "take", "label": "לא", "side": "right" }
+  ],
+  "animation": {
+    "step_seconds": 1.8,
+    "steps": [
+      { "active": ["lock"], "set": { "cond": 0 } },
+      { "active": ["cond"], "edges": [0], "set": { "cond": 1 } },
+      { "active": ["wait"], "edges": [1] },
+      { "edges": [2] },
+      { "active": ["cond"], "set": { "cond": 2 } },
+      { "active": ["wait"], "edges": [1] },
+      { "edges": [2] },
+      { "active": ["cond"], "set": { "cond": 3 } },
+      { "active": ["take"], "edges": [3] }
+    ]
+  }
+}

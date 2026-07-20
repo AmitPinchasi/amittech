@@ -1,0 +1,39 @@
+{
+  "title": "טיפול ב-page fault של UVM: ה-GPU ניגש לדף בזיכרון ה-host, המודול משהה את ה-warp, מהגר את הדף אל ה-HBM ומעדכן טבלאות עד שה-warp ממשיך",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "access", "type": "box", "label": "ה-GPU ניגש לדף שיושב בזיכרון ה-host" },
+    { "id": "fault", "type": "box", "label": "החומרה יורה page fault" },
+    { "id": "stall", "type": "box", "label": "המודול nvidia-uvm.ko משהה את ה-warp" },
+    { "id": "migrate", "type": "box", "label": "הדף מהוגר אל ה-HBM של ה-GPU" },
+    { "id": "tables", "type": "box", "label": "טבלאות הדפים מתעדכנות" },
+    { "id": "resume", "type": "box", "label": "ה-warp ממשיך לרוץ" },
+    { "id": "where", "type": "dynamic", "values": [
+      "מיקום הדף - זיכרון ה-host",
+      "מיקום הדף - זיכרון ה-host",
+      "ה-warp מושהה בהמתנה",
+      "הדף בהגירה אל ה-HBM",
+      "מיקום הדף - HBM של ה-GPU",
+      "מיקום הדף - HBM, הגישה הושלמה"
+    ] }
+  ],
+  "connections": [
+    { "from": "access", "to": "fault" },
+    { "from": "fault", "to": "stall" },
+    { "from": "stall", "to": "migrate" },
+    { "from": "migrate", "to": "tables" },
+    { "from": "tables", "to": "resume" },
+    { "from": "resume", "to": "where" }
+  ],
+  "animation": {
+    "step_seconds": 1.7,
+    "steps": [
+      { "active": ["access"], "set": { "where": 0 } },
+      { "active": ["fault"], "edges": [0], "set": { "where": 1 } },
+      { "active": ["stall"], "edges": [1], "set": { "where": 2 } },
+      { "active": ["migrate"], "edges": [2], "set": { "where": 3 } },
+      { "active": ["tables"], "edges": [3], "set": { "where": 4 } },
+      { "active": ["resume"], "edges": [4, 5], "set": { "where": 5 } }
+    ]
+  }
+}

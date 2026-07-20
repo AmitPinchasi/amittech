@@ -2756,6 +2756,7 @@
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">-</span><span class="n">EFAULT</span><span class="p">;</span>
 </code></pre></div>
 <p>בגרסה הבטוחה, אם <code>out</code> היה כתובת kernel, <code>copy_to_user</code> היה מזהה שהכתובת לא בטווח המשתמש ומחזיר <code>-EFAULT</code>. בגרסה vulnerable, הkernel פשוט כותב <code>out[i] = ...</code> ישירות. זהו הבאג.</p>
+<p><img alt="תרשים זרימה שמשווה בין דרייבר שבודק כתובת מהמשתמש עם access_ok ו-copy_to_user לבין דרייבר פגיע שכותב ישירות לכתובת שהמשתמש בחר בלי שום בדיקה" src="../../../../images/illustrations/vuln-9-2-boundary-check.svg" /></p>
 <h2 id="-kernel">מהבאג לפרימיטיב - כתיבה שרירותית לkernel<a class="headerlink" href="#-kernel" title="Permanent link">&para;</a></h2>
 <p>מה בעצם קיבלנו? פרימיטיב של <strong>כתיבה למקום שנבחר - write-what-where</strong>: אנחנו בוחרים לאן (<code>out</code>, כתובת kernel כלשהי) ומה (<code>in</code>, הבתים שאנחנו רוצים). זה אחד הפרימיטיבים החזקים ביותר בkernel exploit.</p>
 <p>יש רק אילוץ אחד שנובע מהקוד: הלולאה הופכת כל בית בטווח <code>0x61</code>-<code>0x7a</code> (האותיות <code>a</code>-<code>z</code>) לאות גדולה, וה-<code>strlen</code> עוצרת בבית אפס. כלומר, הבתים שאנחנו כותבים חייבים להימנע מבתי אפס באמצע, ובתים בטווח האותיות הקטנות ייכתבו מעוותים. תכף נראה איך עוקפים את זה בבחירת כתובת מתאימה.</p>
@@ -2808,6 +2809,7 @@
 <li>מנגנון KPTI מפריד את טבלאות הדפים כך שכתובות הkernel בכלל לא ממופות בזמן שרצים במשתמש.</li>
 </ul>
 <p>באתגר syscall מדובר בkernel ARM ישן שבו אף אחת מההגנות האלה לא קיימת, ולכן ret2usr הוא הפתרון הישיר. בkernel x86-64 מודרני נצטרך לעקוף את SMEP/SMAP (ניגע בזה בפרק הבא), אבל העיקרון זהה.</p>
+<p><img alt="תרשים זרימה של ret2usr: זרימת הבקרה בקרנל נחטפת, ואם SMEP כבוי הקפיצה לפונקציה במרחב המשתמש מצליחה ומריצה commit_creds(prepare_kernel_cred(0)) ומחזירה אותנו כ-root, אבל אם SMEP דלוק המעבד מסרב להריץ עמוד משתמש והקרנל קורס" src="../../../../images/illustrations/vuln-9-2-ret2usr-flow.svg" /></p>
 <h2 id="_1">חזרה נקיה למרחב המשתמש<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>הרצנו את <code>getroot</code> וקיבלנו הרשאות root. עכשיו צריך לחזור בשלום מ-ring 0 בלי להפיל את הkernel, אחרת נקבל root למשך אלפית שנייה ואז panic. יש שני מצבים:</p>
 <p>המצב הקל: חטפנו <strong>כניסה ב-sys_call_table</strong>. אם דרסנו כניסה בטבלת הקריאות והרצנו את <code>getroot</code> דרך קריאת מערכת רגילה, אז כשה-<code>getroot</code> שלנו חוזר (סתם <code>return</code> של פונקציית C), מנגנון היציאה הרגיל של ה-syscall מחזיר אותנו למרחב המשתמש בצורה נקייה לגמרי. אנחנו לא צריכים לעשות כלום ידנית. זו הסיבה שדריסת כניסה בטבלת הקריאות היא היעד המועדף באתגר הזה.</p>
@@ -2884,7 +2886,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:14:39 UTC">2026-07-20 09:14:39</span>
   </span>
 
     

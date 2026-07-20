@@ -1,0 +1,35 @@
+{
+  "title": "מנגנון path traversal מול הגנת realpath: כיצד file=../../../../etc/passwd יוצא מתיקיית uploads, וכיצד בדיקת הנתיב שנפתר חוסמת גישה מחוץ לתיקייה המורשית",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "input", "type": "box", "label": "קלט: file=../../../../etc/passwd" },
+    {
+      "id": "concat",
+      "type": "code",
+      "values": [
+        "$path = \"uploads/\" . $file;",
+        "uploads/../../../../etc/passwd"
+      ]
+    },
+    { "id": "check", "type": "diamond", "label": "הנתיב עבר realpath?" },
+    { "id": "read", "type": "box", "label": "file_get_contents קורא את etc/passwd" },
+    { "id": "deny", "type": "box", "label": "חורג מ-uploads/ - הגישה נחסמת" }
+  ],
+  "connections": [
+    { "from": "input", "to": "concat" },
+    { "from": "concat", "to": "check" },
+    { "from": "check", "to": "read", "label": "לא" },
+    { "from": "check", "to": "deny", "label": "כן", "side": "right" }
+  ],
+  "animation": {
+    "step_seconds": 1.7,
+    "steps": [
+      { "active": ["input"], "set": { "concat": 0 } },
+      { "active": ["concat"], "edges": [0], "set": { "concat": 1 } },
+      { "active": ["check"], "edges": [1] },
+      { "active": ["deny"], "edges": [3] },
+      { "active": ["check"] },
+      { "active": ["read"], "edges": [2] }
+    ]
+  }
+}

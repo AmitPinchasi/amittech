@@ -2719,6 +2719,7 @@
 <a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>| ...         | ...                 | ...                  |
 <a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>+-------------+---------------------+---------------------+
 </code></pre></div>
+<p><img alt="מפת המקורות שמהם printf שולפת כל המרה ב-64 ביט - חמש ההמרות הראשונות מגיעות מהאוגרים rsi עד r9, ומההמרה השישית ואילך printf שולפת מהמחסנית, ושם בדיוק יושב הbuffer של התוקף" src="../../../../images/illustrations/vuln-5-1-arg-sources.svg" /></p>
 <p>שימו לב לתובנה החשובה ביותר בשקף הזה: הbuffer שאנחנו כותבים אליו נמצא <strong>על המחסנית</strong>. חמש ההמרות הראשונות שולפות מאוגרים, ולכן הן מציגות זבל שלא קשור לקלט שלנו. רק מההמרה השישית ואילך <code>printf</code> מתחילה לקרוא מהמחסנית, ושם, איפשהו, יושב הקלט שלנו. לכן ההיסט של הbuffer במערכת 64 ביט הוא כמעט תמיד 6 ומעלה.</p>
 <p>במערכת 32 ביט הסיפור פשוט יותר: מוסכמת cdecl מעבירה את <strong>כל</strong> הארגומנטים על המחסנית. מצביע הformat יושב ב-<code>[esp]</code>, ומיד אחריו הארגומנטים ב-<code>[esp+4]</code>, <code>[esp+8]</code> וכן הלאה. אין שלב אוגרים:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>32-bit - everything from the stack (cdecl)
@@ -2783,6 +2784,7 @@
 <p>פלט אופייני:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>AAAAAAAA.0x7f....(rsi).(rdx).(rcx).(r8).(r9).0x4141414141414141.0x252e70252e70252e....
 </code></pre></div>
+<p><img alt="אנימציה של מציאת ההיסט הפוזיציוני של הbuffer - שולחים סמן AAAAAAAA ואחריו רצף %p, וסורקים סלוט אחרי סלוט עד שהסמן 0x4141414141414141 מופיע, ושם נמצא ההיסט" src="../../../../images/illustrations/vuln-5-1-find-offset.svg" /></p>
 <p>ספרו את מיקום הערך <code>0x4141414141414141</code> ברצף ה-<code>%p</code>. אם הוא ה-<code>%p</code> השישי - ההיסט של הקלט שלנו הוא 6, כלומר <code>%6$p</code> קורא את שמונת הבתים הראשונים של הbuffer שלנו. שימו לב שהערך שאחריו, <code>0x252e70252e70252e</code>, הוא פשוט המשך הקלט שלנו - הבתים של <code>.%p.%p</code> שנקראים כערך. זה סימן טוב שאנחנו בטווח הנכון.</p>
 <p>מדוע הסמן חייב להיות 8 בתים aligned? כי <code>printf</code> קוראת את המחסנית סלוט-סלוט בגבולות של 8 בתים. אם הbuffer מתחיל בכתובת aligned ל-8 (מה שקורה כמעט תמיד עבור מערך על המחסנית), שמונת הבתים הראשונים שלו יישבו בדיוק בגבול סלוט אחד, והסמן יופיע נקי. אם תשתמשו בסמן קצר יותר כמו <code>AAAA</code>, הוא עלול להתערבב עם בתים אחרים באותו סלוט.</p>
 <p>הנה אותה שיטה, אבל אוטומטית עם pwntools - פשוט סורקים היסטים עד שהסמן צץ:</p>
@@ -2885,7 +2887,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:14:39 UTC">2026-07-20 09:14:39</span>
   </span>
 
     

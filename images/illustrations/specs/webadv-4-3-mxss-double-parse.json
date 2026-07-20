@@ -1,0 +1,34 @@
+{
+  "title": "מנגנון מוטציית XSS: הסניטייזר מאשר את הקלט ומסריאלז למחרוזת, וכשהיא נכנסת ל-innerHTML הפרסור השני מבצע מוטציה שמשחררת סקריפט, אלא אם מוחזר DOM fragment",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "input", "type": "code", "label": "<math><style><img onerror=..>" },
+    { "id": "parse1", "type": "box", "label": "המנקה DOMPurify מפרסר ומאשר" },
+    { "id": "fragq", "type": "diamond", "label": "מוחזר DOM fragment?" },
+    { "id": "serialize", "type": "box", "label": "סריאליזציה חזרה למחרוזת HTML" },
+    { "id": "parse2", "type": "box", "label": "הכנסה ל-innerHTML - פרסור שני" },
+    { "id": "xss", "type": "box", "label": "ה-img משתחרר ורץ - XSS" },
+    { "id": "safe", "type": "box", "label": "ה-fragment מוכנס בלי פרסור שני" }
+  ],
+  "connections": [
+    { "from": "input", "to": "parse1" },
+    { "from": "parse1", "to": "fragq" },
+    { "from": "fragq", "to": "serialize", "label": "לא" },
+    { "from": "serialize", "to": "parse2" },
+    { "from": "parse2", "to": "xss" },
+    { "from": "fragq", "to": "safe", "label": "כן", "side": "right" }
+  ],
+  "animation": {
+    "step_seconds": 1.7,
+    "steps": [
+      { "active": ["input"] },
+      { "active": ["parse1"], "edges": [0] },
+      { "active": ["fragq"], "edges": [1] },
+      { "active": ["safe"], "edges": [5] },
+      { "active": ["fragq"] },
+      { "active": ["serialize"], "edges": [2] },
+      { "active": ["parse2"], "edges": [3] },
+      { "active": ["xss"], "edges": [4] }
+    ]
+  }
+}

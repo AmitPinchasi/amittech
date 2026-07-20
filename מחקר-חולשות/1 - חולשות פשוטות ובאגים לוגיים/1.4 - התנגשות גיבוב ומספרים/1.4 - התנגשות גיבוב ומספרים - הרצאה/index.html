@@ -2979,6 +2979,7 @@
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="p">}</span>
 </code></pre></div>
 <p>עבור מספרים <strong>לא מסומנים</strong>, ההתנהגות הזו מוגדרת היטב בתקן C: החישוב נעשה מודולו <code>2^n</code>. כלומר <code>0xFFFFFFFF + 1</code> שווה בדיוק <code>0</code>. אין כאן "שגיאה" מבחינת השפה - התוכנית ממשיכה כרגיל עם הערך הגלוש.</p>
+<p><img alt="איור המראה מונה לא מסומן של 8 סיביות שמגיע לערך 255 וגולש בחזרה לאפס כשמוסיפים לו אחד" src="../../../../images/illustrations/vuln-1-4-int-overflow.svg" /></p>
 <p>עבור מספרים <strong>מסומנים</strong> המצב שונה ומסוכן יותר: הoverflow של <code>signed int</code> היא <strong>התנהגות לא מוגדרת - undefined behavior</strong>. הקומפיילר רשאי להניח שהיא לעולם לא קורית, ולכן אופטימיזציות עלולות למחוק בדיקות שלמות שכתבתם. בפועל, על רוב המעבדים הoverflow תתנהג כמו wrap-around של משלים לשתיים - <code>2147483647 + 1</code> יהפוך ל-<code>-2147483648</code> - אבל אסור להסתמך על זה בקוד אמיתי.</p>
 <h3 id="-the-security-angle">למה זה חשוב לנו כתוקפים - the security angle<a class="headerlink" href="#-the-security-angle" title="Permanent link">&para;</a></h3>
 <p>הנה תבנית קלאסית של באג שמופיע שוב ושוב בקוד אמיתי:</p>
@@ -3007,6 +3008,7 @@
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="p">}</span>
 </code></pre></div>
 <p>אם <code>len</code> הוא <code>-1</code>, אז <code>len &lt; 100</code> הוא אמת (כי <code>-1 &lt; 100</code>), הבדיקה עוברת, אבל <code>memcpy</code> מקבל את <code>len</code> בפרמטר מסוג <code>size_t</code> שהוא <strong>לא מסומן</strong>. הערך <code>-1</code> מומר ל-<code>0xFFFFFFFFFFFFFFFF</code>, ו-<code>memcpy</code> מנסה להעתיק כמות אסטרונומית של בתים. שוב - קריסה או גלישה.</p>
+<p><img alt="איור זרימה המראה איך len בערך מינוס אחד עובר את בדיקת הגבול len &lt; 100 ומתפרש כ-size_t ענק שגורם ל-memcpy להעתיק כמות עצומה" src="../../../../images/illustrations/vuln-1-4-signed-bypass.svg" /></p>
 <h3 id="-sign-extension">הרחבת סימן - sign extension<a class="headerlink" href="#-sign-extension" title="Permanent link">&para;</a></h3>
 <p>כשמעתיקים ערך מסומן קטן לרוחב גדול יותר, המעבד מבצע <strong>הרחבת סימן</strong>: הוא מעתיק את ביט הסימן שמאלה. <code>char</code> בערך <code>0xFF</code> (שהוא <code>-1</code> כ-<code>signed char</code>) שהופך ל-<code>int</code> יהפוך ל-<code>0xFFFFFFFF</code>, ולא ל-<code>0x000000FF</code> כמו שאולי ציפיתם.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>signed char  0xFF   =  -1
@@ -3159,7 +3161,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:14:39 UTC">2026-07-20 09:14:39</span>
   </span>
 
     

@@ -2767,6 +2767,7 @@
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>2,048 threads/SM  x  132 SM  =  270,336 apparently-parallel threads
 </code></pre></div>
 <p>הפער עצום: מתוך 2,048 הthreads התושבים ב-SM, רק 128 מתקדמים בכל מחזור נתון (יחס של 16:1). מתוך רבע מיליון הthreads החיים על השבב, רק כ-16,000 זזים בכל תקתוק. הפער הזה איננו בזבוז - הוא <strong>מאגר ההסתרה</strong> (latency hiding). כל warp תושב שאינו רץ כרגע הוא עבודה מוכנה בהמתנה. כשה-warps הרצים נתקעים בהמתנה ל-global memory (זיכרון גלובלי) - latency של מאות מחזורים - המתזמן שולף warp אחר מהמאגר וממשיך. ככל שהמאגר מלא יותר (מדד ה-occupancy - תפוסה), קל יותר להסתיר את הlatencies.</p>
+<p><img alt="איור המדגים את ההבחנה בין מקבילות למקביליות: 2048 threads תושבים על ה-SM בו-זמנית, אך בכל מחזור שעון רק 128 מהם מתקדמים בפועל, ביחס של 16 לאחד" src="../../../../images/illustrations/gpu-1-2-parallel-concurrent.svg" /></p>
 <p>מה שהופך את ההחלפה הזו לאפשרית הוא המחיר שלה: <strong>החלפת warp עולה מחזור שעון אחד</strong> (סדר גודל של ננושנייה). ב-CPU החלפת הקשר עולה מאות עד אלפי מחזורים, כי צריך לשמור ולשחזר אוגרים. ב-GPU אין מה לשמור: כל 2,048 הthreads התושבים כבר מחזיקים את האוגרים שלהם פיזית בקובץ האוגרים בו-זמנית. להחליף warp פירושו רק להצביע על קבוצת אוגרים אחרת. אין תנועת נתונים, ולכן ההחלפה כמעט חינמית. זו החלפת הקשר באפס overhead (zero-overhead context switch), והיא הלב של הסתרת הlatency. נסגור מעגל: בגלל שהחלפה זולה, כדאי להעמיס הרבה warps תושבים; אבל מספר האוגרים לכל thread מוגבל (65,536 לכל SM), ולכן ככל שכל thread צורך יותר אוגרים, פחות warps יכולים להיות תושבים. המתח הזה (register pressure - לחץ אוגרים) הוא שקובע את ה-occupancy בפועל, ונחזור אליו בפרק הביצועים.</p>
 <p>טעות נפוצה: לחשוב שכל 2,048 הthreads "רצים במקביל". הם <strong>תושבים</strong> במקביל, אבל רק 128 <strong>מתקדמים</strong> במקביל בכל מחזור. השאר ממתינים לתורם. המילים "מקבילי" ו"מקביל-לכאורה" מפרידות בדיוק בין שני המצבים.</p>
 <h2 id="-sm-compute-capability-sass-compatibility">ארכיטקטורת ה-SM וה-Compute Capability - SASS Compatibility<a class="headerlink" href="#-sm-compute-capability-sass-compatibility" title="Permanent link">&para;</a></h2>
@@ -2892,7 +2893,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 10:54:28 UTC">2026-07-20 10:54:28</span>
   </span>
 
     

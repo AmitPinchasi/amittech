@@ -2896,6 +2896,7 @@
 </code></pre></div>
 <p>שמנו את המזחלת וה-shellcode דווקא <strong>אחרי</strong> הreturn address. למה? כי הbuffer שלנו קטן (64 בתים) ואין בו מקום למזחלת רצינית, אבל אחרי הreturn address יש לנו את כל שאר ה-<code>read</code> (עד 400 בתים) לשחק בו. הכתובת שנשים בהreturn address מכוונת לאמצע המזחלת.</p>
 <p>על גודל המזחלת: ככל שהיא גדולה יותר, כך יש לנו יותר סובלנות לאי-דיוק בכתובת. אם ההבדל בין gdb להרצה אמיתית הוא, נניח, 200 בתים, מזחלת של 512 בתים תבלע אותו בקלות ותשאיר לנו מרווח ביטחון. כלל אצבע: מזחלת של כמה מאות בתים, ולכוון לאמצע שלה. עוד עדינות: המזחלת חייבת להיות באמת הוראות שלא משנות מצב קריטי לפני ה-shellcode. <code>0x90</code> מושלם לזה כי הוא הוראה בת בית אחד שלא נוגעת בשום רגיסטר.</p>
+<p><img alt="איור המראה שכתובת החזרה מכוונת לאמצע מזחלת ארוכה של הוראות nop, מספיק שהקפיצה תנחת באנשהו בתוך המזחלת, והמעבד מחליק קדימה מ-nop ל-nop עד שהוא מגיע ל-shellcode" src="../../../../images/illustrations/vuln-3-2-nop-sled.svg" /></p>
 <h3 id="exploit-">הexploit מלא - שיטת הכתובת הישירה<a class="headerlink" href="#exploit-" title="Permanent link">&para;</a></h3>
 <p>הנה exploit שלם ב-pwntools ל-<code>vuln64</code>, בשיטת הכתובת הישירה עם מזחלת:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="ch">#!/usr/bin/env python3</span>
@@ -2940,6 +2941,7 @@
 <a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>high addresses
 </code></pre></div>
 <p>למה זה גאוני? כי <strong>לא היינו צריכים לדעת את כתובת המחסנית בכלל</strong>. הכתובת היחידה שהשתמשנו בה היא כתובת הגאדג'ט <code>jmp rsp</code>, והיא נמצאת בתוך הבינארי. מכיוון שהבינארי לא PIE, הכתובת הזו <strong>קבועה גם כש-ASLR פעיל</strong>. ה-ASLR מערבב את המחסנית, אבל לא אכפת לנו - אנחנו לא נוגעים בכתובת המחסנית, רק ב-<code>rsp</code> שממילא מצביע לאן שצריך. זו שיטה שעוקפת ASLR של המחסנית לחלוטין.</p>
+<p><img alt="איור זרימה המראה שברגע ה-ret מצביע rsp על ה-shellcode שיושב מיד אחרי כתובת החזרה, ולכן קופצים לגאדג'ט קבוע jmp rsp שבבינארי, והוא מקפיץ אל ה-shellcode בלי לדעת את כתובת המחסנית" src="../../../../images/illustrations/vuln-3-2-jmp-rsp.svg" /></p>
 <p>איך מוצאים את הגאדג'ט? כמה דרכים:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>$<span class="w"> </span>ROPgadget<span class="w"> </span>--binary<span class="w"> </span>vuln64<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s1">&#39;jmp rsp&#39;</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>0x000000000040118f<span class="w"> </span>:<span class="w"> </span>jmp<span class="w"> </span>rsp
@@ -3054,7 +3056,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:14:39 UTC">2026-07-20 09:14:39</span>
   </span>
 
     

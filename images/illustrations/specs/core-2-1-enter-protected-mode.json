@@ -1,0 +1,41 @@
+{
+  "title": "תרשים המראה את סדר השלבים מרגע הדלקת המחשב ב-Real Mode ועד שהמעבד רץ ב-Protected Mode",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "boot", "type": "box", "label": "המחשב נדלק והמעבד מתחיל ב-Real Mode" },
+    { "id": "bios", "type": "box", "label": "ה-BIOS מגדיר את טבלת ה-ivt ומריץ את הקרנל" },
+    { "id": "gdt", "type": "box", "label": "הקרנל בונה את טבלת ה-GDT עם הרשאות לכל סגמנט" },
+    { "id": "lgdt", "type": "code", "lines": ["cli", "lgdt [gdt_ptr]"] },
+    { "id": "pe", "type": "box", "label": "הדלקת הביט הראשון ברגיסטר cr0" },
+    { "id": "cr0", "type": "code", "lines": ["mov eax, cr0", "or eax, 1", "mov cr0, eax"] },
+    { "id": "jump", "type": "code", "label": "jmp 0x23:pm_entry" },
+    { "id": "done", "type": "box", "label": "הקוד רץ בהרשאות נמוכות ולא יכול לשבור את המערכת" },
+    { "id": "mode", "type": "dynamic", "values": [
+      "mode = Real Mode, Ring 0",
+      "mode = Protected Mode, Ring 0",
+      "mode = Protected Mode, Ring 3"
+    ] }
+  ],
+  "connections": [
+    { "from": "boot", "to": "bios" },
+    { "from": "bios", "to": "gdt" },
+    { "from": "gdt", "to": "lgdt" },
+    { "from": "lgdt", "to": "pe" },
+    { "from": "pe", "to": "cr0" },
+    { "from": "cr0", "to": "jump" },
+    { "from": "jump", "to": "done" }
+  ],
+  "animation": {
+    "step_seconds": 1.8,
+    "steps": [
+      { "active": ["boot"], "set": { "mode": 0 } },
+      { "active": ["bios"], "edges": [0] },
+      { "active": ["gdt"], "edges": [1] },
+      { "active": ["lgdt"], "edges": [2] },
+      { "active": ["pe"], "edges": [3] },
+      { "active": ["cr0"], "edges": [4], "set": { "mode": 1 } },
+      { "active": ["jump"], "edges": [5], "set": { "mode": 2 } },
+      { "active": ["done"], "edges": [6] }
+    ]
+  }
+}

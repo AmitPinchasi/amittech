@@ -2662,6 +2662,7 @@
 <li><strong>שגיאת הרצה (asynchronous / execution error).</strong> קורית <strong>בזמן שה-kernel רץ על ה-GPU</strong>, זמן רב אחרי שהhost כבר המשיך הלאה: גישה מחוץ לתחום ב-global memory, <code>assert</code> שנכשל, חלוקה שגרמה ל-trap. שגיאה כזו <strong>לא</strong> יכולה להיתפס מיד - היא צצה רק ב<strong>קריאה המסנכרנת הבאה</strong>: <code>cudaDeviceSynchronize</code>, <code>cudaStreamSynchronize</code>, או אפילו <code>cudaMemcpy</code> שממתין לתוצאה.</li>
 </ul>
 <p>מכאן נובע כלל הזהב: <strong>כדי לבדוק kernel במלואו צריך שתי בדיקות.</strong> הראשונה מיד אחרי הlaunch תופסת שגיאות תצורה; השנייה, אחרי סנכרון, תופסת שגיאות הרצה.</p>
+<p><img alt="איור המתאר את תזמון השגיאות בשיגור kernel שבו שגיאת התצורה נתפסת מיד ב-cudaGetLastError בעוד שגיאת ההרצה צצה רק בקריאת הסנכרון הבאה" src="../../../../images/illustrations/gpu-5-3-async-error-timing.svg" /></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">myKernel</span><span class="o">&lt;&lt;&lt;</span><span class="n">grid</span><span class="p">,</span><span class="w"> </span><span class="n">block</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">d_a</span><span class="p">,</span><span class="w"> </span><span class="n">d_b</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">);</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaGetLastError</span><span class="p">());</span><span class="w">        </span><span class="c1">// catches a launch error (config)</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaDeviceSynchronize</span><span class="p">());</span><span class="w">   </span><span class="c1">// catches an execution error (out-of-bounds etc.)</span>
@@ -2707,6 +2708,7 @@
 <li><strong>בתוך אותו stream</strong> הפעולות סדרתיות: פעולה <code>i+1</code> לא מתחילה עד שפעולה <code>i</code> הסתיימה. זו ערובת התלות שעליה אתם סומכים.</li>
 <li><strong>בין streams שונים</strong> אין שום סדר מובטח; ה-GPU רשאי, ואף אמור, להריץ אותם <strong>במקביל</strong>, בכפוף למשאבי החומרה (SMs פנויים, Copy Engines פנויים).</li>
 </ul>
+<p><img alt="איור המדגים זרם כתור פעולות שבו המעבד מנפיק את שלוש הפעולות H2D, kernel ו-D2H וחוזר מיד, וה-GPU מבצע אותן לפי סדר ההנפקה" src="../../../../images/illustrations/gpu-5-3-stream-queue.svg" /></p>
 <p>מכאן שה-stream הוא ה<strong>מנוף לקבילות (concurrency)</strong>: פיזור עבודה בלתי-תלויה על כמה streams מאפשר ל-GPU לחפוף חישוב עם חישוב, וחישוב עם העתקה. אבל - ואת זה 3.2 רק רמז - יש עדינות עמוקה בשאלה <strong>מהו ה-default stream</strong>, וזו נקודת הכשל הנפוצה בקוד קבילות.</p>
 <p><strong>ה-default stream המסורתי - legacy default stream (stream 0).</strong> בכל הקוד שכתבנו עד עכשיו, שלא ציין stream, הפעולות רצו ב-default stream. ב-semantics המסורתי, ה-default stream הוא <strong>מסנכרן (implicitly synchronizing)</strong>: פעולה בו <strong>חוסמת את כל ה-streams ה"רגילים" (blocking streams)</strong> על הdevice, וכל אחד מהם חוסם אותו. התוצאה ההרסנית: אם תשתלשל ולו פעולה אחת אל ה-default stream באמצע צנרת של streams מפורשים, היא תיצור מחסום שמבטל את כל הקבילות שבניתם.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>   legacy default stream (stream 0) synchronizes everyone:
@@ -2907,7 +2909,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 10:54:28 UTC">2026-07-20 10:54:28</span>
   </span>
 
     

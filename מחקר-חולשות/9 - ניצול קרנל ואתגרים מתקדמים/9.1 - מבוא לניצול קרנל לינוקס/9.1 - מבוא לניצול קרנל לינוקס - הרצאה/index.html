@@ -2636,6 +2636,7 @@
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>+-------------------+   return    +----------------------+
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>   isolation between processes    one space for the whole kernel, no isolation
 </code></pre></div>
+<p><img alt="תרשים של גבול ההרשאות בין ring 3 ל-ring 0: תהליך המשתמש חוצה את הגבול באמצעות syscall אל קוד הקרנל המיוחס וחוזר בשלום בסיום, כאשר בתוך הקרנל עצמו אין בידוד נוסף בין המודולים" src="../../../../images/illustrations/vuln-9-1-ring-boundary.svg" /></p>
 <p>בארכיטקטורת x86-64 מרחב הכתובות מחולק לשניים: החצי התחתון (כתובות שמתחילות ב-<code>0x0000...</code>) שייך למרחב המשתמש, והחצי העליון (כתובות קנוניות שמתחילות ב-<code>0xffff8...</code>) שייך לkernel. כשאתם רואים כתובת שמתחילה ב-<code>0xffffffff81...</code> אתם יודעים מיד: זו כתובת בתוך קוד הkernel.</p>
 <hr />
 <h2 id="-the-syscall-boundary">גבול הקריאה למערכת - the syscall boundary<a class="headerlink" href="#-the-syscall-boundary" title="Permanent link">&para;</a></h2>
@@ -2860,6 +2861,7 @@
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>                   of modprobe_path, of the function we want to overwrite
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>step 3 - control: write to the computed address -&gt; escalate to root
 </code></pre></div>
+<p><img alt="תרשים של צינור הפעולה בשלושה שלבים - leak לחילוץ כתובת, compute לחישוב כתובת היעד מבסיס הקרנל, ו-control לכתיבה לכתובת המחושבת שמסלימה להרשאות root" src="../../../../images/illustrations/vuln-9-1-privesc-pipeline.svg" /></p>
 <p>בשלב השלישי, כשיש כתיבה שרירותית אבל ההגנות SMEP/SMAP/KPTI דולקות ומקשות על קפיצה לקוד שלנו, הטריק הכי אלגנטי הוא דריסת המשתנה <code>modprobe_path</code>. זהו מחרוזת גלובלית בkernel שמכילה את הנתיב <code>"/sbin/modprobe"</code>. כשהkernel מנסה להריץ קובץ עם פורמט שהוא לא מזהה, הוא קורא ל-<code>call_usermodehelper</code> עם הנתיב הזה - וכ-root. אז אנחנו:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1">// 1. overwrite modprobe_path with a path to our script</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">new_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/tmp/x&quot;</span><span class="p">;</span>
@@ -2911,7 +2913,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:14:39 UTC">2026-07-20 09:14:39</span>
   </span>
 
     

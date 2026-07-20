@@ -1,0 +1,29 @@
+{
+  "title": "עקיפה באי-התאמת Content-Type: ה-WAF מפרסר את הגוף כ-form-urlencoded ולא מזהה הזרקה, בעוד השרת מפרסר את אותו גוף כ-JSON ומחלץ את ה-payload הזדוני",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "req", "type": "code", "lines": [
+      "Content-Type: x-www-form-urlencoded",
+      "",
+      "{\"user\":\"admin\",\"pass\":\"' OR 1=1--\"}"
+    ] },
+    { "id": "waf", "type": "box", "label": "פרסור ב-WAF כ-form", "values": ["פרסור ב-WAF כ-form-urlencoded", "מפתח אחד ארוך - אין הזרקה"] },
+    { "id": "fwd", "type": "box", "label": "אין התאמה - הבקשה מועברת" },
+    { "id": "app", "type": "box", "label": "פרסור בשרת כ-JSON", "values": ["פרסור בשרת כ-JSON", "השדה pass מכיל ' OR 1=1-- הזרקה"] },
+    { "id": "note", "type": "text", "label": "הלקח ההגנתי: לוודא שה-Content-Type תואם לגוף הבקשה ולפרסר אותו זהה בכל רכיב" }
+  ],
+  "connections": [
+    { "from": "req", "to": "waf" },
+    { "from": "waf", "to": "fwd" },
+    { "from": "fwd", "to": "app" }
+  ],
+  "animation": {
+    "step_seconds": 1.9,
+    "steps": [
+      { "active": ["req"] },
+      { "active": ["waf"], "edges": [0], "set": { "waf": 1 } },
+      { "active": ["fwd"], "edges": [1] },
+      { "active": ["app"], "edges": [2], "set": { "app": 1 } }
+    ]
+  }
+}

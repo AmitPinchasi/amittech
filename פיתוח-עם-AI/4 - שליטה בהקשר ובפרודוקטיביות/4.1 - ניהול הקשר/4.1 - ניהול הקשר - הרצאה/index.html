@@ -2605,6 +2605,7 @@
 <p>בנוסף, הגדרות של שרתי MCP יכולות לתפוס מקום רב. Claude Code דוחה כברירת מחדל את טעינת ההגדרות המלאות של MCP tools (deferred), כך שרק שמות הtools נכנסים להcontext עד שמשתמשים בtool ספציפי. עדיין, שרת MCP שלא בשימוש הוא נטל - אפשר לראות עלויות לפי שרת עם <code>/mcp</code> ולכבות מה שלא צריך.</p>
 <h2 id="-compaction">דחיסה וסיכום - compaction<a class="headerlink" href="#-compaction" title="Permanent link">&para;</a></h2>
 <p>מה קורה כשהcontext מתקרב לגבול? Claude Code מנהל את זה אוטומטית, ובסדר מדורג. לפי התיעוד, כשמתקרבים לגבול המערכת קודם <strong>מנקה פלטים ישנים של tools</strong>, ורק אם צריך עוד מקום - היא <strong>מסכמת את השיחה</strong>. התהליך הזה נקרא דחיסה, compaction, או auto-compaction כשהוא אוטומטי.</p>
+<p><img alt="תרשים זרימה שמראה איך Claude Code מפנה context: קודם מנקה פלטי tools ישנים, בודק אם עדיין צריך מקום, ואם כן מסכם את השיחה עד שמתפנה מקום להמשך" src="../../../../images/illustrations/ai-4-1-compaction-stages.svg" /></p>
 <p>הרעיון פשוט: במקום לשמור את כל ההיסטוריה מילה במילה, המערכת מייצרת סיכום קצר של מה שקרה עד כה, ומחליפה בו את ההודעות הישנות. הבקשות שלכם וקטעי קוד מרכזיים נשמרים, אבל - וזו הנקודה הכי חשובה - <strong>הוראות מפורטות מתחילת השיחה עלולות ללכת לאיבוד</strong>. אם בתחילת השיחה אמרתם "תמיד תשתמש ב-tabs ולא ב-spaces", אחרי דחיסה המודל עלול לשכוח את זה.</p>
 <p>מכאן נובע כלל אצבע מרכזי: <strong>חוקים קבועים לא שמים בשיחה, שמים ב-CLAUDE.md</strong>. קובץ CLAUDE.md נטען מחדש בכל סשן ולא נמחק בדחיסה, בעוד הוראה שנאמרה באמצע שיחה עלולה להיעלם.</p>
 <p>אפשר גם להשפיע על מה שנשמר בדחיסה. הפקודה <code>/compact</code> מפעילה דחיסה יזומה, ואפשר לתת לה מיקוד:</p>
@@ -2627,6 +2628,7 @@
 <li><strong><code>/clear</code></strong> - מתחיל שיחה חדשה לגמרי, עם context ריק. משתמשים בזה כשעוברים למשימה <strong>לא קשורה</strong>.</li>
 </ul>
 <p>הכלל: <strong>כשעוברים למשימה חדשה שאין לה שום קשר לקודמת - נקו עם <code>/clear</code>.</strong> הcontext ישן ולא רלוונטי לא רק מבזבז טוקנים בכל הודעה, אלא גם מבלבל את המודל. אם סיימתם לתקן באג ברשת ואתם עוברים לכתוב בדיקות למודול תשלומים - אין שום סיבה שהמודל יסחוב איתו את כל ההיסטוריה של הבאג ברשת.</p>
+<p><img alt="תרשים החלטה שמראה שבסיום משימה בודקים אם המשימה הבאה קשורה: אם כן מכווצים עם compact, ואם לא מתחילים נקי עם clear" src="../../../../images/illustrations/ai-4-1-clear-vs-compact.svg" /></p>
 <p>טיפ מעשי מהתיעוד: לפני <code>/clear</code>, השתמשו ב-<code>/rename</code> כדי לתת לסשן שם, וכך תוכלו למצוא אותו בקלות אחר כך עם <code>/resume</code> ולחזור אליו אם צריך.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Finished the task, moving to something else</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>/rename<span class="w"> </span>fix-network-retry-bug<span class="w">   </span><span class="c1"># gave the current session a name</span>
@@ -2651,6 +2653,7 @@
 <h2 id="context-auto-memory">זיכרון אוטומטי מול context - auto memory<a class="headerlink" href="#context-auto-memory" title="Permanent link">&para;</a></h2>
 <p>יש עוד רכיב שכדאי להכיר, כי הוא נכנס לcontext: הזיכרון האוטומטי (auto memory). לפי התיעוד, Claude Code שומר אוטומטית "לקחים" תוך כדי עבודה - דפוסים בפרויקט והעדפות שלכם - ובתחילת כל סשן נטענות ה-200 השורות הראשונות או 25KB של קובץ הזיכרון, לפי מה שקורה קודם.</p>
 <p>הנקודה החשובה: <strong>סשנים הם עצמאיים</strong>. כל סשן חדש מתחיל עם context window טרי, בלי היסטוריית השיחה של סשנים קודמים. מה שכן עובר בין סשנים הוא רק שני דברים: הזיכרון האוטומטי, וההוראות הקבועות שלכם ב-CLAUDE.md. זו עוד סיבה לכך שחוקים חשובים חייבים לשבת ב-CLAUDE.md - זה המקום היחיד (יחד עם הזיכרון האוטומטי) ששורד גם <code>/clear</code> וגם מעבר לסשן חדש. כל דבר שנאמר רק בשיחה נעלם ברגע שהשיחה נדחסת או נסגרת.</p>
+<p><img alt="תרשים שמראה מה שורד מעבר לסשן חדש: הזיכרון האוטומטי וקובץ CLAUDE.md עוברים הלאה, בעוד היסטוריית השיחה, הקבצים והפלט נמחקים" src="../../../../images/illustrations/ai-4-1-session-memory.svg" /></p>
 <h2 id="context-the-cost-of-bloat">המחיר של context מנופח - the cost of bloat<a class="headerlink" href="#context-the-cost-of-bloat" title="Permanent link">&para;</a></h2>
 <p>למה כל זה חשוב? כי לcontext מנופח יש מחיר כפול, ושניהם מורגשים.</p>
 <p><strong>מחיר כספי וזמן</strong>: Claude Code מתמחר לפי צריכת טוקנים, ועלות עולה עם גודל הcontext - ככל שיש יותר context לעבד, כך צורכים יותר טוקנים בכל הודעה. שיחה מנופחת משלמת את המחיר הזה שוב ושוב, בכל תור. אפשר לעקוב אחרי הצריכה עם <code>/cost</code> (שהוא כינוי ל-<code>/usage</code>), שמציג עלות משוערת, משך זמן, ופירוט לפי סקילים, sub-agents ושרתי MCP:</p>
@@ -2693,7 +2696,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:31:27 UTC">2026-07-20 09:31:27</span>
   </span>
 
     

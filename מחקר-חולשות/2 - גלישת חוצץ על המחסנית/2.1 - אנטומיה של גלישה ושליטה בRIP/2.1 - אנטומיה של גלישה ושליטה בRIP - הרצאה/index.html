@@ -2766,6 +2766,7 @@
 <a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>low addresses
 </code></pre></div>
 <p>הפעם אנחנו לא צריכים לגעת בreturn address בכלל. אנחנו רק צריכים לכתוב מספיק בתים כדי לזחול מ-<code>overflowme</code> עד <code>key</code>, ואז לכתוב שם את הערך <code>0xcafebabe</code>. ה-<code>gets</code> תשמח לכתוב לנו כמה בתים שנרצה.</p>
+<p><img alt="איור המראה שבאתגר bof הגלישה ממלאת את overflowme בבתי AAAA, זוחלת דרך saved ebp וכתובת החזרה, ודורסת רק את הארגומנט key בערך 0xcafebabe שהבדיקה מצפה לו" src="../../../../images/illustrations/vuln-2-1-bof-key-overwrite.svg" /></p>
 <p>איך יודעים כמה בתים לרפד? מפרקים את הבינארי. בדיסאסמבלי של <code>func</code> רואים שני מספרים מפתח:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>lea    eax, [ebp-0x2c]      ; overflowme is at ebp-0x2c
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>...
@@ -2859,6 +2860,7 @@
 <a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>low addresses
 </code></pre></div>
 <p>כש-<code>vuln</code> מבצעת <code>ret</code>, היא שולפת את <code>0x401156</code> לתוך <code>rip</code>, והמעבד קופץ ל-<code>win</code>. פתחנו shell מקוד שהתוכנית אפילו לא התכוונה להריץ.</p>
+<p><img alt="איור זרימה המראה שההוראה ret שקולה ל-pop rip, שולפת את הכתובת 0x401156 שדרסנו אל תוך rip, וקופצת אל win שמריצה system של bin sh" src="../../../../images/illustrations/vuln-2-1-ret-rip-redirect.svg" /></p>
 <h3 id="-stack-alignment">מלכודת יישור המחסנית - stack alignment<a class="headerlink" href="#-stack-alignment" title="Permanent link">&para;</a></h3>
 <p>יש כאן מוקש אחד שכדאי להכיר כבר עכשיו. במעבדי x86-64, לפני קריאה לפונקציה, ה-ABI דורש שהמחסנית תהיה מיושרת ל-16 בתים. הפונקציה <code>system</code> בגרסאות glibc מודרניות מריצה הוראת <code>movaps</code> שקורסת (SIGSEGV) אם <code>rsp</code> לא מיושר. אחרי שדרסנו את הreturn address וקפצנו ל-<code>win</code>, לפעמים הalignment יוצא לא נכון וה-shell מת בתוך <code>system</code>.</p>
 <p>הפתרון הקלאסי: לפני הכתובת של <code>win</code>, נשים כתובת של גאדג'ט <code>ret</code> בודד. הוא לא עושה כלום מלבד להזיז את <code>rsp</code> ב-8 בתים, וזה בדיוק מיישר את המחסנית:</p>
@@ -2936,7 +2938,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:14:39 UTC">2026-07-20 09:14:39</span>
   </span>
 
     

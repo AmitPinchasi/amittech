@@ -1,0 +1,38 @@
+{
+  "title": "תרשים המראה כיצד כתיבה אחרי fork גורמת ל-page fault, וכיצד הקרנל מקצה עותק פרטי של ה-page במנגנון העתקה בכתיבה",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "fork", "type": "code", "label": "pid = fork();" },
+    { "id": "share", "type": "box", "label": "שני התהליכים מצביעים לאותם pages פיזיים, שמסומנים לקריאה בלבד" },
+    { "id": "write", "type": "code", "label": "buf[0] = 'A';" },
+    { "id": "fault", "type": "box", "label": "המעבד מייצר page fault כי ה-page מסומן לקריאה בלבד" },
+    { "id": "cond", "type": "diamond", "values": ["COW page ?", "COW = yes"] },
+    { "id": "segv", "type": "box", "label": "הקרנל שולח SIGSEGV" },
+    { "id": "copy", "type": "box", "label": "הקרנל מקצה page פיזי חדש ומעתיק אליו את התוכן" },
+    { "id": "update", "type": "box", "label": "טבלת ה-paging של הכותב מצביעה ל-page החדש עם הרשאת כתיבה" },
+    { "id": "done", "type": "box", "label": "הכתיבה מתבצעת, ולתהליך השני נשאר ה-page המקורי" }
+  ],
+  "connections": [
+    { "from": "fork", "to": "share" },
+    { "from": "share", "to": "write" },
+    { "from": "write", "to": "fault" },
+    { "from": "fault", "to": "cond" },
+    { "from": "cond", "to": "segv", "label": "לא", "side": "right" },
+    { "from": "cond", "to": "copy", "label": "כן" },
+    { "from": "copy", "to": "update" },
+    { "from": "update", "to": "done" }
+  ],
+  "animation": {
+    "step_seconds": 1.8,
+    "steps": [
+      { "active": ["fork"], "set": { "cond": 0 } },
+      { "active": ["share"], "edges": [0] },
+      { "active": ["write"], "edges": [1] },
+      { "active": ["fault"], "edges": [2] },
+      { "active": ["cond"], "edges": [3], "set": { "cond": 1 } },
+      { "active": ["copy"], "edges": [5] },
+      { "active": ["update"], "edges": [6] },
+      { "active": ["done"], "edges": [7] }
+    ]
+  }
+}

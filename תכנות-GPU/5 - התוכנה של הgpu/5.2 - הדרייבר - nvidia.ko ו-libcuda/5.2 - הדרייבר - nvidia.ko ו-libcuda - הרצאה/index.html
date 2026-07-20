@@ -2713,6 +2713,7 @@
 <a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaFree</span><span class="p">(</span><span class="n">data</span><span class="p">));</span>
 </code></pre></div>
 <p>כאן <code>data</code> הוא מצביע יחיד שה-CPU וה-GPU משתמשים בו בלי <code>cudaMemcpy</code> מפורש. איך זה עובד מתחת למכסה: כשה-GPU ניגש לדף שנמצא כרגע בזיכרון ה-host, החומרה יורה page fault, המטופל על ידי <code>nvidia-uvm.ko</code>. המודול משהה את ה-warp (קבוצת 32 threads) הרלוונטי, מהגר את הדף אל ה-HBM של ה-GPU, מעדכן את טבלאות הדפים, וממשיך. זו בדיוק אותה מכניקה של demand paging מ-CPU שהכרתם בליבת-המחשב, אלא שכאן ה"פסיקה" מגיעה מה-GPU דרך המודול הזה. הנוחות עולה בlatency (latency): page fault הוא יקר, ולכן בקוד ביצועים גבוה נעדיף לרוב הקצאה מפורשת עם <code>cudaMalloc</code> והעתקה מפורשת, או נכוון את ההגירה מראש עם <code>cudaMemPrefetchAsync</code>. את שיקולי הביצועים האלה נעמיק בפרק על ניהול הזיכרון; כאן העיקר הוא לזהות את <code>nvidia-uvm.ko</code> כרכיב דרייבר נבדל עם קובץ device משלו.</p>
+<p><img alt="איור המתאר את רצף הטיפול ב-page fault של UVM שבו ה-GPU ניגש לדף בזיכרון ה-host, המודול nvidia-uvm.ko משהה את ה-warp, מהגר את הדף אל ה-HBM, מעדכן את טבלאות הדפים וה-warp ממשיך" src="../../../../images/illustrations/gpu-5-2-uvm-page-fault.svg" /></p>
 <h2 id="-jit-ptx-to-sass-at-load">ה-JIT של הדרייבר - PTX to SASS at load<a class="headerlink" href="#-jit-ptx-to-sass-at-load" title="Permanent link">&para;</a></h2>
 <p>לדרייבר יש תפקיד נוסף שקל לשכוח שהוא שם: הוא גם compiler. בשיעורי פרק 4 ראינו ש-fat binary יכול לשאת PTX (שפת ביניים וירטואלית) ו/או SASS (אסמבלי מקורי לכל גרסת SM). מה קורה כשהיישום מנסה להריץ kernel שעבורו יש בקובץ רק PTX, ואין SASS מתאים ל-GPU הפיזי? כאן נכנס ה-JIT (Just-In-Time) של הדרייבר.</p>
 <p>בזמן טעינת המודול - <code>cuModuleLoad</code> בשפת ה-Driver API, או אוטומטית בהפעלת ה-kernel הראשונה תחת ה-Runtime API - <code>libcuda.so</code> לוקחת את ה-PTX המוטמע, קוראת ל-<code>ptxas</code> הפנימי שלה, ומהדרת אותו ל-SASS של ה-GPU הפיזי הנוכחי. זו בדיוק הסיבה שהטמעת PTX נותנת תאימות קדימה: קובץ שהודר עם PTX של <code>compute_90</code> יוכל לרוץ בעתיד על Blackwell גם בלי compilation מחדש, כי הדרייבר יַהְדֵּר את ה-PTX ל-SASS של הכרטיס החדש בזמן הריצה.</p>
@@ -2847,7 +2848,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 10:54:28 UTC">2026-07-20 10:54:28</span>
   </span>
 
     

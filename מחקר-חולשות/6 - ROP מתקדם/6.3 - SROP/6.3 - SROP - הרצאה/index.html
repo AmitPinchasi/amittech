@@ -2858,6 +2858,7 @@
 <a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>+--------------------------+
 <a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>high addresses
 </code></pre></div>
+<p><img alt="מסגרת sigcontext מזויפת שהתוקף שותל על המחסנית ב-SROP - שדה אחד לכל אוגר, כולל rax שקובע את מספר קריאת המערכת ו-rip שקובע לאן קופצים אחרי השחזור, וכולם נטענים בבת אחת עם rt_sigreturn" src="../../../../images/illustrations/vuln-6-3-sigframe.svg" /></p>
 <p>תסתכלו על מה שיש כאן: <code>rax</code> שקובע איזו קריאה נבצע, <code>rdi</code>, <code>rsi</code>, <code>rdx</code> שהם שלושת הארגומנטים הראשונים לפי קונבנציית x86-64, וגם <code>rip</code> שקובע לאן קופצים אחרי השחזור, ו-<code>rsp</code> שקובע איפה תהיה המחסנית. במילים אחרות: אחרי sigreturn אחד אנחנו יכולים להיות במצב <code>rax=59, rdi=&amp;"/bin/sh", rsi=0, rdx=0</code> ולקפוץ להוראת <code>syscall</code> - וזהו, <code>execve("/bin/sh", NULL, NULL)</code>, קיבלנו shell.</p>
 <h2 id="srop-when-srop-shines">מתי SROP זורח - when SROP shines<a class="headerlink" href="#srop-when-srop-shines" title="Permanent link">&para;</a></h2>
 <p>הטכניקה SROP היא לא תמיד הכלי הנכון. כשיש לכם המון גאדג'טים, <code>pop rdi ; ret</code> ו-<code>pop rsi ; ret</code> ומה שלא יהיה, ROP רגיל פשוט יותר. SROP זורח בדיוק במצב ההפוך, וזה מצב נפוץ בבינארים קטנים וסטטיים או ב-shellcode ממוזער:</p>
@@ -2985,6 +2986,7 @@
 <li>המעבד קופץ ל-<code>rip</code> שקבענו (הוראת <code>syscall</code>), עכשיו עם <code>rax=59</code> - זה <code>execve("/bin/sh", NULL, NULL)</code>. shell.</li>
 </ol>
 <p>זהו כל הקסם. גאדג'ט אחד של הkernel טען לנו ארבעה אוגרים בבת אחת.</p>
+<p><img alt="אנימציה של זרימת SROP צעד אחר צעד - טוענים rax=15, מריצים syscall שמפעיל rt_sigreturn, הkernel טוען את המסגרת המזויפת על כל אוגריה, והמעבד קופץ ל-rip שקבענו עם rax=59 ומריץ execve" src="../../../../images/illustrations/vuln-6-3-srop-flow.svg" /></p>
 <h2 id="binsh-">כשאין /bin/sh בבינארי - שרשור שתי מסגרות<a class="headerlink" href="#binsh-" title="Permanent link">&para;</a></h2>
 <p>בבינארי הסטטי שלנו המחרוזת <code>"/bin/sh"</code> נמצאת בפנים, אבל מה עושים כשהיא לא? כאן מתגלה כוח נוסף של SROP: אפשר לשרשר מסגרות. במסגרת אנחנו שולטים גם ב-<code>rsp</code> וגם ב-<code>rip</code>, אז אפשר לבצע קריאה אחת, ואז לחזור לchain שלב שני שמבצעת sigreturn נוסף.</p>
 <p>הרעיון: מסגרת ראשונה קוראת ל-<code>read</code> כדי לכתוב <code>"/bin/sh"</code> לאזור כתיב וקבוע (ה-<code>.bss</code>, שכתובתו קבועה כי אין PIE), ומסגרת שנייה מבצעת <code>execve</code> על המחרוזת שכתבנו. הפעם <code>frame.rip</code> של המסגרת הראשונה חייב להיות <code>syscall ; ret</code> דווקא, כי אחרי ש-<code>read</code> יחזור אנחנו רוצים ש-<code>ret</code> יעביר אותנו ל-<code>rsp</code> שקבענו - שם תשב chain שלב שני. את הקוד המלא נראה בפתרון התרגיל השני. הרעיון החשוב שכדאי לקחת: <strong>המסגרת נותנת שליטה ב-rsp, ולכן SROP הוא לא רק קריאה בודדת אלא מנוע שרשור מלא</strong>.</p>
@@ -3027,7 +3029,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:14:39 UTC">2026-07-20 09:14:39</span>
   </span>
 
     

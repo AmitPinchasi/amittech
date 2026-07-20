@@ -1,0 +1,29 @@
+{
+  "title": "זרימת redirect עם שכבת cache: בקשה בודקת קודם את Redis, פגיעה חוזרת מיד, והחטאה פונה ל-Read Replica ואז ממלאת את ה-cache",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "req", "type": "code", "label": "GET /abc123" },
+    { "id": "cache", "type": "diamond", "label": "נמצא ב-Redis?" },
+    { "id": "db", "type": "box", "label": "Read Replica" },
+    { "id": "resp", "type": "box", "label": "redirect 302" },
+    { "id": "note", "type": "text", "label": "החטאה ב-cache פונה למסד ואז שומרת את הערך ל-cache" }
+  ],
+  "connections": [
+    { "from": "req", "to": "cache" },
+    { "from": "cache", "to": "db", "label": "miss", "side": "left" },
+    { "from": "db", "to": "resp" },
+    { "from": "cache", "to": "resp", "label": "hit" }
+  ],
+  "animation": {
+    "step_seconds": 1.6,
+    "steps": [
+      { "active": ["req"] },
+      { "active": ["cache"], "edges": [0] },
+      { "active": ["db"], "edges": [1] },
+      { "active": ["resp"], "edges": [2] },
+      { "active": ["req"], "edges": [0] },
+      { "active": ["cache"] },
+      { "active": ["resp"], "edges": [3] }
+    ]
+  }
+}

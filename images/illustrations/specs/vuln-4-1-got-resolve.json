@@ -1,0 +1,42 @@
+{
+  "title": "פתרון עצל של puts דרך PLT ו-GOT: בקריאה הראשונה תא ה-GOT מצביע בחזרה לתוך ה-PLT והפותר הדינמי כותב לתוכו את הכתובת האמיתית ב-libc, ומרגע זה כל קריאה קופצת ישירות דרך התא שנשאר ניתן לכתיבה",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "call", "type": "code", "label": "call puts@plt" },
+    { "id": "plt", "type": "box", "label": "puts@plt מבצע קפיצה עקיפה jmp *[puts@got]" },
+    { "id": "got", "type": "box",
+      "label": "puts@got מצביע בחזרה ל-puts@plt+6",
+      "values": [
+        "puts@got מצביע בחזרה ל-puts@plt+6",
+        "puts@got מכיל את הכתובת האמיתית ב-libc"
+      ] },
+    { "id": "cond", "type": "diamond", "label": "זו הקריאה הראשונה ל-puts?",
+      "values": ["זו הקריאה הראשונה ל-puts?", "כן - עדיין לא נפתר", "לא - כבר פתור"] },
+    { "id": "resolve", "type": "box", "label": "הפותר הדינמי כותב את הכתובת לתא ה-GOT" },
+    { "id": "jump", "type": "box", "label": "קפיצה ישירה לקוד האמיתי של puts בתוך libc" },
+    { "id": "risk", "type": "text", "label": "תא ה-GOT נשאר ניתן לכתיבה - מי שכותב אליו שולט לאן הקריאה הבאה תקפוץ" }
+  ],
+  "connections": [
+    { "from": "call", "to": "plt" },
+    { "from": "plt", "to": "got" },
+    { "from": "got", "to": "cond" },
+    { "from": "cond", "to": "resolve", "label": "כן", "side": "right" },
+    { "from": "resolve", "to": "jump" },
+    { "from": "cond", "to": "jump", "label": "לא" },
+    { "from": "jump", "to": "risk" }
+  ],
+  "animation": {
+    "step_seconds": 1.8,
+    "steps": [
+      { "active": ["call"], "set": { "got": 0, "cond": 0 } },
+      { "active": ["plt"], "edges": [0] },
+      { "active": ["got"], "edges": [1] },
+      { "active": ["cond"], "edges": [2], "set": { "cond": 1 } },
+      { "active": ["resolve"], "edges": [3], "set": { "got": 1 } },
+      { "active": ["jump"], "edges": [4] },
+      { "active": ["cond"], "set": { "cond": 2 } },
+      { "active": ["jump"], "edges": [5] },
+      { "active": ["risk"], "edges": [6] }
+    ]
+  }
+}

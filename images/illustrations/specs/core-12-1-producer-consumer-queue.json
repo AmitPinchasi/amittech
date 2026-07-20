@@ -1,0 +1,48 @@
+{
+  "title": "דפוס יצרן צרכן עם תור מוגבל: היצרן נחסם כשהתור מלא והצרכן מעיר אותו אחרי שהוציא פריט",
+  "layout": { "type": "stack" },
+  "components": [
+    { "id": "prod", "type": "code", "values": [
+      "producer: idle",
+      "queue_push(&q, 10);",
+      "queue_push(&q, 20);",
+      "queue_push(&q, 30);",
+      "queue_push(&q, 40); -> cond_wait(not_full)",
+      "queue_push(&q, 40); -> done"
+    ] },
+    { "id": "q", "type": "dynamic", "values": [
+      "count = 0 of 3, items = []",
+      "count = 1 of 3, items = [10]",
+      "count = 2 of 3, items = [10, 20]",
+      "count = 3 of 3, items = [10, 20, 30]",
+      "count = 2 of 3, items = [20, 30]",
+      "count = 3 of 3, items = [20, 30, 40]"
+    ] },
+    { "id": "cons", "type": "code", "values": [
+      "consumer: cond_wait(not_empty)",
+      "consumer: idle",
+      "queue_pop(&q); -> 10"
+    ] },
+    { "id": "note", "type": "box", "values": [
+      "התור ריק, ולכן הצרכן ישן על התנאי not_empty",
+      "היצרן מכניס פריטים והתור מתמלא",
+      "התור הגיע לקיבולת, ולכן היצרן נרדם על התנאי not_full",
+      "הצרכן מוציא פריט, מוריד את המונה, ומאותת not_full",
+      "היצרן מתעורר, מגלה שיש מקום, ומכניס את הפריט שחיכה"
+    ] },
+    { "id": "cap", "type": "text", "label": "בדיקת התנאי נעשית תמיד בתוך לולאת while, כדי שהתעוררות מדומה לא תגרום לפעולה על תור ריק או מלא" }
+  ],
+  "connections": [],
+  "animation": {
+    "step_seconds": 1.9,
+    "steps": [
+      { "active": ["cons"], "set": { "prod": 0, "q": 0, "cons": 0, "note": 0 } },
+      { "active": ["prod", "q"], "set": { "prod": 1, "q": 1, "cons": 1, "note": 1 } },
+      { "active": ["prod", "q"], "set": { "prod": 2, "q": 2 } },
+      { "active": ["prod", "q"], "set": { "prod": 3, "q": 3 } },
+      { "active": ["prod"], "set": { "prod": 4, "note": 2 } },
+      { "active": ["cons", "q"], "set": { "cons": 2, "q": 4, "note": 3 } },
+      { "active": ["prod", "q"], "set": { "prod": 5, "q": 5, "cons": 1, "note": 4 } }
+    ]
+  }
+}

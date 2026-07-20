@@ -2868,6 +2868,7 @@
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>   (dangling) \  | AAAA | BBBB |...  |   our data!
 <a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>   new ----/  +------------------+
 </code></pre></div>
+<p><img alt="תרשים המראה שלושה שלבים של מחזור נתח משוחרר: הבלוק בשימוש עם מצביע שלנו, אחרי free הבתים הראשונים הופכים למצביע fd והמצביע שלנו נשאר תלוי, ואז הקצאה חדשה באותו גודל מחזירה את אותו בלוק עם תוכן שהתוקף שולט בו" src="../../../../images/illustrations/vuln-7-2-uaf-reuse-steps.svg" /></p>
 <p>שימו לב לפרט קטן וקריטי בשלב 2: כשהמקצה משחרר בלוק ומכניס אותו ל-bin, הוא כותב את מצביע ה-<code>fd</code> (המצביע לבלוק הבא ב-bin) לתוך שמונת הבתים הראשונים של אזור המשתמש. אלה בדיוק הבתים שבהם יושב ה-vptr של אובייקט C++. כלומר, עצם השחרור כבר משחית לנו את ה-vptr הישן. זו הסיבה שאסור פשוט לקרוא לאובייקט אחרי free בלי למחזר אותו קודם - נצלול לזה בהמשך.</p>
 <hr />
 <h2 id="-tcache-bins">מנגנון המיחזור - tcache ו-bins<a class="headerlink" href="#-tcache-bins" title="Permanent link">&para;</a></h2>
@@ -2928,6 +2929,7 @@
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1">; rdi already holds this</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nf">call</span><span class="w">   </span><span class="no">rax</span><span class="w">                       </span><span class="c1">; jump to the function</span>
 </code></pre></div>
+<p><img alt="תרשים של קריאה וירטואלית ב-C++: מהאובייקט אל ה-vptr שלו, ומה-vptr אל טבלת ה-vtable שבה כל slot מחזיק מצביע לפונקציה אחרת" src="../../../../images/illustrations/vuln-7-2-vtable-dispatch.svg" /></p>
 <p>עצרו רגע והסתכלו על שתי השורות הראשונות. הקריאה הווירטואלית עושה שתי הפניות עקיפות: קודם קוראת את ה-vptr מהאובייקט, ואז קוראת את מצביע הפונקציה מ-<code>vptr+8</code>. אם אנחנו שולטים על ה-vptr - שהוא הבית הראשון של האובייקט - אנחנו שולטים לחלוטין על מה ש-<code>call rax</code> יקפוץ אליו. וזה בדיוק מה ש-UAF נותן לנו: את היכולת לכתוב לבית הראשון של אובייקט משוחרר.</p>
 <hr />
 <h2 id="-vptr-uaf-">חטיפת ה-vptr דרך UAF - הרעיון המרכזי<a class="headerlink" href="#-vptr-uaf-" title="Permanent link">&para;</a></h2>
@@ -3089,7 +3091,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:14:39 UTC">2026-07-20 09:14:39</span>
   </span>
 
     

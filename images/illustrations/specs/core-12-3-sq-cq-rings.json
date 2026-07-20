@@ -1,0 +1,42 @@
+{
+  "title": "מחזור בקשה בio_uring: הבקשה נכתבת לטבעת ההגשה והתוצאה מוחזרת דרך טבעת ההשלמה",
+  "layout": { "type": "stack" },
+  "components": [
+    { "id": "app", "type": "code", "values": [
+      "sqe = io_uring_get_sqe(&ring);",
+      "io_uring_prep_read(sqe, fd, buf, 1024, 0);",
+      "io_uring_submit(&ring);",
+      "io_uring_wait_cqe(&ring, &cqe);",
+      "cqe->res = 512; io_uring_cqe_seen(&ring, cqe);"
+    ] },
+    { "id": "sq", "type": "dynamic", "values": [
+      "SQ = []",
+      "SQ = [read fd=7 len=1024]",
+      "SQ = []"
+    ] },
+    { "id": "cq", "type": "dynamic", "values": [
+      "CQ = []",
+      "CQ = [res=512 user_data=ctx]",
+      "CQ = []"
+    ] },
+    { "id": "note", "type": "box", "values": [
+      "התוכנה לוקחת רשומת הגשה פנויה מטבעת ההגשה המשותפת",
+      "פרטי הפעולה נכתבים לרשומה: סוג הפעולה, המתאר, הבאפר, והאורך",
+      "ההגשה מודיעה לקרנל שיש בקשות חדשות, ובמצב SQPOLL גם זה מיותר",
+      "הקרנל מבצע את הפעולה וכותב את התוצאה לטבעת ההשלמה",
+      "התוכנה קוראת את התוצאה מהזיכרון המשותף בלי קריאת מערכת נוספת"
+    ] },
+    { "id": "cap", "type": "text", "label": "שתי הטבעות ממופות בזיכרון בין התוכנה לקרנל, ולכן העברת הבקשות והתוצאות לא עולה קריאת מערכת" }
+  ],
+  "connections": [],
+  "animation": {
+    "step_seconds": 1.9,
+    "steps": [
+      { "active": ["app", "sq"], "set": { "app": 0, "sq": 0, "cq": 0, "note": 0 } },
+      { "active": ["app", "sq"], "set": { "app": 1, "sq": 1, "note": 1 } },
+      { "active": ["app"], "set": { "app": 2, "note": 2 } },
+      { "active": ["sq", "cq"], "set": { "sq": 2, "cq": 1, "note": 3 } },
+      { "active": ["app", "cq"], "set": { "app": 4, "cq": 2, "note": 4 } }
+    ]
+  }
+}

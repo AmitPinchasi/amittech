@@ -2852,6 +2852,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kt">int</span><span class="w"> </span><span class="nf">system</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">command</span><span class="p">);</span>
 </code></pre></div>
 <p>הפונקציה <code>system</code> מקבלת מחרוזת, מריצה אותה דרך <code>/bin/sh -c</code>, וזהו - יש לנו shell. אם נצליח לגרום לתוכנית לקרוא ל-<code>system("/bin/sh")</code>, סיימנו. וזה בדיוק מה שנעשה: נדרוס את הreturn address בכתובת של <code>system</code> בתוך <code>libc</code>, ונסדר את המחסנית כך שהארגומנט יהיה מצביע למחרוזת <code>"/bin/sh"</code>.</p>
+<p><img alt="איור שני יעדים אפשריים לכתובת חזרה שנדרסה: קפיצה למחסנית שמסומנת rw בגלל NX נכשלת עם SIGSEGV, לעומת קפיצה לתוך libc הממופה שמסומנת קריאה והרצה ומאפשרת להריץ קוד קיים כמו system" src="../../../../images/illustrations/vuln-4-2-nx-blocks-shellcode.svg" /></p>
 <h2 id="-libc-ret2libc">הרעיון - חזרה לתוך libc - ret2libc<a class="headerlink" href="#-libc-ret2libc" title="Permanent link">&para;</a></h2>
 <p>הרעיון בשם: return-to-libc, כלומר "לחזור אל libc". אנחנו לא מזריקים כלום ולא בונים chain ארוכה (עוד). אנחנו פשוט גורמים ל-<code>ret</code> של הפונקציה הvulnerable לקפוץ אל <code>system</code> שבתוך <code>libc</code>, כאילו מישהו קרא לה כרגיל.</p>
 <p>כדי שזה יעבוד, <code>system</code> צריכה למצוא את הארגומנט שלה במקום שהיא מצפה לו. וכאן חוזר בדיוק מה שלמדנו על קונבנציית הקריאה של 32 ביט (cdecl) בשיעור 2.3: הארגומנטים עוברים על המחסנית, והפונקציה מצפה שברגע שהיא מתחילה לרוץ, בראש המחסנית תהיה הreturn address שלה, ומיד מעליה הארגומנט הראשון.</p>
@@ -2885,6 +2886,7 @@
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>| pointer to &quot;/bin/sh&quot;          |
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>+------------------------------+
 </code></pre></div>
+<p><img alt="איור זרימת ret2libc בשלושה תאים על המחסנית: ה-ret של הפונקציה הפגיעה קופץ ל-system, system קוראת את מצביע /bin/sh שמעליה כארגומנט, ובסיום מחזירה שליטה לתא הבא שמכיל את הכתובת של exit במקום להקריס את התוכנית" src="../../../../images/illustrations/vuln-4-2-ret2libc-chain.svg" /></p>
 <p>עכשיו יש לנו את המבנה. חסרות לנו שלוש כתובות: של <code>system</code>, של המחרוזת <code>"/bin/sh"</code>, ושל <code>exit</code>. בואו נמצא אותן.</p>
 <h2 id="-aslr">הנחות ההגנה - למה מתחילים עם ASLR כבוי<a class="headerlink" href="#-aslr" title="Permanent link">&para;</a></h2>
 <p>לפני שנמצא כתובות, נקבע את הנחות הסביבה. הבינארי שנתקוף:</p>
@@ -3066,7 +3068,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:14:39 UTC">2026-07-20 09:14:39</span>
   </span>
 
     

@@ -3078,6 +3078,7 @@
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>+-----------+----------------------------------------------+
 </code></pre></div>
 <p>הכותרת בגודל 52 בתים, ואחריה מיד כותרת התוכנית בגודל 32 בתים. יחד: 84 בתים, שזה <code>0x54</code>. הקובץ כולו ממופה לזיכרון בכתובת <code>0x08048000</code>, ולכן ההיסט <code>0x54</code> בקובץ הוא בדיוק הכתובת הווירטואלית <code>0x08048054</code>. וזו, לא במקרה, נקודת הכניסה של tiny_easy. במילים אחרות: נקודת הכניסה של הבינארי היא הבית הראשון אחרי שתי הכותרות. אין שם שום קוד אתחול - הקוד שלנו מתחיל לרוץ ברגע הראשון האפשרי.</p>
+<p><img alt="תרשים מבנה קובץ ELF מינימלי - כותרת ELF בת 52 בתים, אחריה כותרת תוכנית יחידה בת 32 בתים מסוג LOAD עם הרשאות קריאה כתיבה והרצה, ומיד אחריה קוד ההרצה שהוא גם נקודת הכניסה, בלי טבלת סקשנים ובלי סמלים" src="../../../../images/illustrations/vuln-8-3-minimal-elf-layout.svg" /></p>
 <p>נאמת את זה עם readelf:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>$<span class="w"> </span>readelf<span class="w"> </span>-h<span class="w"> </span>tiny_easy<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>Entry
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>Entry<span class="w"> </span>point<span class="w"> </span>address:<span class="w">               </span>0x8048054
@@ -3126,6 +3127,7 @@
 <a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>+-----------------------------+
 <a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>high addresses (top of stack)
 </code></pre></div>
+<p><img alt="תרשים מפת המחסנית ברגע הכניסה לתוכנית - esp מצביע ל-argc, מעליו מערך argv, מעליו מערך envp, אחריו טבלת auxv, ובראש המחסנית מחרוזות התוכן עצמן" src="../../../../images/illustrations/vuln-8-3-initial-stack-layout.svg" /></p>
 <p>שימו לב להבחנה הקריטית: <code>argv[0]</code> הוא <strong>מצביע</strong>, והוא מצביע אל מחרוזת שיושבת גבוה יותר על המחסנית. המחרוזת הזו היא שם התוכנית שאיתו הפעילו אותה. שני הדברים האלה - שאנחנו שולטים בתוכן של <code>argv[0]</code> (דרך שם ההרצה) ושמחרוזות הסביבה יושבות בכתובת יציבה בראש המחסנית - הם בדיוק שני המנופים שמפוצצים את tiny_easy.</p>
 <h2 id="tiny_easy-the-disassembly">הקוד של tiny_easy - the disassembly<a class="headerlink" href="#tiny_easy-the-disassembly" title="Permanent link">&para;</a></h2>
 <p>עכשיו כשאנחנו יודעים מה יש על המחסנית, נפרק את הקוד. נריץ <code>objdump</code> על הבינארי:</p>
@@ -3268,7 +3270,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:14:39 UTC">2026-07-20 09:14:39</span>
   </span>
 
     
