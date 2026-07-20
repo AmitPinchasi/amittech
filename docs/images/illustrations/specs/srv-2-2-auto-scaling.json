@@ -1,0 +1,28 @@
+{
+  "title": "Auto Scaling ב-AWS: CloudWatch מודד את עומס ה-CPU, וכשהעומס עובר את הסף קבוצת ה-Auto Scaling מוסיפה instance, ואם העומס נמוך אין שינוי",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "metric", "type": "box", "label": "CPU: 45%", "values": ["CPU: 45%", "CPU: 88%"] },
+    { "id": "cond", "type": "diamond", "label": "45 > 70 ?", "values": ["45 > 70 ?", "88 > 70 ?"] },
+    { "id": "scaleup", "type": "box", "label": "מוסיפים instance עם ASG" },
+    { "id": "ok", "type": "box", "label": "אין שינוי - העומס נמוך" }
+  ],
+  "connections": [
+    { "from": "metric", "to": "cond" },
+    { "from": "cond", "to": "scaleup", "label": "כן" },
+    { "from": "cond", "to": "ok", "label": "לא", "side": "right" },
+    { "from": "scaleup", "to": "metric", "label": "ניטור מחדש", "loop": true }
+  ],
+  "animation": {
+    "step_seconds": 1.7,
+    "steps": [
+      { "active": ["metric"], "set": { "metric": 0, "cond": 0 } },
+      { "active": ["cond"], "edges": [0] },
+      { "active": ["ok"], "edges": [2] },
+      { "active": ["metric"], "set": { "metric": 1, "cond": 1 } },
+      { "active": ["cond"], "edges": [0] },
+      { "active": ["scaleup"], "edges": [1] },
+      { "active": ["metric"], "edges": [3] }
+    ]
+  }
+}
