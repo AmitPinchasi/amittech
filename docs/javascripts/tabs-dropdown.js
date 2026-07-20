@@ -50,6 +50,8 @@
     var tabsList = document.querySelector('.md-tabs__list');
     if (!tabsList) return false;
 
+    var baseUrl = getBaseUrl();
+
     var tabs = tabsList.querySelectorAll('.md-tabs__item');
     if (tabs.length === 0 || Object.keys(categories).length === 0) return false;
 
@@ -74,7 +76,9 @@
 
       courses.forEach(function(course) {
         var a = document.createElement('a');
-        a.href = course.href;
+        /* course.href is site-root-relative without a leading slash, so it
+           must be resolved against the site base, not the current page */
+        a.href = baseUrl + course.href;
         a.className = 'tabs-dropdown-item';
         a.textContent = course.name;
         dropdown.appendChild(a);
