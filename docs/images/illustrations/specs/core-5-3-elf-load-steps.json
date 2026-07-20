@@ -1,0 +1,40 @@
+{
+  "title": "איור הדרך שהקרנל עובר מהקריאה execve ועד להרצת התוכנית: זיהוי הbytes magic, מיפוי הסגמנטים עם mmap, הכנת הstack וקפיצה לentry point",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "call", "type": "code", "label": "execve(\"/bin/ls\", args, NULL);" },
+    { "id": "read", "type": "box", "label": "הקרנל קורא את ארבעת הבתים הראשונים של הקובץ",
+      "values": ["הקרנל קורא את ארבעת הבתים הראשונים של הקובץ", "הבתים שנקראו הם 7f 45 4c 46"] },
+    { "id": "cond1", "type": "diamond", "label": "magic == 7f ELF" },
+    { "id": "other", "type": "box", "label": "מופעל handler אחר" },
+    { "id": "map", "type": "box", "label": "הטוען ממפה כל סגמנט PT_LOAD עם mmap והרשאות משלו" },
+    { "id": "stack", "type": "box", "label": "הקרנל בונה את הstack עם argv ועם envp" },
+    { "id": "cond2", "type": "diamond", "label": "האם הקובץ דינמי" },
+    { "id": "interp", "type": "box", "label": "השליטה עוברת ל-ld-linux.so שטוען את הספריות" },
+    { "id": "entry", "type": "box", "label": "קפיצה ל-entry point והתוכנית מתחילה לרוץ" }
+  ],
+  "connections": [
+    { "from": "call", "to": "read" },
+    { "from": "read", "to": "cond1" },
+    { "from": "cond1", "to": "map", "label": "כן" },
+    { "from": "cond1", "to": "other", "label": "לא", "side": "right" },
+    { "from": "map", "to": "stack" },
+    { "from": "stack", "to": "cond2" },
+    { "from": "cond2", "to": "interp", "label": "כן", "side": "right" },
+    { "from": "interp", "to": "entry" },
+    { "from": "cond2", "to": "entry", "label": "לא" }
+  ],
+  "animation": {
+    "step_seconds": 1.8,
+    "steps": [
+      { "active": ["call"], "set": { "read": 0 } },
+      { "active": ["read"], "edges": [0], "set": { "read": 1 } },
+      { "active": ["cond1"], "edges": [1] },
+      { "active": ["map"], "edges": [2] },
+      { "active": ["stack"], "edges": [4] },
+      { "active": ["cond2"], "edges": [5] },
+      { "active": ["interp"], "edges": [6] },
+      { "active": ["entry"], "edges": [7] }
+    ]
+  }
+}

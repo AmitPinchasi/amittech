@@ -1,0 +1,37 @@
+{
+  "title": "השוואה בין select לepoll: select סורק את כל המתארים בכל קריאה, ואילו epoll מחזיר רק את המוכנים",
+  "layout": { "type": "stack" },
+  "components": [
+    { "id": "call", "type": "code", "values": [
+      "select(max_fd + 1, &read_fds, NULL, NULL, NULL);",
+      "epoll_wait(epoll_fd, events, 64, -1);"
+    ] },
+    { "id": "scan", "type": "dynamic", "values": [
+      "scanned = 0 of 10000",
+      "scanned = 5000 of 10000",
+      "scanned = 10000 of 10000",
+      "scanned = 0 of 10000"
+    ] },
+    { "id": "ready", "type": "dynamic", "values": [
+      "ready = 0",
+      "ready = 3"
+    ] },
+    { "id": "note", "type": "box", "values": [
+      "עשרת אלפים חיבורים פתוחים, ורק שלושה מהם באמת מוכנים לקריאה",
+      "הקרנל סורק את כל המתארים בקבוצה כדי לגלות מי מוכן",
+      "הסריקה הסתיימה אחרי עשרת אלפים בדיקות, וזו עלות לכל קריאה",
+      "הepoll מחזיק רשימת מוכנים פנימית ומחזיר אותה בלי לסרוק כלום"
+    ] },
+    { "id": "cap", "type": "text", "label": "העלות של select גדלה עם מספר החיבורים, ואילו העלות של epoll תלויה רק במספר האירועים בפועל" }
+  ],
+  "connections": [],
+  "animation": {
+    "step_seconds": 1.9,
+    "steps": [
+      { "active": ["call"], "set": { "call": 0, "scan": 0, "ready": 0, "note": 0 } },
+      { "active": ["scan"], "set": { "scan": 1, "note": 1 } },
+      { "active": ["scan", "ready"], "set": { "scan": 2, "ready": 1, "note": 2 } },
+      { "active": ["call", "ready"], "set": { "call": 1, "scan": 3, "ready": 1, "note": 3 } }
+    ]
+  }
+}

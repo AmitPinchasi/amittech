@@ -1,0 +1,38 @@
+{
+  "title": "תרשים המראה כיצד פסיקת הטיימר עוצרת את התוכנה הרצה, שומרת את האוגרים שלה ב-PCB, ומחזירה שליטה לתוכנה אחרת",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "timer", "type": "box", "label": "טיימר החומרה עוצר את התוכנה כל עשר מילי שניות" },
+    { "id": "save", "type": "code", "lines": ["cli", "pushad", "mov [eax].regs, esp"] },
+    { "id": "pcb", "type": "box", "label": "כל האוגרים של התוכנה הנוכחית נשמרים במבנה ה-PCB שלה" },
+    { "id": "pick", "type": "code", "lines": ["call scheduler_pick_next", "mov [current_pcb], eax"] },
+    { "id": "cr3", "type": "code", "lines": ["mov ebx, [eax].cr3", "mov cr3, ebx"] },
+    { "id": "restore", "type": "code", "lines": ["mov esp, [eax].regs", "popad", "sti", "iret"] },
+    { "id": "resume", "type": "box", "label": "התוכנה הבאה ממשיכה בדיוק מהנקודה שבה נעצרה" },
+    { "id": "cur", "type": "dynamic", "values": [
+      "running = A",
+      "running = kernel scheduler",
+      "running = B"
+    ] }
+  ],
+  "connections": [
+    { "from": "timer", "to": "save" },
+    { "from": "save", "to": "pcb" },
+    { "from": "pcb", "to": "pick" },
+    { "from": "pick", "to": "cr3", "label": "הזיכרון של B" },
+    { "from": "cr3", "to": "restore" },
+    { "from": "restore", "to": "resume" }
+  ],
+  "animation": {
+    "step_seconds": 1.8,
+    "steps": [
+      { "active": ["timer"], "set": { "cur": 0 } },
+      { "active": ["save"], "edges": [0], "set": { "cur": 1 } },
+      { "active": ["pcb"], "edges": [1] },
+      { "active": ["pick"], "edges": [2] },
+      { "active": ["cr3"], "edges": [3] },
+      { "active": ["restore"], "edges": [4] },
+      { "active": ["resume"], "edges": [5], "set": { "cur": 2 } }
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "title": "תרשים המראה כיצד גישה לכתובת ללא page גורמת לשגיאת page fault, כיצד הקרנל מקצה מסגרת חדשה, וכיצד ההוראה מצליחה בניסיון השני",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "code", "type": "code", "label": "mov eax, [0x00500000]" },
+    { "id": "walk", "type": "box", "label": "המעבד מתרגם את הכתובת דרך טבלאות ה-paging" },
+    { "id": "cond", "type": "diamond", "values": ["Present ?", "Present = 0", "Present = 1"] },
+    { "id": "ok", "type": "box", "label": "הערך נקרא מה-RAM" },
+    { "id": "fault", "type": "box", "label": "המעבד מפעיל את הפסיקה int 14h ושומר את הכתובת ברגיסטר cr2" },
+    { "id": "cr2", "type": "code", "label": "CR2 = 0x00500000" },
+    { "id": "alloc", "type": "code", "lines": ["call allocate_frame", "or eax, 0x7", "mov [edx + ebx*4], eax"] },
+    { "id": "iret", "type": "box", "label": "הפקודה iret מחזירה את התוכנה לאותה הוראה בדיוק" }
+  ],
+  "connections": [
+    { "from": "code", "to": "walk" },
+    { "from": "walk", "to": "cond" },
+    { "from": "cond", "to": "ok", "label": "כן", "side": "right" },
+    { "from": "cond", "to": "fault", "label": "לא" },
+    { "from": "fault", "to": "cr2" },
+    { "from": "cr2", "to": "alloc" },
+    { "from": "alloc", "to": "iret" },
+    { "from": "iret", "to": "walk", "label": "ניסיון נוסף", "loop": true }
+  ],
+  "animation": {
+    "step_seconds": 1.8,
+    "steps": [
+      { "active": ["code"], "set": { "cond": 0 } },
+      { "active": ["walk"], "edges": [0] },
+      { "active": ["cond"], "edges": [1], "set": { "cond": 1 } },
+      { "active": ["fault"], "edges": [3] },
+      { "active": ["cr2"], "edges": [4] },
+      { "active": ["alloc"], "edges": [5] },
+      { "active": ["iret"], "edges": [6] },
+      { "active": ["walk"], "edges": [7] },
+      { "active": ["cond"], "edges": [1], "set": { "cond": 2 } },
+      { "active": ["ok"], "edges": [2] }
+    ]
+  }
+}

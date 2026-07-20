@@ -1,0 +1,45 @@
+{
+  "title": "מסלול ההחלטות של שרת HTTP סטטי: בדיקת המתודה, בדיקת path traversal, ופתיחת הקובץ",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "req", "type": "code", "label": "GET /index.html HTTP/1.1",
+      "values": [
+        "GET /index.html HTTP/1.1",
+        "POST /form HTTP/1.1",
+        "GET /../../etc/passwd HTTP/1.1",
+        "GET /missing.html HTTP/1.1"
+      ] },
+    { "id": "m", "type": "diamond", "label": "method == GET" },
+    { "id": "trav", "type": "diamond", "label": "strstr(path, \"..\")" },
+    { "id": "open", "type": "diamond", "label": "fopen(filepath)" },
+    { "id": "ok", "type": "box", "label": "שליחת 200 עם תוכן הקובץ" },
+    { "id": "e405", "type": "box", "label": "שליחת 405" },
+    { "id": "e403", "type": "box", "label": "שליחת 403" },
+    { "id": "e404", "type": "box", "label": "שליחת 404" }
+  ],
+  "connections": [
+    { "from": "req", "to": "m" },
+    { "from": "m", "to": "trav", "label": "כן" },
+    { "from": "m", "to": "e405", "label": "לא", "side": "right" },
+    { "from": "trav", "to": "e403", "label": "נמצא", "side": "right" },
+    { "from": "trav", "to": "open", "label": "לא נמצא" },
+    { "from": "open", "to": "e404", "label": "נכשל", "side": "right" },
+    { "from": "open", "to": "ok", "label": "הצליח" }
+  ],
+  "animation": {
+    "step_seconds": 1.8,
+    "steps": [
+      { "active": ["req"], "set": { "req": 0 } },
+      { "active": ["m"], "edges": [0] },
+      { "active": ["trav"], "edges": [1] },
+      { "active": ["open"], "edges": [4] },
+      { "active": ["ok"], "edges": [6] },
+      { "active": ["req"], "set": { "req": 1 } },
+      { "active": ["e405"], "edges": [2] },
+      { "active": ["req"], "set": { "req": 2 } },
+      { "active": ["e403"], "edges": [3] },
+      { "active": ["req"], "set": { "req": 3 } },
+      { "active": ["e404"], "edges": [5] }
+    ]
+  }
+}

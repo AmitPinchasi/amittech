@@ -1,0 +1,44 @@
+{
+  "title": "בעיית ABA במחסנית Treiber: הראש חזר לערך A ולכן פעולת CAS מצליחה למרות שהמבנה כולו השתנה",
+  "layout": { "type": "stack" },
+  "components": [
+    { "id": "t1", "type": "code", "values": [
+      "t1: old_top = A, plan CAS(top, A, B)",
+      "t1: preempted",
+      "t1: CAS(top, A, B) -> true"
+    ] },
+    { "id": "top", "type": "dynamic", "values": [
+      "top = A -> B -> C",
+      "top = B -> C",
+      "top = C",
+      "top = A -> C",
+      "top = B (freed)"
+    ] },
+    { "id": "t2", "type": "code", "values": [
+      "t2: idle",
+      "t2: pop() -> A",
+      "t2: pop() -> B, free(B)",
+      "t2: push(A)"
+    ] },
+    { "id": "note", "type": "box", "values": [
+      "התהליכון הראשון קרא את הראש ותכנן להחליף אותו במצביע הבא",
+      "התהליכון הראשון נעצר לפני שהספיק לבצע את הפעולה האטומית",
+      "התהליכון השני מוציא את A ואחר כך את B, ומשחרר את הזיכרון של B",
+      "התהליכון השני מחזיר את A למחסנית, וכעת A מצביע ל-C",
+      "הפעולה מצליחה כי הערך שוב A, אבל הראש מצביע לזיכרון משוחרר"
+    ] },
+    { "id": "cap", "type": "text", "label": "הפעולה האטומית בודקת רק שוויון ערכים, ולכן מוסיפים מונה גרסה למצביע כדי לזהות שהמבנה השתנה" }
+  ],
+  "connections": [],
+  "animation": {
+    "step_seconds": 2.0,
+    "steps": [
+      { "active": ["t1", "top"], "set": { "t1": 0, "top": 0, "t2": 0, "note": 0 } },
+      { "active": ["t1"], "set": { "t1": 1, "note": 1 } },
+      { "active": ["t2", "top"], "set": { "t2": 1, "top": 1, "note": 2 } },
+      { "active": ["t2", "top"], "set": { "t2": 2, "top": 2 } },
+      { "active": ["t2", "top"], "set": { "t2": 3, "top": 3, "note": 3 } },
+      { "active": ["t1", "top"], "set": { "t1": 2, "top": 4, "note": 4 } }
+    ]
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "title": "תרשים מעברי המצבים של תהליך בקרנל: מהיצירה למצב מוכן לריצה, לריצה על המעבד, לשינה בהמתנה לאירוע, ולבסוף למצב זומבי ולשחרור",
+  "layout": { "type": "flow" },
+  "components": [
+    { "id": "fork", "type": "code", "label": "fork()" },
+    { "id": "ready", "type": "box", "label": "TASK_RUNNING - ממתין בתור" },
+    { "id": "run", "type": "box", "label": "TASK_RUNNING - רץ על המעבד" },
+    { "id": "cond", "type": "diamond", "values": ["why stop ?", "waiting for IO", "exit()"] },
+    { "id": "sleep", "type": "box", "label": "TASK_INTERRUPTIBLE - ישן" },
+    { "id": "zomb", "type": "box", "label": "TASK_ZOMBIE - ממתין ל-wait מהאב" },
+    { "id": "gone", "type": "box", "label": "הקרנל משחרר את ה-task_struct" },
+    { "id": "note", "type": "text", "label": "פסיקת הטיימר מחזירה את התהליך לתור הריצה, ולכן TASK_RUNNING מתאר גם ריצה בפועל וגם המתנה בתור" }
+  ],
+  "connections": [
+    { "from": "fork", "to": "ready" },
+    { "from": "ready", "to": "run" },
+    { "from": "run", "to": "cond" },
+    { "from": "cond", "to": "sleep", "label": "המתנה", "side": "right" },
+    { "from": "sleep", "to": "ready", "label": "האירוע קרה", "loop": true },
+    { "from": "cond", "to": "zomb", "label": "סיום" },
+    { "from": "zomb", "to": "gone", "label": "האב קרא ל-wait" }
+  ],
+  "animation": {
+    "step_seconds": 1.8,
+    "steps": [
+      { "active": ["fork"], "set": { "cond": 0 } },
+      { "active": ["ready"], "edges": [0] },
+      { "active": ["run"], "edges": [1] },
+      { "active": ["cond"], "edges": [2], "set": { "cond": 1 } },
+      { "active": ["sleep"], "edges": [3] },
+      { "active": ["ready"], "edges": [4] },
+      { "active": ["run"], "edges": [1] },
+      { "active": ["cond"], "edges": [2], "set": { "cond": 2 } },
+      { "active": ["zomb"], "edges": [5] },
+      { "active": ["gone"], "edges": [6] }
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "title": "סינכרון acquire release בין יצרן לצרכן: הכתיבה לנתונים קודמת לפרסום הדגל, ולכן הצרכן רואה את הנתונים",
+  "layout": { "type": "stack" },
+  "components": [
+    { "id": "prod", "type": "code", "values": ["data = 42;", "atomic_store(&ready, 1, release);"] },
+    { "id": "data", "type": "dynamic", "values": ["data = 0", "data = 42"] },
+    { "id": "ready", "type": "dynamic", "values": ["ready = 0", "ready = 1"] },
+    { "id": "cons", "type": "code", "label": "while (atomic_load(&ready, acquire) == 0) ;" },
+    { "id": "res", "type": "box", "values": ["הצרכן ממתין כי הדגל עדיין אפס", "הצרכן רואה את הדגל דלוק ולכן data שווה 42"] },
+    { "id": "note", "type": "text", "label": "הrelease מבטיח שכל הכתיבות שלפניו נראות לפני הדגל, וacquire מבטיח שהקריאות שאחריו יראו אותן" }
+  ],
+  "connections": [],
+  "animation": {
+    "step_seconds": 1.9,
+    "steps": [
+      { "active": ["cons"], "set": { "prod": 0, "data": 0, "ready": 0, "res": 0 } },
+      { "active": ["prod", "data"], "set": { "data": 1 } },
+      { "active": ["prod", "ready"], "set": { "prod": 1, "ready": 1 } },
+      { "active": ["cons"] },
+      { "active": ["res"], "set": { "res": 1 } }
+    ]
+  }
+}
