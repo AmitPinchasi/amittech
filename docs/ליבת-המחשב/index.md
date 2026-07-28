@@ -47,8 +47,6 @@ course: true
 ### פרק 12 - מקביליות מתקדמת
 דפוסי תכנות מקבילי (producer-consumer, thread pool, reader-writer, barrier), מבני נתונים ללא נעילה (lock-free stack, SPSC queue, CAS), io_uring, תכנות אסינכרוני עם event loop. כולל פרויקט מסכם - ספריית thread pool.
 
----
-
 ## פרויקטים
 
 הקורס כולל פרויקט מסכם בסוף כל פרק מרכזי:
