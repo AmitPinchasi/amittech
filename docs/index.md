@@ -34,7 +34,6 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>תכנות בסיסי</strong>
-<span class="course-badge">קורס</span>
 <p>פייתון מהבסיס ועד נושאים מתקדמים, תכנות מונחה עצמים, מודולים, אלגוריתמיקה וקוד נקי</p>
 </div>
 </a>
@@ -44,7 +43,6 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>פיתוח עם AI - AI-Assisted Development</strong>
-<span class="course-badge">קורס</span>
 <p>כל כלי ה-AI שמתכנת צריך להכיר, בדגש על פיתוח אג'נטי עם Claude Code - הנדסת פרומפט, זרימות עבודה, ניהול הקשר, MCP וסוכנים, ובנייה מעל ה-API</p>
 </div>
 </a>
@@ -66,7 +64,6 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>פיתוח צד שרת - Backend</strong>
-<span class="course-badge">קורס</span>
 <p>פיתוח API עם FastAPI, מסדי נתונים, DevOps, AWS, ופיתוח JavaScript עם Node.js</p>
 </div>
 </a>
@@ -76,7 +73,6 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>פיתוח צד לקוח - Frontend</strong>
-<span class="course-badge">קורס</span>
 <p>פיתוח frontend עם React ו-Next.js</p>
 </div>
 </a>
@@ -86,7 +82,6 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>ארכיטקטורת תוכנה</strong>
-<span class="course-badge">קורס</span>
 <p>SOLID, תבניות עיצוב, Clean Architecture, מיקרוסרביסים, ועיצוב מערכות גדולות בקנה-מידה</p>
 </div>
 </a>
@@ -103,7 +98,6 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>ווינדוס בסיסי</strong>
-<span class="course-badge">קורס</span>
 <p>באצ', פאוורשל, ניהול מערכת, כלי Sysinternals</p>
 </div>
 </a>
@@ -113,7 +107,6 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>לינוקס בסיסי</strong>
-<span class="course-badge">קורס</span>
 <p>טרמינל, באש, הרשאות, סקריפטים, שירותים וניהול מערכת לינוקס</p>
 </div>
 </a>
@@ -135,7 +128,6 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>רשתות</strong>
-<span class="course-badge">קורס</span>
 <p>מודל חמש השכבות, פרוטוקולים, שכבת האפליקציה, האינטרנט, רשתות מנוהלות ואבטחת רשת</p>
 </div>
 </a>
@@ -152,7 +144,6 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>פריצת אתרים</strong>
-<span class="course-badge">קורס</span>
 <p>פיתוח אתרים, חולשות צד לקוח וצד שרת, הגנות והתמודדות</p>
 </div>
 </a>
@@ -162,7 +153,6 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>בדיקת חדירות - Penetration Testing</strong>
-<span class="course-badge">קורס</span>
 <p>תקיפה חיצונית ופנימית, הסלמת הרשאות, תקיפת דומיין מתקדמת</p>
 </div>
 </a>
@@ -172,7 +162,6 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>פריצת אתרים מתקדם</strong>
-<span class="course-badge">קורס</span>
 <p>חולשות מתקדמות, התמודדות מול הגנות</p>
 </div>
 </a>
@@ -189,7 +178,6 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>ליבת המחשב - Low Level</strong>
-<span class="course-badge">קורס</span>
 <p>ארגון המחשב, אסמבלי 16 ו-32 ביט, שפת C, ספריית libc, הקרנל של לינוקס, ארכיטקטורת מעבדים, ופיתוח מערכת הפעלה</p>
 </div>
 </a>
@@ -200,7 +188,6 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>מחקר ווינדוס</strong>
-<span class="course-badge">קורס</span>
 <p>מחקר סטטי ודינמי, פרידה, פאצ'ינג, חולשות נפוצות וצלילה עמוקה ל-internals</p>
 </div>
 </a>
@@ -211,7 +198,6 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>מחקר חולשות - Binary Exploitation</strong>
-<span class="course-badge">קורס</span>
 <p>ניצול בינארי מאפס - באגים לוגיים, גלישות חוצץ, shellcode, עקיפת NX ו-ROP, מחרוזות פורמט, ניצול heap, ניצול קרנל, ומציאת חולשות אמיתיות עם fuzzing</p>
 </div>
 </a>
@@ -221,7 +207,6 @@ hide:
 </div>
 <div class="course-card-body">
 <strong>תכנות GPU ו-CUDA</strong>
-<span class="course-badge">קורס</span>
 <p>ארכיטקטורת GPU לעומק, מודל CUDA, זיכרון ו-shared memory, PTX ו-SASS, ספריות ביצועים, ומודל Roofline עם אופטימיזציה ופרופיילינג של kernels אמיתיים</p>
 </div>
 </a>
