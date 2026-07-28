@@ -3103,7 +3103,6 @@
 <h2 id="_1">הבעיה<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>בפרק 11.1 כתבנו שרת הד שעובד, אבל הוא מטפל בלקוח אחד בכל פעם. כל עוד השרת עסוק בלולאת <code>read</code>/<code>write</code> עם לקוח אחד, לקוחות אחרים שמנסים להתחבר חייבים לחכות. בעולם האמיתי, שרת צריך לטפל במאות או אלפי לקוחות במקביל.</p>
 <p>בהרצאה הזו נלמד חמש גישות שונות לפתור את הבעיה, מהפשוטה ביותר ועד המתקדמת ביותר.</p>
-<hr />
 <h2 id="1-process-fork-per-connection">גישה 1: הprocess לכל חיבור - fork per connection<a class="headerlink" href="#1-process-fork-per-connection" title="Permanent link">&para;</a></h2>
 <p>הרעיון: אחרי <code>accept</code>, השרת עושה <code>fork</code>. הprocess הילד מטפל בלקוח, וprocess האב חוזר ל-<code>accept</code> לקבל לקוחות חדשים.</p>
 <p>למדנו על <code>fork</code> בפרק 5.2. כל process ילד מקבל עותק של כל ה-fd-ים של האב, כולל הסוקט החדש של הלקוח.</p>
@@ -3208,7 +3207,6 @@
 - <code>fork</code> יקר - יצירת process חדש דורשת משאבים (זיכרון, זמן)<br />
 - לא סקיילבילי - עם 10,000 לקוחות נצטרך 10,000 processes<br />
 - תקשורת בין הלקוחות מסובכת (צריך IPC)</p>
-<hr />
 <h2 id="2-thread-thread-per-connection">גישה 2: הthread לכל חיבור - thread per connection<a class="headerlink" href="#2-thread-thread-per-connection" title="Permanent link">&para;</a></h2>
 <p>הרעיון דומה לfork, אבל במקום process חדש יוצרים thread. למדנו על threads בפרק 5.8. הם קלים יותר מprocesses כי חולקים את אותו מרחב זיכרון.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
@@ -3317,7 +3315,6 @@
 - עדיין thread אחד לכל לקוח - לא סקיילבילי ל-10,000 לקוחות<br />
 - באגים של concurrency (race conditions, deadlocks)<br />
 - קריסה של thread אחד יכולה להפיל את כל השרת</p>
-<hr />
 <h2 id="3-select-io-multiplexing">גישה 3: ריבוב קלט/פלט עם select - I/O multiplexing<a class="headerlink" href="#3-select-io-multiplexing" title="Permanent link">&para;</a></h2>
 <p>מה אם במקום ליצור thread או process לכל לקוח, נשתמש ב-thread אחד שמנטר הרבה סוקטים בו-זמנית? זה הרעיון של I/O multiplexing.</p>
 <p><code>select</code> מאפשר לנו לחכות עד שאחד (או יותר) מתוך רשימת fd-ים מוכן לקריאה או כתיבה. במקום <code>read</code> שחוסם אותנו על fd אחד, <code>select</code> חוסם אותנו עד שאיזשהו fd מוכן.</p>
@@ -3476,7 +3473,6 @@
 - <code>fd_set</code> מוגבל ל-<code>FD_SETSIZE</code> (בדרך כלל 1024) - אי אפשר לנטר יותר מזה<br />
 - ביצועים O(n) - בכל סיבוב צריך לסרוק את כל הfd-ים<br />
 - צריך לבנות מחדש את הקבוצה בכל קריאה ל-select</p>
-<hr />
 <h2 id="4-poll">גישה 4: ריבוב עם poll<a class="headerlink" href="#4-poll" title="Permanent link">&para;</a></h2>
 <p><code>poll</code> פותרת חלק מהבעיות של <code>select</code>. במקום bitmask (fd_set), היא משתמשת במערך של מבנים:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;poll.h&gt;</span>
@@ -3542,7 +3538,6 @@
 <p><strong>חסרונות:</strong><br />
 - עדיין O(n) - הקרנל סורק את כל המערך בכל קריאה<br />
 - פחות יעיל מ-epoll עם הרבה fd-ים</p>
-<hr />
 <h2 id="5-epoll-">גישה 5: epoll - ספציפי ללינוקס, הכי יעיל<a class="headerlink" href="#5-epoll-" title="Permanent link">&para;</a></h2>
 <p><code>epoll</code> הוא מנגנון I/O multiplexing ספציפי ללינוקס שפותר את בעיית הביצועים של select ו-poll. זה המנגנון ש-nginx, Node.js, Redis, ושרתים עתירי ביצועים אחרים משתמשים בו.</p>
 <h3 id="epoll">למה epoll טוב יותר?<a class="headerlink" href="#epoll" title="Permanent link">&para;</a></h3>
@@ -3692,7 +3687,6 @@
 <a id="__codelineno-9-112" name="__codelineno-9-112" href="#__codelineno-9-112"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 <a id="__codelineno-9-113" name="__codelineno-9-113" href="#__codelineno-9-113"></a><span class="p">}</span>
 </code></pre></div>
-<hr />
 <h2 id="_4">טבלת השוואה<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -3742,7 +3736,6 @@
 </tr>
 </tbody>
 </table>
-<hr />
 <h2 id="-non-blocking-sockets">סוקטים לא חוסמים - non-blocking sockets<a class="headerlink" href="#-non-blocking-sockets" title="Permanent link">&para;</a></h2>
 <p>כברירת מחדל, קריאות כמו <code>read</code>, <code>write</code>, ו-<code>accept</code> חוסמות - כלומר, הן ממתינות עד שיש נתונים/מקום/חיבור. עם epoll, לפעמים רוצים סוקטים שלא חוסמים:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;fcntl.h&gt;</span>
@@ -3759,7 +3752,6 @@
 2. <code>epoll_wait</code> מחכה עד שfd מוכן<br />
 3. קוראים/כותבים - מובטח שלא ייחסם (כי epoll אמר שהוא מוכן)<br />
 4. אם <code>read</code> מחזיר EAGAIN - אין יותר נתונים כרגע, חוזרים ל-<code>epoll_wait</code></p>
-<hr />
 <h2 id="_5">סיכום<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <ul>
 <li>שרת TCP צריך לטפל במספר לקוחות במקביל</li>
@@ -3790,7 +3782,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 08:33:06 UTC">2026-07-20 08:33:06</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

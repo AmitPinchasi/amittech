@@ -2841,7 +2841,6 @@
 
 <p>עד עכשיו כל החולשות שתקפנו חיו על המחסנית - overflows, שליטה ב-RIP, ROP. עכשיו אנחנו יורדים לזירה השנייה והמעניינת לא פחות: הheap. בשיעור הקודם (7.1) הכרנו את הפנימיות של המקצה של glibc - מה זה chunk, איך נראים ה-bins, ומה קורה ל-chunk כשמשחררים אותו. עכשיו ניקח את הידע הזה ונבנה ממנו את אחת החולשות הכי נפוצות ומסוכנות בעולם האמיתי: שימוש לאחר שחרור. זו החולשה שמפילה דפדפנים, kernels ומכונות וירטואליות, וכאן נלמד אותה על דוגמה נקייה ומדויקת - האתגר האגדי <code>uaf</code> מ-pwnable.kr, שבו נחטוף את זרימת הבקרה של תוכנית C++ דרך דריסת מצביע ל-vtable.</p>
 <p>הרעיון בבסיס פשוט להחריד: אחרי ש-<code>free</code> משחרר בלוק זיכרון, המצביע הישן עדיין קיים ועדיין מצביע לשם. אם נצליח לגרום למקצה להחזיר את אותו בלוק להקצאה חדשה שאנחנו שולטים בתוכן שלה, אז המצביע הישן פתאום "קורא" את הנתונים שלנו. וכשהמצביע הישן הוא מצביע לאובייקט עם פונקציות וירטואליות - השליטה בתוכן הופכת לשליטה על הקריאה הבאה של פונקציה.</p>
-<hr />
 <h2 id="-dangling-pointer">מצביע תלוי - Dangling Pointer<a class="headerlink" href="#-dangling-pointer" title="Permanent link">&para;</a></h2>
 <p>בואו נתחיל מהבאג עצמו. ב-C וב-C++ הפונקציה <code>free</code> (או האופרטור <code>delete</code>) מחזירה בלוק זיכרון למקצה, אבל היא לא נוגעת במשתנה שמחזיק את הכתובת. המצביע ממשיך להצביע בדיוק לאותו מקום - רק שהמקום הזה כבר לא שייך לנו.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">malloc</span><span class="p">(</span><span class="mh">0x20</span><span class="p">);</span>
@@ -2870,7 +2869,6 @@
 </code></pre></div>
 <p><img alt="תרשים המראה שלושה שלבים של מחזור נתח משוחרר: הבלוק בשימוש עם מצביע שלנו, אחרי free הבתים הראשונים הופכים למצביע fd והמצביע שלנו נשאר תלוי, ואז הקצאה חדשה באותו גודל מחזירה את אותו בלוק עם תוכן שהתוקף שולט בו" src="../../../../images/illustrations/vuln-7-2-uaf-reuse-steps.svg" /></p>
 <p>שימו לב לפרט קטן וקריטי בשלב 2: כשהמקצה משחרר בלוק ומכניס אותו ל-bin, הוא כותב את מצביע ה-<code>fd</code> (המצביע לבלוק הבא ב-bin) לתוך שמונת הבתים הראשונים של אזור המשתמש. אלה בדיוק הבתים שבהם יושב ה-vptr של אובייקט C++. כלומר, עצם השחרור כבר משחית לנו את ה-vptr הישן. זו הסיבה שאסור פשוט לקרוא לאובייקט אחרי free בלי למחזר אותו קודם - נצלול לזה בהמשך.</p>
-<hr />
 <h2 id="-tcache-bins">מנגנון המיחזור - tcache ו-bins<a class="headerlink" href="#-tcache-bins" title="Permanent link">&para;</a></h2>
 <p>כדי לexploit UAF צריך לשלוט בשאלה: כשאני קורא ל-<code>malloc</code>, איזה בלוק אני מקבל? התשובה נקבעת על ידי ה-bins של glibc, ובמיוחד ה-tcache.</p>
 <p>מאז glibc 2.26 יש לכל thread מטמון פרטי בשם tcache. לכל מחלקת גודל (0x20, 0x30, 0x40, ...) יש רשימה מקושרת משלה, והיא מתנהגת כמו מחסנית - LIFO. כלומר, הבלוק ששוחרר אחרון הוא הראשון שיוקצה מחדש.</p>
@@ -2888,7 +2886,6 @@
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>/lib/x86_64-linux-gnu/libc.so.6<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-1
 </code></pre></div>
 <p>הכלל שצריך לזכור: <strong>בלוק פנוי חוזר להקצאה הבאה מאותה מחלקת גודל, לפי LIFO.</strong> מי ששולט בגודל ההקצאה ובתוכן שלה, שולט בבלוק המשוחרר.</p>
-<hr />
 <h2 id="uaf-">שלושת הפנים של UAF - קריאה, כתיבה, וקריאה-לביצוע<a class="headerlink" href="#uaf-" title="Permanent link">&para;</a></h2>
 <p>לא כל UAF שווה. חשוב להבין מה בדיוק אנחנו יכולים לעשות עם המצביע התלוי:</p>
 <ul>
@@ -2897,7 +2894,6 @@
 <li><strong>קריאה-לביצוע</strong> - זה הזהב. אם הבלוק המשוחרר מכיל מצביע פונקציה, והתוכנית קוראת דרכו לפונקציה אחרי שמילאנו אותו, אנחנו שולטים על ה-RIP ישירות. ב-C++ זה בדיוק מה שקורה עם ה-vtable של אובייקט.</li>
 </ul>
 <p>בשיעור הזה נתמקד בפן השלישי, כי הוא הכי חד וכי הוא בדיוק מה שאתגר <code>uaf</code> בונה. כדי להבין אותו צריך לדעת איך אובייקט C++ עם פונקציות וירטואליות בנוי בזיכרון.</p>
-<hr />
 <h2 id="c-vtable">אובייקט C++ וטבלת הפונקציות הווירטואלית - vtable<a class="headerlink" href="#c-vtable" title="Permanent link">&para;</a></h2>
 <p>כשמחלקה ב-C++ מכריזה על פונקציה <code>virtual</code>, המהדר לא יכול לדעת בזמן קומפילציה איזו גרסה של הפונקציה תיקרא (של מחלקת הבסיס או של היורשת). לכן הוא בונה <strong>טבלת פונקציות וירטואליות</strong> - vtable: מערך של מצביעי פונקציה, אחד לכל מתודה וירטואלית, לפי סדר ההכרזה. כל אובייקט של מחלקה כזו מתחיל במצביע לטבלה הזו - ה-vptr.</p>
 <p>נסתכל על מבנה שמדמה את <code>uaf</code>:</p>
@@ -2931,7 +2927,6 @@
 </code></pre></div>
 <p><img alt="תרשים של קריאה וירטואלית ב-C++: מהאובייקט אל ה-vptr שלו, ומה-vptr אל טבלת ה-vtable שבה כל slot מחזיק מצביע לפונקציה אחרת" src="../../../../images/illustrations/vuln-7-2-vtable-dispatch.svg" /></p>
 <p>עצרו רגע והסתכלו על שתי השורות הראשונות. הקריאה הווירטואלית עושה שתי הפניות עקיפות: קודם קוראת את ה-vptr מהאובייקט, ואז קוראת את מצביע הפונקציה מ-<code>vptr+8</code>. אם אנחנו שולטים על ה-vptr - שהוא הבית הראשון של האובייקט - אנחנו שולטים לחלוטין על מה ש-<code>call rax</code> יקפוץ אליו. וזה בדיוק מה ש-UAF נותן לנו: את היכולת לכתוב לבית הראשון של אובייקט משוחרר.</p>
-<hr />
 <h2 id="-vptr-uaf-">חטיפת ה-vptr דרך UAF - הרעיון המרכזי<a class="headerlink" href="#-vptr-uaf-" title="Permanent link">&para;</a></h2>
 <p>עכשיו נחבר את הכל. הזרימה של ההתקפה:</p>
 <ol>
@@ -2947,7 +2942,6 @@
 </code></pre></div>
 <p>כלומר, הזזנו את ה"טבלה" שמונה בתים אחורה, כך שמה ש-introduce חושב שהוא slot 1 הוא בעצם slot 0 = give_shell. אלגנטי, ולא דורש שום כתובת heap - רק את הכתובת הקבועה של ה-vtable בבינארי.</p>
 <p>זה עובד רק כי הבינארי הוא <strong>No PIE</strong>. בלי PIE, ה-vtable ו-<code>give_shell</code> יושבים בכתובות קבועות בכל הרצה, אז אפשר לכתוב אותן קשיח. אם היה PIE, היינו צריכים קודם לדלוף כתובת קוד (למשל דרך פן ה"קריאה לאחר שחרור" של אותה חולשה) ואז לחשב את הבסיס.</p>
-<hr />
 <h2 id="-local-demo">דמו מקומי מלא - Local Demo<a class="headerlink" href="#-local-demo" title="Permanent link">&para;</a></h2>
 <p>בואו נבנה גרסה מוקטנת שאפשר להדר ולתקוף אצלכם, כדי לראות את המנגנון חי. נשתמש ב-<code>char name[16]</code> במקום <code>std::string</code> כדי שהגודל יהיה יציב בין מהדרים.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1">// vuln.cpp</span>
@@ -3026,7 +3020,6 @@
 <a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a><span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
 </code></pre></div>
 <p>מריצים ומקבלים shell. שימו לב לדפוס: free, ואז alloc שממלא, ואז use. זה בדיוק אותו ריקוד שנעשה על האתגר האמיתי.</p>
-<hr />
 <h2 id="-pwnablekr-uaf">המקרה הקלאסי - pwnable.kr uaf<a class="headerlink" href="#-pwnablekr-uaf" title="Permanent link">&para;</a></h2>
 <p>עכשיו לאתגר עצמו. <code>uaf</code> בקטגוריית Rookiss הוא תוכנית C++ עם מחלקות <code>Human</code>, <code>Man</code> ו-<code>Woman</code>. הפונקציה <code>main</code> מקצה שני אובייקטים ואז נכנסת ללולאת תפריט:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">Human</span><span class="o">*</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Man</span><span class="p">(</span><span class="s">&quot;Jack&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">25</span><span class="p">);</span>
@@ -3051,7 +3044,6 @@
 </ul>
 <p>למה צריך להקצות <strong>פעמיים</strong> ולא פעם אחת? כי כמו שראינו, עצם ה-<code>free</code> דורס את ה-vptr של כל אובייקט עם מצביע ה-fd של ה-bin. אחרי <code>delete m; delete w;</code>, גם ה-vptr של m וגם של w מושחתים. אם נקרא ל-use מיד, <code>m-&gt;introduce()</code> יקרוס על vptr זבל. לכן נקצה פעמיים: הקצאה ראשונה ממחזרת את w וכותבת לו vptr טוב, הקצאה שנייה ממחזרת את m וכותבת לו vptr טוב. רק אז use בטוח.</p>
 <p>ואיזה ערך כותבים? בדיוק הטריק מקודם. מוצאים ב-gdb את slot0 של הטבלה (שם יושב <code>give_shell</code>), וכותבים אותו פחות 8. בבינארי הזה <code>give_shell</code> יושבת ב-<code>0x400ec4</code>, ה-vptr האמיתי של האובייקט הוא <code>0x401570</code>, ולכן הערך שנכתוב הוא <code>0x401568</code>. את כל הצעדים המדויקים - איך מוצאים את זה ב-gdb, איך בונים את הקובץ, ובאיזה סדר לוחצים על התפריט - נעשה יחד בפתרון.</p>
-<hr />
 <h2 id="-mitigations">הגנות והשלכות - Mitigations<a class="headerlink" href="#-mitigations" title="Permanent link">&para;</a></h2>
 <p>חשוב להבין מה עוצר UAF ומה לא:</p>
 <ul>
@@ -3061,7 +3053,6 @@
 <li><strong>NX</strong> - פעיל, ולא מפריע: אנחנו לא מריצים shellcode, אלא קופצים לקוד קיים (<code>give_shell</code>).</li>
 </ul>
 <p>ומה כן היה עוזר? מקצים מוקשחים (hardened allocators) שמאפסים או "מרעילים" זיכרון משוחרר, זיהוי בזמן ריצה עם <code>AddressSanitizer</code> (מסמן כל גישה לזיכרון משוחרר), תיוג זיכרון בחומרה כמו MTE של ARM, וברמת הקוד - שימוש ב-smart pointers ואיפוס מצביעים אחרי שחרור (<code>p = nullptr</code>). כל אלה תוקפים את שורש הבעיה: מצביע ששורד את הזיכרון שאליו הוא הצביע.</p>
-<hr />
 <h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>מצביע תלוי - dangling pointer</strong> נוצר כש-<code>free</code>/<code>delete</code> משחרר בלוק אבל המצביע ממשיך להצביע אליו. שימוש בו הוא UAF.</li>
@@ -3091,7 +3082,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:14:39 UTC">2026-07-20 09:14:39</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

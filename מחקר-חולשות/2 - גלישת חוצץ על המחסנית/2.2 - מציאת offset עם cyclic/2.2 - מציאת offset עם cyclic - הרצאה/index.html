@@ -2729,7 +2729,6 @@
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    NX:       NX enabled
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    PIE:      No PIE (0x400000)
 </code></pre></div>
-<hr />
 <h2 id="-offset">הבעיה - למה offset מדויק זה הכל<a class="headerlink" href="#-offset" title="Permanent link">&para;</a></h2>
 <p>נזכיר את מבנה ה-frame של <code>vuln</code> על מכונת 64 ביט:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>high addresses
@@ -2744,11 +2743,9 @@
 </code></pre></div>
 <p>כדי לדרוס את הreturn address בערך שאנחנו בוחרים, צריך קודם למלא בדיוק את כל מה שמתחתיה: את 64 הבתים של <code>buf</code> ואת 8 הבתים של <code>saved rbp</code>. סכום ביניים: 72 בתים. הבית ה-73 ואילך כבר נופל על הreturn address עצמה. המספר הזה, 72, הוא ה-offset, וכל המשחק שלנו תלוי בו.</p>
 <p>הבעיה: את המספר 72 אנחנו עדיין לא יודעים. <code>buf</code> יכול להיות בגודל אחר, הקומפיילר יכול להוסיף padding לalignment, ולפעמים יש עוד משתנים מקומיים שדוחפים את הbuffer למטה. אנחנו צריכים דרך אמינה למדוד את ה-offset הזה במקום לנחש אותו.</p>
-<hr />
 <h2 id="_1">הגישה התמימה ולמה היא כואבת<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>הרעיון הראשון שעולה: נשלח מחרוזת ארוכה של <code>A</code>-ים, נראה שהתוכנית קורסת, ואז נשחק עם האורך עד שנבין. למשל, נשלח 200 בתים, נראה ש-RIP מכיל <code>0x4141414141414141</code>, ונדע שדרסנו את הreturn address. יופי, אבל <strong>כמה</strong> בתים בדיוק היו מיותרים? כל ה-<code>A</code>-ים נראים אותו דבר, אז אי אפשר לדעת איזה <code>A</code> נחת על הreturn address.</p>
 <p>הדרך הידנית היא חיפוש בינארי: נשלח 100 בתים, ואם קרס נחתוך ל-84, נבדוק, נעלה ל-92, וכן הלאה. זה עובד, אבל זה איטי, מייגע, ומזמין טעויות. ברגע שהbuffer גדול או שיש כמה שדות שרוצים לדרוס בנפרד, זה הופך לסיוט. חייבים משהו חכם יותר.</p>
-<hr />
 <h2 id="-de-bruijn-sequences">רצפי דה-ברוין - De Bruijn sequences<a class="headerlink" href="#-de-bruijn-sequences" title="Permanent link">&para;</a></h2>
 <p>הנה הטריק היפה. במקום לשלוח בתים זהים, נשלח רצף שבו <strong>כל תת-מחרוזת באורך קבוע מופיעה בדיוק פעם אחת</strong>. רצף כזה נקרא רצף דה-ברוין. בזכות התכונה הזו, כל "חלון" של ארבעה בתים ברצף הוא ייחודי וחד-משמעי, ומזהה בדיוק את המיקום שלו לאורך הרצף.</p>
 <p>עכשיו נחשוב מה זה נותן לנו. נמלא את הbuffer ברצף דה-ברוין. כשהתוכנית קורסת, ארבעת הבתים שנחתו על הreturn address (או ליתר דיוק, על ה-RIP) הם חלון ייחודי אחד. אנחנו קוראים את הערך הזה מתוך הקריסה, מחפשים איפה החלון הזה יושב ברצף המקורי, וזהו: המיקום שלו הוא בדיוק ה-offset. <strong>קריסה אחת, תשובה מדויקת, בלי חיפוש בינארי.</strong></p>
@@ -2757,7 +2754,6 @@
 </code></pre></div>
 <p>שימו לב לתבנית <code>aaaa</code>, אחר כך <code>baaa</code>, <code>caaa</code>, <code>daaa</code>. כל רביעייה שונה. אם ניקח כל ארבעה בתים רצופים במקום כלשהו ברצף, הם יופיעו רק שם ובשום מקום אחר. מספר החלונות האפשריים עם אלפבית של 26 אותיות וחלון של 4 הוא 26 בחזקת 4, כלומר 456976 בתים ייחודיים. יותר ממספיק לכל overflow סבירה.</p>
 <p>למה חלון של 4 ולא 8? כי במערכת 32 ביט כתובת היא 4 בתים, וזה בדיוק גודל החלון הטבעי. במערכת 64 ביט כתובת היא 8 בתים, אבל גם שם 4 בתים תחתונים מספיקים לזהות את המיקום באופן חד-משמעי, כפי שנראה מיד. אם רוצים ייחודיות מלאה על פני 8 בתים, אפשר לבקש חלון של 8 במפורש.</p>
-<hr />
 <h2 id="cyclic-pwntools">הכלי cyclic של pwntools<a class="headerlink" href="#cyclic-pwntools" title="Permanent link">&para;</a></h2>
 <p>הספרייה pwntools עושה את כל העבודה בשתי פונקציות. <code>cyclic(n)</code> מייצרת רצף דה-ברוין באורך <code>n</code>, ו-<code>cyclic_find(x)</code> מקבלת חלון ומחזירה את המיקום שלו ברצף.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pwn</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
@@ -2780,7 +2776,6 @@
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">offset</span> <span class="o">=</span> <span class="n">cyclic_find</span><span class="p">(</span><span class="n">rip_full_8_bytes</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
 </code></pre></div>
 <p>עצה מעשית: אם משתמשים בברירת המחדל (חלון 4), פשוט קחו את <code>rip &amp; 0xffffffff</code> ותנו ל-<code>cyclic_find</code>. אם עברתם ל-<code>n=8</code>, זכרו להעביר את אותו <code>n</code> גם ל-<code>cyclic_find</code>, אחרת החיפוש ייכשל.</p>
-<hr />
 <h2 id="-offset-gdb-pwndbg">מציאת ה-offset עם gdb ו-pwndbg<a class="headerlink" href="#-offset-gdb-pwndbg" title="Permanent link">&para;</a></h2>
 <p>הדרך הראשונה והמהירה: מריצים את הבינארי תחת gdb (עם pwndbg מותקן), מזינים את הרצף, וקוראים את ה-offset ישירות מהקריסה.</p>
 <p>נכין קובץ קלט עם הרצף:</p>
@@ -2811,7 +2806,6 @@
 </code></pre></div>
 <p><img alt="איור המראה שהbuffer מלא ברצף דה-ברוין שבו כל חלון של 4 בתים ייחודי, ולכן החלון saaa שנחת על RIP בזמן הקריסה מזוהה על ידי cyclic_find כ-offset של 72 בתים" src="../../../../images/illustrations/vuln-2-2-cyclic-offset.svg" /></p>
 <p>הערה חשובה על 64 ביט: הערך שנדרס על הreturn address הוא כתובת לא חוקית (non-canonical), ולכן ה-<code>ret</code> נכשל כבר בניסיון לקפוץ אליה. ברוב הבניינים pwndbg יציג את הערך הזה ב-RIP, ואפשר לקרוא אותו משם. אם מסיבה כלשהי RIP לא מכיל את התבנית, אפשר להסתכל על <code>$rsp</code> (שמצביע לבתים שבאו מיד אחרי הreturn address) או פשוט לעבור לשיטת ה-core dump שנראה עכשיו.</p>
-<hr />
 <h2 id="core-dumps">הפעלת core dumps<a class="headerlink" href="#core-dumps" title="Permanent link">&para;</a></h2>
 <p>מה עושים כשאין gdb מחובר? למשל כשמריצים exploit מול process רגיל, או כשהקריסה קרתה בסביבה מרוחקת. כאן נכנס ה-core dump: קובץ תמונת מצב שהמערכת מייצרת ברגע הקריסה, ובו כל האוגרים והזיכרון של התהליך. אם נצליח לגרום למערכת לשמור אותו, נחלץ ממנו את ה-offset אחרי מעשה.</p>
 <p>שני דברים צריכים להיות במקום. ראשית, מגבלת גודל ה-core צריכה להיות פתוחה:</p>
@@ -2833,7 +2827,6 @@
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>ls<span class="w"> </span>-l<span class="w"> </span>core*
 </code></pre></div>
 <p>הכיתוב <code>(core dumped)</code> הוא הסימן שהצלחנו. אם רואים רק <code>Segmentation fault</code> בלי הכיתוב הזה, כנראה ש-<code>ulimit -c</code> עדיין 0 או שה-<code>core_pattern</code> שולח למקום אחר.</p>
-<hr />
 <h2 id="-offset-coredump">חילוץ ה-offset מ-coredump<a class="headerlink" href="#-offset-coredump" title="Permanent link">&para;</a></h2>
 <p>עכשיו יש לנו קובץ core, וצריך לשלוף ממנו את הערך שנחת על RIP. שתי דרכים.</p>
 <p>הדרך הראשונה עם gdb: פותחים את הבינארי יחד עם ה-core, וקוראים את האוגרים ישירות. ה-core כבר מכיל את הערכים ברגע הקריסה, אין צורך להריץ שוב.</p>
@@ -2870,7 +2863,6 @@
 <a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;offset = </span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>   <span class="c1"># 72</span>
 </code></pre></div>
 <p>התכונה <code>core.fault_addr</code> נותנת את הכתובת שגרמה לתקלה, שבמקרה של קפיצה לכתובת שדרסנו היא בדיוק הערך שנחת על RIP. אפשר להשתמש גם בה, אבל <code>core.rip</code> הוא הבחירה הישירה והברורה כאן.</p>
-<hr />
 <h2 id="-offset-return-address-32-64">ה-offset לאוגר שמור לעומת return address, ו-32 מול 64 ביט<a class="headerlink" href="#-offset-return-address-32-64" title="Permanent link">&para;</a></h2>
 <p>נקודה שמבלבלת מתחילים: לא כל offset שווה. תלוי <strong>מה</strong> דרסנו כשקראנו את הערך.</p>
 <p>אם הoverflow שלנו קצרה בדיוק ב-8 בתים, נדרוס את <code>saved rbp</code> אבל <strong>לא</strong> את הreturn address. במקרה כזה, אחרי שהפונקציה משחזרת את rbp ומבצעת <code>ret</code>, ה-<code>ret</code> יקפוץ לכתובת התקינה, והקריסה (אם תהיה) תיראה אחרת לגמרי. אם נסתכל על האוגר rbp אחרי הקריסה נראה שם את התבנית, וה-offset שנקבל ממנו קטן ב-8 מה-offset לreturn address. הנה למה זה חשוב: כשקוראים ערך מהקריסה, תמיד לוודא מאיזה אוגר לקחנו אותו.</p>
@@ -2886,7 +2878,6 @@
 <p>וזה מוביל להבדל בין 32 ל-64 ביט:</p>
 <p>במערכת 64 ביט כתובת היא 8 בתים, <code>saved rbp</code> הוא 8 בתים, והreturn address נמצאת ב-<code>rbp+8</code>. אנחנו קוראים את הערך מ-<code>rip</code> שבתוך ה-core, לוקחים 32 ביט תחתונים, ומזינים ל-<code>cyclic_find</code>. הכתובות שנכתוב בהמשך יהיו עם <code>p64</code>.</p>
 <p>במערכת 32 ביט כתובת היא 4 בתים, <code>saved ebp</code> הוא 4 בתים, והreturn address ב-<code>ebp+4</code>. כאן החיים אפילו יותר פשוטים: החלון של 4 בתים מתלבש בדיוק על <code>eip</code>, אז קוראים את <code>eip</code> כמו שהוא ומזינים ישירות ל-<code>cyclic_find</code>. הכתובות בהמשך יהיו עם <code>p32</code>. שימו לב שבינארי 32 ביט מעביר ארגומנטים על המחסנית (cdecl), ולכן לפעמים ה-offset שנחפש הוא לא עד הreturn address אלא עד <strong>ארגומנט</strong> של פונקציה, כמו באתגר bof מ-pwnable.kr. גם שם אותה שיטה בדיוק עובדת: ממלאים ברצף, קוראים איזה חלון נחת על השדה שרוצים לשלוט בו, ומחשבים offset.</p>
-<hr />
 <h2 id="-frame-">חישוב ידני מה-frame - כגיבוי ולהבנה<a class="headerlink" href="#-frame-" title="Permanent link">&para;</a></h2>
 <p>לפעמים כדאי לאמת את ה-offset גם בלי הרצה בכלל, ישירות מהדיסאסמבלי. זה בונה אינטואיציה וגם מציל אתכם כשאין סביבת הרצה נוחה. נפרק את <code>vuln</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>objdump<span class="w"> </span>-d<span class="w"> </span>./vuln<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-A15<span class="w"> </span><span class="s1">&#39;&lt;vuln&gt;:&#39;</span>
@@ -2901,7 +2892,6 @@
 <a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="nf">call</span><span class="w">   </span><span class="no">read</span>
 </code></pre></div>
 <p>מכאן קוראים את הכל. ההוראה <code>lea rax,[rbp-0x40]</code> מגלה ש-<code>buf</code> יושב ב-<code>rbp-0x40</code>, כלומר 64 בתים מתחת ל-rbp השמור. saved rbp נמצא בדיוק ב-<code>rbp</code>, והreturn address ב-<code>rbp+8</code>. לכן המרחק מתחילת <code>buf</code> עד הreturn address הוא <code>0x40 + 8 = 0x48 = 72</code>. בדיוק מה ש-<code>cyclic</code> נתן לנו. שימו לב שהערך של <code>sub rsp, ...</code> יכול להיות גדול מ-0x40 בגלל alignment המחסנית, אבל זה לא משנה את החישוב, כי אנחנו מודדים יחסית ל-rbp דרך ה-<code>lea</code>.</p>
-<hr />
 <h2 id="exploit">שלד exploit מלא<a class="headerlink" href="#exploit" title="Permanent link">&para;</a></h2>
 <p>נחבר את הכל לתבנית עבודה שתשרת אתכם בכל אתגר overflow. שלב א', מוצאים את ה-offset (פעם אחת). שלב ב', בונים את ה-payload עם ה-offset שמצאנו.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="ch">#!/usr/bin/env python3</span>
@@ -2931,7 +2921,6 @@
 <a id="__codelineno-24-25" name="__codelineno-24-25" href="#__codelineno-24-25"></a><span class="n">io</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
 </code></pre></div>
 <p>שימו לב לרעיון: אותו <code>cyclic(offset)</code> שמשמש למילוי הוא בדיוק באורך שמצאנו, אז הבית הבא נופל על הreturn address בדיוק. בשיעור הבא נמלא את <code>target</code> בכתובת אמיתית ונבצע ret2win. כרגע המטרה הייתה למצוא את ה-offset בצורה אמינה, וזה בדיוק מה שיש לנו עכשיו.</p>
-<hr />
 <h2 id="_2">סיכום<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <ul>
 <li>ה-offset הוא מספר הבתים מתחילת הקלט עד השדה שרוצים לדרוס (בדרך כלל הreturn address). בלעדיו אין exploit.</li>
@@ -2965,7 +2954,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:14:39 UTC">2026-07-20 09:14:39</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

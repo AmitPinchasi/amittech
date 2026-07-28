@@ -3350,7 +3350,6 @@
 <h2 id="_1">הקדמה<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>בהרצאה הקודמת למדנו על מתארי קבצים (fd-ים) וראינו שבלינוקס "הכל הוא קובץ". למדנו גם על <code>dup2</code> שמאפשר לredirect את stdout לקובץ. עכשיו נלמד על אחד הכלים החשובים ביותר בלינוקס - <strong>צינורות (pipes)</strong>.</p>
 <p>הpipes מאפשרים לשני processes לתקשר ביניהם. process אחד כותב נתונים לpipe, וprocess אחר קורא אותם מהצד השני. זה בדיוק מה שקורה כשאנחנו כותבים בshell פקודה כמו <code>ls | grep .c</code> - הפלט של ls עובר דרך pipe לתוך grep.</p>
-<hr />
 <h2 id="-pipe">מה זה צינור - pipe<a class="headerlink" href="#-pipe" title="Permanent link">&para;</a></h2>
 <p>הpipe הוא <strong>ערוץ נתונים חד-כיווני</strong> בין שני מתארי קבצים. אפשר לחשוב על pipe כמו תור (queue) בקרנל - כותבים מצד אחד, וקוראים מהצד השני.</p>
 <p>הsyscall <code>pipe</code> יוצר pipe:</p>
@@ -3365,7 +3364,6 @@
 <p>כל מה שנכתוב ל-<code>pipefd[1]</code> עם <code>write</code> - נוכל לקרוא מ-<code>pipefd[0]</code> עם <code>read</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>write: write(pipefd[1], data, len)  ---&gt;  [  kernel buffer  ]  ---&gt;  read(pipefd[0], buf, len) :read
 </code></pre></div>
-<hr />
 <h2 id="pipes-fork">שימוש בpipes עם fork<a class="headerlink" href="#pipes-fork" title="Permanent link">&para;</a></h2>
 <p>הpipe בתוך process בודד לא כל כך שימושי (למה שprocess יכתוב לעצמו?). הכוח האמיתי של pipes הוא בשילוב עם <code>fork</code>.</p>
 <p>נזכיר: כשקוראים ל-<code>fork</code>, process הבן יורש את כל הfd-ים של האב (למדנו את זה בהרצאה 5.5). ולכן, אם ניצור pipe <strong>לפני</strong> הfork, שני הprocesses יחלקו את אותם fd-ים של הpipe:</p>
@@ -3377,14 +3375,12 @@
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  child process: pipefd[0] (read), pipefd[1] (write)
 </code></pre></div>
 <p>עכשיו, אם האב כותב ל-<code>pipefd[1]</code> והבן קורא מ-<code>pipefd[0]</code>, יש לנו תקשורת חד-כיוונית מאב לבן.</p>
-<hr />
 <h2 id="_2">חשוב: סגירת הצדדים שלא בשימוש<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>כלל חשוב: כל process חייב <strong>לסגור את הצד של הpipe שהוא לא משתמש בו</strong>.</p>
 <p>למשל, אם האב כותב והבן קורא:<br />
 - האב צריך לסגור את <code>pipefd[0]</code> (הוא לא קורא)<br />
 - הבן צריך לסגור את <code>pipefd[1]</code> (הוא לא כותב)</p>
 <p>למה זה כל כך חשוב? בגלל <strong>זיהוי סוף הקובץ (EOF)</strong>. הsyscall <code>read</code> על pipe מחזיר 0 (EOF) <strong>רק כאשר כל הצדדים של הכתיבה נסגרו</strong>. אם הבן שוכח לסגור את <code>pipefd[1]</code>, אז <code>read</code> לעולם לא יחזיר 0, כי עדיין יש fd פתוח לכתיבה - גם אם אף אחד לא כותב דרכו. הבן ייתקע בloop אינסופי ויחכה לנתונים שלעולם לא יגיעו.</p>
-<hr />
 <h2 id="_3">דוגמה: אב שולח הודעה לבן<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;unistd.h&gt;</span>
@@ -3428,7 +3424,6 @@
 3. כל process סוגר את הצד שהוא לא צריך<br />
 4. האב כותב, הבן קורא<br />
 5. האב סוגר את צד הכתיבה - הבן יקבל EOF ויצא מread</p>
-<hr />
 <h2 id="shell">איך הshell מממש את האופרטור |<a class="headerlink" href="#shell" title="Permanent link">&para;</a></h2>
 <p>עכשיו נגיע לחלק הכי מעניין - איך הshell מממש את הפקודה <code>ls | grep .c</code>?</p>
 <p>הנה מה שהshell עושה מאחורי הקלעים:</p>
@@ -3495,7 +3490,6 @@
 </code></pre></div>
 <p>הקוד הזה מבצע בדיוק את מה ש-<code>ls | grep .c</code> עושה בshell. הרעיון העיקרי: הפלט של ls (שנכתב ל-stdout) הולך דרך הpipe ונכנס ל-stdin של grep.</p>
 <p><img alt="איור מימוש האופרטור צינור בshell: התהליך ls מפנה את המתאר 1 לצד הכתיבה וכותב את שמות הקבצים, הנתונים עוברים דרך הבאפר בקרנל, והתהליך grep קורא אותם מצד הקריאה ומדפיס רק את השורות המתאימות" src="../../../../images/illustrations/core-5-6-shell-pipe-operator.svg" /></p>
-<hr />
 <h2 id="pipes-fifo">הpipes עם שם - FIFO<a class="headerlink" href="#pipes-fifo" title="Permanent link">&para;</a></h2>
 <p>הpipes שראינו עד עכשיו הם <strong>pipes אנונימיים</strong> - הם קיימים רק בזיכרון ומשמשים processes שנוצרו מאותו fork. אבל מה אם שני processes שלא קשורים אחד לשני (שלא נוצרו מfork משותף) רוצים לתקשר?</p>
 <p>בשביל זה יש <strong>pipes עם שם</strong>, שנקראים גם <strong>FIFO</strong> (ראשי תיבות של First In First Out). הpipe עם שם הוא קובץ מיוחד שנוצר במערכת הקבצים. כל process יכול לפתוח אותו - אחד לכתיבה ואחד לקריאה.</p>
@@ -3544,7 +3538,6 @@
 <a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="p">}</span>
 </code></pre></div>
 <p>כדי שזה יעבוד, צריך להריץ את שתי התוכנות במקביל - כל אחת בטרמינל אחר.</p>
-<hr />
 <h2 id="processes-ipc">מנגנוני תקשורת נוספים בין processes - IPC<a class="headerlink" href="#processes-ipc" title="Permanent link">&para;</a></h2>
 <p>הpipes הם המנגנון הכי נפוץ ופשוט לתקשורת בין processes (IPC - Inter-Process Communication), אבל הם לא היחידים. הנה סקירה קצרה של מנגנונים נוספים שלינוקס מציעה:</p>
 <p><strong>זיכרון משותף - shared memory</strong> (<code>shmget</code>, <code>shmat</code>):<br />
@@ -3553,7 +3546,6 @@
 מאפשרים שליחה וקבלה של הודעות מובנות בין processes. כל הודעה היא יחידה שלמה עם סוג ותוכן.</p>
 <p><strong>סוקטים - Unix domain sockets</strong>:<br />
 מאפשרים תקשורת דו-כיוונית (bidirectional) בין processes על אותו מחשב. הם עובדים כמו סוקטים של רשת, אבל בלי לעבור דרך ה-network stack. נלמד על סוקטים של רשת בהמשך הקורס.</p>
-<hr />
 <h2 id="_4">מתי להשתמש במה?<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -3587,7 +3579,6 @@
 </tbody>
 </table>
 <p>לרוב, צינורות (pipes) מספיקים. הם פשוטים, אמינים, ומספקים תקשורת חד-כיוונית יעילה בין processes.</p>
-<hr />
 <h2 id="_5">סיכום<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <p>בהרצאה הזו למדנו:<br />
 - צינור (pipe) הוא ערוץ נתונים חד-כיווני בין שני fd-ים<br />
@@ -3617,7 +3608,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 08:33:06 UTC">2026-07-20 08:33:06</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

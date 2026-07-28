@@ -2651,7 +2651,6 @@
 
 <p>בפרקים הקודמים ראינו איך תוכנה נשברת בגלל באגים לוגיים, בלי לגעת בזיכרון בכלל. עכשיו אנחנו נכנסים ללב של הקורס: החולשה שבנתה את כל התחום, buffer overflow על המחסנית. בשיעור הזה נפרק לרסיסים מה בדיוק קורה בזיכרון כשכותבים מעבר לגבול של buffer מקומי, איך הבתים הנוספים דורסים קודם את ה-rbp השמור ואחר כך את הreturn address, ולמה דריסה של הreturn address שקולה לשליטה מלאה בזרימת הביצוע של התוכנית. את התיאוריה נמסמר על שני יעדים אמיתיים: האתגר bof מ-pwnable.kr, ודמו מקומי שבו נשתלט על RIP ונקפוץ לפונקציה שאנחנו בוחרים.</p>
 <p>מי שעבר את קורס ליבת-המחשב כבר מכיר את כל אבני הבניין: מחסנית, אוגרים, מוסכמת קריאה, ELF ו-GDB. כאן אנחנו לא לומדים אותם מחדש, אלא מלמדים אותם לעבוד בשבילנו.</p>
-<hr />
 <h2 id="-stack-frame">תזכורת - מבנה של מסגרת מחסנית - stack frame<a class="headerlink" href="#-stack-frame" title="Permanent link">&para;</a></h2>
 <p>כשפונקציה נקראת, המעבד והקומפיילר בונים לה מסגרת (frame) על המחסנית. חשוב להפנים שני דברים לפני הכל:</p>
 <ul>
@@ -2676,7 +2675,6 @@
 </code></pre></div>
 <p>הפרט הכי חשוב בתמונה: <strong>הreturn address יושבת מעל הbuffer</strong>, בכתובת גבוהה יותר. כשנכתוב לתוך <code>buf</code> ונמשיך לכתוב מעבר ל-64 הבתים שלו, נזחל כלפי מעלה ונדרוס קודם את ה-rbp השמור, ואז את הreturn address עצמה.</p>
 <p>ב-32 ביט התמונה כמעט זהה, רק שהאוגרים נקראים <code>ebp</code>/<code>esp</code>, הreturn address ב-<code>[ebp+4]</code>, וה-<strong>ארגומנטים לפונקציה מועברים על המחסנית</strong> (מוסכמת cdecl), מעל הreturn address. שימו לב לנקודה הזו, היא בדיוק מה שיאפשר לנו לפתור את bof.</p>
-<hr />
 <h2 id="overflow-">הoverflow - מה בדיוק נדרס<a class="headerlink" href="#overflow-" title="Permanent link">&para;</a></h2>
 <p>נסתכל על הקוד הvulnerable הקלאסי:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
@@ -2703,7 +2701,6 @@
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>+---------------------------+        +---------------------------+
 </code></pre></div>
 <p>הבתים 65 עד 72 דורסים את ה-rbp השמור, והבתים שאחריהם דורסים את הreturn address. עד עכשיו לא עשינו כלום מיוחד: פשוט שברנו נתונים. הקסם מתחיל ברגע שהפונקציה מסיימת.</p>
-<hr />
 <h2 id="-rip">שליטה במצביע ההוראות - RIP<a class="headerlink" href="#-rip" title="Permanent link">&para;</a></h2>
 <p>בסוף כל פונקציה יש הוראת <code>ret</code>. מה <code>ret</code> עושה בפועל? היא שקולה ל:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nf">pop</span><span class="w"> </span><span class="no">rip</span><span class="w">      </span><span class="c1">; pops 8 bytes from the top of the stack and loads them into rip</span>
@@ -2725,7 +2722,6 @@
 <li><strong>כתובת יעד חוקית</strong> לקפוץ אליה. אם נכתוב זבל, נקבל קריסה (SIGSEGV). אם נכתוב כתובת אמיתית, נקבל שליטה.</li>
 </ol>
 <p>לפני שנקפוץ לreturn address, נתחמם על מטרה קלה יותר: לדרוס משתנה מקומי בודד. זה בדיוק האתגר bof.</p>
-<hr />
 <h2 id="-bof-pwnablekr">המקרה הראשון - bof מ-pwnable.kr<a class="headerlink" href="#-bof-pwnablekr" title="Permanent link">&para;</a></h2>
 <p>האתגר bof הוא ההיכרות הראשונה של כמעט כל pwner עם buffer overflow. הנה קוד המקור שלו (הבינארי הוא 32 ביט):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
@@ -2780,7 +2776,6 @@
 </code></pre></div>
 <p>זהו. ברגע ש-<code>gets</code> מסיימת, <code>func</code> בודקת את <code>key</code>, מוצאת <code>0xcafebabe</code>, ומריצה <code>system("/bin/sh")</code>. השירות מאזין ב-<code>nc pwnable.kr 9000</code>, ואת חיבור ה-remote והפתרון המלא נראה בקובץ הפתרון של השיעור הזה. את השלב של מציאת ה-offset עשינו כאן ידנית מהדיסאסמבלי, ובשיעור 2.2 נעשה אותו אוטומטית.</p>
 <p><strong>הרעיון להפנים:</strong> הbuffer overflow לא חייבת לדרוס את הreturn address. לפעמים דריסה של משתנה מקומי בודד או של ארגומנט מספיקה כדי לשבור את הלוגיקה של התוכנית. bof הוא המקרה הכי נקי של זה.</p>
-<hr />
 <h2 id="return-address-rip">מהמשתנה המקומי לreturn address - שליטה ב-RIP<a class="headerlink" href="#return-address-rip" title="Permanent link">&para;</a></h2>
 <p>עכשיו נעלה מדרגה. במקום לדרוס משתנה, נדרוס את הreturn address ונקפוץ לפונקציה שאנחנו בוחרים. נעבוד על דמו מקומי, ב-64 ביט, שאפשר להדר ולהריץ על מכונת הלימוד:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1">// demo.c</span>
@@ -2872,7 +2867,6 @@
 <a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="n">payload</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="n">elf</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s1">&#39;win&#39;</span><span class="p">])</span>
 </code></pre></div>
 <p>אם ה-shell עובד גם בלי הגאדג'ט, מצוין, אל תוסיפו אותו. אם הוא קורס בתוך <code>system</code> על <code>movaps</code>, הוספת ה-<code>ret</code> תפתור את זה מיד. את הרעיון של קפיצה לפונקציה קיימת (ret2win) נרחיב לעומק בשיעור 2.3.</p>
-<hr />
 <h2 id="-checksec">מה עם ההגנות - checksec<a class="headerlink" href="#-checksec" title="Permanent link">&para;</a></h2>
 <p>חשוב להיות ישרים לגבי מתי מה שראינו כאן עובד. בדמו כיבינו את ההגנות בכוונה, אבל בשטח לא תמיד יהיה לכם את המותרות הזאת. הנה איך כל הגנה משפיעה על מה שעשינו:</p>
 <table>
@@ -2907,7 +2901,6 @@
 </tbody>
 </table>
 <p>הטבלה הזו היא מפת הדרכים של שאר הפרק ושל הקורס כולו. כל אחד מ-Canary, NX, PIE ו-ASLR מקבל שיעור משלו, ובכל שיעור נלמד את הטריק שמחזיר לנו את השליטה ב-RIP. אבל היסוד תמיד יישאר זהה למה שראינו כאן: למצוא offset, ולדרוס את הreturn address.</p>
-<hr />
 <h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <ul>
 <li>המחסנית גדלה כלפי כתובות נמוכות, אבל buffers נכתבים כלפי כתובות גבוהות, ולכן overflow זוחלת ישר לעבר ה-rbp השמור והreturn address.</li>
@@ -2938,7 +2931,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:14:39 UTC">2026-07-20 09:14:39</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

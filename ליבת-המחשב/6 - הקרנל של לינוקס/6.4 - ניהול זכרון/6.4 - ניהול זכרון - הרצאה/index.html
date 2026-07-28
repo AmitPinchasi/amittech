@@ -3746,7 +3746,6 @@
 <h2 id="_1">הקדמה<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>בפרק 2 למדנו על paging וזכרון וירטואלי ברמה הרעיונית - מה זה page table, איך כתובת וירטואלית מתורגמת לכתובת פיזית, ומדוע כל process חושב שהוא לבד בעולם. בפרק 5 השתמשנו ב-mmap כדי למפות זכרון ולעבוד עם קבצים ממופים, ולמדנו על fork וprocesses.</p>
 <p>עכשיו הגיע הזמן לצלול פנימה ולהבין איך הקרנל של לינוקס באמת מנהל זכרון. מה קורה כשprocess ניגש לזכרון שלא מופה? איך הקרנל מחליט איזה page פיזי להקצות? מה קורה כשנגמר הRAM?</p>
-<hr />
 <h2 id="_2">ניהול זכרון פיזי<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <h3 id="-page">הדף - page<a class="headerlink" href="#-page" title="Permanent link">&para;</a></h3>
 <p>היחידה הבסיסית ביותר בניהול זכרון של לינוקס היא הpage (page). בארכיטקטורת x86 גודל הpage הוא 4KB (4096 בתים). כל הזכרון הפיזי מחולק לpages, וכל הallocations, השחרורים, והמיפויים עובדים ביחידות של pages.</p>
@@ -3797,7 +3796,6 @@
 <li><strong>ZONE_HIGHMEM</strong> - קיים רק במערכות 32 ביט. בקרנל 32 ביט, הקרנל יכול לגשת ישירות רק ל-896MB הראשונים (כי הוא תופס 1GB מתוך 4GB של מרחב כתובות וירטואלי). זכרון מעל 896MB נמצא ב-ZONE_HIGHMEM וצריך מיפוי מיוחד כדי לגשת אליו. במערכות 64 ביט אין צורך בזה.</li>
 </ul>
 <p>כל zone מנהל buddy allocator משלו.</p>
-<hr />
 <h2 id="_3">ניהול זכרון וירטואלי<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <h3 id="mm_struct-process">mm_struct - מתאר הזכרון של process<a class="headerlink" href="#mm_struct-process" title="Permanent link">&para;</a></h3>
 <p>כל process בלינוקס מקבל מרחב כתובות וירטואלי משלו. המבנה שמנהל את הזכרון הוירטואלי של process הוא <code>struct mm_struct</code>. הוא נמצא בתוך ה-task_struct שלמדנו עליו ב-6.3 (מתזמן התהליכים).</p>
@@ -3856,7 +3854,6 @@
 <li>הוא מחזיר את כתובת ההתחלה של ה-VMA.</li>
 </ol>
 <p>שימו לב מה לא קורה: שום page פיזי לא מוקצה! טבלת הpages לא מתעדכנת. הpages הוירטואליים עדיין לא ממופים לpages פיזיים. זה allocation עצלנית (lazy allocation), ורק כשהprocess באמת ניגש לאחת הכתובות האלה - אז יקרה page fault והקרנל יקצה page פיזי.</p>
-<hr />
 <h2 id="-page-fault">שגיאת דף - page fault<a class="headerlink" href="#-page-fault" title="Permanent link">&para;</a></h2>
 <p>זה אחד המנגנונים המרכזיים ביותר בניהול זכרון. בואו נעקוב אחרי מה שקורה כשprocess ניגש לכתובת וירטואלית שלא ממופה לpage פיזי.</p>
 <h3 id="_4">הזרימה<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
@@ -3900,7 +3897,6 @@
 <p>מנגנון ה-page faults מאפשר את מה שנקרא demand paging - הpages מוקצים רק כשמישהו ניגש אליהם.</p>
 <p>נזכר בדוגמה מפרק 5.7: כשקוראים ל-mmap על קובץ, הקרנל לא טוען את כל הקובץ לRAM. הוא רק יוצר VMA. כשהprocess ניגש לבית מסוים בקובץ, קורה page fault, הקרנל קורא את הpage המתאים מהדיסק, ממפה אותו, והprocess ממשיך. אם הקובץ הוא 1GB אבל הprocess קורא רק את 10KB הראשונים - רק שלושה pages ייטענו לזכרון.</p>
 <p>זה גם מסביר למה הקרנל משתמש ב-mmap כדי לטעון קבצי ELF להרצה (כפי שלמדנו ב-5.7). קובץ הרצה יכול להיות גדול, אבל בהרצה רגילה רוב הקוד אף פעם לא רץ (קוד טיפול בשגיאות, פיצ'רים שלא בשימוש). עם demand paging, רק הpages שבאמת נדרשים נטענים.</p>
-<hr />
 <h2 id="-copy-on-write">העתקה-בכתיבה - Copy-on-Write<a class="headerlink" href="#-copy-on-write" title="Permanent link">&para;</a></h2>
 <p>זוכרים מפרק 5.2 את fork? כשprocess קורא ל-fork(), נוצר process בן שהוא עותק של האב. אבל להעתיק את כל הזכרון של process זה יקר מאוד. אם לprocess יש 500MB של זכרון, לא נרצה להעתיק חצי גיגה בכל fork.</p>
 <p>הפתרון הוא Copy-on-Write (בקיצור COW), וככה זה עובד:</p>
@@ -3926,7 +3922,6 @@
 </ol>
 <p><img alt="תרשים המראה כיצד כתיבה אחרי fork גורמת ל-page fault וכיצד הקרנל מקצה עותק פרטי של ה-page במנגנון העתקה בכתיבה" src="../../../../images/illustrations/core-6-4-cow-fault.svg" /></p>
 <p>היופי במנגנון הזה הוא שהעתקה מתבצעת רק על pages שבאמת משתנים. אם process עושה fork ואז מיד קורא ל-exec (מה שקורה בכל פעם שמריצים פקודה מה-shell), כמעט אף page לא מועתק - כי exec מחליף את כל הזכרון בתמונה חדשה.</p>
-<hr />
 <h2 id="-swapping">החלפה - swapping<a class="headerlink" href="#-swapping" title="Permanent link">&para;</a></h2>
 <p>מה קורה כשנגמר הRAM? הקרנל לא יכול פשוט לחדול מלהקצות זכרון - הprocesses ימותו. במקום זאת, הוא מעביר pages שלא בשימוש פעיל לדיסק, לאזור שנקרא swap space.</p>
 <h3 id="-swap">איך הקרנל מחליט מה להעביר ל-swap<a class="headerlink" href="#-swap" title="Permanent link">&para;</a></h3>
@@ -3945,7 +3940,6 @@
 <li><strong>הpages dirty של קבצים ממופים</strong> - הקרנל כותב אותם חזרה לקובץ ואז זורק אותם.</li>
 <li><strong>הpages אנונימיים</strong> (heap, stack) - אלה צריכים ללכת ל-swap space, כי אין להם קובץ על הדיסק.</li>
 </ul>
-<hr />
 <h2 id="oom-oom-killer">הרוצח OOM - OOM Killer<a class="headerlink" href="#oom-oom-killer" title="Permanent link">&para;</a></h2>
 <p>מה קורה כשגם הRAM מלא וגם ה-swap space מלא? המערכת במצב קריטי - אי אפשר להקצות זכרון לשום דבר.</p>
 <p>במצב כזה, הקרנל מפעיל את ה-OOM Killer (Out Of Memory Killer). זה מנגנון שבורר process ל"הריגה" כדי לשחרר את הזכרון שלו.</p>
@@ -3959,7 +3953,6 @@
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nb">echo</span><span class="w"> </span><span class="m">1000</span><span class="w"> </span>&gt;<span class="w"> </span>/proc/<span class="o">[</span>pid<span class="o">]</span>/oom_score_adj<span class="w">   </span><span class="c1"># high priority for killing</span>
 </code></pre></div>
 <p>ה-OOM Killer הוא מנגנון שנוי במחלוקת. מצד אחד, הוא מציל את המערכת מקריסה מוחלטת. מצד שני, הוא הורג process שלא ביקש להיהרג - וזה יכול להיות process חשוב. בשרתי production, מנהלי מערכת מגדירים oom_score_adj לprocesses קריטיים כדי להגן עליהם.</p>
-<hr />
 <h2 id="_6">סיכום<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <p>בפרק הזה ראינו איך הקרנל של לינוקס מנהל זכרון ברמה העמוקה:</p>
 <ul>
@@ -3991,7 +3984,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 08:33:06 UTC">2026-07-20 08:33:06</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

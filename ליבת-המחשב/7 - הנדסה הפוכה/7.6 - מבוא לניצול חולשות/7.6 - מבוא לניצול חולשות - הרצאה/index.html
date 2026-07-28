@@ -3613,7 +3613,6 @@
 
 <p>הנדסה הפוכה לא עוסקת רק בהבנת קוד - היא גם הבסיס לגילוי וניצול חולשות אבטחה. בהרצאה הזו נלמד על חולשות נפוצות בתוכנות, איך הן נוצרות, ואיך מנגנוני הגנה מודרניים מנסים למנוע ניצול שלהן.</p>
 <p><strong>חשוב להדגיש</strong>: הידע הזה הוא <strong>הגנתי</strong>. אנחנו צריכים להבין איך התקפות עובדות כדי לבנות הגנות טובות יותר. כדי להגן על מערכת, צריך להבין מה תוקף יכול לעשות.</p>
-<hr />
 <h2 id="buffer-stack-buffer-overflow">המחסנית וגלישת buffer - stack buffer overflow<a class="headerlink" href="#buffer-stack-buffer-overflow" title="Permanent link">&para;</a></h2>
 <h3 id="-stack-layout">תזכורת: מבנה המחסנית - stack layout<a class="headerlink" href="#-stack-layout" title="Permanent link">&para;</a></h3>
 <p>כמו שלמדנו בפרקים הקודמים, כשפונקציה נקראת, נוצר stack frame חדש. בואו ניזכר במבנה:</p>
@@ -3667,7 +3666,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python3 -c &quot;print(&#39;A&#39; * 72 + &#39;\x00\x10\x40\x00\x00\x00\x00\x00&#39;)&quot; | ./vulnerable
 </code></pre></div></p>
 <p>הפקודה הזו כותבת 72 תווים 'A' (כדי למלא את buf ולדרוס את saved rbp), ואז כותבת את הכתובת <code>0x401000</code> ככתובת החזרה. כשהפונקציה חוזרת, היא תקפוץ ל-<code>0x401000</code>.</p>
-<hr />
 <h2 id="-stack-canary">הגנה: קנרי על המחסנית - Stack Canary<a class="headerlink" href="#-stack-canary" title="Permanent link">&para;</a></h2>
 <p>מנגנון ההגנה הראשון שניתקל בו הוא <strong>stack canary</strong> (נקרא גם stack protector או stack cookie).</p>
 <h3 id="_2">איך זה עובד?<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
@@ -3691,7 +3689,6 @@
 <h3 id="_4">חולשה של הקנרי<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <p>הקנרי בדרך כלל מתחיל בבית null (<code>\x00</code>). למה? כי רוב פונקציות המחרוזות (כמו strcpy, gets) עוצרות בבית null. אז אם התוקף מנסה לקרוא את הקנרי על ידי גלישה, הוא ייתקע ב-null byte.</p>
 <p>אבל הקנרי לא מגן מפני כל חולשה - למשל, הוא לא עוזר נגד חולשות שמאפשרות כתיבה <strong>מדויקת</strong> לכתובת ספציפית (arbitrary write) בלי לדרוס את הקנרי.</p>
-<hr />
 <h2 id="nx-dep-">הגנה: NX / DEP - ללא הרצה<a class="headerlink" href="#nx-dep-" title="Permanent link">&para;</a></h2>
 <p>בעבר, התוקפים היו כותבים <strong>קוד מכונה</strong> (shellcode) ישירות על המחסנית, ואז גורמים לתוכנית לקפוץ לשם ולהריץ אותו.</p>
 <p>מנגנון <strong>NX</strong> (No eXecute) או <strong>DEP</strong> (Data Execution Prevention) מסמן את אזורי המחסנית וה-heap כ<strong>לא ניתנים להרצה</strong>. כלומר, גם אם התוקף כותב קוד על המחסנית, המעבד יסרב להריץ אותו.</p>
@@ -3709,7 +3706,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>readelf<span class="w"> </span>-l<span class="w"> </span>program<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>GNU_STACK
 </code></pre></div></p>
 <p>אם הפלט מראה <code>RW</code> (בלי E) - זה אומר שה-NX פעיל והמחסנית לא ניתנת להרצה.</p>
-<hr />
 <h2 id="aslr-">הגנה: ASLR - הקצאת כתובות אקראית<a class="headerlink" href="#aslr-" title="Permanent link">&para;</a></h2>
 <p><strong>ASLR</strong> (Address Space Layout Randomization) מערבבת את הכתובות של:<br />
 - המחסנית<br />
@@ -3728,7 +3724,6 @@
 </code></pre></div></p>
 <h3 id="aslr">חולשה של ASLR<a class="headerlink" href="#aslr" title="Permanent link">&para;</a></h3>
 <p>אם התוקף מצליח <strong>לדלוף כתובת</strong> מהזיכרון (information leak), הוא יכול לחשב את שאר הכתובות ולעקוף את ASLR. למשל, אם יש חולשת format string שמדליפה כתובת מה-stack, התוקף יכול לחשב את הבסיס של libc ולהשתמש בפונקציות שלה.</p>
-<hr />
 <h2 id="-rop-return-oriented-programming">תכנות מונחה חזרה - ROP - Return-Oriented Programming<a class="headerlink" href="#-rop-return-oriented-programming" title="Permanent link">&para;</a></h2>
 <p>אם NX מונע הרצת קוד על המחסנית, ו-ASLR מקשה על מציאת כתובות - מה התוקפים עושים?</p>
 <p>התשובה: <strong>ROP</strong>. במקום להזריק קוד חדש, התוקף משתמש בקטעי קוד <strong>שכבר קיימים</strong> בתוכנית או בספריות.</p>
@@ -3770,7 +3765,6 @@
 </code></pre></div>
 <p>הכלים האלו סורקים את הבינארי ומוצאים את כל הגאדג'טים האפשריים.</p>
 <p>ROP הוא נושא מתקדם ולא ניכנס ליישום מלא שלו כאן, אבל חשוב להבין את העיקרון - הוא מראה למה NX לבד לא מספיק.</p>
-<hr />
 <h2 id="format-string">חולשות format string<a class="headerlink" href="#format-string" title="Permanent link">&para;</a></h2>
 <p>עוד חולשה קלאסית ומעניינת:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1">// dangerous!</span>
@@ -3790,7 +3784,6 @@
 <p>קומפיילרים מודרניים מזהירים על זה:<br />
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>gcc<span class="w"> </span>-Wformat<span class="w"> </span>-Wformat-security<span class="w"> </span>program.c
 </code></pre></div></p>
-<hr />
 <h2 id="-heap-">חולשות ב-heap - ערמה<a class="headerlink" href="#-heap-" title="Permanent link">&para;</a></h2>
 <p>נושא מתקדם, אבל חשוב להכיר את העקרונות:</p>
 <h3 id="-use-after-free-uaf">שימוש לאחר שחרור - Use-After-Free (UAF)<a class="headerlink" href="#-use-after-free-uaf" title="Permanent link">&para;</a></h3>
@@ -3813,7 +3806,6 @@
 </code></pre></div>
 <p>דומה לstack overflow, אבל ב-heap. דורס את ה-metadata של ה-heap allocator או מידע שנמצא ב-chunk הבא.</p>
 <p>חולשות heap הן מורכבות יותר לניצול מ-stack overflow, אבל הן נפוצות מאוד בתוכנות אמיתיות (דפדפנים, שרתים, קרנלים).</p>
-<hr />
 <h2 id="_7">סיכום מנגנוני הגנה מודרניים<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -3869,7 +3861,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>RELRO           STACK CANARY      NX            PIE
 <a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>Full RELRO      Canary found      NX enabled    PIE enabled
 </code></pre></div></p>
-<hr />
 <h2 id="fuzzing-">הכלי fuzzing - מציאת קריסות אוטומטית<a class="headerlink" href="#fuzzing-" title="Permanent link">&para;</a></h2>
 <p>במקום לחפש חולשות ידנית, אפשר להשתמש ב<strong>fuzzer</strong> - כלי שמייצר קלטים אקראיים ומריץ את התוכנית עם כל אחד מהם, ומחפש קריסות.</p>
 <h3 id="_8">עקרון הפעולה<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
@@ -3891,7 +3882,6 @@
 2. אנחנו מנתחים את הקריסה - למה היא קורה?<br />
 3. האם אפשר לנצל אותה? או שזה פשוט באג שצריך לתקן?<br />
 4. בכל מקרה - מתקנים את הבאג</p>
-<hr />
 <h2 id="_9">סיכום<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <p>בהרצאה הזו למדנו על:<br />
 - <strong>גלישת buffer במחסנית</strong> - החולשה הקלאסית ביותר<br />
@@ -3923,7 +3913,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 08:33:06 UTC">2026-07-20 08:33:06</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

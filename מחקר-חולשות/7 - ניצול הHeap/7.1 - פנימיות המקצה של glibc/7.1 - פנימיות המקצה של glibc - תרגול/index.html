@@ -2853,7 +2853,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>ldd<span class="w"> </span>--version<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-1
 </code></pre></div>
 <p>זכרו: <code>malloc(0x18)</code> נותן נתח <code>0x20</code>, וה-tcache של גודל זה מחזיק לכל היותר <strong>7</strong> נתחים.</p>
-<hr />
 <h3 id="1-">תרגיל 1 - צילום הערמה אחרי הקצאה<a class="headerlink" href="#1-" title="Permanent link">&para;</a></h3>
 <p>שימו breakpoint על <code>puts</code> ורוצו עד ה"allocated". עכשיו הסתכלו על מבנה הערמה <strong>לפני</strong> ששחררנו משהו.</p>
 <ul>
@@ -2864,7 +2863,6 @@
 <p>רמז: הכתובת שהתוכנית מחזיקה (<code>mem</code>) היא 0x10 בתים אחרי תחילת ה-<code>chunk</code>. ב-<code>vis_heap_chunks</code> תחילת כל שורה היא תחילת ה-<code>chunk</code>, לא ה-<code>mem</code>.</p>
 <p>רמז: הגודל שתראו יהיה <code>0x21</code> ולא <code>0x20</code>. למה? חזרו להסבר על שלושת הדגלים.</p>
 <p><strong>שאלה לתשובה בכתב</strong>: כמה בתים בסך הכל תפס <code>malloc(0x18)</code> בערמה, ולמה זה לא 0x18?</p>
-<hr />
 <h3 id="2-tcache-fastbin">תרגיל 2 - מילוי ה-tcache וזליגה ל-fastbin<a class="headerlink" href="#2-tcache-fastbin" title="Permanent link">&para;</a></h3>
 <p>עכשיו המשיכו עד ה-breakpoint השני (אחרי כל ה-free-ים). כאן קורה הדבר המעניין.</p>
 <ul>
@@ -2875,7 +2873,6 @@
 <p>רמז: שחררנו 9 נתחים בגודל <code>0x20</code>. ה-tcache מחזיק 7. חשבו מה קורה לשניים הנוספים.</p>
 <p>רמז: הרשימות האלה מתנהגות LIFO. עקבו אחרי ה-<code>fd</code> של הנתח הראשון בכל רשימה עם <code>malloc_chunk &lt;addr&gt;</code> וראו לאן הוא מצביע.</p>
 <p><strong>שאלה לתשובה בכתב</strong>: איזה מהנתחים המקוריים (<code>chunks[i]</code>) נמצא בראש ה-tcache, ואיזה נמצא ב-fastbin? הסבירו לפי סדר ה-free.</p>
-<hr />
 <h3 id="3-unsorted-bin-leak-libc">תרגיל 3 - ה-unsorted bin וleak libc<a class="headerlink" href="#3-unsorted-bin-leak-libc" title="Permanent link">&para;</a></h3>
 <p>הנתח הגדול (<code>big</code>) לא נכנס ל-tcache כי הוא גדול מ-<code>0x410</code>, וגם לא ל-fastbin. הוא נחת ב-unsorted bin.</p>
 <ul>
@@ -2886,7 +2883,6 @@
 <p>רמז: נתח יחיד ב-unsorted bin משרשר את עצמו בחזרה ל-<code>main_arena</code>, שיושבת בתוך libc. חפשו את הביטוי <code>main_arena</code> בפלט של pwndbg.</p>
 <p>רמז: כדי לאמת שזו אכן libc, הריצו <code>vmmap</code> וראו לאיזה אזור זיכרון הכתובת שייכת.</p>
 <p><strong>שאלה לתשובה בכתב</strong>: אם הייתם יכולים לקרוא את 8 הבתים האלה מהזיכרון של התוכנית (למשל דרך חולשת use-after-free), איך זה היה עוזר לכם לעקוף ASLR? כתבו את הרעיון בשתי שורות.</p>
-<hr />
 <h3 id="4-top-chunk">תרגיל 4 (אתגר) - איחוד לתוך ה-top chunk<a class="headerlink" href="#4-top-chunk" title="Permanent link">&para;</a></h3>
 <p>שנו את התוכנית: הסירו את השורה של <code>guard</code> (הנתח שהפריד את <code>big</code> מ-top chunk). הדרו מחדש והריצו שוב עד אחרי <code>free(big)</code>.</p>
 <ul>
@@ -2895,7 +2891,6 @@
 </ul>
 <p>רמז: נתח שגובל ב-top chunk לא נכנס לאף פח כשמשחררים אותו.</p>
 <p><strong>שאלה לתשובה בכתב</strong>: הסבירו במשפט אחד למה השומר <code>guard</code> היה נחוץ בתרגילים הקודמים כדי לראות את <code>big</code> ב-unsorted bin.</p>
-<hr />
 <h3 id="_2">מה למדתם<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
 <p>אם עניתם על ארבעת התרגילים, יש לכם עכשיו מודל מנטלי חי של המקצה: אתם יודעים לזהות נתח בזיכרון, לקרוא את הדגלים שלו, ולחזות לאיזה פח הוא ילך כשישוחרר. הפתרון המלא נמצא בקובץ הפתרון - אבל נסו קודם לבד. ההפרש בין "קראתי על tcache" ל"ראיתי נתח נוחת ב-tcache" הוא כל ההבדל.</p>
 
@@ -2918,7 +2913,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

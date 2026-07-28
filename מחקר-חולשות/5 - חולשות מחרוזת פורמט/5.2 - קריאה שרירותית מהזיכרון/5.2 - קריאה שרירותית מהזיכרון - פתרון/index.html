@@ -2612,7 +2612,6 @@
 <h2 id="-">פתרון - קריאה שרירותית מהזיכרון<a class="headerlink" href="#-" title="Permanent link">&para;</a></h2>
 <p>נעבור על התרגילים לפי הסדר. המטרה: לדלוף תוכן של גלובל ואת בסיס libc דרך קריאות format string בלבד. נניח לאורך הפתרון שהבינארי הוא <code>leakme</code> שקימפלנו בלי PIE ובלי canary, עם ASLR של המערכת פעיל.</p>
 <p>תזכורת על ההנחות: <code>buf[128]</code> על המחסנית, <code>printf(buf)</code> vulnerable, כתובות הבינארי (גלובל, GOT) קבועות, libc זזה בכל הרצה בגלל ASLR.</p>
-<hr />
 <h3 id="1-buffer">פתרון תרגיל 1 - מציאת האינדקס של הbuffer<a class="headerlink" href="#1-buffer" title="Permanent link">&para;</a></h3>
 <p>שולחים סמן של 8 בתים ואחריו ספציפיירים פוזיציוניים, ובודקים היכן צף <code>0x4141414141414141</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>$<span class="w"> </span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;import sys; sys.stdout.buffer.write(b&quot;AAAAAAAA.%6$p.%7$p.%8$p.%9$p.%10$p\n&quot;)&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>./leakme
@@ -2631,7 +2630,6 @@
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="n">io</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </code></pre></div>
 <p><strong>למה זה עבד / איך להכליל:</strong> האינדקס תלוי במיקום הbuffer על המחסנית ובמהדר, אז מודדים אותו לכל בינארי. הסמן של 8 בתים חייב להיות בדיוק ברוחב סלוט (<code>AAAAAAAA</code> = <code>0x4141414141414141</code>), אחרת קשה לזהות אותו בין הערכים. מרגע שיודעים את <code>BUF_INDEX</code>, האריתמטיקה פשוטה: <code>buf[8*k .. ]</code> הוא אינדקס <code>BUF_INDEX + k</code>.</p>
-<hr />
 <h3 id="2-leak">פתרון תרגיל 2 - leak של תוכן הגלובל<a class="headerlink" href="#2-leak" title="Permanent link">&para;</a></h3>
 <p>קודם מוצאים את כתובת הגלובל (קבועה, כי אין PIE):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>$<span class="w"> </span>objdump<span class="w"> </span>-t<span class="w"> </span>leakme<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>flag_store
@@ -2665,7 +2663,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>[!] Program crashed with SIGSEGV
 </code></pre></div>
 <p><strong>למה זה עבד / איך להכליל:</strong> <code>%s</code> מפרש את הארגומנט כמצביע ומדפיס את המחרוזת שבכתובת. אנחנו שולטים בסלוט הפוזיציוני <code>buf[8..15]</code>, אז שתלנו שם את הכתובת שרצינו לקרוא. הסמן <code>#</code> מיד אחרי הספציפייר מאפשר לחתוך בדיוק את הפלט של <code>%s</code> בלי הזבל שאחריו. הכלל: קידומת בכפולה של 8, כתובת בסוף, ובית סמן לחיתוך נקי.</p>
-<hr />
 <h3 id="3-leak-libc">פתרון תרגיל 3 - leak של כתובת libc<a class="headerlink" href="#3-leak-libc" title="Permanent link">&para;</a></h3>
 <p>הפעם קוראים רשומה מטבלת ה-GOT. הפונקציה <code>read</code> נקראה כבר לפני ה-<code>printf</code>, אז הרשומה שלה מצביעה לכתובת האמיתית ב-libc:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="ch">#!/usr/bin/env python3</span>
@@ -2702,7 +2699,6 @@
 </code></pre></div>
 <p>שימו לב שבסיס libc תמיד מסתיים ב-<code>000</code> (aligned לעמוד של 4KB), וזו בדיקת שפיות טובה: אם קיבלתם בסיס שלא מסתיים באפסים, כנראה שהאינדקס לא נכון או שהalignment נשבר.</p>
 <p><strong>למה זה עבד / איך להכליל:</strong> ה-GOT מכיל את הכתובות ה"חיות" של פונקציות libc אחרי שנקראו. דלפנו אחת מהן, ובגלל שההיסטים בתוך libc קבועים, חיסור פשוט נותן את הבסיס. משם pwntools מחשב כל כתובת אחרת. שני דגשים: לדלוף פונקציה שכבר נקראה (אחרת יש שם PLT stub), ולהשתמש בדיוק בקובץ ה-libc של היעד, כי ההיסטים משתנים בין גרסאות.</p>
-<hr />
 <h3 id="4-leak">פתרון תרגיל 4 - סקריפט leak שלם<a class="headerlink" href="#4-leak" title="Permanent link">&para;</a></h3>
 <p>מאחדים הכל, עם תמיכה בשרת מרוחק:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="ch">#!/usr/bin/env python3</span>
@@ -2741,7 +2737,6 @@
 </code></pre></div>
 <p>מריצים מקומית עם <code>python3 solve.py</code>, ומול השירות (אחרי <code>socat TCP-LISTEN:1337,reuseaddr,fork EXEC:./leakme</code>) עם <code>python3 solve.py REMOTE</code>.</p>
 <p><strong>למה זה עבד / איך להכליל:</strong> בנינו לבנה אחת, <code>read_at</code>, ובנינו ממנה שתי leaks. הסמן <code>#</code> בכל leak מפריד בבירור בין הפלטים, כך שאין בלבול בין השליחות. אותו סקריפט עובד מקומית ומרחוק בזכות <code>args.REMOTE</code> - זה בדיוק המעבר מפיתוח לפרודקשן.</p>
-<hr />
 <h3 id="5-canary-pie">פתרון תרגיל 5 (בונוס) - הcanary ו-PIE<a class="headerlink" href="#5-canary-pie" title="Permanent link">&para;</a></h3>
 <p><strong>הleak של הcanary.</strong> קמפלנו <code>leakme_canary</code>. מזהים את סלוט הcanary - ערך אקראי שמסתיים ב-<code>00</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>$<span class="w"> </span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;print(&quot;.&quot;.join(&quot;%%%d$p&quot;%i for i in range(6,25)))&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>./leakme_canary
@@ -2815,7 +2810,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

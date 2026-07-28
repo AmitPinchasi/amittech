@@ -2885,7 +2885,6 @@
 
 <p>הפרק הזה הוא צומת. עד עכשיו, בקורס הליבה, למדנו איך המחשב עובד מבפנים. מכאן והלאה נתחיל לשבור אותו. לפני שנצלול לחולשה הראשונה, בואו נעצור לרגע ונרענן את אבני היסוד שילוו אותנו לאורך כל הקורס: מפת הזיכרון של תהליך, המחסנית ומוסכמות הקריאה, מה בדיוק <code>call</code> ו-<code>ret</code> עושים, מבנה קובץ ELF, המנגנון של GOT ו-PLT, וקידוד little-endian. את רוב הדברים האלה אתם כבר מכירים, אבל הפעם נסתכל עליהם דרך העיניים של תוקף: לא רק "איך זה עובד" אלא "איפה זה נשבר, ומה זה נותן לי".</p>
 <p>אני ממליץ בחום לפתוח טרמינל ולהריץ כל פקודה שנראה תוך כדי קריאה. הבסיס הזה חייב להיות בקצות האצבעות שלכם - נחזור אליו בכל אתגר.</p>
-<hr />
 <h2 id="-process-memory-map">מפת הזיכרון של תהליך - process memory map<a class="headerlink" href="#-process-memory-map" title="Permanent link">&para;</a></h2>
 <p>כשמריצים תוכנית, מערכת ההפעלה יוצרת עבורה <strong>מרחב כתובות וירטואלי</strong> משלה. כל כתובת שהתוכנית רואה היא וירטואלית, וה-MMU מתרגם אותה לכתובת פיזית מאחורי הקלעים. שני תהליכים יכולים להשתמש באותה כתובת וירטואלית והיא תצביע על זיכרון פיזי שונה לגמרי.</p>
 <p>המרחב הזה מחולק לאזורים (mappings), ולכל אזור יש הרשאות: קריאה (r), כתיבה (w), הרצה (x). הדרך הכי מהירה לראות את המפה של תהליך חי היא הקובץ הווירטואלי <code>/proc/&lt;pid&gt;/maps</code>:</p>
@@ -2936,7 +2935,6 @@
 <a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>high addresses
 </code></pre></div>
 <p>הבחנה חשובה: ה-<code>.bss</code> הוא אזור למשתנים גלובליים שאותחלו לאפס (או לא אותחלו כלל). הוא לא תופס מקום בקובץ עצמו - הטוען פשוט ממפה עמודים מאופסים. ה-<code>.data</code>, לעומתו, מכיל ערכים התחלתיים שכן שמורים בקובץ.</p>
-<hr />
 <h2 id="-stack-frame">המחסנית ומסגרת הפונקציה - stack frame<a class="headerlink" href="#-stack-frame" title="Permanent link">&para;</a></h2>
 <p>המחסנית גדלה <strong>כלפי מטה</strong> - כלומר, <code>push</code> מקטין את <code>rsp</code> ו-<code>pop</code> מגדיל אותו. לכל קריאה לפונקציה נוצרת מסגרת (stack frame) שמכילה את הreturn address, את ה-<code>rbp</code> השמור, ואת המשתנים המקומיים.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>high addresses
@@ -2954,7 +2952,6 @@
 <a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>low addresses
 </code></pre></div>
 <p>הנקודה שתלווה אותנו בכל הקורס: <strong>הbuffer יושב בכתובות נמוכות יותר מreturn address</strong>. כתיבה לbuffer מתקדמת מכתובות נמוכות לגבוהות, כלומר לכיוון הreturn address. אם נכתוב יותר בתים ממה שהbuffer מחזיק, נגלוש קדימה ונדרוס את ה-<code>rbp</code> השמור, ואז את הreturn address. זה הלב של buffer overflow.</p>
-<hr />
 <h2 id="-calling-conventions">מוסכמות קריאה - calling conventions<a class="headerlink" href="#-calling-conventions" title="Permanent link">&para;</a></h2>
 <p>מוסכמת קריאה היא ההסכם על <strong>איפה יושבים הארגומנטים</strong> ו<strong>איפה חוזר הערך</strong> כשקוראים לפונקציה. אנחנו חייבים לשלוט בזה בעל פה, כי כשנבנה ROP chain או קריאה ל-<code>system</code> נצטרך להעמיס ארגומנטים במקום הנכון.</p>
 <h3 id="-64-system-v-amd64">מוסכמת ה-64 ביט - System V AMD64<a class="headerlink" href="#-64-system-v-amd64" title="Permanent link">&para;</a></h3>
@@ -2991,7 +2988,6 @@
 <a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>return value -&gt; eax
 </code></pre></div>
 <p>וקריאת מערכת ב-32 ביט: מעמיסים את מספר הקריאה ל-<code>eax</code>, את הארגומנטים ל-<code>ebx, ecx, edx, esi, edi</code>, ומפעילים <code>int 0x80</code>. מספר הקריאה של <code>execve</code> ב-32 ביט הוא <strong>11</strong> (לא 59!). ההבדל הזה תופס הרבה אנשים בהתחלה, אז שימו לב.</p>
-<hr />
 <h2 id="call-ret">מה call ו-ret עושים<a class="headerlink" href="#call-ret" title="Permanent link">&para;</a></h2>
 <p>זו אולי הנקודה הכי חשובה בכל ההרצאה, כי כל הexploit שלנו נשען על המנגנון הזה.</p>
 <p>ההוראה <strong>call target</strong> עושה שני דברים בפעולה אחת:</p>
@@ -3020,7 +3016,6 @@
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>                          |          ...            |
 </code></pre></div>
 <p>ואחרי ה-<code>ret</code> בתוך הפונקציה, <code>rsp</code> חוזר למעלה והערך נשלף ל-<code>rip</code>. בתרגול נצעד על שתי ההוראות האלה שלב-שלב ב-gdb ונראה את <code>rsp</code> ו-<code>rip</code> זזים בזמן אמת.</p>
-<hr />
 <h2 id="elf">חזרה על ELF<a class="headerlink" href="#elf" title="Permanent link">&para;</a></h2>
 <p>קובץ הרצה בלינוקס הוא בפורמט <strong>ELF</strong> (Executable and Linkable Format). חשוב להבין את המבנה שלו כי ממנו נשלוף כתובות, סמלים, ומידע על ההגנות.</p>
 <h3 id="-headers-segments-sections">כותרת, מקטעים וקטעים - headers, segments, sections<a class="headerlink" href="#-headers-segments-sections" title="Permanent link">&para;</a></h3>
@@ -3058,7 +3053,6 @@
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>Full RELRO      Canary found      NX enabled    PIE enabled
 </code></pre></div>
 <p>או ידנית: אם <code>readelf -h ./vuln</code> מראה <code>Type: DYN</code>, זה PIE. אם <code>Type: EXEC</code>, זה בינארי עם כתובות קבועות.</p>
-<hr />
 <h2 id="-got-plt">טבלאות הקישור הדינמי - GOT ו-PLT<a class="headerlink" href="#-got-plt" title="Permanent link">&para;</a></h2>
 <p>כשהתוכנית קוראת ל-<code>printf</code>, שנמצאת בתוך libc, הקוד שלנו לא יודע בזמן קומפילציה איפה <code>printf</code> תשב בזיכרון (libc נטענת לכתובת אקראית). כדי לפתור את זה, המקשר הדינמי משתמש בשתי טבלאות: <strong>PLT</strong> ו-<strong>GOT</strong>.</p>
 <ul>
@@ -3098,7 +3092,6 @@
 <a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>0000000404020   ...  R_X86_64_JUMP_SLOT   puts@GLIBC_2.2.5
 </code></pre></div>
 <p>ה-<code>Offset</code> הוא הכתובת של כניסת ה-GOT של הפונקציה. את הכתובת הזו נצטרך כשנרצה לדלוף או לדרוס אותה.</p>
-<hr />
 <h2 id="-endianness">סדר בתים - endianness<a class="headerlink" href="#-endianness" title="Permanent link">&para;</a></h2>
 <p>הארכיטקטורות x86 ו-x86-64 הן <strong>little-endian</strong>: הבית הכי פחות משמעותי נשמר בכתובת הנמוכה ביותר. זה נשמע כמו פרט טכני קטן, אבל הוא מקור נפוץ לבאגים בכתיבת exploit-ים.</p>
 <p>נניח שאנחנו רוצים לכתוב את הכתובת <code>0x00000000004011a6</code> למחסנית. בזיכרון היא תיושב כך:</p>
@@ -3123,7 +3116,6 @@
 <a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a><span class="n">u32</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;</span><span class="se">\x56\x84\x04\x08</span><span class="s1">&#39;</span><span class="p">)</span>    <span class="c1"># 0x8048456</span>
 </code></pre></div>
 <p>הכלל: <code>p64</code>/<code>p32</code> להמרת מספר לבתים לפני שליחה, <code>u64</code>/<code>u32</code> להמרת בתים למספר אחרי leak. הרבה מהזמן שנבזבז על תיקון exploit-ים שלא עובדים ייעלם ברגע שנטמיע את זה. וטיפ קטן: אם דלפתם 6 בתים בלבד (כתובות לינוקס בפועל הן 48 ביט), רפדו לפני <code>u64</code>, למשל <code>u64(leaked.ljust(8, b'\x00'))</code>.</p>
-<hr />
 <h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>מפת הזיכרון</strong> של תהליך מחולקת לאזורים עם הרשאות (<code>r/w/x</code>). רואים אותה חיה ב-<code>/proc/pid/maps</code>. הקוד הוא <code>r-x</code>, המחסנית והערמה הן <code>rw-</code> (זה ה-NX), ו-libc ממופה פנימה - שם יושבות הפונקציות שנרצה לקרוא להן.</li>
@@ -3155,7 +3147,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:14:39 UTC">2026-07-20 09:14:39</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

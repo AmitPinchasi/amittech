@@ -2642,7 +2642,6 @@
 <h2 id="-pwntools">פתרון - מבוא לpwntools<a class="headerlink" href="#-pwntools" title="Permanent link">&para;</a></h2>
 <p>נעבור על שלושת התרגילים לפי הסדר, עם הקוד המלא, הפלט שאתם אמורים לראות, וההסבר למה כל חלק שם. בסוף יש תבנית מלאה ומוערת שתוכלו לשכפל לכל אתגר.</p>
 <p>תזכורת על הבינאריים: הרכבנו את <code>echo_server</code> רגיל, ואת <code>vuln</code> עם <code>-fno-stack-protector -no-pie</code> כדי לכבות canary ו-PIE. <code>pwn checksec ./vuln</code> צריך להראות NX פעיל, Canary ו-PIE כבויים. המשמעות: כתובת <code>win</code> קבועה בין הרצות, ואין canary שיתפוס את הoverflow.</p>
-<hr />
 <h3 id="1-">פתרון תרגיל 1 - לדבר עם התוכנית<a class="headerlink" href="#1-" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="ch">#!/usr/bin/env python3</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pwn</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
@@ -2671,7 +2670,6 @@
 </ul>
 <p>למה זה עבד: הבנו שהתקשורת עם תוכנית היא ריקוד של שאלה-תשובה, ו-<code>sendlineafter</code>/<code>recvuntil</code> הם הצעדים שמסנכרנים אותנו איתה. אותו דפוס בדיוק יעבוד מול שרת מרוחק - רק נחליף <code>process</code> ב-<code>remote</code>.</p>
 <p>טיפ: אם משהו לא הסתנכרן, הוסיפו <code>context.log_level = 'debug'</code> בראש הסקריפט ותראו hexdump של כל בית. זה הכלי הראשון לכל באג תקשורת.</p>
-<hr />
 <h3 id="2-offset-cyclic">פתרון תרגיל 2 - למצוא את ה-offset עם cyclic<a class="headerlink" href="#2-offset-cyclic" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="ch">#!/usr/bin/env python3</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pwn</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
@@ -2718,7 +2716,6 @@
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">cyclic</span><span class="p">(</span><span class="mi">200</span><span class="p">))</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># the process crashes inside GDB; in pwndbg run:  cyclic -l $rsp</span>
 </code></pre></div>
-<hr />
 <h3 id="3-win">פתרון תרגיל 3 - לנתב את הזרימה ל-win<a class="headerlink" href="#3-win" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="ch">#!/usr/bin/env python3</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pwn</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
@@ -2762,7 +2759,6 @@
 </ul>
 <p>למה צריך את גאדג'ט ה-<code>ret</code>: בתוך <code>system</code> יש הוראות SSE כמו <code>movaps</code> שדורשות ש-<code>rsp</code> יהיה מיושר לגבול של 16 בתים בזמן הקריאה. כשאנחנו קופצים ישר ל-<code>win</code>, הalignment לרוב שבור בגלל שהוספנו כתובת אחת, והתוכנית קורסת בתוך <code>system</code> דווקא אחרי שהגענו ל-<code>win</code>. גאדג'ט <code>ret</code> בודד לפני <code>win</code> מתקן את הalignment. זה תקלה נפוצה מאוד, ושווה לזכור את הפתרון - הוא יחזור לאורך כל הקורס.</p>
 <p>למה זה עבד ואיך להכליל: שלטנו ב-RIP כי ידענו את ה-offset המדויק (72) ואת כתובת היעד הקבועה (<code>win</code>, כי הבינארי הוא no-pie). זו התבנית של ret2win, והיא הבסיס לכל מה שנבנה מכאן: החליפו את <code>win</code> בROP chain, ותקבלו ret2libc; דלפו כתובת קודם, ותעקפו PIE ו-ASLR. אותו שלד, יעדים מתוחכמים יותר.</p>
-<hr />
 <h3 id="_1">התבנית המלאה לשימוש חוזר<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h3>
 <p>זו הגרסה שכדאי לשמור ולשכפל לכל אתגר. אותו סקריפט רץ מקומית, תחת GDB, ומול השרת - רק הארגומנט משתנה:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="ch">#!/usr/bin/env python3</span>
@@ -2827,7 +2823,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

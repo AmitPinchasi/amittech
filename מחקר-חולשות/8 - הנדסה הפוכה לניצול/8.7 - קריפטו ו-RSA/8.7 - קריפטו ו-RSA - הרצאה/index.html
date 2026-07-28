@@ -2995,7 +2995,6 @@
 
 <p>בפרק הזה עסקנו בreverse engineering ככלי לexploit, ועד עכשיו התוצר הסופי שלנו היה כמעט תמיד shell או דגל שמגיע מoverflow, מ-ROP או מבאג לוגי. בהרצאה הזו נעצור על משפחה קצת שונה של אתגרים - אתגרי קריפטו. כאן אין buffer overflow ואין דריסת return address. במקום זה יש בדיקה מתמטית שצריך לעבור: מנגנון הצפנה ביתי שאפשר להפוך, או מימוש RSA עם פרמטרים שבורים. המטרה שלנו כתוקפים היא לא "לשבור קריפטוגרפיה" במובן האקדמי הכבד, אלא לזהות את החולשה הספציפית ולנצל אותה בעזרת מעט מתמטיקה ופייתון.</p>
 <p>חשוב להבין את ההבחנה הזו מראש. קריפטוגרפיה חזקה, כשהיא מיושמת נכון, לא נשברת בתרגיל. מה שנשבר בפועל הוא <strong>המימוש</strong>: מפתח קבוע שנחשף, cipher ביתי שמישהו כתב לבד, מעריך <code>e</code> קטן מדי, מודולוס משותף, או שירות שבטעות משמש כאורקל. שני האתגרים שנפרק כאן - <code>crypto1</code> ו-<code>rsa calculator</code> מ-pwnable.kr - הם בדיוק זה: לא פריצה של אלגוריתם, אלא exploit של טעות במימוש.</p>
-<hr />
 <h2 id="-reverse-the-check-dont-break-the-crypto">הלך הרוח - reverse the check, don't break the crypto<a class="headerlink" href="#-reverse-the-check-dont-break-the-crypto" title="Permanent link">&para;</a></h2>
 <p>לפני שנצלול, בואו נסגור את הגישה. באתגר קריפטו טיפוסי מקבלים שלושה דברים: קוד מקור (או בינארי לreverse engineering), פלט כלשהו שהשירות מייצר, וקריטריון הצלחה. העבודה שלנו היא שרשרת של שלוש שאלות:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>1. what exactly does the check require of me?   (which value needs to be produced)
@@ -3004,7 +3003,6 @@
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>3. is the transformation invertible, and how?   (find the input that produces the output)
 </code></pre></div>
 <p>כמעט תמיד הבאג הוא בשלב 3: המימוש בחר טרנספורמציה שקל להפוך אותה. חיבור פשוט הפכנו בשיעור ההתנגשות, xor נהפוך כאן, ו-RSA עם מעריך קטן נהפוך עם שורש שלישי. הכלל: <strong>אל תתקפו את החזק, תתקפו את החלש</strong>. חפשו את הפרמטר שמישהו בחר בו לא נכון.</p>
-<hr />
 <h2 id="xor-the-xor-cipher">הצפנה מבוססת xor - the xor cipher<a class="headerlink" href="#xor-the-xor-cipher" title="Permanent link">&para;</a></h2>
 <p>הפעולה הכי נפוצה ב-cipher-ים ביתיים היא xor. הסיבה פשוטה: קל לכתוב אותה, היא נראית "מבלבלת", והרבה מתכנתים בטעות חושבים שהיא מספקת אבטחה. היא לא. הנה שלוש התכונות שהופכות את xor למתנה בשביל תוקף:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>a ^ a = 0            xor of a value with itself zeroes out
@@ -3054,14 +3052,12 @@
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">plain</span><span class="p">)</span>   <span class="c1"># b&#39;MyS3cr3tP4ssw0rd&#39; - the input that makes encode return exactly cipher</span>
 </code></pre></div>
 <p>הפעולה <code>&amp; 0xff</code> שם כדי לחקות את החשבון של <code>unsigned char</code> (מודולו 256), בדיוק כמו שהבינארי עושה. שימו לב שאם הטרנספורמציה הייתה כוללת גם ערבוב בין בתים (למשל בית שתלוי בבית הקודם, כמו במצב CBC), היינו צריכים להפוך גם את התלות הזו - אבל העיקרון זהה: פורקים את הצינור ומפעילים כל שלב הפוך.</p>
-<hr />
 <h2 id="crypto1-pwnablekr">האתגר crypto1 מ-pwnable.kr<a class="headerlink" href="#crypto1-pwnablekr" title="Permanent link">&para;</a></h2>
 <p>האתגר <code>crypto1</code> (בקטגוריית Rookiss) בנוי בדיוק על התבנית הזו. בדף האתגר מקבלים את קוד המקור וגישה למכונה. הצורה הכללית: התוכנית לוקחת את הקלט שלכם (בדרך כלל מזהה וסיסמה מקודדים ב-hex), מריצה אותם דרך שרשרת של פענוח hex ואז טרנספורמציה סימטרית, ומשווה לערך קבוע ששמור בבינארי. אם ההשוואה מתלכדת - מקבלים את הדגל.</p>
 <p>התהליך שלכם זהה למה שעשינו למעלה, רק עם עוד שלב או שניים של קידוד:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>your input --&gt; decode hex --&gt; transformation (xor/permutation) --&gt; compare to constant
 </code></pre></div>
 <p>כדי לפתור, קוראים את המקור בקפידה ומזהים כל שלב בצינור. אז הופכים את השרשרת מהסוף להתחלה: מתחילים מהערך הקבוע, מפעילים את ההופכי של כל שלב לפי הסדר ההפוך, ומגיעים לקלט. אם באמצע יש קידוד hex, זכרו להחזיר אותו ל-hex לפני ההזנה. מכיוון שהמימושים המדויקים באתגר משתנים מגרסה לגרסה, בתרגול נעבוד על בינארי דמו מקומי שמכיל את אותה מהות בדיוק, ותוכלו להעביר את אותה שיטה לאתגר עצמו.</p>
-<hr />
 <h2 id="rsa-rsa-recap">הזכרת RSA - RSA recap<a class="headerlink" href="#rsa-rsa-recap" title="Permanent link">&para;</a></h2>
 <p>עכשיו לחלק השני והכבד יותר: RSA. נזכיר בקצרה איך זה עובד, כי כל התקפה שנראה נשענת על שבירה של הנחה מסוימת בתהליך.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>key generation:
@@ -3075,7 +3071,6 @@
 <a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>decryption:  m = c^d mod n
 </code></pre></div>
 <p>הביטחון של RSA נשען על שתי הנחות: ש<strong>קשה לפרק את <code>n</code></strong> לגורמים <code>p</code> ו-<code>q</code>, וש<strong>המסר <code>m</code> באמת עובר את הצמצום מודולו <code>n</code></strong> (כלומר <code>m^e</code> באמת גדול מ-<code>n</code>). כל אחת מההתקפות שנראה שוברת את אחת ההנחות האלה. שימו לב לנקודה מרכזית: אם התוקף משיג את <code>phi</code>, הוא מיד מחשב <code>d = e^(-1) mod phi</code> ומפענח הכל. ולהשיג את <code>phi</code> שקול לפרק את <code>n</code>, כי <code>phi = (p-1)(q-1) = n - p - q + 1</code>.</p>
-<hr />
 <h2 id="-small-e-cube-root">מלכודת ראשונה: מעריך קטן ושורש שלישי - small e cube-root<a class="headerlink" href="#-small-e-cube-root" title="Permanent link">&para;</a></h2>
 <p>ההתקפה הראשונה, והנפוצה ביותר באתגרים, מנצלת מעריך פומבי קטן. נניח <code>e = 3</code>. ההצפנה היא <code>c = m^3 mod n</code>. מה קורה אם המסר <code>m</code> קטן, כך ש-<code>m^3</code> עצמו <strong>קטן מ-<code>n</code></strong>? אז הצמצום מודולו <code>n</code> פשוט לא קורה, כי <code>m^3</code> כבר קטן מהמודולוס:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>if  m^3 &lt; n   then   c = m^3 mod n = m^3   (no reduction)
@@ -3104,7 +3099,6 @@
 </code></pre></div>
 <h3 id="-hastad-broadcast">וריאציה: שידור לשלושה נמענים - Hastad broadcast<a class="headerlink" href="#-hastad-broadcast" title="Permanent link">&para;</a></h3>
 <p>מה אם המסר גדול, אבל אותו <code>m</code> נשלח לשלושה נמענים שונים עם <code>e=3</code> ושלושה מודולוסים <code>n1, n2, n3</code>? אז יש לנו שלוש משוואות <code>ci = m^3 mod ni</code>. לפי משפט השאריות הסיני - CRT - אפשר לשלב אותן למשוואה אחת מודולו <code>n1*n2*n3</code>, ומכיוון ש-<code>m^3 &lt; n1*n2*n3</code>, השורש השלישי של התוצאה המשולבת מחזיר את <code>m</code>. זו הכללה יפה של אותה מלכודת: מעריך קטן פוגש כמות מספיקה של טקסטים מוצפנים.</p>
-<hr />
 <h2 id="-common-modulus-attack">מלכודת שנייה: מודולוס משותף - common modulus attack<a class="headerlink" href="#-common-modulus-attack" title="Permanent link">&para;</a></h2>
 <p>התקפה אלגנטית שמופיעה בשירותי "מחשבון RSA": אותו מסר <code>m</code> מוצפן פעמיים עם <strong>אותו מודולוס <code>n</code></strong> אבל שני מעריכים שונים <code>e1, e2</code> שזרים זה לזה (<code>gcd(e1, e2) = 1</code>). זה קורה כשמשתמשים משתפים מפתח או כשהשירות מאפשר להצפין עם מעריך שהמשתמש בוחר.</p>
 <p>יש לנו <code>c1 = m^e1 mod n</code> ו-<code>c2 = m^e2 mod n</code>. מכיוון ש-<code>gcd(e1, e2) = 1</code>, אלגוריתם אוקלידס המורחב נותן מקדמים שלמים <code>a, b</code> כך ש:</p>
@@ -3127,7 +3121,6 @@
 <a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="k">assert</span> <span class="n">g</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;the exponents are not coprime, this attack doesn&#39;t apply as-is&quot;</span>
 <a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="nb">pow</span><span class="p">(</span><span class="n">c1</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="nb">pow</span><span class="p">(</span><span class="n">c2</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span> <span class="o">%</span> <span class="n">n</span>
 </code></pre></div>
-<hr />
 <h2 id="d-n-recovering-d">מלכודת שלישית: שחזור d על ידי פירוק n - recovering d<a class="headerlink" href="#d-n-recovering-d" title="Permanent link">&para;</a></h2>
 <p>לפעמים אין קיצור דרך חכם, ופשוט צריך לפרק את <code>n</code>. זה בלתי אפשרי כשהראשוניים נבחרו כמו שצריך - אבל באתגרים הם לרוב נבחרו רע. שלושה מקרים נפוצים:</p>
 <p><strong>מספר קטן.</strong> אם <code>n</code> קטן מספיק (עד בערך 70-80 ספרות עשרוניות), כלים כמו <code>sympy.factorint</code> או השירות <code>factordb.com</code> מפרקים אותו ישירות. תמיד שווה לנסות קודם את <code>factordb</code> - אם מישהו כבר פירק את <code>n</code>, קיבלתם את הגורמים בחינם.</p>
@@ -3148,7 +3141,6 @@
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="n">m</span> <span class="o">=</span> <span class="nb">pow</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>             <span class="c1"># full decryption</span>
 </code></pre></div>
 <p><strong>מעריך פרטי קטן - Wiener.</strong> אם דווקא <code>d</code> קטן (בערך <code>d &lt; n^(1/4)</code>), התקפת Wiener משחזרת אותו ישירות מ-<code>e</code> ו-<code>n</code>, בלי לפרק. היא מבוססת על כך ש-<code>e/n</code> קרוב מאוד ל-<code>k/d</code>, ואחד מ<strong>המקורבים - convergents</strong> של פיתוח שבר משולב של <code>e/n</code> הוא בדיוק <code>k/d</code>. המימוש המלא של Wiener נמצא בפתרון, כי הוא מעט ארוך, אבל העיקרון הזה - "מעריך פרטי קטן דולף דרך שברים משולבים" - שווה לזכור.</p>
-<hr />
 <h2 id="-decryption-oracle-and-blinding">מלכודת רביעית: אורקל פענוח והסתרה - decryption oracle and blinding<a class="headerlink" href="#-decryption-oracle-and-blinding" title="Permanent link">&para;</a></h2>
 <p>התבנית הכי מעניינת ב"מחשבון RSA" היא כשהשירות עצמו מוכן לפענח בשבילכם - חוץ מהטקסט המוצפן היחיד שאתם רוצים. כלומר יש טקסט מוצפן מטרה <code>c</code>, השירות מסרב לפענח בדיוק אותו, אבל מפענח כל דבר אחר. זה נקרא <strong>אורקל פענוח</strong>, והתכונה הכפלית של RSA הופכת אותו לחסר תועלת מבחינת ההגנה.</p>
 <p>הטריק נקרא <strong>הסתרה - blinding</strong>. מכיוון ש-RSA הומומורפי לכפל (<code>(x*y)^e = x^e * y^e</code>), אנחנו "מלבישים" את <code>c</code> בגורם אקראי, מבקשים לפענח את הגרסה המולבשת, ומורידים את הגורם בסוף:</p>
@@ -3164,7 +3156,6 @@
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="n">m_blind</span> <span class="o">*</span> <span class="nb">pow</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span> <span class="o">%</span> <span class="n">n</span>          <span class="c1"># r^(-1) mod n</span>
 </code></pre></div>
 <p>אותו רעיון בדיוק מאפשר <strong>לזייף חתימה</strong>: אם השירות חותם (מעלה בחזקת <code>d</code>) על כל הודעה חוץ מזו שאתם רוצים, מלבישים אותה, מבקשים חתימה, ומורידים את ההסתרה. RSA גולמי בלי padding כמו OAEP או padding חתימה נכון תמיד vulnerable להסתרה הזו.</p>
-<hr />
 <h2 id="-the-toolbox">כלים - the toolbox<a class="headerlink" href="#-the-toolbox" title="Permanent link">&para;</a></h2>
 <p>לאתגרי הקריפטו האלה, אלה הכלים שתרצו מותקנים:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>pip<span class="w"> </span>install<span class="w"> </span>pycryptodome<span class="w"> </span>gmpy2<span class="w"> </span>sympy
@@ -3198,7 +3189,6 @@
 <a id="__codelineno-18-22" name="__codelineno-18-22" href="#__codelineno-18-22"></a><span class="n">io</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </code></pre></div>
 <p>שימו לב שהבדיקה <code>assert exact</code> היא רשת ביטחון: היא אומרת לכם מיד אם המסר גדול מדי והשורש השלישי לא ישים, כדי שתעברו להתקפה מתאימה אחרת במקום לרדוף אחרי תוצאה שגויה.</p>
-<hr />
 <h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>בהרצאה הזו למדנו איך ניגשים לאתגרי קריפטו בעולם ה-pwn:</p>
 <ul>
@@ -3230,7 +3220,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

@@ -2712,13 +2712,11 @@
   <h1>3.2 - כתיבת פיצ'ר מקצה לקצה - הרצאה</h1>
 
 <p>עד עכשיו למדנו איך להשתמש בagent כדי להתמצא בקוד קיים. עכשיו נעבור לשימוש היומיומי המרכזי: לגרום לו לכתוב פיצ'ר חדש, מהבקשה הראשונה ועד קוד שעובד ועבר בדיקות. זו לא פקודה אחת - זו זרימת עבודה שלמה, ומי שמנסה לדחוס אותה לפרומפט יחיד ("תוסיף לי פיצ'ר X") בדרך כלל מקבל קוד שנראה סביר אבל מפספס פרטים שהיו ברורים לו אבל לא הועברו לagent. בהרצאה הזו נבנה זרימה מסודרת: תיאור המטרה, תכנון, יישום בצעדים, סקירת diff, והרצת בדיקות - עם דוגמה מלאה שנעקוב אחריה מקצה לקצה.</p>
-<hr />
 <h2 id="_1">למה לא לבקש הכל בבת אחת<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>הפיתוי הראשון הוא לכתוב פרומפט ארוך שמתאר את כל הפיצ'ר, וללחוץ Enter. זה עובד לפיצ'רים קטנים מאוד. אבל ברגע שהפיצ'ר נוגע ביותר משכבה אחת - למשל גם ב-API, גם בלוגיקה עסקית, גם ב-DB - הagent צריך לקבל החלטות עיצוב (design decisions) שאתם לא ניסחתם במפורש, והוא יקבל אותן לבד, במהירות, בלי לעצור ולשאול. לפעמים ההחלטות טובות. לפעמים הן סותרות משהו שכבר קיים בקוד, או פשוט שונות ממה שהייתם רוצים.</p>
 <p>הפתרון הוא לא לכתוב פרומפט ארוך יותר, אלא לפרק את התהליך לשלבים שבהם אתם נשארים בלולאה: קודם מסכימים על התכנית, ואז מיישמים, ואז בודקים. זה בדיוק המבנה שנלמד בהרצאה הזו.</p>
 <p><img alt="תרשים זרימת עבודה לכתיבת פיצ'ר עם agent: מטרה ואז תכנון שחושף שאלות פתוחות לענות עליהן, יישום בצעדים, וסקירת diff שאם מצאה בעיה חוזרת ליישום ורק אחריה מריצים בדיקות" src="../../../../images/illustrations/ai-3-2-feature-workflow.svg" /></p>
 <p>חשוב להבהיר: זו לא המלצה לפרק <em>כל</em> פיצ'ר, גם הכי טריוויאלי, לחמישה שלבים פורמליים. שינוי קטן ומבודד - תיקון טקסט, הוספת שדה אופציונלי לתגובת API - אפשר וכדאי לבקש בפרומפט אחד ולסקור את התוצאה. הכלל הוא יחסי לגודל ולסיכון: ככל שהפיצ'ר גדול יותר, נוגע ביותר שכבות, או קרוב יותר ללוגיקה רגישה (תשלומים, הרשאות, נתוני משתמשים), כך משתלם יותר להשקיע בתהליך המסודר. הזרימה שנלמד כאן היא ארגז כלים - לוקחים ממנו את מה שמתאים לגודל המשימה.</p>
-<hr />
 <h2 id="1-describing-the-goal">שלב 1: תיאור המטרה - describing the goal<a class="headerlink" href="#1-describing-the-goal" title="Permanent link">&para;</a></h2>
 <p>מטרה טובה כוללת שלושה מרכיבים: <strong>מה</strong> רוצים שיקרה, <strong>למה</strong> (כדי שהagent יבין את הכוונה ולא רק את הפעולה הטכנית), ו<strong>אילו אילוצים</strong> קיימים - קונבנציות בפרויקט, דברים שאסור לשבור.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>&gt; I want to add the ability to export orders to CSV. The user will hit
@@ -2728,7 +2726,6 @@
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  a new CSV library if there&#39;s already one in package.json.
 </code></pre></div>
 <p>שימו לב לפרטים: יש נתיב מדויק, פורמט פרמטרים, הפניה מפורשת לאילוץ קיים (auth), והנחיה שמונעת מהagent להוסיף תלות (dependency) מיותרת. ככל שהמטרה מדויקת יותר, כך פחות מקום לניחושים.</p>
-<hr />
 <h2 id="2-planning-before-code">שלב 2: תכנון לפני קוד - planning before code<a class="headerlink" href="#2-planning-before-code" title="Permanent link">&para;</a></h2>
 <p>לפני שנותנים לagent לגעת בקבצים, שווה לבקש תכנית. ב-Claude Code זה קורה טבעי דרך מצב התכנון (plan mode) שלמדנו בפרק הקודם, אבל גם בלי מצב מיוחד אפשר לבקש זאת במפורש:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>&gt; Before you write code, give me a plan: which files you&#39;ll create or
@@ -2761,14 +2758,12 @@
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  id, created_at, total, status. No need for pagination,
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  the assumption is that the range won&#39;t be huge.
 </code></pre></div>
-<hr />
 <h2 id="3-incremental-implementation">שלב 3: יישום בצעדים - incremental implementation<a class="headerlink" href="#3-incremental-implementation" title="Permanent link">&para;</a></h2>
 <p>עכשיו נותנים לagent לממש. בפיצ'ר קטן-בינוני כמו הדוגמה שלנו, אפשר לתת לו לרוץ על כל התכנית בבת אחת ואז לסקור. בפיצ'רים גדולים יותר עדיף לעצור אחרי כל קובץ מרכזי:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>&gt; Implement only the first step (the findByDateRange service) and stop.
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>  I want to see it before we continue to the controller and the route.
 </code></pre></div>
 <p>הכלל הפרקטי: ככל שהפיצ'ר גדול או רגיש יותר (נוגע בתשלומים, בהרשאות, בסכימת DB), כך שווה לחתוך אותו לצעדים קטנים יותר עם עצירה ביניהם. בפיצ'ר קטן ומבודד, עצירה אחרי כל קובץ רק מאטה אתכם בלי תועלת אמיתית.</p>
-<hr />
 <h2 id="4-diff-reviewing-the-diff">שלב 4: סקירת diff - reviewing the diff<a class="headerlink" href="#4-diff-reviewing-the-diff" title="Permanent link">&para;</a></h2>
 <p>זה השלב שהכי קל לדלג עליו כשמתרגלים לזרימה, וזה השלב שהכי חשוב לא לדלג עליו. אחרי שהagent סיים, מריצים <code>git diff</code> ועוברים על השינוי שורה-שורה - לא סתם קוראים את התיאור המילולי שהagent נותן על מה שהוא עשה.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>$<span class="w"> </span>git<span class="w"> </span>diff<span class="w"> </span>--stat
@@ -2790,7 +2785,6 @@
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  from/to are valid, and 400 is returned if not.
 </code></pre></div>
 <p>אם התשובה מצביעה על שורה קונקרטית - טוב. אם הagent "מסביר" בלי להצביע על קוד, זה סימן אזהרה שהבדיקה בכלל לא קיימת.</p>
-<hr />
 <h2 id="5-running-tests">שלב 5: הרצת בדיקות - running tests<a class="headerlink" href="#5-running-tests" title="Permanent link">&para;</a></h2>
 <p>קובץ diff שנראה נכון עדיין לא אומר קוד שרץ. מבקשים מהagent להריץ את חבילת הבדיקות, ואם אין בדיקות רלוונטיות לפיצ'ר החדש - לכתוב אותן (נרחיב על כתיבת בדיקות בהרצאה 3.5):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>&gt; Run the existing test suite and show me the full output. If
@@ -2810,7 +2804,6 @@
 <a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>Tests:<span class="w">       </span><span class="m">3</span><span class="w"> </span>passed,<span class="w"> </span><span class="m">3</span><span class="w"> </span>total
 </code></pre></div>
 <p>הרצת בדיקה שלישית - "לא מחזיר הזמנות של משתמש אחר" - היא בדיוק סוג הבדיקה שagent לא תמיד יכתוב מיוזמתו, אלא אם מבקשים אותה במפורש. זה תפקידכם לזהות איפה יש סיכון אבטחתי או לוגי ולדרוש בדיקה שמכסה אותו.</p>
-<hr />
 <h2 id="-choosing-among-design-options">בחירה בין כמה גישות מימוש - choosing among design options<a class="headerlink" href="#-choosing-among-design-options" title="Permanent link">&para;</a></h2>
 <p>לפעמים בשלב התכנון מתברר שיש יותר מדרך אחת סבירה לממש את הפיצ'ר, וההבדל ביניהן לא טכני זניח אלא משמעותי - ביצועים, מורכבות, או קלות תחזוקה. הagent שמתבקש "פשוט תממש" יבחר גישה אחת בלי להסביר למה, ולפעמים הגישה שהוא בוחר אינה זו שהייתם בוחרים אילו ידעתם על החלופות. שווה להפוך את שלב התכנון להזדמנות לקבל השוואה מפורשת:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>&gt; There are a few ways to implement the CSV export: (1) fetch all
@@ -2839,7 +2832,6 @@
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>  downloadable file (not JSON)? If so, implement this export in the exact same pattern.
 </code></pre></div>
 <p>זה מונע מצב שבו כל פיצ'ר חדש מביא איתו סגנון מעט שונה, גם כשאין סיבה אמיתית לשוני - בעיה שמצטברת עם הזמן והופכת קוד עקבי לפזור סגנונות.</p>
-<hr />
 <h2 id="-the-full-worked-example">דוגמה מלאה: מקצה לקצה - the full worked example<a class="headerlink" href="#-the-full-worked-example" title="Permanent link">&para;</a></h2>
 <p>בואו נראה איך זה נראה ברצף אחד, כפי שהיה קורה בפועל:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>1. &gt; [Goal] I want to add the ability to export orders to CSV...
@@ -2864,7 +2856,6 @@
 <a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a>   &lt; [all tests pass]
 </code></pre></div>
 <p>שימו לב לצעד 6: זה בדיוק הרגע שבו סקירת diff תפסה בעיה אמיתית - שכחת סינון לפי משתמש, שהיא באג אבטחתי קלאסי (broken access control). אם היינו מדלגים על שלב הסקירה ורצים ישר להרצת בדיקות, סביר שהבדיקות שהagent היה כותב מלכתחילה גם הן היו "שוכחות" לבדוק את התרחיש הזה, כי הן נכתבו מאותה הנחת יסוד שגויה.</p>
-<hr />
 <h2 id="_2">מלכודות נפוצות<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2902,7 +2893,6 @@
 </tr>
 </tbody>
 </table>
-<hr />
 <h2 id="_3">סיכום<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <ul>
 <li>פיצ'ר שנוגע ביותר משכבה אחת לא כדאי לבקש בפרומפט יחיד - מפרקים לזרימה: מטרה, תכנון, יישום, סקירה, בדיקות.</li>
@@ -2933,7 +2923,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:31:27 UTC">2026-07-20 09:31:27</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

@@ -3516,7 +3516,6 @@
 <h2 id="_1">הקדמה<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>בפרק 4 למדנו על עבודה עם קבצים באמצעות libc - השתמשנו בפונקציות כמו <code>fopen</code>, <code>fread</code>, <code>fwrite</code> ו-<code>fclose</code> שעובדות עם <code>FILE*</code> (מצביע לקובץ). ראינו שמאחורי הקלעים כל הפונקציות האלו מבוססות על מנגנון שנקרא <strong>file descriptor</strong> - מספר שלם שמייצג קובץ פתוח.</p>
 <p>בהרצאה הזו נצלול לעומק לתוך המנגנון הזה. נבין מה בדיוק הם מתארי קבצים, איך הם מאורגנים בתוך process, ונלמד לעבוד ישירות עם הsyscall-ים של לינוקס בלי לעבור דרך libc. בנוסף, נלמד על מנגנון חשוב שנקרא dup2 שמאפשר לנו לשלוט לאן הפלט של התוכנה שלנו הולך.</p>
-<hr />
 <h2 id="-file-descriptors">מתארי קבצים - file descriptors<a class="headerlink" href="#-file-descriptors" title="Permanent link">&para;</a></h2>
 <p>מתאר קובץ (file descriptor, בקיצור fd) הוא מספר שלם (int) שמייצג משאב פתוח בprocess. כשאנחנו פותחים קובץ, מערכת ההפעלה מחזירה לנו מספר - וזה המספר שנשתמש בו כדי לקרוא, לכתוב, ולסגור את המשאב.</p>
 <p>אבל fd-ים הם לא רק לקבצים. בלינוקס, הפילוסופיה היא <strong>"הכל הוא קובץ" - everything is a file</strong>. כלומר, כמעט כל משאב במערכת נגיש דרך file descriptor:<br />
@@ -3526,12 +3525,10 @@
 - התקני חומרה - devices (כמו <code>/dev/null</code>, <code>/dev/random</code>)<br />
 - טרמינלים</p>
 <p>כל אלו נגישים דרך אותו ממשק: <code>open</code>, <code>read</code>, <code>write</code>, <code>close</code>. בזכות זה, קוד שיודע לקרוא מfd יכול לעבוד עם קובץ, עם pipe, עם socket - בלי לשנות שום דבר.</p>
-<hr />
 <h2 id="fd-process">טבלת הfd-ים של process<a class="headerlink" href="#fd-process" title="Permanent link">&para;</a></h2>
 <p>לכל process בלינוקס יש <strong>טבלה פרטית של מתארי קבצים</strong>. הטבלה הזו ממפה מספרים (0, 1, 2, 3, ...) לאובייקטי קבצים בקרנל.</p>
 <p>כשאנחנו פותחים קובץ עם <code>open</code>, הקרנל מחפש את המספר הנמוך ביותר שפנוי בטבלה, מקצה אותו, ומחזיר לנו את המספר הזה. כשאנחנו סוגרים את הקובץ עם <code>close</code>, המספר משתחרר ויכול לשמש בעתיד.</p>
 <p>למשל, אם fd-ים 0, 1, 2 כבר תפוסים (תמיד - נסביר מיד), אז הfd הבא שנקבל מ-<code>open</code> יהיה 3. אם נפתח עוד קובץ, נקבל 4. אם נסגור את 3 ונפתח שוב - נקבל שוב 3.</p>
-<hr />
 <h2 id="fd-">שלושת הfd-ים הסטנדרטיים<a class="headerlink" href="#fd-" title="Permanent link">&para;</a></h2>
 <p>כבר ראינו את זה בפרק 4, אבל עכשיו נבין את זה לעומק. כל process בלינוקס מתחיל עם שלושה fd-ים פתוחים מראש:</p>
 <table>
@@ -3563,7 +3560,6 @@
 <p>שלושת הfd-ים האלו נפתחים אוטומטית על ידי מערכת ההפעלה כשprocess מתחיל לרוץ. הם קיימים עוד לפני ששורה אחת של הקוד שלנו רצה.</p>
 <p>כשאנחנו עושים <code>printf("hello")</code>, מאחורי הקלעים libc כותבת לfd מספר 1 (stdout).<br />
 כשאנחנו עושים <code>scanf(...)</code>, מאחורי הקלעים libc קוראת מfd מספר 0 (stdin).</p>
-<hr />
 <h2 id="open-libc-open">מopen של libc לopen של הקרנל<a class="headerlink" href="#open-libc-open" title="Permanent link">&para;</a></h2>
 <p>בפרק 4 למדנו על שתי קבוצות של פונקציות:<br />
 - <strong>פונקציות FILE* של libc</strong>: <code>fopen</code>, <code>fread</code>, <code>fwrite</code>, <code>fclose</code>, <code>fprintf</code>, <code>fscanf</code><br />
@@ -3575,7 +3571,6 @@
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>fclose(f)                --&gt;  close(fd)                   --&gt;  syscall in the kernel
 </code></pre></div></p>
 <p>כלומר, <code>FILE*</code> הוא מבנה (struct) של libc שמכיל בתוכו fd, באפר פנימי, ומידע נוסף. כשאנחנו עובדים ישירות עם fd-ים, אנחנו עוקפים את כל השכבה הזו ומדברים ישירות עם הקרנל.</p>
-<hr />
 <h2 id="syscall-open">הsyscall של open<a class="headerlink" href="#syscall-open" title="Permanent link">&para;</a></h2>
 <p>הsyscall <code>open</code> פותח קובץ ומחזיר file descriptor. ההכרזה שלו:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;fcntl.h&gt;</span>
@@ -3631,7 +3626,6 @@
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="kt">int</span><span class="w"> </span><span class="n">fd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">open</span><span class="p">(</span><span class="s">&quot;log.txt&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">O_WRONLY</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">O_CREAT</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">O_APPEND</span><span class="p">,</span><span class="w"> </span><span class="mo">0644</span><span class="p">);</span>
 </code></pre></div></p>
 <p>אם <code>open</code> נכשל, הוא מחזיר -1. תמיד צריך לבדוק את ערך ההחזרה.</p>
-<hr />
 <h2 id="syscall-read-write">הsyscall-ים של read ו-write<a class="headerlink" href="#syscall-read-write" title="Permanent link">&para;</a></h2>
 <p>הsyscall <code>read</code> קורא בתים מfd לתוך באפר:</p>
 <p><div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kt">ssize_t</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">fd</span><span class="p">,</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">count</span><span class="p">);</span>
@@ -3647,12 +3641,10 @@
 - <code>buf</code> - כתובת הנתונים לכתיבה<br />
 - <code>count</code> - מספר הבתים לכתיבה<br />
 - מחזיר את מספר הבתים שנכתבו בפועל, או -1 בשגיאה</p>
-<hr />
 <h2 id="syscall-close">הsyscall של close<a class="headerlink" href="#syscall-close" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kt">int</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">fd</span><span class="p">);</span>
 </code></pre></div>
 <p>סוגר את הfd ומשחרר את המשאב. אחרי <code>close</code>, אסור להשתמש באותו fd - הוא כבר לא מצביע על שום דבר.</p>
-<hr />
 <h2 id="file-fd-">ההבדל בין FILE* לfd - סיכום<a class="headerlink" href="#file-fd-" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -3698,7 +3690,6 @@
 - כשרוצים נוחות (fprintf, fscanf)<br />
 - כשעובדים עם טקסט ופורמט<br />
 - כשה-buffering האוטומטי מועיל לביצועים</p>
-<hr />
 <h2 id="fd">דוגמה: כתיבה לקובץ עם fd<a class="headerlink" href="#fd" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;fcntl.h&gt;</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;unistd.h&gt;</span>
@@ -3719,7 +3710,6 @@
 <a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="p">}</span>
 </code></pre></div>
 <p>שימו לב - גם את הודעת השגיאה כתבנו עם <code>write</code> לfd 2 (stderr), בלי להשתמש ב-printf בכלל. כל הפעולות כאן הן syscall-ים ישירים.</p>
-<hr />
 <h2 id="-dup-dup2">שכפול מתארי קבצים - dup ו-dup2<a class="headerlink" href="#-dup-dup2" title="Permanent link">&para;</a></h2>
 <p>עכשיו נגיע לחלק המעניין באמת. לינוקס נותנת לנו שני syscall-ים ששולטים במתארי קבצים:</p>
 <h3 id="dup-">dup - שכפול<a class="headerlink" href="#dup-" title="Permanent link">&para;</a></h3>
@@ -3733,7 +3723,6 @@
 </code></pre></div>
 <p>הsyscall <code>dup2</code> עושה משהו יותר מעניין - הוא מעתיק את <code>oldfd</code> לתוך <code>newfd</code>. אם <code>newfd</code> כבר פתוח, <code>dup2</code> סוגר אותו קודם. אחרי הקריאה, <code>newfd</code> מצביע על אותו משאב כמו <code>oldfd</code>.</p>
 <p>למה זה כל כך חשוב? כי בעזרת <code>dup2</code> אנחנו יכולים <strong>להפנות מחדש</strong> את stdin, stdout, ו-stderr!</p>
-<hr />
 <h2 id="redirect-io-redirection-dup2">הredirect פלט - I/O redirection עם dup2<a class="headerlink" href="#redirect-io-redirection-dup2" title="Permanent link">&para;</a></h2>
 <p>דמיינו שאנחנו רוצים שכל הפלט של התוכנה שלנו ילך לקובץ במקום למסך. בshell אנחנו עושים:<br />
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>./my_program<span class="w"> </span>&gt;<span class="w"> </span>output.txt
@@ -3773,7 +3762,6 @@
 </code></pre></div>
 <p>אחרי הרצת התוכנה, שום דבר לא יודפס למסך - הכל ילך ישירות לתוך <code>output.txt</code>. נסו! זה אחד מהדברים הכי שימושיים שתלמדו בהרצאה הזו.</p>
 <p><img alt="איור הפניית הפלט עם dup2: טבלת מתארי הקבצים של התהליך משתנה צעד אחר צעד, המתאר 1 מפסיק להצביע על המסך ומתחיל להצביע על הקובץ output.txt, ולכן הפלט של printf נכתב לקובץ" src="../../../../images/illustrations/core-5-5-dup2-redirect.svg" /></p>
-<hr />
 <h2 id="fork">מתארי קבצים וfork<a class="headerlink" href="#fork" title="Permanent link">&para;</a></h2>
 <p>בהרצאה 5.2 למדנו על <code>fork</code> - שכפול process. דבר חשוב שצריך לדעת: כאשר process קורא ל-<code>fork</code>, <strong>process הבן יורש עותק של טבלת הfd-ים של האב</strong>.</p>
 <p>כלומר, אם לאב יש fd 3 שמצביע על קובץ מסוים, גם לבן יהיה fd 3 שמצביע על אותו קובץ. שניהם חולקים את אותו משאב.</p>
@@ -3783,7 +3771,6 @@
 3. הבן קורא ל-<code>execve</code> כדי להריץ את התוכנה החיצונית<br />
 4. התוכנה החיצונית כותבת ל-stdout (fd 1) - שמצביע על הקובץ</p>
 <p>ככה <code>ls &gt; output.txt</code> עובד מאחורי הקלעים.</p>
-<hr />
 <h2 id="_2">דוגמה: אב ובן כותבים לאותו קובץ<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;fcntl.h&gt;</span>
@@ -3817,7 +3804,6 @@
 <a id="__codelineno-11-30" name="__codelineno-11-30" href="#__codelineno-11-30"></a><span class="p">}</span>
 </code></pre></div>
 <p>אחרי ההרצה, הקובץ <code>shared.txt</code> יכיל את ההודעות משני הprocesses. שימו לב שלא היינו צריכים לעשות <code>open</code> בprocess הבן - הוא ירש את הfd מהאב.</p>
-<hr />
 <h2 id="_3">סיכום<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <p>בהרצאה הזו למדנו:<br />
 - מתאר קובץ (fd) הוא מספר שלם שמייצג משאב פתוח בprocess<br />
@@ -3849,7 +3835,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 08:33:06 UTC">2026-07-20 08:33:06</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

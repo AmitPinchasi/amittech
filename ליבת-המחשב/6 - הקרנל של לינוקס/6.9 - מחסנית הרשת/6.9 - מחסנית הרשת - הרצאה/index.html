@@ -4058,7 +4058,6 @@
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">recv</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="n">len</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w">                         </span><span class="c1">// receiving data</span>
 </code></pre></div>
 <p>כל אלה הם syscalls שמגיעים לקוד הרשת בקרנל. עכשיו נראה מה קורה בצד של הקרנל.</p>
-<hr />
 <h2 id="_1">שכבות הרשת בקרנל<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>הקרנל מאורגן בשכבות שמתאימות למודל TCP/IP:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>+------------------------------------------+
@@ -4078,7 +4077,6 @@
 <a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>+------------------------------------------+
 </code></pre></div>
 <p>כל חבילה שעוברת בstack עולה או יורדת דרך השכבות האלה.</p>
-<hr />
 <h2 id="-sk_buff">מבנה הנתונים המרכזי - sk_buff<a class="headerlink" href="#-sk_buff" title="Permanent link">&para;</a></h2>
 <p>המבנה <code>struct sk_buff</code> (שנקרא בקיצור SKB) הוא <strong>מבנה הנתונים הכי חשוב</strong> בתת-מערכת הרשת. כל חבילת רשת שעוברת בקרנל מיוצגת על ידי sk_buff.</p>
 <h3 id="-sk_buff_1">מה יש ב-sk_buff?<a class="headerlink" href="#-sk_buff_1" title="Permanent link">&para;</a></h3>
@@ -4126,7 +4124,6 @@
 - עכשיו הdata מתחיל אחרי הheader שהסרנו</p>
 <p><strong>למה זה אלגנטי?</strong> כי אין העתקה של מידע! כשחבילה עוברת דרך כל שכבות הstack, הנתונים נשארים באותו מקום בזיכרון. רק הפוינטרים זזים. זה חוסך המון זמן בביצועי רשת.</p>
 <p><img alt="תרשים המראה כיצד כל שכבה במחסנית הרשת מזיזה את המצביע data אחורה עם skb_push וכותבת את ה-header שלה בשטח הפנוי בלי להעתיק נתונים" src="../../../../images/illustrations/core-6-9-skb-push-headers.svg" /></p>
-<hr />
 <h2 id="-">שליחת חבילה - המסע המלא<a class="headerlink" href="#-" title="Permanent link">&para;</a></h2>
 <p>בואו נעקוב אחרי מה קורה כשתוכנה שולחת מידע ברשת:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">send</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello!&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
@@ -4155,7 +4152,6 @@
 - מודיע לNIC שיש חבילה חדשה לשליחה</p>
 <h3 id="6-">שלב 6 - החומרה<a class="headerlink" href="#6-" title="Permanent link">&para;</a></h3>
 <p>כרטיס הרשת קורא את החבילה מהזיכרון באמצעות DMA ושולח אותה על הכבל/האוויר.</p>
-<hr />
 <h2 id="-_1">קבלת חבילה - המסע ההפוך<a class="headerlink" href="#-_1" title="Permanent link">&para;</a></h2>
 <p>עכשיו בכיוון ההפוך - חבילה מגיעה מהרשת לתוכנה שלכם:</p>
 <h3 id="1-">שלב 1 - החומרה<a class="headerlink" href="#1-" title="Permanent link">&para;</a></h3>
@@ -4192,7 +4188,6 @@
 <p>הsocket מעיר את הprocess שחיכה (בrecv או בselect/poll/epoll):<br />
 - המידע מועתק מהsocket buffer ל-user space (copy_to_user)<br />
 - הsyscall recv() חוזר עם המידע</p>
-<hr />
 <h2 id="napi-new-api">מנגנון NAPI - New API<a class="headerlink" href="#napi-new-api" title="Permanent link">&para;</a></h2>
 <h3 id="_3">הבעיה<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
 <p>ברשתות מהירות (10Gbps ומעלה), כרטיס הרשת יכול לקבל מיליוני חבילות בשנייה. אם כל חבילה גורמת לinterrupt נפרדת, המעבד יבזבז את כל הזמן שלו על טיפול בinterrupts ולא ישאר זמן לעבוד.</p>
@@ -4212,7 +4207,6 @@
 <li>בעומס נמוך: הinterrupts יעילות כי המעבד לא מבזבז זמן על polling</li>
 <li>בעומס גבוה: polling יעיל כי תמיד יש חבילות לעבד, ואנחנו חוסכים את הoverhead של interrupts</li>
 </ul>
-<hr />
 <h2 id="-netfilter-iptablesnftables">מסנן החבילות - Netfilter ו-iptables/nftables<a class="headerlink" href="#-netfilter-iptablesnftables" title="Permanent link">&para;</a></h2>
 <h3 id="netfilter">מה זה Netfilter?<a class="headerlink" href="#netfilter" title="Permanent link">&para;</a></h3>
 <p>מנגנון Netfilter הוא מסגרת (framework) בקרנל שמאפשרת לבדוק, לשנות, לסנן ולנתב חבילות רשת. הוא עובד על ידי <strong>נקודות עצירה (hooks)</strong> בנתיב של כל חבילה.</p>
@@ -4252,7 +4246,6 @@
 <a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>iptables<span class="w"> </span>-t<span class="w"> </span>nat<span class="w"> </span>-A<span class="w"> </span>POSTROUTING<span class="w"> </span>-o<span class="w"> </span>eth0<span class="w"> </span>-j<span class="w"> </span>MASQUERADE
 </code></pre></div>
 <p>ככה עובדים firewalls בלינוקס. כל חבילה שעוברת בstack נבדקת מול הכללים שהגדרנו.</p>
-<hr />
 <h2 id="-network-namespaces">מרחבי שמות של רשת - network namespaces<a class="headerlink" href="#-network-namespaces" title="Permanent link">&para;</a></h2>
 <p>מרחב שמות של רשת (network namespace) הוא מנגנון שנותן לקבוצה של processes <strong>stack רשת שלם ומבודד משלהם</strong>:<br />
 - הinterfaces רשת משלהם<br />
@@ -4274,7 +4267,6 @@
 <a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>ip<span class="w"> </span>link<span class="w"> </span><span class="nb">set</span><span class="w"> </span>veth1<span class="w"> </span>netns<span class="w"> </span>mynamespace
 </code></pre></div>
 <p>כל namespace מיוצג בקרנל על ידי struct <code>net</code> שמכיל את כל מידע הרשת של אותו namespace.</p>
-<hr />
 <h2 id="stack">כלים שמתקשרים עם הstack של הקרנל<a class="headerlink" href="#stack" title="Permanent link">&para;</a></h2>
 <h3 id="ip">הפקודה ip<a class="headerlink" href="#ip" title="Permanent link">&para;</a></h3>
 <p>הפקודה <code>ip</code> (שמחליפה את <code>ifconfig</code> ו-<code>route</code> הישנות) מתקשרת עם הקרנל דרך interface Netlink:</p>
@@ -4306,7 +4298,6 @@
 <a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>cat<span class="w"> </span>/proc/net/route<span class="w">     </span><span class="c1"># the routing table</span>
 </code></pre></div>
 <p>לדוגמה, כשאתם מריצים <code>ss -t</code>, הפקודה בעצם קוראת מ-<code>/proc/net/tcp</code> (או משתמשת בNetlink) ומציגה את המידע בצורה קריאה.</p>
-<hr />
 <h2 id="_5">סיכום<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <ul>
 <li>חבילת רשת עוברת דרך שכבות: socket, transport (TCP/UDP), network (IP), link (Ethernet), driver, hardware</li>
@@ -4336,7 +4327,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 08:33:06 UTC">2026-07-20 08:33:06</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

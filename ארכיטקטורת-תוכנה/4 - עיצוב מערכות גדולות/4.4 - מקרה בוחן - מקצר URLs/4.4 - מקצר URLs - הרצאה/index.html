@@ -2491,7 +2491,6 @@
 
 <h2 id="urls">מקרה בוחן: עיצוב מקצר URLs<a class="headerlink" href="#urls" title="Permanent link">&para;</a></h2>
 <p>מקצר URLs (כמו bit.ly) הוא שאלת system design קלאסית בראיונות עבודה. נעבור על כל שלבי העיצוב.</p>
-<hr />
 <h2 id="1">שלב 1: הגדרת דרישות<a class="headerlink" href="#1" title="Permanent link">&para;</a></h2>
 <p><strong>שאלות שצריך לשאול:</strong></p>
 <p><strong>דרישות פונקציונליות:</strong><br />
@@ -2505,7 +2504,6 @@
 - יחס קריאה/כתיבה: 10:1 (הרבה יותר redirects מהקצרות)<br />
 - latency נמוך ל-redirect (&lt; 10ms)<br />
 - זמינות גבוהה</p>
-<hr />
 <h2 id="2">שלב 2: הערכת נפח<a class="headerlink" href="#2" title="Permanent link">&para;</a></h2>
 <p><strong>כתיבות:</strong><br />
 - 100 מיליון URLs<br />
@@ -2518,7 +2516,6 @@
 - URL ארוך: 2KB ממוצע<br />
 - 100 מיליון × 2KB = 200GB</p>
 <p>לא מסיבי - שרת אחד יכול להכיל, אבל נצטרך scaling לביצועים.</p>
-<hr />
 <h2 id="3-api">שלב 3: עיצוב ה-API<a class="headerlink" href="#3-api" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>POST /api/shorten
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Request:  { &quot;long_url&quot;: &quot;https://www.example.com/very/long/path/...&quot; }
@@ -2530,7 +2527,6 @@
 <p><strong>301 לעומת 302:</strong><br />
 - 301 Permanent Redirect: דפדפן שומר ולא שולח בקשה לשרת שלנו פעמיים - פחות עומס אבל אין analytics<br />
 - 302 Temporary Redirect: כל קליק מגיע לשרת שלנו - יש analytics</p>
-<hr />
 <h2 id="4">שלב 4: מבנה הנתונים<a class="headerlink" href="#4" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">urls</span><span class="w"> </span><span class="p">(</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="n">id</span><span class="w">          </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="w"> </span><span class="n">AUTO_INCREMENT</span><span class="p">,</span>
@@ -2543,7 +2539,6 @@
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_short_code</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">urls</span><span class="p">(</span><span class="n">short_code</span><span class="p">);</span>
 </code></pre></div>
-<hr />
 <h2 id="5-short-code">שלב 5: יצירת short code<a class="headerlink" href="#5-short-code" title="Permanent link">&para;</a></h2>
 <p><strong>אפשרות 1: Hash + Truncation</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
@@ -2582,7 +2577,6 @@
 <a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="nb">print</span><span class="p">(</span><span class="n">decode_base62</span><span class="p">(</span><span class="s2">&quot;4qbEW&quot;</span><span class="p">))</span>   <span class="c1"># 12345678</span>
 </code></pre></div>
 <p><strong>יתרון:</strong> אין התנגשויות. ID מהDB → code ייחודי.</p>
-<hr />
 <h2 id="6">שלב 6: ארכיטקטורה<a class="headerlink" href="#6" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Client → [Load Balancer]
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>              ↓
@@ -2640,13 +2634,11 @@
 <a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>
 <a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>    <span class="k">return</span> <span class="n">short_code</span>
 </code></pre></div>
-<hr />
 <h2 id="7-bottlenecks">שלב 7: Bottlenecks ופתרונות<a class="headerlink" href="#7-bottlenecks" title="Permanent link">&para;</a></h2>
 <p><strong>הכי חשוב:</strong> redirects מהירים. Cache hit rate גבוה = מהיר.</p>
 <p><strong>מה לאחסן בcache:</strong> URLs פופולריות מאוד (20% מה-URLs = 80% מהקליקים, Zipf's Law).</p>
 <p><strong>Cache eviction:</strong> LRU (Least Recently Used) - URLs שלא נגישו הכי הרבה - יוצאות ראשונות.</p>
 <p><strong>Rate Limiting:</strong> מניעת spam - לא יותר מ-100 קיצורים לדקה למשתמש.</p>
-<hr />
 <h2 id="_1">סיכום הארכיטקטורה<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2702,7 +2694,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 11:53:14 UTC">2026-07-20 11:53:14</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

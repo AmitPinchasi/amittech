@@ -3123,7 +3123,6 @@
 <p>איך Node.js מטפל באלפי חיבורים עם thread אחד? איך Redis, אחד ממסדי הנתונים המהירים בעולם, עובד בthread יחיד? איך Nginx מגיש אלפי בקשות בו-זמנית?</p>
 <p>התשובה: לולאת אירועים - event loop.</p>
 <p>בפרק 11 למדנו על epoll שנותן לנו לנטר הרבה file descriptors. בפרק 12.3 ראינו את io_uring שמבצע I/O אסינכרוני. עכשיו נלמד את הדפוס שמחבר את הכל: ה-event loop.</p>
-<hr />
 <h2 id="_2">הרעיון<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>לולאת אירועים היא הפשטות עצמה:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="nb">true</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
@@ -3140,7 +3139,6 @@
 - קריאת I/O חוסמת (blocking read) - כל הלקוחות יחכו.<br />
 - חישוב כבד - כל הלקוחות יחכו.</p>
 <p>אם צריך לעשות משהו שלוקח זמן - תעביר את זה לthread pool נפרד (כמו שלמדנו ב-12.1) ותקבל את התוצאה כאירוע.</p>
-<hr />
 <h2 id="event-loop">מימוש event loop בסיסי<a class="headerlink" href="#event-loop" title="Permanent link">&para;</a></h2>
 <p>בואו נבנה event loop פשוט אבל שלם מעל epoll:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
@@ -3282,7 +3280,6 @@
 <a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 <a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a><span class="p">}</span>
 </code></pre></div>
-<hr />
 <h2 id="-timerfd">אירועי טיימר - timerfd<a class="headerlink" href="#-timerfd" title="Permanent link">&para;</a></h2>
 <p>לינוקס מספקת <code>timerfd</code> - fd שמתנהג כמו טיימר. כשהטיימר פוקע, הfd הופך ל"מוכן לקריאה", ואפשר לשלב אותו ב-event loop:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;sys/timerfd.h&gt;</span>
@@ -3311,7 +3308,6 @@
 <a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="kt">int</span><span class="w"> </span><span class="n">tfd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">create_timer</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span><span class="w">  </span><span class="c1">// every second</span>
 <a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="n">event_loop_add_reader</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span><span class="w"> </span><span class="n">tfd</span><span class="p">,</span><span class="w"> </span><span class="n">on_timer</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">);</span>
 </code></pre></div>
-<hr />
 <h2 id="-signalfd">אירועי סיגנלים - signalfd<a class="headerlink" href="#-signalfd" title="Permanent link">&para;</a></h2>
 <p>בדומה ל-timerfd, אפשר להפוך סיגנלים לfd-ים עם <code>signalfd</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;sys/signalfd.h&gt;</span>
@@ -3343,7 +3339,6 @@
 <a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a><span class="n">event_loop_add_reader</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span><span class="w"> </span><span class="n">sfd</span><span class="p">,</span><span class="w"> </span><span class="n">on_signal</span><span class="p">,</span><span class="w"> </span><span class="n">loop</span><span class="p">);</span>
 </code></pre></div>
 <p>עכשיו Ctrl+C לא הורג את התוכנית ישר, אלא עובר דרך event loop ומאפשר כיבוי מסודר (graceful shutdown).</p>
-<hr />
 <h2 id="event-loop-stdin">דוגמה שלמה: event loop עם טיימר, סיגנלים, ו-stdin<a class="headerlink" href="#event-loop-stdin" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdlib.h&gt;</span>
@@ -3425,7 +3420,6 @@
 <a id="__codelineno-5-78" name="__codelineno-5-78" href="#__codelineno-5-78"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 <a id="__codelineno-5-79" name="__codelineno-5-79" href="#__codelineno-5-79"></a><span class="p">}</span>
 </code></pre></div>
-<hr />
 <h2 id="-callbacks-vs-state-machines">קולבקים מול מכונת מצבים - callbacks vs state machines<a class="headerlink" href="#-callbacks-vs-state-machines" title="Permanent link">&para;</a></h2>
 <h3 id="callbacks">בעיית הcallbacks<a class="headerlink" href="#callbacks" title="Permanent link">&para;</a></h3>
 <p>כשיש פרוטוקול מורכב (למשל HTTP), הלוגיקה מתפצלת בין הרבה callbacks, וקשה לעקוב אחרי הזרימה. זה מה שמכנים "callback hell":</p>
@@ -3503,7 +3497,6 @@
 </code></pre></div>
 <p><img alt="תרשים זרימה מונפש של מכונת מצבים לחיבור בלולאת אירועים, שעוברת ממצב קריאה לעיבוד ואז לכתיבה וחוזרת לקרוא את הבקשה הבאה" src="../../../../images/illustrations/core-12-4-connection-state-machine.svg" /></p>
 <p>מכונת מצבים יותר ברורה כשיש פרוטוקול עם שלבים מוגדרים.</p>
-<hr />
 <h2 id="-coroutines-and-asyncawait">קורוטינות ותכנות אסינכרוני - coroutines and async/await<a class="headerlink" href="#-coroutines-and-asyncawait" title="Permanent link">&para;</a></h2>
 <h3 id="_5">הבעיה<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
 <p>גם callbacks וגם מכונות מצבים מסרבלים: הלוגיקה שבקוד סינכרוני (רגיל) היא שורה אחרי שורה, אבל בקוד אסינכרוני היא מפוצלת.</p>
@@ -3533,7 +3526,6 @@
 - <strong>async/await ב-Python</strong> (asyncio) - coroutines שרצות על event loop.<br />
 - <strong>async/await ב-Rust</strong> - coroutines שמתקמפלות למכונת מצבים.<br />
 - <strong>async/await ב-JavaScript</strong> (Node.js) - coroutines מעל libuv event loop.</p>
-<hr />
 <h2 id="http-event-loop">שרת HTTP פשוט עם event loop<a class="headerlink" href="#http-event-loop" title="Permanent link">&para;</a></h2>
 <p>בואו נבנה שרת HTTP מינימלי שמשתמש ב-event loop שלנו:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
@@ -3710,7 +3702,6 @@
 <a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>curl<span class="w"> </span>http://localhost:8080
 </code></pre></div></p>
 <p>שימו לב: שרת אחד, thread אחד, אפס mutex-ים, ומטפל בהרבה לקוחות במקביל. זו העוצמה של event loop.</p>
-<hr />
 <h2 id="_6">סיכום<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -3774,7 +3765,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 08:33:06 UTC">2026-07-20 08:33:06</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

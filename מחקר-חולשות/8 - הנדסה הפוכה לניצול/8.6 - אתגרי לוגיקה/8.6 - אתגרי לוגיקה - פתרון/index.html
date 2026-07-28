@@ -3254,7 +3254,6 @@
 <p>לכל דמו נכין קובץ <code>flag</code> מקומי כדי לראות שהexploit עובד:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;FLAG{demo}&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>flag
 </code></pre></div>
-<hr />
 <h3 id="1-simple-login">פתרון תרגיל 1 - simple login<a class="headerlink" href="#1-simple-login" title="Permanent link">&para;</a></h3>
 <h4 id="_1">הבינארי לדוגמה<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h4>
 <p>הדמו משחזר את הדפוס: קלט שמפוענח מ-base64 ומועתק ב-<code>memcpy</code> לbuffer קטן, עם פונקציית <code>correct</code> שלא נקראת בזרימה הרגילה. מפענח ה-base64 כלול כדי שהכל יהיה עצמאי:</p>
@@ -3338,7 +3337,6 @@
 <h4 id="_2">מיפוי לאתגר האמיתי<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h4>
 <p>מתחברים ל-<code>ssh simple_login@pwnable.kr -p2222</code>, קוראים את המקור, ומזהים את שלושת הפרטים: (1) גודל הbuffer ומיקומו, כדי לחשב את ה-offset עד הreturn address; (2) הכתובת של פונקציית ההצלחה, עם <code>nm</code>/<code>objdump -d</code>/<code>elf.symbols</code>; (3) העובדה שהקלט מפוענח מ-base64. אז בונים <code>base64(b'A'*offset + p32(correct_addr))</code> ושולחים. אם ה-offset או הכתובת שונים בגרסה שלכם, רק המספרים משתנים - הטכניקה זהה.</p>
 <p><strong>למה זה עבד</strong>: <code>memcpy</code> מעתיק בתים גולמיים לפי אורך שנשלט על ידינו, בלי בדיקת גבולות ובלי לעצור על null. בינארי 32 ביט לא-PIE ובלי canary הופך את זה ל-<code>ret2win</code> פשוט דרך שכבת base64. <strong>איך להכליל</strong>: כל פעם שקלט מפוענח או מועתק לbuffer באורך שאתם קובעים, שאלו עד לאן הוא מגיע ומה יש שם. אם אין canary ואין PIE - הreturn address שלכם.</p>
-<hr />
 <h3 id="2-otp">פתרון תרגיל 2 - otp<a class="headerlink" href="#2-otp" title="Permanent link">&para;</a></h3>
 <h4 id="_3">הבינארי לדוגמה<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h4>
 <p>הדמו משחזר את הזרימה של otp: ערך אקראי נכתב לקובץ, נקרא בחזרה ל-<code>passcode</code>, ומושווה לארגומנט:</p>
@@ -3420,7 +3418,6 @@
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="n">os</span><span class="o">.</span><span class="n">execv</span><span class="p">(</span><span class="s1">&#39;/home/otp/otp&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;otp&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">])</span>
 </code></pre></div>
 <p><strong>למה זה עבד</strong>: <code>passcode</code> תלוי לגמרי בהצלחת מסלול הכתיבה-קריאה של הקובץ. הכשלנו את הכתיבה מבחוץ, בלי לגעת בבינארי, וניצלנו את ערך האתחול <code>0</code>. <strong>איך להכליל</strong>: כשתוכנית מסתמכת על קובץ, על משתנה סביבה או על משאב חיצוני, שאלו מה קורה כשהמשאב נכשל או ריק. ערכי אתחול (<code>0</code>, מחרוזת ריקה, <code>NULL</code>) הם לעיתים קרובות המפתח. מגבלות משאב (<code>ulimit</code>) ואותות הן כלים לגיטימיים לשלוט בהתנהגות תהליך מבחוץ.</p>
-<hr />
 <h3 id="3-md5-calculator">פתרון תרגיל 3 - md5 calculator<a class="headerlink" href="#3-md5-calculator" title="Permanent link">&para;</a></h3>
 <p>זה הפתרון הגדול, כי כאן יש גם overflow וגם canary. נבנה שירות מזלג (<code>fork</code>) עם canary, ננחש את הcanary בית-בית, ואז נגלוש אל פונקציית ההצלחה.</p>
 <h4 id="_5">הבינארי לדוגמה<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h4>
@@ -3556,7 +3553,6 @@
 <h4 id="_6">מיפוי לאתגר האמיתי<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h4>
 <p>מתחברים ל-<code>ssh md5calculator@pwnable.kr -p2222</code>, מריצים <code>checksec</code> (יש canary), קוראים את המקור, ומזהים את הbuffer שאליו מפענחים. אם השירות מזלג - ננחש את הcanary; אם הוא מדליף - נדלוף אותו. אחרי שיש canary, בונים <code>base64(padding + canary + saved_rbp + כתובת_יעד)</code>. הכתובת יעד היא פונקציית ההצלחה של האתגר, או <code>system("/bin/sh")</code> דרך גאדג'ט אם צריך.</p>
 <p><strong>למה זה עבד</strong>: הcanary מגן רק כל עוד אנחנו לא יודעים את ערכו. <code>fork</code> שומר canary קבוע ומאפשר ניחוש בית-בית; leak נותנת אותו ישירות. ברגע שיש canary, overflow עם canary היא בדיוק כמו overflow בלי canary. <strong>איך להכליל</strong>: <code>checksec</code> ראשון. אם יש canary, השאלה הראשונה היא "איך אני משיג אותו" - <code>fork</code> (ניחוש) או leak. אין דרך שלישית קסומה; אם אין אף אחת מהשתיים, מחפשים פרימיטיב אחר (כתיבה שרירותית, למשל).</p>
-<hr />
 <h3 id="4-blukat">פתרון תרגיל 4 - blukat<a class="headerlink" href="#4-blukat" title="Permanent link">&para;</a></h3>
 <h4 id="_7">הבינארי לדוגמה<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h4>
 <p>הדמו קורא סיסמה מקובץ, ואם הקלט תואם - מפענח את הדגל ב-XOR עם מפתח שמוטמע בבינארי:</p>
@@ -3626,7 +3622,6 @@
 <h4 id="_8">מיפוי לאתגר האמיתי<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h4>
 <p>מתחברים ל-<code>ssh blukat@pwnable.kr -p2222</code>, מריצים <code>ls -l</code> על קובץ הסיסמה, ובודקים אם אפשר לקרוא אותו. אם כן - <code>cat</code> אותו (שימו לב ל-newline עם <code>xxd</code>) והזינו. אם לא - <code>strings ./blukat</code> ו-<code>objdump -s -j .data ./blukat</code> כדי למצוא את המפתח ואת הטקסט המוצפן, ו-XOR בפייתון. לרוב אחת משתי הדרכים תעבוד.</p>
 <p><strong>למה זה עבד</strong>: המידע שהיינו צריכים לא היה באמת מוגן - קובץ קריא, או מפתח וטקסט מוצפן שמוטמעים בבינארי בגלוי. <strong>איך להכליל</strong>: לפני exploit מתוחכם, שאלו את השאלה הזולה - האם מה שאני צריך בכלל מוסתר כמו שצריך? הרשאות קבצים, מפתחות מוטמעים, וערכים מקודדים ב-XOR הם "חולשות" קלות שכדאי לבדוק ראשונות. XOR עם מפתח קבוע הוא לא הצפנה, הוא קידוד - וקידוד תמיד הפיך.</p>
-<hr />
 <h3 id="5-">פתרון תרגיל 5 - סיכום הדפוסים<a class="headerlink" href="#5-" title="Permanent link">&para;</a></h3>
 <p>הנה הטבלה שהתבקשתם למלא, כתשובה מלאה:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>+-------------------+--------------------------------+------------------------------+
@@ -3659,7 +3654,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

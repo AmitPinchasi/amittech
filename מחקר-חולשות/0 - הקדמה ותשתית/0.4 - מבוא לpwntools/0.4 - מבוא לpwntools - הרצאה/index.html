@@ -2929,7 +2929,6 @@
 
 <p>עד עכשיו עבדנו הרבה עם GDB, objdump וקצת פייתון גולמי כדי לדבר עם תוכניות. זה עובד, אבל זה מסורבל: לבנות payload ידני עם escape של בתים, לחשב offset-ים במחשבון, ולהעביר הכל דרך pipe זה כאב ראש. בשביל זה קיימת הספרייה pwntools - ארגז הכלים הסטנדרטי של כל חוקר חולשות. היא תלווה אותנו לאורך כל הקורס, מהאתגר הראשון ב-pwnable.kr ועד לexploit heap מודרני. בהרצאה הזו נכיר את החלקים שנשתמש בהם כל יום, ונסיים עם תבנית exploit מלאה שתשרת אתכם שוב ושוב.</p>
 <p>הרעיון המרכזי: pwntools לא עושה במקומכם את העבודה החכמה (מציאת החולשה, בניית ROP chain) - היא מוחקת את כל העבודה המשעממת סביבה. אתם חושבים על ההתקפה, היא מטפלת בבתים.</p>
-<hr />
 <h2 id="-installation">התקנה וייבוא - installation<a class="headerlink" href="#-installation" title="Permanent link">&para;</a></h2>
 <p>ההתקנה פשוטה, דרך pip:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pwntools
@@ -2938,7 +2937,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pwn</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
 </code></pre></div>
 <p>השורה הזו מייבאת את הכל: את <code>process</code>, <code>remote</code>, <code>p64</code>, <code>cyclic</code>, <code>ELF</code>, <code>ROP</code>, <code>asm</code>, <code>context</code> ועוד עשרות שמות ישר ל-namespace. זה נחשב לפרקטיקה טובה בעולם ה-exploit-ים (בניגוד לקוד ייצור רגיל) כי אנחנו רוצים סקריפט קצר וקריא.</p>
-<hr />
 <h2 id="-context">ההקשר הגלובלי - context<a class="headerlink" href="#-context" title="Permanent link">&para;</a></h2>
 <p>לפני שנוגעים בבינארי, מגדירים את ההקשר. האובייקט <code>context</code> הוא הגדרה גלובלית שאומרת ל-pwntools על איזו ארכיטקטורה אנחנו עובדים, ואיך להתנהג. זה קריטי: הפונקציה <code>p64</code> יודעת לארוז 8 בתים כי היא מכבדת את ה-context, ו-<code>asm</code> יודעת להרכיב קוד x86-64 מאותה סיבה.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">context</span><span class="o">.</span><span class="n">arch</span> <span class="o">=</span> <span class="s1">&#39;amd64&#39;</span>        <span class="c1"># or &#39;i386&#39; for 32-bit, &#39;arm&#39;, &#39;aarch64&#39;, &#39;mips&#39;</span>
@@ -2951,7 +2949,6 @@
 </code></pre></div>
 <p>השורה הזו טוענת את ה-ELF, ומגדירה אוטומטית את <code>context.arch</code>, <code>context.bits</code> ו-<code>context.os</code> לפי הכותרת של הקובץ. אחרי זה כבר לא צריך לדאוג אם זה 32 או 64 ביט - pwntools יודעת.</p>
 <p>הטיפ הכי שימושי בהרצאה הזו: כשמשהו לא עובד, הריצו <code>context.log_level = 'debug'</code>. פתאום תראו hexdump מלא של כל בית שנשלח וכל בית שהתקבל. רוב הבאגים ב-exploit מתגלים ברגע הזה.</p>
-<hr />
 <h2 id="-tubes">צינורות - tubes<a class="headerlink" href="#-tubes" title="Permanent link">&para;</a></h2>
 <p>צינור (tube) הוא הפשטה של תעבורה דו-כיוונית: משהו שאפשר לשלוח אליו בתים ולקרוא ממנו בתים. שני הצינורות שנשתמש בהם כל הזמן הם תהליך מקומי ותהליך מרוחק, ושניהם חולקים בדיוק את אותו ממשק. זה הקסם: אותו קוד exploit עובד גם על הבינארי שעל הדיסק שלכם וגם על השרת של pwnable.kr, ורק שורה אחת משתנה.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">io</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./chall&#39;</span><span class="p">)</span>            <span class="c1"># runs a local binary</span>
@@ -2980,7 +2977,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">io</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
 </code></pre></div>
 <p>מרגע זה הקלדות שלכם עוברות ישר לתהליך, והפלט שלו חוזר אליכם. כאן אתם מקלידים <code>cat flag</code>, <code>id</code>, <code>ls</code> ומקבלים את הדגל.</p>
-<hr />
 <h2 id="-packing">אריזה ופריקה - packing<a class="headerlink" href="#-packing" title="Permanent link">&para;</a></h2>
 <p>הexploit חולשות זה בסופו של דבר לכתוב כתובות לזיכרון. כתובת כמו <code>0x401156</code> צריכה להיכתב בזיכרון בסדר little-endian, כלומר הבית הנמוך ראשון. לעשות את זה ביד זה מקור נפוץ לבאגים, אז pwntools נותנת פונקציות:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">p64</span><span class="p">(</span><span class="mh">0x401156</span><span class="p">)</span>     <span class="c1"># -&gt; b&#39;\x56\x11\x40\x00\x00\x00\x00\x00&#39;   (8 bytes)</span>
@@ -3009,7 +3005,6 @@
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="p">})</span>
 </code></pre></div>
 <p>זו בדיוק צורת הכתיבה שנשתמש בה ל-ret2win: "מלא זבל עד 72, ואז כתובת".</p>
-<hr />
 <h2 id="-elf">אובייקט הבינארי - ELF<a class="headerlink" href="#-elf" title="Permanent link">&para;</a></h2>
 <p>האובייקט <code>ELF</code> הוא מטמון של כל המידע על הקובץ הבינארי: הסמלים, טבלאות ה-GOT וה-PLT, המקטעים, והכתובות של הכל. במקום להריץ <code>objdump</code> ולהעתיק כתובות ביד, pwntools קוראת אותן בשבילנו:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">exe</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./chall&#39;</span><span class="p">)</span>
@@ -3028,7 +3023,6 @@
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">target</span> <span class="o">=</span> <span class="n">exe</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s1">&#39;win&#39;</span><span class="p">]</span>   <span class="c1"># now this is already the real address in memory</span>
 </code></pre></div>
 <p>בדיוק אותו רעיון עובד עם libc: טוענים <code>libc = ELF('./libc.so.6')</code>, מדליפים כתובת של פונקציה אחת, מציבים <code>libc.address = leak - libc.sym['puts']</code>, ואז <code>libc.sym['system']</code> ו-<code>next(libc.search(b'/bin/sh'))</code> נותנים לנו את היעדים ל-ret2libc. נחזור לזה לעומק בפרק על עקיפת NX.</p>
-<hr />
 <h2 id="-offset-cyclic">מציאת ה-offset עם cyclic<a class="headerlink" href="#-offset-cyclic" title="Permanent link">&para;</a></h2>
 <p>כדי לשלוט בהreturn address צריך לדעת בדיוק כמה בתים מפרידים בין תחילת הbuffer לבין ה-return address. אפשר לספור ביד, אבל זה שביר. הטריק המקצועי הוא רצף דה-ברוין (De Bruijn): מחרוזת שבה כל תת-רצף באורך קבוע מופיע בדיוק פעם אחת. לכן, אם נראה איזה 4 בתים דרסו את ה-RIP, נדע במדויק מאיזה offset הם הגיעו.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">cyclic</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>              <span class="c1"># -&gt; b&#39;aaaabaaacaaadaaa...&#39; of length 200</span>
@@ -3053,7 +3047,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>pwn<span class="w"> </span>cyclic<span class="w"> </span><span class="m">200</span><span class="w">          </span><span class="c1"># prints the sequence</span>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>pwn<span class="w"> </span>cyclic<span class="w"> </span>-l<span class="w"> </span>0x6161616b<span class="w">  </span><span class="c1"># returns the offset</span>
 </code></pre></div>
-<hr />
 <h2 id="-rop">אובייקט ה-ROP<a class="headerlink" href="#-rop" title="Permanent link">&para;</a></h2>
 <p>כשנגיע לפרק ה-ROP נבנה שרשראות של גאדג'טים ביד, אבל pwntools יודעת לעשות הרבה מזה בשבילנו. האובייקט <code>ROP</code> מקבל ELF, סורק אותו לגאדג'טים, ומאפשר לבנות chain בצורה מוצהרת:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="n">rop</span> <span class="o">=</span> <span class="n">ROP</span><span class="p">(</span><span class="n">exe</span><span class="p">)</span>
@@ -3067,7 +3060,6 @@
 <a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="n">payload</span> <span class="o">=</span> <span class="n">rop</span><span class="o">.</span><span class="n">chain</span><span class="p">()</span>   <span class="c1"># returns the chain as ready bytes</span>
 </code></pre></div>
 <p>יש גם קסם תחבירי: <code>rop.rdi = 0x1234</code> יגרום ל-pwntools למצוא גאדג'ט <code>pop rdi</code> ולהכניס את הערך, ו-<code>rop.win()</code> יבנה קריאה לפונקציה <code>win</code>. בהתחלה נעדיף לבנות ידני כדי להבין מה קורה, ורק אחר כך ניתן ל-pwntools לקצר לנו את הדרך.</p>
-<hr />
 <h2 id="-shellcode-asm-shellcraft">הרכבה ו-shellcode עם asm ו-shellcraft<a class="headerlink" href="#-shellcode-asm-shellcraft" title="Permanent link">&para;</a></h2>
 <p>כשנרצה להזריק shellcode (בפרק על shellcode) נצטרך קוד מכונה. במקום לכתוב בתים ביד, <code>asm</code> מרכיבה אסמבלי, ו-<code>shellcraft</code> מייצרת shellcode מוכן:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="n">context</span><span class="o">.</span><span class="n">arch</span> <span class="o">=</span> <span class="s1">&#39;amd64&#39;</span>
@@ -3084,7 +3076,6 @@
 <a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>pwn<span class="w"> </span>disasm<span class="w"> </span><span class="s1">&#39;b801000000&#39;</span><span class="w">              </span><span class="c1"># disassembles bytes into assembly</span>
 </code></pre></div>
 <p>זכרו: shellcode על המחסנית עובד רק כש-NX כבוי. אם NX פעיל (וזה כמעט תמיד המצב היום), נצטרך ROP. נדבר על זה בהרחבה בהמשך.</p>
-<hr />
 <h2 id="gdb">ניפוי באגים עם GDB<a class="headerlink" href="#gdb" title="Permanent link">&para;</a></h2>
 <p>היכולת לצרף מנפה לתהליך שאנחנו תוקפים היא אולי הכלי הכי חשוב לפיתוח exploit. ל-pwntools יש שתי דרכים.</p>
 <p>הדרך הראשונה, <code>gdb.attach</code>, מצרפת GDB לתהליך שכבר רץ:</p>
@@ -3105,7 +3096,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="n">context</span><span class="o">.</span><span class="n">terminal</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;tmux&#39;</span><span class="p">,</span> <span class="s1">&#39;splitw&#39;</span><span class="p">,</span> <span class="s1">&#39;-h&#39;</span><span class="p">]</span>   <span class="c1"># GDB window on the right side</span>
 </code></pre></div>
 <p>טיפ לבינארי PIE: אי אפשר לדעת מראש כתובות מוחלטות, אז ב-pwndbg משתמשים ב-<code>b *win</code> (לפי שם) או ב-<code>breakrva 0x1156</code> שמוסיף את הבסיס האקראי אוטומטית.</p>
-<hr />
 <h2 id="exploit">תבנית exploit לשימוש חוזר<a class="headerlink" href="#exploit" title="Permanent link">&para;</a></h2>
 <p>עכשיו נחבר את הכל. זו התבנית שנשתמש בה כמעט בכל אתגר בקורס. שמרו אותה, היא תחסוך לכם המון זמן:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="ch">#!/usr/bin/env python3</span>
@@ -3148,7 +3138,6 @@
 <a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>python3<span class="w"> </span>exp.py<span class="w"> </span>REMOTE<span class="w">   </span><span class="c1"># against the real server, when everything works</span>
 </code></pre></div>
 <p>זרימת העבודה שנחזור עליה שוב ושוב: קודם <code>python3 exp.py</code> כדי שהקריסה תעבוד מקומית, אחר כך <code>python3 exp.py GDB</code> כדי לראות מקרוב מה קורה ב-RSP וב-RIP, ורק כשהכל מושלם - <code>python3 exp.py REMOTE</code> כדי לתפוס את הדגל.</p>
-<hr />
 <h2 id="pwn">כלי שורת הפקודה של pwn<a class="headerlink" href="#pwn" title="Permanent link">&para;</a></h2>
 <p>מעבר לספרייה, ההתקנה מביאה איתה כלי שורת פקודה שימושיים. שווה להכיר:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>pwn<span class="w"> </span>checksec<span class="w"> </span>./chall<span class="w">           </span><span class="c1"># shows NX / PIE / Canary / RELRO</span>
@@ -3158,7 +3147,6 @@
 <a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>pwn<span class="w"> </span>disasm<span class="w"> </span><span class="s1">&#39;b801000000&#39;</span><span class="w">        </span><span class="c1"># disassembles bytes into assembly</span>
 </code></pre></div>
 <p>הפקודה <code>pwn template</code> יוצרת שלד דומה מאוד לתבנית שראינו למעלה, כולל פונקציית <code>start</code>. דרך מצוינת להתחיל אתגר חדש.</p>
-<hr />
 <h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>בהרצאה הזו הכרנו את ארגז הכלים שילווה אותנו לאורך כל הקורס:</p>
 <ul>
@@ -3195,7 +3183,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:14:39 UTC">2026-07-20 09:14:39</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

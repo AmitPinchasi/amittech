@@ -3746,7 +3746,6 @@
 <h2 id="_1">הקדמה<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>לינוקס תומך בעשרות סוגים של מערכות קבצים: ext4, xfs, btrfs, ntfs, fat32, nfs, ועוד. בנוסף, יש מערכות קבצים וירטואליות כמו procfs (שלמדנו עליה ב-5.9), sysfs, tmpfs, ו-devtmpfs. כל אחת מהן עובדת אחרת מבפנים, ובכל זאת - מנקודת מבט של המשתמש, כולן נראות אותו דבר. אתם עושים <code>open</code>, <code>read</code>, <code>write</code>, <code>close</code> - ולא אכפת לכם אם הקובץ יושב על ext4 או על nfs.</p>
 <p>איך זה עובד? התשובה היא VFS - ה-Virtual File System. זו שכבת הפשטה (abstraction layer) בתוך הקרנל שמספקת interface אחיד לכל מערכות הקבצים. היא מה שהופך את הפילוסופיה של "הכל הוא קובץ" ממשפט נחמד למציאות טכנית.</p>
-<hr />
 <h2 id="vfs">ארבעת האובייקטים המרכזיים של VFS<a class="headerlink" href="#vfs" title="Permanent link">&para;</a></h2>
 <p>ה-VFS מגדיר ארבעה מבנים (structs) מרכזיים. ביחד, הם מייצגים את כל מה שקשור לקבצים ומערכות קבצים:</p>
 <h3 id="superblock-">superblock - גוש-על<a class="headerlink" href="#superblock-" title="Permanent link">&para;</a></h3>
@@ -3819,7 +3818,6 @@
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="p">};</span>
 </code></pre></div>
 <p>השדה הכי חשוב כאן הוא <strong>f_op</strong> - מצביע ל-file_operations. בואו נעמיק בזה.</p>
-<hr />
 <h2 id="file_operations-vfs">file_operations - הלב של VFS<a class="headerlink" href="#file_operations-vfs" title="Permanent link">&para;</a></h2>
 <p>הstruct שנקרא <code>file_operations</code> הוא המפתח להבנת VFS. כל מערכת קבצים, כל driver, כל pseudo-filesystem ממלא struct כזה עם מצביעים לפונקציות שלו:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">file_operations</span><span class="w"> </span><span class="p">{</span>
@@ -3855,7 +3853,6 @@
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">};</span>
 </code></pre></div>
 <p>כשאתם עושים <code>cat /proc/meminfo</code>, הread שרץ הוא seq_read, שקורא ל-meminfo_proc_show שמייצר את התוכן דינמית ממצב הזכרון של הקרנל.</p>
-<hr />
 <h2 id="-pathname-resolution">פתרון נתיבים - pathname resolution<a class="headerlink" href="#-pathname-resolution" title="Permanent link">&para;</a></h2>
 <p>כשprocess קורא ל-<code>open("/home/user/file.txt", O_RDONLY)</code>, הקרנל צריך לפתור את הנתיב ולמצוא את ה-inode של הקובץ. התהליך הזה נקרא pathname resolution, וזה אחד הדברים שVFS עושה הכי הרבה.</p>
 <p>הנה הזרימה:</p>
@@ -3878,7 +3875,6 @@
 </ol>
 <p>בכל שלב, הקרנל בודק גם הרשאות - האם לprocess יש הרשאת execute (שפירושה "חיפוש" עבור תיקיות) על כל תיקייה בנתיב.</p>
 <p>ה-dcache הופך את התהליך הזה ליעיל מאוד. אחרי שנתיב נפתר פעם אחת, כל הrכיבים שלו נמצאים ב-dcache ופתרון חוזר הוא כמעט מיידי.</p>
-<hr />
 <h2 id="-page-cache">מטמון הדפים - page cache<a class="headerlink" href="#-page-cache" title="Permanent link">&para;</a></h2>
 <p>כשקוראים תוכן מקובץ, הוא לא נקרא ישירות מהדיסק אל הbuffer של הprocess. הנתונים עוברים דרך ה-page cache - הcache ברמת pages ש-VFS מנהל.</p>
 <h3 id="_2">איך זה עובד<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
@@ -3894,13 +3890,11 @@
 <p>אפשר לראות את מצב ה-page cache:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>cat<span class="w"> </span>/proc/meminfo<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;Cached|Buffers&quot;</span>
 </code></pre></div>
-<hr />
 <h2 id="-mount">התקנת מערכות קבצים - mount<a class="headerlink" href="#-mount" title="Permanent link">&para;</a></h2>
 <p>מערכת קבצים לא פשוט "קיימת" - צריך להתקין (mount) אותה לנקודה בעץ התיקיות. הפקודה <code>mount</code> יוצרת קשר בין מערכת קבצים למיקום בעץ התיקיות.</p>
 <p>כשהקרנל פותר נתיב ומגיע לנקודת mount, הוא "קופץ" ממערכת קבצים אחת לאחרת. למשל, אם <code>/proc</code> מותקן כ-procfs, אז כשפותרים את הנתיב <code>/proc/cpuinfo</code>, הקרנל מגיע ל-<code>/proc</code>, מזהה שזו נקודת mount, ועובר ל-superblock של procfs.</p>
 <h3 id="mount-mount-namespaces">מרחבי שמות של mount - mount namespaces<a class="headerlink" href="#mount-mount-namespaces" title="Permanent link">&para;</a></h3>
 <p>בלינוקס מודרני, כל process (או קבוצת processes) יכול לראות עץ mount שונה. זה נקרא mount namespace. זה הבסיס לcontainers - כל container רואה מערכת קבצים שונה, עם מערכות קבצים שונות מותקנות בנקודות שונות.</p>
-<hr />
 <h2 id="_3">סוגי מערכות קבצים חשובים<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <p>בלינוקס יש הרבה מערכות קבצים. הנה החשובות ביותר:</p>
 <h3 id="ext4">ext4<a class="headerlink" href="#ext4" title="Permanent link">&para;</a></h3>
@@ -3913,7 +3907,6 @@
 <p>מערכת קבצים שחיה בRAM (ובswap). משמשת עבור <code>/tmp</code>, <code>/dev/shm</code>, ולפעמים <code>/run</code>. מאוד מהירה כי אין גישה לדיסק, אבל הנתונים נמחקים באתחול מחדש.</p>
 <h3 id="devtmpfs">devtmpfs<a class="headerlink" href="#devtmpfs" title="Permanent link">&para;</a></h3>
 <p>מותקנת ב-<code>/dev</code>. מכילה את קבצי ההתקנים (device files) - character devices ו-block devices. כשאתם ניגשים ל-<code>/dev/sda</code> או <code>/dev/null</code>, אתם ניגשים לקבצי התקן שה-VFS מנתב אותם לדרייבר המתאים דרך file_operations ייעודיים.</p>
-<hr />
 <h2 id="_4">לראות את כל מערכות הקבצים<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>אפשר לראות אילו סוגי מערכות קבצים הקרנל תומך בהם:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>cat<span class="w"> </span>/proc/filesystems
@@ -3923,7 +3916,6 @@
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="c1"># or in a more readable form:</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>findmnt
 </code></pre></div>
-<hr />
 <h2 id="_5">סיכום<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <p>ה-VFS הוא שכבת ההפשטה שמאחדת את כל מערכות הקבצים בלינוקס תחת interface אחד. ראינו את ארבעת המבנים המרכזיים:</p>
 <ul>
@@ -3954,7 +3946,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 08:33:06 UTC">2026-07-20 08:33:06</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

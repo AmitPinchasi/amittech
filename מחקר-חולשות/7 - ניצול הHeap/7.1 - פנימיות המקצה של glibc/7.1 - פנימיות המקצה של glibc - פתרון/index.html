@@ -2791,7 +2791,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>gcc<span class="w"> </span>heap_lab.c<span class="w"> </span>-o<span class="w"> </span>heap_lab<span class="w"> </span>-no-pie
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>gdb<span class="w"> </span>./heap_lab
 </code></pre></div>
-<hr />
 <h3 id="1-">פתרון תרגיל 1 - צילום הערמה אחרי הקצאה<a class="headerlink" href="#1-" title="Permanent link">&para;</a></h3>
 <p>שמנו breakpoint על <code>puts</code> והרצנו עד ה"allocated":</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pwndbg&gt; break puts
@@ -2826,7 +2825,6 @@
 <li>הגודל של <code>big</code> הוא <code>0x511</code> ולא <code>0x510</code> - כי הביט התחתון הוא PREV_INUSE שדלוק. הגודל האמיתי הוא <code>0x511 &amp; ~0x7 = 0x510</code>, כמו שחישבנו: <code>malloc(0x500)</code> -&gt; <code>(0x500 + 8 + 15) &amp; ~15 = 0x510</code>.</li>
 </ul>
 <p><strong>התשובה לשאלה בכתב</strong>: <code>malloc(0x18)</code> תפס <code>0x20</code> בתים (32), לא <code>0x18</code> (24). הסיבה כפולה: המקצה מוסיף 8 בתים לשדה ה-<code>size</code>, ומיישר את התוצאה ל-16 בתים. <code>(0x18 + 8 + 15) &amp; ~15 = 0x20</code>. שימו לב שדווקא כאן 0x18 בתי משתמש כן נכנסים ב-0x20, כי אפשר "לשאול" את 8 הבתים של <code>prev_size</code> מהנתח הבא כל עוד הנתח הנוכחי בשימוש.</p>
-<hr />
 <h3 id="2-tcache-fastbin">פתרון תרגיל 2 - מילוי ה-tcache וזליגה ל-fastbin<a class="headerlink" href="#2-tcache-fastbin" title="Permanent link">&para;</a></h3>
 <p>המשכנו עד אחרי כל ה-free-ים:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pwndbg&gt; continue        # stops at puts(&quot;freed&quot;)
@@ -2851,7 +2849,6 @@
 </code></pre></div>
 <p><strong>הערה על safe-linking (glibc 2.32+)</strong>: אם אתם על גרסה 2.32 ומעלה, ה-<code>fd</code> שתראו לא יהיה כתובת "נקייה" אלא ערך מעורבל: <code>fd_real ^ (chunk_addr &gt;&gt; 12)</code>. pwndbg כבר יודע לפענח את זה ב-<code>bins</code>, ולכן שם תראו כתובות רגילות. אם תסתכלו על הבתים הגולמיים בזיכרון (<code>x/2gx</code>), תראו את הערך המעורבל. אל תיבהלו - זו הגנה, ונלמד לעקוף אותה בשיעור על tcache poisoning.</p>
 <p><strong>התשובה לשאלה בכתב</strong>: בראש ה-tcache יושב <code>chunks[6]</code> (האחרון שנכנס ל-tcache), ובראש ה-fastbin יושב <code>chunks[8]</code> (האחרון ששוחרר בכלל). הסיבה: שתי הרשימות הן LIFO, וה-tcache התמלא אחרי 7 שחרורים, כך שהשחרורים ה-8 וה-9 גלשו ל-fastbin.</p>
-<hr />
 <h3 id="3-unsorted-bin-leak-libc">פתרון תרגיל 3 - ה-unsorted bin וleak libc<a class="headerlink" href="#3-unsorted-bin-leak-libc" title="Permanent link">&para;</a></h3>
 <p>באותה נקודה, בפלט של <code>bins</code>, נמצא גם את השורה של ה-unsorted bin:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>unsortedbin
@@ -2871,7 +2868,6 @@
 </code></pre></div>
 <p>אכן, הכתובת יושבת בתוך המיפוי של <code>libc.so.6</code>.</p>
 <p><strong>התשובה לשאלה בכתב</strong>: לו יכולנו לקרוא את 8 הבתים של ה-<code>fd</code> (למשל דרך use-after-free שמדפיס נתח משוחרר), היינו מקבלים כתובת קבועה בתוך libc - <code>main_arena+96</code>. ה-offset של <code>main_arena</code> מתחילת libc קבוע לכל גרסת glibc נתונה, ולכן: <code>libc_base = leaked - offset_of(main_arena+96)</code>. ברגע שיש לנו <code>libc_base</code>, כל פונקציה בו (למשל <code>system</code>) בכתובת ידועה, וה-ASLR של libc נשבר לגמרי. זו טכניקת leak קלאסית ב-heap.</p>
-<hr />
 <h3 id="4-top-chunk">פתרון תרגיל 4 (אתגר) - איחוד לתוך ה-top chunk<a class="headerlink" href="#4-top-chunk" title="Permanent link">&para;</a></h3>
 <p>הסרנו את שורת ה-<code>guard</code>, הידרנו מחדש, והרצנו עד אחרי <code>free(big)</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>pwndbg&gt; bins
@@ -2888,7 +2884,6 @@
 </code></pre></div>
 <p>לפני השחרור ה-top התחיל אחרי <code>big</code>. עכשיו, בלי ה-<code>guard</code>, <code>big</code> היה הנתח האחרון לפני ה-top - כלומר גבל בו ישירות. כשמשחררים נתח שגובל ב-top chunk, glibc לא שמה אותו בפח אלא <strong>מאחדת</strong> אותו לתוך ה-top. הכתובת של ה-top ירדה אחורה עד תחילת <code>big</code>, והגודל שלו גדל ב-<code>0x510</code>.</p>
 <p><strong>התשובה לשאלה בכתב</strong>: השומר <code>guard</code> היה נחוץ כדי למנוע מ-<code>big</code> לגבול ישירות ב-top chunk. בלעדיו, <code>free(big)</code> פשוט מרחיב את ה-top במקום להכניס את <code>big</code> ל-unsorted bin, וכך לא היינו יכולים לצפות בו שם.</p>
-<hr />
 <h3 id="_1">איך להכליל<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>חוק אצבע ראשון</strong>: כדי לדחוף נתחים ל-fastbin או ל-unsorted bin, קודם צריך "לעקוף" את ה-tcache. או שממלאים אותו (7 נתחים), או שמשחררים נתח גדול ממנו (מעל <code>0x410</code>), או שמכבים אותו לגמרי עם <code>export GLIBC_TUNABLES=glibc.malloc.tcache_count=0</code>.</li>
@@ -2916,7 +2911,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

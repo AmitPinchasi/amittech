@@ -3453,12 +3453,10 @@
 <p>בפרק 4 למדנו על allocation זכרון דינמית עם <code>malloc</code> ו-<code>free</code>. למדנו שאפשר לבקש זכרון בזמן ריצה ולשחרר אותו כשסיימנו.<br />
 אבל מה קורה מאחורי הקלעים? איך הקרנל באמת מקצה זכרון לprocess?</p>
 <p>בפרק הזה נלמד על <code>mmap</code> - ה-syscall שנמצא מתחת לכל מנגנון הזכרון הדינמי. הוא חזק יותר, גמיש יותר, ומאפשר לנו לעשות דברים שmalloc לא יכול.</p>
-<hr />
 <h2 id="-mmap">מה זה מיפוי זכרון - mmap?<a class="headerlink" href="#-mmap" title="Permanent link">&para;</a></h2>
 <p>נחזור רגע לפרק 2 שבו למדנו על paging וזכרון וירטואלי. זוכרים את ה-page tables? כל process מקבל מרחב כתובות וירטואלי משלו, והקרנל מנהל טבלת pages שממפה כתובות וירטואליות לכתובות פיזיות.</p>
 <p>הsyscall שנקרא <code>mmap</code> (קיצור של memory map) מאפשר לנו ליצור ערכים חדשים בטבלת הpages של הprocess. בעצם, אנחנו אומרים לקרנל: "תקצה לי אזור חדש בזכרון הוירטואלי שלי".</p>
 <p>זה המנגנון הבסיסי ביותר שבו process מקבל זכרון ממערכת ההפעלה.</p>
-<hr />
 <h2 id="mmap">החתימה של mmap<a class="headerlink" href="#mmap" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;sys/mman.h&gt;</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
@@ -3497,7 +3495,6 @@
 </li>
 </ul>
 <p>ערך ההחזרה הוא פוינטר לתחילת האזור שמופה, או <code>MAP_FAILED</code> במקרה של שגיאה.</p>
-<hr />
 <h2 id="-map_anonymous">מיפוי אנונימי - MAP_ANONYMOUS<a class="headerlink" href="#-map_anonymous" title="Permanent link">&para;</a></h2>
 <p>הסוג הפשוט ביותר של mmap הוא מיפוי אנונימי - allocation זכרון ללא קובץ. בעצם אנחנו אומרים לקרנל "תן לי pages זכרון ריקים".</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">ptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mmap</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="mi">4096</span><span class="p">,</span><span class="w"> </span><span class="n">PROT_READ</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">PROT_WRITE</span><span class="p">,</span>
@@ -3534,7 +3531,6 @@
 <a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a><span class="p">}</span>
 </code></pre></div>
 <p>שימו לב שאנחנו משתמשים ב-<code>munmap</code> כדי לשחרר את הזכרון (במקום <code>free</code>). נדבר על זה עוד רגע.</p>
-<hr />
 <h2 id="-file-backed-mapping">מיפוי קבצים - File-backed Mapping<a class="headerlink" href="#-file-backed-mapping" title="Permanent link">&para;</a></h2>
 <p>כאן mmap מתחיל להיות באמת מעניין. במקום לקרוא קובץ עם <code>read()</code> לתוך buffer, אפשר פשוט למפות את הקובץ ישירות לזכרון. אחרי המיפוי, התוכן של הקובץ נגיש דרך פוינטר רגיל - כאילו הקובץ כבר נמצא בRAM.</p>
 <p>למה זה טוב?<br />
@@ -3589,7 +3585,6 @@
 <a id="__codelineno-3-45" name="__codelineno-3-45" href="#__codelineno-3-45"></a><span class="p">}</span>
 </code></pre></div>
 <p>שימו לב לפרט חשוב: אחרי שעשינו mmap, אנחנו יכולים לסגור את ה-file descriptor. המיפוי עצמו נשאר תקף עד שנקרא ל-<code>munmap</code>.</p>
-<hr />
 <h2 id="map_private-map_shared">MAP_PRIVATE מול MAP_SHARED<a class="headerlink" href="#map_private-map_shared" title="Permanent link">&para;</a></h2>
 <p>ההבדל בין שני הדגלים האלו הוא קריטי:</p>
 <p><strong>MAP_PRIVATE</strong> - כאשר אנחנו כותבים לאזור הממופה, הקרנל יוצר עותק פרטי של הדף (מנגנון שנקרא Copy-on-Write). השינויים נשארים רק אצלנו ולא נכתבים חזרה לקובץ.</p>
@@ -3636,7 +3631,6 @@
 </code></pre></div>
 <p>זוכרים מפרק 5.2 שfork יוצר עותק של הprocess? בדרך כלל הprocess הבן מקבל עותק של הזכרון של האב (Copy-on-Write). אבל אם השתמשנו ב-<code>MAP_SHARED</code>, האזור הזה באמת משותף בין שני הprocesses - גם האב וגם הבן ניגשים לאותם pages פיזיים.</p>
 <p><img alt="איור זכרון משותף עם mmap ו-MAP_SHARED לאחר fork: האב והבן ממופים לאותו דף פיזי, ולכן כשהאב כותב את הערך 42 לזכרון המשותף, הבן קורא את אותו הערך 42" src="../../../../images/illustrations/core-5-7-map-shared-fork.svg" /></p>
-<hr />
 <h2 id="-munmap">שחרור מיפוי - munmap<a class="headerlink" href="#-munmap" title="Permanent link">&para;</a></h2>
 <p>כמו שיש <code>free</code> ל-<code>malloc</code>, יש <code>munmap</code> ל-<code>mmap</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kt">int</span><span class="w"> </span><span class="nf">munmap</span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">addr</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">length</span><span class="p">);</span>
@@ -3646,7 +3640,6 @@
 <li><strong>length</strong> - הגודל שמיפינו.</li>
 </ul>
 <p>חשוב לזכור לקרוא ל-munmap כשסיימנו, אחרת יש לנו דליפת זכרון (memory leak), בדיוק כמו שקורה אם שוכחים <code>free</code>.</p>
-<hr />
 <h2 id="-mprotect">שינוי הרשאות זכרון - mprotect<a class="headerlink" href="#-mprotect" title="Permanent link">&para;</a></h2>
 <p>לפעמים נרצה לשנות את ההרשאות של אזור זכרון שכבר מופה. לדוגמה, נרצה להקצות זכרון ולכתוב אליו קוד מכונה, ואז לעשות אותו ניתן להרצה. בדיוק ככה עובדים מנועי JIT (Just-In-Time compilation).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;sys/mman.h&gt;</span>
@@ -3671,7 +3664,6 @@
 <a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="c1">// now the code in memory can be executed</span>
 </code></pre></div></p>
 <p>שימו לב - זה קשור ישירות לאבטחת מידע. היכולת לשנות הרשאות זכרון היא חרב פיפיות: היא מאפשרת מנועי JIT, אבל גם מאפשרת ל-exploits להריץ קוד זדוני. לכן מנגנוני אבטחה רבים (כמו NX bit ו-W^X) מגבילים את היכולת הזו.</p>
-<hr />
 <h2 id="mmap_1">למה mmap חשוב?<a class="headerlink" href="#mmap_1" title="Permanent link">&para;</a></h2>
 <p>הsyscall הזה הוא אחד הבסיסיים ביותר בלינוקס. הוא משמש לכל דבר:</p>
 <ol>
@@ -3691,7 +3683,6 @@
 <p><strong>זכרון משותף בין processes</strong> - mmap עם MAP_SHARED מאפשר לprocesses שונים לתקשר דרך זכרון משותף, שזה אחד המנגנונים המהירים ביותר ל-IPC (Inter-Process Communication).</p>
 </li>
 </ol>
-<hr />
 <h2 id="_2">סיכום<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>למדנו על mmap - ה-syscall שמאפשר לנו למפות זכרון לתוך מרחב הכתובות של הprocess. ראינו שיש שני סוגים עיקריים: מיפוי אנונימי (allocation זכרון נקי) ומיפוי קבצים (גישה לתוכן קובץ דרך פוינטר). למדנו על ההבדל בין MAP_PRIVATE ל-MAP_SHARED, ועל munmap ו-mprotect. והכי חשוב - הבנו ש-mmap הוא הבסיס לאיך שלינוקס מנהל זכרון, טוען תוכניות, ומשתף מידע בין processes.</p>
 
@@ -3714,7 +3705,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 08:33:06 UTC">2026-07-20 08:33:06</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

@@ -2735,7 +2735,6 @@
 
 <p>בשני השיעורים הקודמים נכנסנו לעולם kernel exploitation. ב-9.1 הבנו איך נראה מודול vulnerable, מה זה <code>task_struct</code>, ולמה באג בkernel שווה הרבה יותר מבאג ב-userspace - כי כאן אין הפרדת הרשאות מעלינו, אנחנו כבר הכי גבוה שאפשר. ב-9.2 בנינו את ההתקפה הקלאסית הראשונה, <code>ret2usr</code>: השתלטנו על זרימת הביצוע בkernel, קפצנו לפונקציה שכתבנו במרחב המשתמש שהריצה <code>commit_creds(prepare_kernel_cred(0))</code>, וחזרנו למשתמש עם shell של root. זה עבד יפה - על kernel בלי הגנות. בשיעור הזה נפגוש את המציאות: <code>KASLR</code>, <code>SMEP</code>, <code>SMAP</code>, ו-<code>KPTI</code>. כל אחת מהן שוברת חלק אחר מ-<code>ret2usr</code>, ולכל אחת יש עקיפה. ובסוף נלמד את מה שהופך לרוב לדרך הכי נקייה להשיג root בכלל - פרימיטיבים מבוססי-נתונים כמו דריסת <code>modprobe_path</code> ו-<code>core_pattern</code>, שלא צריכים אפילו ROP. זו הרצאה עמוסה, אבל אחריה תהיה לכם תמונה מלאה של איך נראה kernel exploitation מודרני.</p>
 <p>כל מה שנכתוב מתייחס ל-Linux על x86-64. ההנחות: אתם כבר יודעים אסמבלי, C, את המחסנית, ELF ו-GDB, ואתם מכירים את <code>commit_creds</code>/<code>prepare_kernel_cred</code> מהשיעור הקודם. כאן נבנה על זה.</p>
-<hr />
 <h2 id="-the-win-condition">מטרת המשחק - the win condition<a class="headerlink" href="#-the-win-condition" title="Permanent link">&para;</a></h2>
 <p>לפני שנדבר על הגנות, בואו נחדד מה בעצם אנחנו מנסים להשיג. בexploitation userspace המטרה כמעט תמיד <code>execve("/bin/sh")</code>. בkernel המטרה אחרת: אנחנו כבר רצים (חלקית) בהקשר הkernel, ומה שאנחנו רוצים זה <strong>להעלות את ההרשאות של התהליך שלנו</strong> ואז לחזור בשלום למרחב המשתמש כדי לנצל אותן.</p>
 <p>יש לזה שתי משפחות של פתרונות, וכדאי להחזיק את שתיהן בראש לאורך כל השיעור:</p>
@@ -2745,7 +2744,6 @@
 </ul>
 <p>עכשיו נבין את ההגנות, ואז נראה איך כל אחת מהמשפחות מתמודדת איתן.</p>
 <p><img alt="תרשים של שתי משפחות ההסלמה מכתיבה שרירותית בקרנל: הפקעה מבוססת קוד שעוקפת SMEP ו-SMAP ומריצה commit_creds(prepare_kernel_cred(0)), מול הפקעה מבוססת נתונים בלבד שדורסת modprobe_path בלי להריץ קוד בקרנל כלל - שתיהן מגיעות להרשאות root" src="../../../../images/illustrations/vuln-9-3-privesc-paths.svg" /></p>
-<hr />
 <h2 id="-cred-the-cred-struct">מבנה ה-cred והפקעת הרשאות - the cred struct<a class="headerlink" href="#-cred-the-cred-struct" title="Permanent link">&para;</a></h2>
 <p>כדי לדעת מה לדרוס, צריך להבין איפה יושבות ההרשאות. לכל תהליך יש <code>task_struct</code>, ובתוכו מצביע למבנה <code>cred</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">cred</span><span class="w"> </span><span class="p">{</span>
@@ -2774,7 +2772,6 @@
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>+-------------------+       +-----------------+
 </code></pre></div>
 <p>הדפוס של <code>comm</code> (שם התהליך, 16 בתים) שימושי מאוד: קוראים לתהליך שלנו בשם ייחודי כמו <code>"PWNPWNPWN"</code>, ואז אפשר לסרוק את הheap של הkernel, לחפש את המחרוזת, ומשם לחשב את הכתובת של <code>cred</code> הסמוך.</p>
-<hr />
 <h2 id="kaslr-defeating-kaslr">עקיפת KASLR - defeating KASLR<a class="headerlink" href="#kaslr-defeating-kaslr" title="Permanent link">&para;</a></h2>
 <p>המנגנון <code>KASLR</code> (Kernel Address Space Layout Randomization) הוא ה-ASLR של הkernel. בכל אתחול, בסיס הkernel מוגרל (הזזה בכפולות של 2MB בתוך טווח נתון), וכך גם בסיס המודולים. המשמעות: הכתובת של <code>commit_creds</code>, של <code>modprobe_path</code>, של הגאדג'טים - כולן זזות בכל boot. בלי לדעת את הבסיס, כל exploit מבוסס-כתובות מת.</p>
 <p>היתרון שלנו: כל הkernel זז ב<strong>אותה הזזה</strong> (kernel slide). מספיק <strong>לדלוף כתובת אחת</strong> של סמל ידוע, להחסיר את ה-offset הקבוע שלו, ולקבל את הבסיס. משם כל כתובת אחרת נגזרת. הנה הדרכים הנפוצות להשיג את הleak הזו:</p>
@@ -2800,7 +2797,6 @@
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">modprobe_path</span>       <span class="o">=</span> <span class="n">kernel_base</span> <span class="o">+</span> <span class="mi">0</span><span class="n">x</span><span class="o">...</span>     <span class="c1"># and so on</span>
 </code></pre></div>
 <p>בלי leak, KASLR הוא חומה. עם leak אחת, הוא נפרץ לגמרי. לכן החיפוש הראשון בכל אתגר kernel הוא: איפה מסתתרת leak הכתובת.</p>
-<hr />
 <h2 id="smep-smap-kerneluser-separation">הגנות SMEP ו-SMAP - kernel/user separation<a class="headerlink" href="#smep-smap-kerneluser-separation" title="Permanent link">&para;</a></h2>
 <p>עכשיו לשתי ההגנות ששוברות את <code>ret2usr</code> עצמו. שתיהן הן ביטים ב-<code>CR4</code>:</p>
 <ul>
@@ -2842,7 +2838,6 @@
 <p>הערך המדויק תלוי-מטרה: קוראים את ה-CR4 הנוכחי ומאפסים בו רק את ביטים 20/21. בכתבות CTF רואים לעיתים את הקבוע הקסום <code>0x6f0</code> (ערך שבו SMEP/SMAP כבר כבויים), אבל הנכון הוא לחשב מהערך האמיתי. אזהרה: מ-kernel 5.3 יש <strong>CR4 pinning</strong> - <code>native_write_cr4</code> מחזיר בכוח את ביטי ההגנה אם ננסה לכבות אותם, אז דרך הפונקציה זה לא יעבוד. גאדג'ט <code>mov cr4</code> גולמי עוקף את הנעילה כי הוא כותב ישירות בלי הבדיקה.</p>
 <h3 id="physmap-ret2dir">לחזור דרך physmap - ret2dir<a class="headerlink" href="#physmap-ret2dir" title="Permanent link">&para;</a></h3>
 <p>עקיפה אלגנטית ל-SMEP בלי לגעת ב-CR4 בכלל. הkernel ממפה את <strong>כל הזיכרון הפיזי</strong> לתוך אזור וירטואלי רציף שנקרא physmap (ה-direct map, בסביבות <code>0xffff888000000000</code>). המשמעות: כל עמוד user שהקצינו קיים גם כ<strong>כפיל בתוך ה-physmap</strong>, אבל שם הוא ממופה כעמוד <strong>supervisor</strong>. אם נמצא את הכתובת של הכפיל ב-physmap ונקפוץ אליה, SMEP מרוצה - מבחינתו זה קוד kernel, לא קוד user. כך "מבריחים" shellcode מ-userspace אל תוך מרחב שהkernel מותר להריץ. השם <code>ret2dir</code> בא מ-"return to direct-mapped memory". זו טכניקה חזקה כשאין מספיק גאדג'טים לkernel chain מלאה.</p>
-<hr />
 <h2 id="-the-kpti-trampoline">חזרה נקייה למשתמש - the KPTI trampoline<a class="headerlink" href="#-the-kpti-trampoline" title="Permanent link">&para;</a></h2>
 <p>נניח שהצלחנו: הרצנו <code>commit_creds(prepare_kernel_cred(0))</code> בkernel ועכשיו אנחנו root. עכשיו צריך <strong>לחזור למרחב המשתמש</strong> כדי לנצל את זה (להריץ shell). זה נשמע פשוט, אבל שתי הגנות מסבכות אותנו.</p>
 <p>הראשונה היא <code>KPTI</code> (Kernel Page Table Isolation), ההגנה שהוכנסה נגד Meltdown. הרעיון: לkernel ולמשתמש יש <strong>טבלאות עמודים נפרדות</strong>. כשרצים בkernel, טבלאות הkernel טעונות; לפני החזרה למשתמש חייבים להחליף את <code>CR3</code> לטבלאות המשתמש <strong>וגם</strong> לעשות <code>swapgs</code>. אם פשוט נעשה <code>iretq</code> בעצמנו בלי ההחלפה הזו - crash, כי <code>CR3</code> עדיין מצביע לטבלאות הkernel שלא ממופות למשתמש.</p>
@@ -2888,7 +2883,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kt">void</span><span class="w"> </span><span class="nf">get_shell</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">system</span><span class="p">(</span><span class="s">&quot;/bin/sh&quot;</span><span class="p">);</span><span class="w"> </span><span class="p">}</span><span class="w">   </span><span class="c1">// runs with uid=0 after the privesc</span>
 </code></pre></div>
 <p>ה-offset המדויק שאליו קופצים בתוך הטרמפולינה (מעבר לחלק שמשחזר אוגרים) משתנה בין גרסאות kernel - מוצאים אותו בדיסאסמבלי של <code>swapgs_restore_regs_and_return_to_usermode</code>. בלי KPTI אפשר לעשות <code>iretq</code> ידני עם אותה מסגרת בדיוק; עם KPTI חייבים לעבור דרך הטרמפולינה כי רק הוא יודע להחליף את CR3.</p>
-<hr />
 <h2 id="modprobe_path-the-clean-privesc">דריסת modprobe_path - the clean privesc<a class="headerlink" href="#modprobe_path-the-clean-privesc" title="Permanent link">&para;</a></h2>
 <p>עכשיו הפרימיטיב האהוב על כולם, וזו הסיבה שדיברתי כל הזמן על "data-only". מה אם אני אומר לכם שכל מה שצריך כדי להפוך ל-root זה <strong>כתיבה שרירותית אחת של כמה בתים</strong>, בלי ROP, בלי leak KPTI, בלי SMEP/SMAP בכלל?</p>
 <p>בkernel יש משתנה גלובלי:</p>
@@ -2917,7 +2911,6 @@
 <li>הכתיבה קטנה: 6-7 בתים של מחרוזת. כל באג שנותן כתיבה שרירותית או אפילו כתיבה מוגבלת מספיק.</li>
 </ul>
 <p>בגלל כל היתרונות האלה, ברגע שיש לכם primitive של כתיבה שרירותית, <code>modprobe_path</code> הוא כמעט תמיד המסלול הקצר ביותר ל-root.</p>
-<hr />
 <h2 id="exploitation-core_pattern-core_pattern-abuse">הexploitation core_pattern - core_pattern abuse<a class="headerlink" href="#exploitation-core_pattern-core_pattern-abuse" title="Permanent link">&para;</a></h2>
 <p>קרוב רוח ל-<code>modprobe_path</code>, ובמיוחד שימושי לבריחה ממכל (container escape). הקובץ <code>/proc/sys/kernel/core_pattern</code> קובע מה קורה כשתהליך קורס ומייצר core dump. אם המחרוזת מתחילה בתו צינור <code>|</code>, הkernel מריץ את התוכנית שאחריו - <strong>כ-root, ב-namespace הראשוני</strong> - ומזרים אליה את ה-core.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>core_pattern = &quot;|/tmp/collector %p&quot;
@@ -2938,7 +2931,6 @@
 <a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>/tmp/rootsh<span class="w"> </span>-p<span class="w">                </span><span class="c1"># shell with root privileges</span>
 </code></pre></div>
 <p>בהקשר של בריחה ממכל זה יהלום: <code>core_pattern</code> הוא גלובלי ברמת ה-host, אז אם הצלחתם לכתוב אליו מתוך מכל, הקוד ירוץ כ-root על ה-host עצמו. גם כאן - data-only, בלי לגעת בהרצת קוד בkernel.</p>
-<hr />
 <h2 id="kernel-heap-exploitation-slab-slub-kmalloc">הkernel heap exploitation - slab, SLUB ו-kmalloc<a class="headerlink" href="#kernel-heap-exploitation-slab-slub-kmalloc" title="Permanent link">&para;</a></h2>
 <p>עד עכשיו הנחנו שיש לנו כבר primitive (כתיבה/הפקעת rip). מאיפה הם באים? חלק גדול מהבאגים המודרניים בkernel הם באגי <strong>heap</strong>. בדיוק כמו שלמדנו heap ב-userspace, יש heap בkernel - וכדאי להבין את המקצה שלו.</p>
 <p>המקצה של הkernel נקרא <strong>SLUB</strong> (יורש של SLAB; שניהם ממשים את ה-slab allocator). הרעיון דומה מאוד ל-tcache: במקום לבקש עמוד מהkernel בכל הקצאה, מחזיקים <strong>caches</strong> של אובייקטים בגדלים קבועים וממחזרים אותם.</p>
@@ -2979,7 +2971,6 @@
 <li>ההקשחה <strong><code>CONFIG_STATIC_USERMODEHELPER</code></strong>: אם מופעלת, <code>call_usermodehelper</code> עובר דרך נתיב קבוע - וזה <strong>מנטרל את טריק ה-<code>modprobe_path</code></strong>. שווה לבדוק אם היא מופעלת לפני שסומכים על הפרימיטיב הזה.</li>
 </ul>
 <p>הקשחות אלו לא הופכות את הexploitation לבלתי אפשרי, אבל הן קובעות אילו טכניקות זמינות - בדיוק כמו שבדקנו glibc version בפרק ה-heap. תמיד תבדקו את ה-<code>.config</code> של הkernel היעד.</p>
-<hr />
 <h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>מטרת kernel exploitation</strong> היא העלאת הרשאות: או להריץ <code>commit_creds(prepare_kernel_cred(0))</code>, או לדרוס ישירות את שדות ה-uid ב-<code>cred</code> של התהליך, או פרימיטיב data-only כמו <code>modprobe_path</code>.</li>
@@ -3013,7 +3004,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:14:39 UTC">2026-07-20 09:14:39</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

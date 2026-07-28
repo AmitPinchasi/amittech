@@ -3356,7 +3356,6 @@
 <p>שימו לב ש-task_struct הוא הגדול ביותר - הוא מכיל המון מידע על הprocess.</p>
 <p>ג. ברוב המערכות, dentry או inode_cache תופסים הכי הרבה זכרון (בגלל הכמות הגדולה שלהם). במערכות עם הרבה processes, task_struct יכול גם לתפוס הרבה.</p>
 <p>כדי לבדוק, מריצים <code>slabtop</code> ומסתכלים על העמודה CACHE SIZE (או מחשבים: num_objs * objsize).</p>
-<hr />
 <h3 id="2-procbuddyinfo">פתרון 2 - ניתוח /proc/buddyinfo<a class="headerlink" href="#2-procbuddyinfo" title="Permanent link">&para;</a></h3>
 <p>א. צריך להסתכל על השורה של ZONE_NORMAL ובמספר הראשון (עמודת order 0). למשל:<br />
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Node 0, zone   Normal   1234   567   234   89   34   12   5   2   1   0   0
@@ -3364,7 +3363,6 @@
 כאן יש 1234 pages בודדים חופשיים.</p>
 <p>ב. בלוק רציף של 1MB = 256 pages. 256 = 2^8, אז זה order 8. צריך להסתכל בעמודה התשיעית (ספירה מ-0). בדוגמה למעלה יש 1 בלוק כזה.</p>
 <p>ג. הפונקציה kmalloc(8192, GFP_KERNEL) מבקשת 8192 בתים = 2 pages = order 1. אבל kmalloc לא הולך ישירות ל-buddy allocator - הוא הולך ל-slab allocator. ה-slab allocator מנהל cache של allocations בגודל 8192 (kmalloc-8192), ו-slab allocator הוא זה שמבקש pages מה-buddy allocator כשצריך. בפועל, ה-slab ישתמש ב-order 1 (2 pages, 8KB) או יותר עבור ה-slab שלו.</p>
-<hr />
 <h3 id="3-gfp">פתרון 3 - הבנת דגלי GFP<a class="headerlink" href="#3-gfp" title="Permanent link">&para;</a></h3>
 <p>א. <strong>GFP_KERNEL</strong> - זו allocation רגילה בהקשר של process (process context, בתוך syscall). אפשר לישון - אם אין זכרון פנוי, הקרנל יכול לעשות IO (לכתוב dirty pages, להעביר pages ל-swap) ולהמתין עד שיתפנה זכרון.</p>
 <p>ב. <strong>GFP_ATOMIC</strong> - אנחנו בinterrupt handler, אסור לישון! אם אין זכרון פנוי ברגע הallocation, הפונקציה מחזירה NULL. הדרייבר צריך לטפל במצב הזה (למשל לזרוק את הפקט).</p>
@@ -3373,7 +3371,6 @@
 - <strong>BUG או scheduling while atomic</strong> - הקרנל מזהה שניסו לישון בהקשר אטומי ומדפיס אזהרה חמורה (או kernel panic במצבים מסוימים).<br />
 - <strong>deadlock</strong> - אם הinterrupt handler ישן, הCPU ייתקע כי אף אחד לא יעיר אותו (הinterrupt עדיין פעיל).</p>
 <p>זו סיבה למה חשוב מאוד לדעת באיזה הקשר הקוד רץ ולבחור את הדגל הנכון.</p>
-<hr />
 <h3 id="4-procmeminfo">פתרון 4 - ניתוח שדות /proc/meminfo<a class="headerlink" href="#4-procmeminfo" title="Permanent link">&para;</a></h3>
 <p>א. כן, SReclaimable + SUnreclaim = Slab (בקירוב). למשל:<br />
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Slab:          350000 kB
@@ -3385,7 +3382,6 @@
 <p><strong>SUnreclaim</strong> - זכרון slab שלא ניתן לשחרור. למשל, task_struct של processes שרצים, sk_buff של חיבורי רשת פעילים. אי אפשר לשחרר אותם כי הם בשימוש פעיל.</p>
 <p>ג. <strong>VmallocTotal</strong> - הגודל הכולל של מרחב הכתובות הוירטואלי שזמין ל-vmalloc. במערכת 64 ביט זה בדרך כלל מספר ענקי (TB) כי מרחב הכתובות של הקרנל ב-64 ביט הוא עצום.</p>
 <p><strong>VmallocUsed</strong> - כמה מתוך המרחב הזה בשימוש. בדרך כלל מספר קטן יחסית - זכרון שהוקצה עם vmalloc עבור מודולי קרנל, buffers גדולים, וכו'.</p>
-<hr />
 <h3 id="5-">פתרון 5 - מודול קרנל מושגי<a class="headerlink" href="#5-" title="Permanent link">&para;</a></h3>
 <p>א. קוד (פסאודו-קוד):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;linux/slab.h&gt;</span>
@@ -3473,7 +3469,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

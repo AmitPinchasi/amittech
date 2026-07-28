@@ -2765,7 +2765,6 @@
 
 <h2 id="-command-injection">פתרון - command injection ועקיפת מסננים<a class="headerlink" href="#-command-injection" title="Permanent link">&para;</a></h2>
 <p>כאן נעבור על הפתרון המלא של שלושת האתגרים, עם ה-payloads המדויקים והסבר למה כל אחד שורד את המסנן. הרעיון המשותף לכל שלושתם: יש פער בין מה שהמסנן רואה (מחרוזת גולמית) לבין מה שהמעטפת מבצעת בפועל (אחרי פרוש, ציטוט, גלוב והרחבה). אנחנו חיים בתוך הפער הזה.</p>
-<hr />
 <h3 id="1-cmd1">פתרון תרגיל 1 - cmd1<a class="headerlink" href="#1-cmd1" title="Permanent link">&para;</a></h3>
 <p>נזכיר את המבנה של <code>cmd1.c</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kt">int</span><span class="w"> </span><span class="nf">filter</span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">cmd</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
@@ -2795,7 +2794,6 @@
 </code></pre></div>
 <p>השורה האחרונה מנצלת פרט חשוב: ב-cmd1 (בניגוד ל-cmd2) התו <code>=</code> והמילה <code>PATH</code> מותרים, אז אפשר פשוט לתקן את ה-PATH בהשמה מקומית שתקפה רק לפקודה הזו, ואז <code>cat</code> הקצר יימצא. הגלוב <code>f*</code> שוב מסתיר את המילה <code>flag</code>.</p>
 <p><strong>למה זה עבד / איך להכליל</strong>: <code>strstr()</code> מחפש התאמה מדויקת ורציפה. כל טכניקה ששוברת את הרציפות של המילה האסורה (ציטוט ריק, גלוב) או מייצרת אותה בעקיפין - עוברת מתחת לרדאר. שיבוש PATH נעקף בקלות בנתיב מוחלט או בהשמה מקומית.</p>
-<hr />
 <h3 id="2-cmd2">פתרון תרגיל 2 - cmd2<a class="headerlink" href="#2-cmd2" title="Permanent link">&para;</a></h3>
 <p>המבנה של <code>cmd2.c</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kt">int</span><span class="w"> </span><span class="nf">filter</span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">cmd</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
@@ -2840,7 +2838,6 @@
 <p>התוכנית מריצה <code>/bin/sh -c '$A *'</code>. המעטפת מרחיבה את <code>$A</code> לערך שהכנו (<code>/bin/cat</code>), ואת <code>*</code> לכל הקבצים בתיקייה. התוצאה: <code>/bin/cat *</code>, שקורא את <code>flag</code>.</p>
 <p>נבדוק את המסנן על מה שהוא כן רואה, כלומר על <code>$A *</code>: אין בו <code>/</code>, אין <code>=</code>, אין <code>PATH</code>, אין <code>export</code>, אין backtick, אין <code>flag</code>. כל התווים האסורים חבויים בתוך המשתנה, וההגדרה שלו נעשתה במעטפת שלנו, לא ב-<code>argv</code>. עובר בקלות, ולא משנה אם <code>/bin/sh</code> הוא bash או dash.</p>
 <p><strong>למה זה עבד / איך להכליל</strong>: מסנן שבודק רק ערוץ קלט אחד (כאן <code>argv</code>) עיוור לכל ערוץ אחר שהתוקף שולט בו (כאן הסביבה). זו תבנית חוזרת בעקיפת מסננים - תמיד לשאול "מה עוד מגיע לתהליך שהמסנן לא בודק?". בנוסף, בניית מחרוזות מהרחבות מעטפת (<code>${PWD:0:1}</code>, גלוב) מאפשרת לייצר כל תו גם כשהוא חסום בקלט הישיר.</p>
-<hr />
 <h3 id="3-shellshock">פתרון תרגיל 3 - shellshock<a class="headerlink" href="#3-shellshock" title="Permanent link">&para;</a></h3>
 <p>המבנה של <code>shellshock.c</code> בקירוב:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
@@ -2878,7 +2875,6 @@
 </code></pre></div>
 <p><strong>למה חייבים דווקא את ה-bash הvulnerable</strong>: ה-dash שמפעיל את השרשרת אינו vulnerable ל-Shellshock, ולכן הוא רק מעביר את <code>x</code> הלאה בלי להריץ כלום ממנו. רק ה-<code>/home/shellshock/bash</code>, שהוא גרסה ישנה עם הבאג בפרסור, מפרש את הקוד הנגרר ומריץ אותו. אילו הבינארי היה מריץ bash מתוקן, ה-payload היה נכשל - bash מתוקן מייבא את הפונקציה אבל <strong>לא</strong> מריץ את מה שנגרר אחריה.</p>
 <p><strong>למה זה עבד / איך להכליל</strong>: Shellshock הוא דוגמה מושלמת לכך שקלט "לא מהימן" יכול להגיע דרך ערוץ שאף אחד לא חשב עליו - משתני סביבה שעוברים לתת-תהליך. כל מקום שבו ערך שהתוקף שולט בו הופך למשתנה סביבה שמגיע ל-bash vulnerable (למשל כותרות HTTP ב-CGI) היה נקודת תקיפה. הלקח: לא רק <code>argv</code> ולא רק stdin הם קלט - גם הסביבה היא קלט, וגם היא צריכה להיחשב לא מהימנה.</p>
-<hr />
 <h3 id="-_1">הכללה - מה מחבר את שלושת האתגרים<a class="headerlink" href="#-_1" title="Permanent link">&para;</a></h3>
 <ul>
 <li>האתגרים <strong>cmd1 ו-cmd2</strong> מראים ששני מסנני רשימה שחורה, גם המחמיר שבהם, נשברים כי המעטפת יכולה לבטא כל כוונה בכמה צורות שונות. התיקון הנכון אינו להוסיף עוד מילים לרשימה, אלא לא להעביר קלט למעטפת בכלל - להשתמש ב-<code>execve()</code> עם ארגומנטים מפורשים.</li>
@@ -2905,7 +2901,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

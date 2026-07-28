@@ -2668,7 +2668,6 @@
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>gcc<span class="w"> </span>-g<span class="w"> </span>-no-pie<span class="w"> </span>-fno-pie<span class="w"> </span>-fno-stack-protector<span class="w"> </span>-o<span class="w"> </span>basics_nopie<span class="w"> </span>basics.c
 </code></pre></div>
 <p>הוספתי <code>-fno-stack-protector</code> לגרסת ה-nopie כדי שתרגיל 5 יעבוד בלי שהcanary יעצור אותנו.</p>
-<hr />
 <h3 id="1-">פתרון תרגיל 1 - מפת הזיכרון של תהליך חי<a class="headerlink" href="#1-" title="Permanent link">&para;</a></h3>
 <p>מריצים ולוקחים את ה-pid:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>./basics_pie
@@ -2698,7 +2697,6 @@
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># 2   -&gt; full randomization</span>
 </code></pre></div>
 <p>למה זה עבד / איך להכליל: <code>/proc/pid/maps</code> הוא החבר הכי טוב שלנו כשאנחנו רוצים להבין תהליך חי. בכל אתגר, אחת הפעולות הראשונות תהיה להסתכל אילו אזורים כתיבים, אילו ניתנים להרצה, ואיפה libc יושבת. ההרשאות של האזורים הן שמכתיבות אילו טכניקות בכלל אפשריות.</p>
-<hr />
 <h3 id="2-pie-pie">פתרון תרגיל 2 - PIE לעומת לא-PIE<a class="headerlink" href="#2-pie-pie" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>checksec<span class="w"> </span>--file<span class="o">=</span>./basics_pie
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1">#   PIE:       PIE enabled</span>
@@ -2721,7 +2719,6 @@
 <p>הקוד יושב תמיד סביב <code>0x400000</code>, וזה <strong>לא משתנה</strong> בין הרצות (הבינארי עצמו לא מושפע מ-ASLR; רק המחסנית, הערמה ו-libc כן).</p>
 <p>למה צריך leak ב-PIE ולא בלא-PIE: בבינארי לא-PIE הכתובת של <code>main</code>, של גאדג'טים ושל הטבלאות ידועה מראש וקבועה - אפשר לכתוב אותה ישירות ב-exploit. בבינארי PIE כל הכתובות הפנימיות מוזזות בכמות אקראית בכל הרצה, אז אנחנו לא יודעים אותן מראש. הפתרון: לדלוף כתובת אחת שאנחנו כן מזהים, לחשב ממנה את בסיס הטעינה (base = כתובת שדלפנו פחות ה-offset הקבוע שלה בקובץ), ואז לחשב כל כתובת אחרת יחסית לבסיס.</p>
 <p>למה זה עבד / איך להכליל: <code>checksec</code> ו-<code>readelf -h</code> הם שתי הבדיקות הראשונות על כל בינארי חדש. <code>Type: DYN</code> = PIE = צריך leak. <code>Type: EXEC</code> = כתובות קבועות = החיים קלים יותר.</p>
-<hr />
 <h3 id="3-got-plt">פתרון תרגיל 3 - איתור GOT ו-PLT<a class="headerlink" href="#3-got-plt" title="Permanent link">&para;</a></h3>
 <p>טבלת ה-relocations:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>readelf<span class="w"> </span>-r<span class="w"> </span>./basics_nopie
@@ -2751,7 +2748,6 @@
 </code></pre></div>
 <p>הפונקציה <code>main</code> קוראת ל-<code>puts@plt</code>, לא ל-<code>puts</code> עצמו, כי בזמן הקומפילציה הכתובת האמיתית של <code>puts</code> בתוך libc עדיין לא ידועה (libc נטענת דינמית לכתובת אקראית). ה-PLT הוא רמת הכוונה (indirection) שמאפשרת לדחות את קביעת הכתובת האמיתית לזמן ריצה.</p>
 <p>למה זה עבד / איך להכליל: <code>readelf -r</code> נותן לכם את מפת כתובות ה-GOT לפי שם פונקציה, ו-<code>objdump -d -j .plt</code> מראה איך ה-PLT קופץ דרכן. הצמד הזה הוא בדיוק מה שנצטרך כשנרצה לדלוף כתובת libc (קוראים את ה-GOT של פונקציה שכבר נפתרה) או לדרוס GOT (כותבים ל-<code>Offset</code> שמצאנו).</p>
-<hr />
 <h3 id="4-call-ret-gdb">פתרון תרגיל 4 - לצעוד על call ו-ret ב-gdb<a class="headerlink" href="#4-call-ret-gdb" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>gdb<span class="w"> </span>./basics_nopie
 </code></pre></div>
@@ -2794,7 +2790,6 @@
 </code></pre></div>
 <p>בשורה אחת: <strong><code>ret</code> שלף 8 בתים מראש המחסנית לתוך <code>rip</code> (כלומר <code>pop rip</code>), והגדיל את <code>rsp</code> ב-8</strong>. שום בדיקה, שום ולידציה. הוא פשוט קפץ למה שהיה שם.</p>
 <p>למה זה עבד / איך להכליל: זו התובנה שכל הקורס נשען עליה. ה-<code>ret</code> בוטח בעיוורון בערך שבראש המחסנית. אם נשלוט בערך הזה (וbuffer overflow נותנת לנו בדיוק את זה), נשלוט ב-<code>rip</code>. וכשנשרשר כמה ערכים כאלה בזה אחר זה - כל אחד גאדג'ט שמסתיים ב-<code>ret</code> - קיבלנו ROP.</p>
-<hr />
 <h3 id="5-return-address">פתרון תרגיל 5 (אתגר) - מה קורה כשדורסים את הreturn address<a class="headerlink" href="#5-return-address" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>gdb ./basics_nopie
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>pwndbg&gt; run $(python3 -c &quot;print(&#39;A&#39;*200)&quot;)
@@ -2827,7 +2822,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

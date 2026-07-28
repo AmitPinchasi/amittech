@@ -3868,7 +3868,6 @@
 <h2 id="_1">הקדמה<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>בפרק 2.4 למדנו על context switch - איך המעבד שומר את מצב תוכנה אחת וטוען את מצב תוכנה אחרת. ראינו איך פסיקת הטיימר (IRQ0) קוטעת את התוכנה הנוכחית ומאפשרת לקרנל להחליף לתוכנה אחרת. אמרנו ש"הscheduler בוחר תוכנה מהרשימה" - אבל לא נכנסנו לפרטים של <strong>איך</strong> הוא בוחר.</p>
 <p>עכשיו הגיע הזמן. בהרצאה הזו נלמד בדיוק איך הscheduler של לינוקס עובד מבפנים - מהם מצבי הprocess, מהו המבנה task_struct הענק שמייצג process בקרנל, ואיך אלגוריתם הCFS (Completely Fair Scheduler) מחליט מי רץ ולכמה זמן.</p>
-<hr />
 <h2 id="-process-states">מצבי תהליך בלינוקס - process states<a class="headerlink" href="#-process-states" title="Permanent link">&para;</a></h2>
 <p>בפרק 5.2 למדנו שלכל process יש PID ו-PPID, ושprocesses יכולים להיות זומבים. אבל בתוך הקרנל, לכל process יש מצב (state) מדויק יותר. אלו המצבים העיקריים:</p>
 <table>
@@ -3938,7 +3937,6 @@
 </code></pre></div>
 <p>שימו לב שTASK_RUNNING מייצג <strong>שני</strong> מצבים - גם "רץ כרגע על CPU" וגם "מוכן לרוץ, ממתין בqueue". ההבדל הוא האם הprocess באמת מקושר לCPU מסוים ברגע זה.</p>
 <p><img alt="תרשים מעברי המצבים של תהליך בקרנל מהיצירה למצב מוכן, לריצה על המעבד, לשינה בהמתנה לאירוע, ולבסוף למצב זומבי ולשחרור" src="../../../../images/illustrations/core-6-3-task-states.svg" /></p>
-<hr />
 <h2 id="task_struct-process">המבנה task_struct - הייצוג של process בקרנל<a class="headerlink" href="#task_struct-process" title="Permanent link">&para;</a></h2>
 <p>בפרק 2.4 הזכרנו את הPCB (Process Control Block) - מבנה נתונים שהקרנל שומר עבור כל process. בלינוקס, הPCB הזה נקרא <code>task_struct</code>, והוא מבנה <strong>ענק</strong> - אלפי בתים שמכילים את כל מה שהקרנל צריך לדעת על process.</p>
 <p>הנה השדות המרכזיים (מאוד מפושט - בפועל יש הרבה יותר):</p>
@@ -3993,7 +3991,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">// anywhere in the kernel code you can do:</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">printk</span><span class="p">(</span><span class="s">&quot;current process: %s (pid=%d)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">current</span><span class="o">-&gt;</span><span class="n">comm</span><span class="p">,</span><span class="w"> </span><span class="n">current</span><span class="o">-&gt;</span><span class="n">pid</span><span class="p">);</span>
 </code></pre></div></p>
-<hr />
 <h2 id="-run-queue">תור הריצה - run queue<a class="headerlink" href="#-run-queue" title="Permanent link">&para;</a></h2>
 <p>כל CPU במערכת מנהל queue ריצה (run queue) משלו. הqueue מכיל את כל הprocesses שנמצאים במצב TASK_RUNNING ומחכים לרוץ על הCPU הזה.</p>
 <p>המבנה שמייצג את הqueue נקרא <code>struct rq</code> (run queue):<br />
@@ -4007,7 +4004,6 @@
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="p">};</span>
 </code></pre></div></p>
 <p>לכל CPU יש rq משלו, מה שמאפשר לCPU-ים שונים לתזמן processes באופן בלתי תלוי (פחות נעילות, יותר ביצועים).</p>
-<hr />
 <h2 id="cfs-completely-fair-scheduler">הCFS - Completely Fair Scheduler<a class="headerlink" href="#cfs-completely-fair-scheduler" title="Permanent link">&para;</a></h2>
 <p>מאז גרסה 2.6.23 של הקרנל (2007), הscheduler ברירת המחדל של לינוקס הוא הCFS - Completely Fair Scheduler. הרעיון המרכזי שלו פשוט: <strong>לתת לכל process את החלק ההוגן שלו מזמן הCPU</strong>.</p>
 <h3 id="-vruntime">הרעיון: זמן ריצה וירטואלי - vruntime<a class="headerlink" href="#-vruntime" title="Permanent link">&para;</a></h3>
@@ -4048,7 +4044,6 @@
 </code></pre></div>
 <p>כש-weight תלוי בערך הnice. לprocess עם nice=-20 יש weight גבוה (vruntime עולה לאט), ולprocess עם nice=19 יש weight נמוך (vruntime עולה מהר).</p>
 <p>בפועל, process עם nice=-20 יקבל פי 100 יותר CPU מprocess עם nice=19 אם שניהם רצים במקביל.</p>
-<hr />
 <h2 id="-real-time-scheduling">תזמון בזמן אמת - Real-Time scheduling<a class="headerlink" href="#-real-time-scheduling" title="Permanent link">&para;</a></h2>
 <p>מעבר לCFS, לינוקס תומך גם בתזמון בזמן אמת (real-time) לprocesses שדורשים תגובה מהירה ומובטחת. הprocesses של real-time תמיד מקבלים עדיפות <strong>גבוהה יותר</strong> מprocesses CFS רגילים.</p>
 <p>יש שתי מדיניות:<br />
@@ -4056,7 +4051,6 @@
 - <strong>SCHED_RR</strong> - Round Robin: כמו FIFO, אבל אם יש כמה processes RT באותה עדיפות, הם מתחלפים בצורה מעגלית (עם time slice קבוע)</p>
 <p>הprocesses של RT מקבלים עדיפויות בטווח 1-99, כשכל העדיפויות האלה גבוהות מכל process CFS רגיל.</p>
 <p>בפועל, רוב התוכנות הרגילות לא משתמשות בRTreal-time scheduling. זה שמור לדברים כמו מערכות שליטה בתעשייה, עיבוד אודיו בזמן אמת, וכו'.</p>
-<hr />
 <h2 id="interrupt-tick-scheduler_tick">הinterrupt הטיימר וtick - scheduler_tick<a class="headerlink" href="#interrupt-tick-scheduler_tick" title="Permanent link">&para;</a></h2>
 <p>בפרק 2.4 למדנו שהטיימר החומרתי שולח interrupt (IRQ0) כל כמה מילישניות, וזה מה שמאפשר לscheduler לקבל שליטה. בלינוקס, כל interrupt טיימר מפעילה את הפונקציה <code>scheduler_tick()</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1">// kernel/sched/core.c (simplified)</span>
@@ -4081,7 +4075,6 @@
 - <strong>100 Hz</strong> - tick כל 10ms (נפוץ בשרתים - פחות overhead)<br />
 - <strong>250 Hz</strong> - tick כל 4ms (ברירת מחדל בהרבה הפצות)<br />
 - <strong>1000 Hz</strong> - tick כל 1ms (תגובתיות גבוהה, יותר overhead)</p>
-<hr />
 <h2 id="-context-switch">החלפת הקשר בפועל - context switch<a class="headerlink" href="#-context-switch" title="Permanent link">&para;</a></h2>
 <p>כשהscheduler מחליט להחליף process, מה בדיוק קורה? הפונקציה <code>context_switch()</code> מבצעת את ההחלפה בפועל:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1">// kernel/sched/core.c (simplified)</span>
@@ -4103,7 +4096,6 @@
 <p>שימו לב: אם שני threads באותו process, הם חולקים את אותו mm_struct - אז switch_mm לא צריך לעשות כלום (אין החלפת CR3). זו עוד סיבה שthreads מהירים יותר מprocesses.</p>
 <h3 id="switch_to-">switch_to - החלפת אוגרים<a class="headerlink" href="#switch_to-" title="Permanent link">&para;</a></h3>
 <p>המאקרו <code>switch_to</code> (בארכיטקטורת x86) שומר את כל הרגיסטרים של הprocess הנוכחי על המחסנית שלו, ומשחזר את הרגיסטרים של הprocess הבא מהמחסנית שלו. בפועל, זה קוד אסמבלי שנמצא ב-<code>arch/x86/include/asm/switch_to.h</code>.</p>
-<hr />
 <h2 id="-preemption">הפקעה - preemption<a class="headerlink" href="#-preemption" title="Permanent link">&para;</a></h2>
 <p>יש שני סוגים של החלפות:</p>
 <h3 id="-voluntary-preemption">הפקעה רצונית - voluntary preemption<a class="headerlink" href="#-voluntary-preemption" title="Permanent link">&para;</a></h3>
@@ -4118,7 +4110,6 @@
 - הprocess עם עדיפות גבוהה יותר התעורר (למשל process RT)<br />
 - הדגל TIF_NEED_RESCHED נדלק (בגלל אחת מהסיבות למעלה)</p>
 <p>בלינוקס, גם קוד קרנלי יכול להיות מופקע (preemptible kernel) - מה שמשפר את התגובתיות של המערכת. אבל יש קטעי קוד קרנליים שבהם הpreemption מושבת באופן זמני (כשמחזיקים נעילה, למשל).</p>
-<hr />
 <h2 id="_3">כלים לצפייה בתזמון<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <p>אפשר להשתמש בכלים שונים כדי לראות מידע על התזמון:</p>
 <h3 id="top-htop">top ו-htop<a class="headerlink" href="#top-htop" title="Permanent link">&para;</a></h3>
@@ -4143,7 +4134,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># general info about a process - including state and nice</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>cat<span class="w"> </span>/proc/1234/stat
 </code></pre></div>
-<hr />
 <h2 id="_4">סיכום<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>בהרצאה הזו למדנו את הצד הפנימי של תזמון processes בלינוקס:</p>
 <ul>
@@ -4177,7 +4167,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 08:33:06 UTC">2026-07-20 08:33:06</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

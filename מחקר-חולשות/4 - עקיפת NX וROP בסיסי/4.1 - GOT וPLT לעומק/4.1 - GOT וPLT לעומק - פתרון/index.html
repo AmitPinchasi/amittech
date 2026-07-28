@@ -2749,7 +2749,6 @@
 
 <h2 id="-got-plt">פתרון - GOT וPLT לעומק<a class="headerlink" href="#-got-plt" title="Permanent link">&para;</a></h2>
 <p>כאן נפתור את כל התרגילים עד הסוף, עם הפקודות האמיתיות, הפלט הצפוי, וה-exploit המלא. אם עוד לא ניסיתם לבד, חזרו לקובץ התרגול. הכתובות המספריות כאן (<code>0x401xxx</code>, <code>0x404xxx</code>) הן דוגמה מבינארי אחד שקומפל אצלי - אצלכם הן עשויות להיות מעט שונות, אבל המבנה זהה. אל תעתיקו כתובות, מדדו אצלכם.</p>
-<hr />
 <h3 id="1-">פתרון תרגיל 1 - לראות את הפתרון קורה<a class="headerlink" href="#1-" title="Permanent link">&para;</a></h3>
 <p>נתחיל מבדיקת ההגנות:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>$<span class="w"> </span>checksec<span class="w"> </span>--file<span class="o">=</span>./trace
@@ -2799,7 +2798,6 @@
 </code></pre></div>
 <p>מכאן, הקריאה השנייה ל-<code>puts</code> תלך ישירות ל-<code>0x7ffff7e5c420</code> בלי הפותר.</p>
 <p><strong>למה זה עבד:</strong> ראינו שחור על גבי לבן ששלושת הצעדים של lazy binding קורים פעם אחת. לפני הקריאה הראשונה התא מצביע ל-PLT, אחרי הקריאה הראשונה הוא מצביע ל-libc. <strong>איך להכליל:</strong> בכל בינארי דינמי, <code>readelf -r</code> נותן לכם את כתובת התא, ו-<code>x/gx</code> ב-GDB מראה אם הוא כבר נפתר. תא שמצביע לתוך ה-PLT עצמו = עדיין לא נקרא; תא שמצביע ל-libc = כבר נקרא לפחות פעם.</p>
-<hr />
 <h3 id="2-got">פתרון תרגיל 2 - למפות את ה-GOT<a class="headerlink" href="#2-got" title="Permanent link">&para;</a></h3>
 <p>מוצאים את הסקשנים:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>$<span class="w"> </span>readelf<span class="w"> </span>-S<span class="w"> </span>./trace<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s1">&#39;\.got|\.plt&#39;</span>
@@ -2830,7 +2828,6 @@
 <p>זה הפותר (בגרסאות glibc מודרניות שמו <code>_dl_runtime_resolve_xsavec</code> או <code>_dl_runtime_resolve_xsave</code>, וריאנטים של אותה פונקציה). זה בדיוק היעד שאליו PLT0 קופץ.</p>
 <p>למה <code>GOT[3]</code> מצביע בהתחלה לתוך ה-PLT? כי זה הבסיס של lazy binding. אילו התא היה מצביע ישר ל-libc, לא היינו צריכים פותר בכלל - אבל אז היינו חייבים לפתור את כל הסמלים בזמן טעינה (זה בדיוק Full RELRO). בגלל שרוצים פתרון עצל, התא מתחיל בהצבעה למסלול הפתרון (<code>push index; jmp PLT0</code>), וזה מפעיל את הפותר רק בקריאה הראשונה.</p>
 <p><strong>למה זה עבד:</strong> ראינו שהטבלה היא מערך, שלושת התאים הראשונים שמורים לתשתית הטעינה, והשאר מצביעים בהתחלה לתוך ה-PLT. <strong>איך להכליל:</strong> <code>GOT[2]</code> תמיד מצביע לפותר. אם אי פעם תרצו לחטוף כל קריאת פונקציה שעדיין לא נפתרה בבת אחת, זו מטרה מעניינת - אבל זה כבר סיפור מתקדם.</p>
-<hr />
 <h3 id="3-partial-full-relro">פתרון תרגיל 3 - Partial מול Full RELRO<a class="headerlink" href="#3-partial-full-relro" title="Permanent link">&para;</a></h3>
 <p>בדיקת ההגנות של שני הבינארים:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>$<span class="w"> </span>checksec<span class="w"> </span>--file<span class="o">=</span>./gotdemo
@@ -2866,7 +2863,6 @@
 </code></pre></div>
 <p>הכתיבה נכשלה - הדף קריאה-בלבד. זו בדיוק ההגנה של Full RELRO.</p>
 <p><strong>למה זה עבד:</strong> ראינו את ההבדל בשלוש רמות - <code>checksec</code>, <code>readelf -d</code> (הדגל BIND_NOW), ו-<code>vmmap</code> (ההרשאות בפועל). <strong>איך להכליל:</strong> לפני שמתכננים דריסת GOT, בדקו RELRO. אם זה Full - תזרקו את הרעיון מיד ותחפשו מטרת כתיבה אחרת. אם זה Partial - <code>.got.plt</code> פתוח לעסקים.</p>
-<hr />
 <h3 id="4-got">פתרון תרגיל 4 - דריסת GOT ראשונה<a class="headerlink" href="#4-got" title="Permanent link">&para;</a></h3>
 <p>מוצאים את שתי הכתובות ב-pwntools:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>&gt;&gt;&gt; from pwn import *
@@ -2928,7 +2924,6 @@
 <a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>puts(&quot;bye&quot;):  jmp *[0x404018]  --&gt;  0x401176 (win)  --&gt;  system(&quot;/bin/sh&quot;)
 </code></pre></div>
 <p><strong>למה זה עבד:</strong> ניצלנו את העובדה ש-<code>puts@got</code> הוא מצביע פונקציה שניתן לכתיבה (Partial RELRO), והתוכנית קופצת דרכו בכל קריאה ל-<code>puts</code>. הכתיבה השרירותית נתנה לנו את היכולת להחליף את התוכן. הבינארי לא-PIE, אז <code>win</code> בכתובת קבועה ולא היינו צריכים leak. <strong>איך להכליל:</strong> דריסת GOT = כתיבה שרירותית + <code>.got.plt</code> פתוח + קריאה עתידית לפונקציה שדרסתם. בכל פעם שיש לכם write-what-where ו-Partial RELRO, זו אחת המטרות הראשונות לבדוק.</p>
-<hr />
 <h3 id="5-exploit-full-relro">פתרון תרגיל 5 - אותו exploit על Full RELRO<a class="headerlink" href="#5-exploit-full-relro" title="Permanent link">&para;</a></h3>
 <p>מחליפים את היעד ל-<code>gotdemo_full</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="ch">#!/usr/bin/env python3</span>
@@ -2965,7 +2960,6 @@
 <p>ה-<code>SIGSEGV</code> נופל על ההוראה <code>mov QWORD PTR [rax], rdx</code> - זו בדיוק השורה <code>*(unsigned long *)addr = val</code> בקוד המקור. הרגיסטר <code>rax</code> מכיל <code>0x404018</code>, כלומר <code>puts@got</code>. הכתיבה עצמה נכשלה, כי הדף של ה-GOT קריאה-בלבד ב-Full RELRO. שום שורה של ה-payload לא הגיעה אפילו ל-<code>puts("bye")</code>.</p>
 <p>במשפט אחד: הכתיבה נכשלה כי Full RELRO ביצע BIND_NOW ומיפה את דף ה-GOT כקריאה-בלבד, אז הניסיון לכתוב אליו הוא גישת זיכרון לא חוקית.</p>
 <p><strong>למה זה עבד (כלומר, למה זה נכשל):</strong> זו לא שגיאה ב-exploit. ה-exploit נכון בדיוק כמו בתרגיל 4 - ההגנה פשוט חוסמת אותו ברמת החומרה. <strong>איך להכליל:</strong> מול Full RELRO אין מה לכוונן ב-exploit של דריסת GOT, זו דלת סגורה. מחפשים מטרת כתיבה אחרת - מצביע ב-heap, <code>__free_hook</code>/<code>__malloc_hook</code> בגרסאות glibc ישנות, return address על המחסנית, וכו'.</p>
-<hr />
 <h3 id="6-">פתרון תרגיל 6 (בונוס) - לחשוב כמו תוקף אמיתי<a class="headerlink" href="#6-" title="Permanent link">&para;</a></h3>
 <ol>
 <li>
@@ -3002,7 +2996,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

@@ -2961,7 +2961,6 @@
 
 <p>עד עכשיו בפרק הזה עסקנו בקבצים ארוזים, בארכיטקטורות זרות ובבינארים זעירים - כל אלה מקרים שבהם ההנדסה ההפוכה נתקלת בקוד שנראה מוזר. הפעם ניגע במשהו שנראה מוזר לגמרי כשפוגשים אותו בפעם הראשונה: תוכנית שקורסת לא בגלל overflow, לא בגלל מצביע פגום, אלא פשוט כי כתובת זיכרון לא הייתה מיושרת נכון. בשביל להבין למה זה קורה נצטרך לדבר על יישור זיכרון - alignment, על הרחבות SSE ועל הוראות ההעתקה שלהן, ובסוף על memcpy מהיר שמתרסק ברגע שנותנים לו כתובת או גודל לא נוחים. זה בדיוק הרעיון שמאחורי אתגר memcpy של pwnable.kr.</p>
 <p>היכולת הזו חשובה גם להנדסה הפוכה טהורה: כשתראו <code>movdqa</code> בדיסאסמבלי ותבינו שהיא דורשת alignment, פתאום הרבה קוד שנראה קסום (memcpy, memset, strlen מואצים) יתבהר.</p>
-<hr />
 <h2 id="-alignment">מהו יישור זיכרון - alignment<a class="headerlink" href="#-alignment" title="Permanent link">&para;</a></h2>
 <p>הalignment של זיכרון הוא כלל פשוט: כתובת <code>p</code> נחשבת מיושרת ל-<code>N</code> בתים אם <code>p</code> מתחלק ב-<code>N</code> ללא שארית, כלומר <code>p % N == 0</code>. מכיוון ש-<code>N</code> הוא כמעט תמיד חזקה של 2, אפשר לנסח את זה גם דרך הביטים: כתובת מיושרת ל-16 בתים היא כתובת שארבעת הביטים התחתונים שלה הם אפס.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Alignment to 16 bytes - the four low bits are zero:
@@ -2981,7 +2980,6 @@
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>+-----------+--------+-----------------+
 </code></pre></div>
 <p>הקומפיילר דואג לalignment הזה בשבילנו: הוא מרפד מבנים - struct padding, הוא בוחר כתובות מיושרות למשתנים על המחסנית, והוא מיישר משתנים גלובליים. ברוב המקרים אנחנו אפילו לא שמים לב שזה קורה. הבעיה מתחילה כשמישהו כותב קוד שמניח alignment מסוים - ואז מקבל כתובת שלא עומדת בהנחה.</p>
-<hr />
 <h2 id="alignment">למה למעבד אכפת מalignment<a class="headerlink" href="#alignment" title="Permanent link">&para;</a></h2>
 <p>המעבד קורא וכותב זיכרון ביחידות של שורת מטמון - cache line, בדרך כלל 64 בתים. גישה מיושרת נופלת בתוך שורת מטמון אחת, וגישה לא מיושרת עלולה להתפרש על פני שתי שורות מטמון או אפילו שני דפי זיכרון - שזה יקר יותר, ולפעמים בלתי אפשרי לבצע אטומית.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>64-byte cache lines:
@@ -2992,7 +2990,6 @@
 </code></pre></div>
 <p><img alt="תרשים המראה גישה לא מיושרת החוצה גבול שורת מטמון - קריאה בת שישה עשר בתים מכתובת 0x38 נופלת בין שתי שורות מטמון סמוכות ונוגעת בשתיהן במקום באחת בלבד" src="../../../../images/illustrations/vuln-8-4-cache-line-crossing.svg" /></p>
 <p>בארכיטקטורות מסוימות (חלק מ-ARM ישן, MIPS, SPARC) גישה לא מיושרת פשוט זורקת חריגה - alignment fault - וקורסת. ארכיטקטורת x86 סלחנית יותר: הוראת <code>mov</code> רגילה תבצע גישה לא מיושרת בלי להתלונן, רק קצת יותר לאט. אבל - וזה הלב של השיעור - חלק מהוראות SSE דורשות alignment בכוח, וזורקות חריגת חומרה אם הכתובת לא מיושרת ל-16 בתים. שם נופלים.</p>
-<hr />
 <h2 id="sse-xmm-sse-and-xmm-registers">הרחבות SSE ואוגרי xmm - SSE and xmm registers<a class="headerlink" href="#sse-xmm-sse-and-xmm-registers" title="Permanent link">&para;</a></h2>
 <p>הרחבת SSE - Streaming SIMD Extensions הוסיפה למעבד אוגרים רחבים בני 128 ביט בשם <code>xmm0</code> עד <code>xmm7</code> (במצב 32 ביט) או <code>xmm0</code> עד <code>xmm15</code> (במצב 64 ביט). הרעיון של SIMD - Single Instruction Multiple Data הוא לעבד כמה ערכים במקביל: אוגר <code>xmm</code> בן 128 ביט יכול להחזיק ארבעה מספרים שלמים של 32 ביט, או שני מספרים של 64 ביט, או 16 בתים - ולהעביר או לחשב את כולם בהוראה אחת.</p>
 <p>בגלל זה מימושים מהירים של <code>memcpy</code>, <code>memset</code> ו-<code>strlen</code> משתמשים ב-SSE: במקום להעתיק בית-בית, מעתיקים 16 בתים בכל הוראה, או אפילו 64 בתים בלולאה שמשתמשת בארבעה אוגרי <code>xmm</code>.</p>
@@ -3010,7 +3007,6 @@
 </code></pre></div>
 <p>ה-<code>a</code> בסוף <code>movdqa</code> ו-<code>movaps</code> הוא ראשי התיבות של aligned, וה-<code>u</code> ב-<code>movdqu</code>/<code>movups</code> הוא unaligned. ההוראות עם <code>a</code>, וגם <code>movntdq</code> (כתיבה לא-זמנית שעוקפת את המטמון), דורשות שהאופרנד בזיכרון יהיה מיושר ל-16 בתים. אם לא - המעבד זורק חריגת הגנה כללית - #GP, ובלינוקס זה מתורגם ל-<code>SIGSEGV</code>.</p>
 <p>בעולם AVX המצב דומה: <code>vmovdqa</code> דורשת alignment (16 בתים לאוגר <code>xmm</code>, 32 בתים לאוגר <code>ymm</code>), ו-<code>vmovdqu</code> לא.</p>
-<hr />
 <h2 id="movdqa-movdqu-aligned-versus-unaligned">ההוראות movdqa מול movdqu - aligned versus unaligned<a class="headerlink" href="#movdqa-movdqu-aligned-versus-unaligned" title="Permanent link">&para;</a></h2>
 <p>בואו נראה את זה בפועל. נכתוב תוכנית קצרה שמנסה לקרוא 16 בתים מכתובת לא מיושרת עם <code>movdqa</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
@@ -3043,7 +3039,6 @@
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>$1 = 0x8          &lt;-- the address is 8 modulo 16, hence the fault
 </code></pre></div>
 <p>הנה הטריק שכדאי לזכור: כשאתם עושים הנדסה הפוכה ורואים <code>movdqa</code>/<code>movaps</code>/<code>movntdq</code> ונופלים על <code>SIGSEGV</code> בדיוק שם - כמעט תמיד הבעיה היא כתובת שאיננה מיושרת ל-16 בתים, לא מצביע שגוי. בדקו את ארבעת הביטים התחתונים של האופרנד.</p>
-<hr />
 <h2 id="-allocation-alignment">יישור בהקצאות זיכרון - allocation alignment<a class="headerlink" href="#-allocation-alignment" title="Permanent link">&para;</a></h2>
 <p>עכשיו השאלה המעניינת: מאיפה מגיעה כתובת מיושרת (או לא) מלכתחילה? זה תלוי איפה הזיכרון מוקצה.</p>
 <h3 id="-stack">על המחסנית - stack<a class="headerlink" href="#-stack" title="Permanent link">&para;</a></h3>
@@ -3086,7 +3081,6 @@
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">p3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">memalign</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="mi">64</span><span class="p">);</span><span class="w">                 </span><span class="c1">// older</span>
 </code></pre></div>
 <p>שלושתן מחזירות כתובת שמובטח שהיא מיושרת ל-16 בתים, ולכן <code>movdqa</code> עליהן בטוח. שימו את שני העולמות האלה בראש - הקצאה רגילה שאולי לא מיושרת מול הקצאה מיושרת מפורשת - כי בדיוק בפער הזה נופל אתגר memcpy.</p>
-<hr />
 <h2 id="memcpy-sse-a-fast-memcpy">פונקציית memcpy מהירה עם SSE - a fast memcpy<a class="headerlink" href="#memcpy-sse-a-fast-memcpy" title="Permanent link">&para;</a></h2>
 <p>בואו נחבר את הכול. הנה מימוש של <code>memcpy</code> שמנסה להיות מהיר: אם יש לפחות 64 בתים להעתיק, הוא מעתיק אותם בבלוקים של 64 בתים בעזרת ארבעה אוגרי <code>xmm</code>, ורק את השארית הקטנה מעתיק בית-בית.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stddef.h&gt;</span>
@@ -3130,7 +3124,6 @@
 </code></pre></div>
 <p>התוכנית קורסת. לא בגלל overflow, לא בגלל דריסת return address - אלא כי <code>dest</code> היה 8 מודולו 16, ו-<code>movntdq</code> דורשת 16. זו בדיוק המלכודת של אתגר memcpy.</p>
 <p>יש כאן גם תובנה שנייה, על הגודל: הלולאה רצה רק אם <code>len &gt;= 64</code>. אם נעביר גודל קטן מ-64, נדלג על כל בלוק ה-SSE ונרד ישר ל-<code>slow_memcpy</code> הבטוחה שמעתיקה בית-בית בלי שום דרישת alignment. הגודל שנבחר קובע אם בכלל נכנסים לקוד המסוכן.</p>
-<hr />
 <h2 id="memcpy-pwnablekr-">אתגר memcpy של pwnable.kr - הצורה של האתגר<a class="headerlink" href="#memcpy-pwnablekr-" title="Permanent link">&para;</a></h2>
 <p>אתגר memcpy בונה על שני הרעיונות האלה - alignment ההקצאה וסף ה-64. מבנה התוכנית (במערכת 32 ביט) הוא בערך כזה:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
@@ -3161,7 +3154,6 @@
 </code></pre></div>
 <p>המלכודת ברורה: השחקן התמים מזין את <code>alloc_size</code> עצמו כגודל ההעתקה. עבור <code>order &gt;= 6</code> הגודל הוא <code>64</code> ומעלה, לכן נכנסים ללולאת ה-SSE, ו-<code>movntdq</code> פוגעת ב-<code>dest</code> שהוא 8 מודולו 16 - <code>SIGSEGV</code>, האתגר נגמר בסיבוב הראשון שחוצה את 64.</p>
 <p>המטרה שלנו: לעבור את כל 20 הסיבובים בלי קריסה, כדי להגיע ל-<code>system("/bin/cat flag")</code>. את הפתרון המלא, כולל למה בחירת הגדלים הנכונה מדלגת על הקוד המסוכן, נעשה בתרגול ובפתרון. כרגע רק תחזיקו את התובנה: <code>src</code> מיושר, <code>dest</code> לא, וסף ה-<code>64</code> הוא הידית שאנחנו שולטים בה.</p>
-<hr />
 <h2 id="_2">סיכום<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <ul>
 <li>יישור זיכרון - alignment: כתובת מיושרת ל-<code>N</code> אם <code>p % N == 0</code>. לalignment ל-16 בתים, ארבעת הביטים התחתונים אפס.</li>
@@ -3191,7 +3183,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:14:39 UTC">2026-07-20 09:14:39</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

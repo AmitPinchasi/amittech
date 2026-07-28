@@ -3348,7 +3348,6 @@
 <p>א. מספר ה-zones תלוי במערכת. במערכת 64 ביט טיפוסית תראו שניים עד שלושה: DMA, DMA32, ו-Normal. במערכת 32 ביט ייתכן גם HighMem.</p>
 <p>ב. המספר הראשון מייצג כמה בלוקים חופשיים יש בגודל של page אחד (4KB, order 0). המספר האחרון (עמודה 11) מייצג כמה בלוקים חופשיים יש בגודל של 1024 pages (4MB, order 10).</p>
 <p>ג. אם המספרים בעמודות הגבוהות הם 0, זה אומר שאין בלוקים רציפים גדולים של זכרון פיזי חופשי. הזכרון מפוצל (fragmented). ייתכן שיש הרבה pages בודדים חופשיים (עמודות נמוכות), אבל הם לא רציפים. זה יגרום לכישלון של allocations שדורשות זכרון פיזי רציף (כמו kmalloc גדול).</p>
-<hr />
 <h3 id="2-procmeminfo">פתרון 2 - חקירת /proc/meminfo<a class="headerlink" href="#2-procmeminfo" title="Permanent link">&para;</a></h3>
 <p>א. הערכים ישתנו בין מערכות. דוגמה:<br />
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>MemTotal:       16384000 kB
@@ -3360,7 +3359,6 @@
 </code></pre></div></p>
 <p>ב. MemFree מראה רק pages שלא בשימוש כלל. MemAvailable כולל גם את MemFree וגם זכרון שניתן לשחרר בקלות - בעיקר page cache (קבצים שנקראו ונשמרו בזכרון כcache) וחלק מה-slab cache (SReclaimable). הקרנל יכול לשחרר את ה-cache הזה מיידית אם process צריך זכרון, ולכן הוא נחשב "זמין".</p>
 <p>ג. לא, זו לא בעיה. Cached גבוה זה דבר טוב! זה אומר שהקרנל משתמש בRAM הפנוי כדי לשמור קבצים שנקראו, מה שמאיץ גישה חוזרת לקבצים. ברגע שprocess צריך זכרון, הקרנל פשוט מפנה pages מה-cache. "RAM פנוי הוא RAM מבוזבז" - יותר טוב להשתמש בו ל-cache מאשר לא לעשות איתו כלום.</p>
-<hr />
 <h3 id="3-procpidmaps">פתרון 3 - ניתוח /proc/[pid]/maps<a class="headerlink" href="#3-procpidmaps" title="Permanent link">&para;</a></h3>
 <p>א. הנה הדרך לזהות את האזורים:</p>
 <ul>
@@ -3375,7 +3373,6 @@
 - <code>r--p</code> - נתונים read-only (קבועים ו-relocations)<br />
 - <code>rw-p</code> - נתונים read-write (משתנים גלובליים של libc)</p>
 <p>ההפרדה נועדה לאבטחה: קוד הוא execute-only (אי אפשר לכתוב עליו), ונתונים הם non-executable (אי אפשר להריץ מהם קוד).</p>
-<hr />
 <h3 id="4-copy-on-write">פתרון 4 - צפייה ב-Copy-on-Write<a class="headerlink" href="#4-copy-on-write" title="Permanent link">&para;</a></h3>
 <p><strong>לפני fork</strong> - יש רק process אחד. ב-<code>/proc/&lt;parent_pid&gt;/status</code> השדה RssAnon מראה בערך 100MB (ה-buffer שהקצנו).</p>
 <p><strong>אחרי fork, לפני כתיבה</strong> - עכשיו יש שני processes. אם נבדוק את <code>/proc/&lt;child_pid&gt;/status</code>:<br />
@@ -3386,7 +3383,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>cat<span class="w"> </span>/proc/&lt;pid&gt;/smaps<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-A<span class="w"> </span><span class="m">20</span><span class="w"> </span><span class="s2">&quot;&lt;address of buffer&gt;&quot;</span>
 </code></pre></div></p>
 <p>השדה <code>Shared_Clean</code> או <code>Shared_Dirty</code> מראה כמה זכרון משותף עם processes אחרים.</p>
-<hr />
 <h3 id="5-">פתרון 5 - שאלה תיאורטית<a class="headerlink" href="#5-" title="Permanent link">&para;</a></h3>
 <p>הזרימה המלאה עבור גישה ראשונה לכתובת של mmap אנונימי:</p>
 <ol>
@@ -3445,7 +3441,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

@@ -2611,7 +2611,6 @@
 
 <h2 id="-format-string-leak">פתרון - יסודות format string והleak של המחסנית<a class="headerlink" href="#-format-string-leak" title="Permanent link">&para;</a></h2>
 <p>כאן נעבור על התרגילים צעד-צעד, עם הפלטים שתראו בפועל וההסבר מאחוריהם. כל הכתובות בפלטים הן ייצוגיות - אצלכם יופיעו כתובות אחרות, אבל המבנה יהיה זהה. הבינארי שאנחנו עובדים עליו הוא זה מהתרגול, מהודר עם <code>gcc -fno-stack-protector -no-pie -O0 -o fmt fmt.c</code> ו-ASLR מכובה.</p>
-<hr />
 <h3 id="1-leak-p">פתרון תרגיל 1 - leak ראשונה עם p<a class="headerlink" href="#1-leak-p" title="Permanent link">&para;</a></h3>
 <p>הרצנו:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;print(&#39;%p.&#39;*8)&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>./fmt
@@ -2623,7 +2622,6 @@
 <p>ההמרה השישית והלאה כבר מגיעות מהמחסנית. שימו לב לערך השישי, <code>0x70252e70252e7025</code>: אם מפרקים אותו לבתים מקבלים <code>70 25 2e 70 25 2e 70 25</code>, וזה בדיוק קוד ה-ASCII של <code>p%.p%.p%</code> - כלומר חלק מהקלט שלנו עצמו (<code>%p.%p.</code>). זו הפעם הראשונה ש-<code>printf</code> "רואה" את מה שהקלדנו. כלומר בבנייה הזו, הbuffer מתחיל בערך בסלוט השישי.</p>
 <p>לגבי <code>%x</code>: אם מריצים <code>python3 -c "print('%x.'*8)" | ./fmt</code> רואים שכל <code>%x</code> מדפיס רק 8 ספרות הקסדצימליות (4 בתים), כי <code>%x</code> מפרש <code>unsigned int</code>. אבל במרחב הארגומנטים של 64 ביט כל סלוט הוא 8 בתים, אז <code>%x</code> בעצם מראה רק את החצי התחתון של הסלוט ו"מבזבז" את החצי העליון. לכן ב-64 ביט עדיף <code>%p</code> שמראה סלוט מלא ולא מבלבל בספירה.</p>
 <p><strong>למה זה עבד / איך להכליל</strong>: מספר ההמרות בformat שולט בכמה עמוק <code>printf</code> חופרת. חמש ההמרות הראשונות ב-64 ביט תמיד מבזבזות את שלב האוגרים, ולכן הנתונים המעניינים - הקלט שלנו, כתובות מחסנית, canary - מתחילים מהסלוט השישי.</p>
-<hr />
 <h3 id="2-buffer">פתרון תרגיל 2 - מציאת ההיסט של הbuffer<a class="headerlink" href="#2-buffer" title="Permanent link">&para;</a></h3>
 <p>זה הלב. שלחנו סמן ורצף <code>%p</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;print(&#39;AAAAAAAA&#39; + &#39;.%p&#39;*12)&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>./fmt
@@ -2675,7 +2673,6 @@
 </code></pre></div>
 <p>שימו לב שהסקריפט משתמש בקידומת קבועה <code>AAAAAAAA|</code> בכל הרצה, כך שהbuffer תמיד מתחיל באותו סמן, ורק מספר הסלוט הנקרא משתנה. ברגע ש-<code>%i$p</code> מחזיר את הסמן - מצאנו את ההיסט.</p>
 <p><strong>למה זה עבד / איך להכליל</strong>: הסמן הוא ערך ייחודי וקל לזיהוי שאנחנו שותלים במקום ידוע (תחילת הbuffer). כשהמרה ממוקמת מחזירה אותו, גילינו את ההתאמה בין "מספר הסלוט ש-<code>printf</code> סופרת" לבין "הבתים שאנחנו שולטים בהם". זהו הגשר שכל שאר הפרק נשען עליו: אותו היסט 6 ישמש אותנו לשתול כתובת ולקרוא ממנה עם <code>%6$s</code>, או לכתוב אליה עם <code>%6$n</code>.</p>
-<hr />
 <h3 id="3-p-s">פתרון תרגיל 3 - דריסה בין p ל-s<a class="headerlink" href="#3-p-s" title="Permanent link">&para;</a></h3>
 <p><strong>משימה א</strong> - <code>%s</code> על הסמן. שלחנו:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;print(&#39;AAAAAAAA%6\$s&#39;)&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>./fmt
@@ -2691,7 +2688,6 @@
 </code></pre></div>
 <p>כשההמרה <code>%s</code> נופלת על סלוט שכן מכיל מצביע ל-string חוקי, נקבל את תוכן המחרוזת מודפס במקום קריסה. זה ממחיש שהתנהגות <code>%s</code> תלויה לגמרי בשאלה אם הסלוט מכיל מצביע חוקי או לא.</p>
 <p><strong>למה זה עבד / איך להכליל</strong>: <code>%s</code> = dereference. הכוח שלה הוא בדיוק הסכנה שלה - היא ניגשת לזיכרון לפי ערך שאולי אנחנו שולטים בו. כשנשלב את זה עם ההיסט מתרגיל 2 ועם כתובת אמיתית ששתלנו, נקבל קריאה שרירותית מלאה.</p>
-<hr />
 <h3 id="4-32-64">פתרון תרגיל 4 - השוואת 32 ביט מול 64 ביט<a class="headerlink" href="#4-32-64" title="Permanent link">&para;</a></h3>
 <p>הידרנו ל-32 ביט והרצנו את אותו סמן (הפעם 4 בתים, כי סלוט הוא 4 בתים):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>gcc<span class="w"> </span>-m32<span class="w"> </span>-fno-stack-protector<span class="w"> </span>-no-pie<span class="w"> </span>-O0<span class="w"> </span>-o<span class="w"> </span>fmt32<span class="w"> </span>fmt.c
@@ -2707,7 +2703,6 @@
 </ul>
 <p>המספר המדויק (4 כאן) תלוי בפרולוג של הפונקציה וב-alignment של המחסנית בבנייה שלכם, אבל התופעה קבועה: <strong>ב-32 ביט ההיסט תמיד נמוך משמעותית מ-64 ביט</strong>.</p>
 <p><strong>למה זה עבד / איך להכליל</strong>: אותו payload נותן היסט שונה בין הארכיטקטורות כי מוסכמת הקריאה שונה. לכן הכלל הראשון בכל אתגר format חדש הוא לזהות את הארכיטקטורה (<code>file ./chal</code> או <code>checksec</code>) ואז למצוא את ההיסט מחדש - אף פעם לא להניח מספר.</p>
-<hr />
 <h3 id="_1">פתרון שאלות ההעמקה<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h3>
 <ul>
 <li>הקריאה <code>printf("%s", buf)</code> מעבירה שני ארגומנטים: פורמט קבוע <code>"%s"</code> שהמתכנת שולט בו, ו-<code>buf</code> כארגומנט נתונים רגיל. כך <code>printf</code> תדפיס את <code>buf</code> כמחרוזת ותעצור. לעומת זאת <code>printf(buf)</code> מעביר את הקלט <strong>כformat</strong>, אז כל <code>%</code> בקלט מתפרש כהוראת שליפה. ההבדל הוא מי שולט במחרוזת הformat.</li>
@@ -2735,7 +2730,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

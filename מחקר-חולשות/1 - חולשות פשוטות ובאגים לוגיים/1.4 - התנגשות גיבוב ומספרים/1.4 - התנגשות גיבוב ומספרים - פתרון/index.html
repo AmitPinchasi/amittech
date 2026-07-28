@@ -2808,7 +2808,6 @@
 <li>היעד הוא <code>0x21DD09EC</code> בהקסה, שהוא <code>568134124</code> בעשרוני.</li>
 <li>הקלט <strong>לא יכול</strong> להכיל בית <code>0x00</code>. הפונקציה <code>strlen</code> סופרת תווים עד בית ה-null הראשון. אם יופיע <code>0x00</code> באמצע, האורך הנמדד יהיה קצר מ-20, והבדיקה תיכשל עם ההודעה <code>passcode length should be 20 bytes</code>.</li>
 </ol>
-<hr />
 <h3 id="2-">פתרון תרגיל 2 - חשבון ההתנגשות<a class="headerlink" href="#2-" title="Permanent link">&para;</a></h3>
 <p>אנחנו צריכים חמישה מספרים שסכומם <code>0x21DD09EC</code>. נחלק את היעד בחמש:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>568134124 / 5 = 113626824   remainder 4
@@ -2824,7 +2823,6 @@
 </code></pre></div>
 <p>אף אחד מהמספרים לא מכיל בית <code>0x00</code>: <code>0x06C5CEC8</code> בנוי מהבתים <code>06 C5 CE C8</code>, וכולם שונים מאפס. מצוין, נעבור את בדיקת האורך.</p>
 <p>הערה על overflow וסימן: הסכום <code>0x21DD09EC</code> קטן מ-<code>0x7FFFFFFF</code>, כך שכשהוא מצטבר במשתנה <code>int</code> המסומן הוא נשאר חיובי ולא גולש. לכן כשהוא מוחזר מ-<code>check_password</code> (המוגדרת <code>unsigned long</code>), הרחבת הסימן ממלאת את הבתים העליונים ב-<code>0x00000000</code>, והערך נשאר <code>0x0000000021DD09EC</code> - בדיוק שווה ל-<code>hashcode</code>. בחירת מספרים קטנים וחיוביים היא זו ששמרה עלינו מהמלכודת הזו.</p>
-<hr />
 <h3 id="3-">פתרון תרגיל 3 - סדר הבתים<a class="headerlink" href="#3-" title="Permanent link">&para;</a></h3>
 <p>נמיר כל מספר לבתים בסדר little-endian - הבית הנמוך ראשון:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>0x06C5CEC8  -&gt;  C8 CE C5 06
@@ -2842,7 +2840,6 @@
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">payload</span><span class="o">.</span><span class="n">hex</span><span class="p">())</span>         <span class="c1"># c8cec506c8cec506c8cec506c8cec506cccec506</span>
 </code></pre></div>
 <p>עם pwntools הקוד שקול הוא <code>p32(0x06C5CEC8)*4 + p32(0x06C5CECC)</code>, שמייצר בדיוק את אותם בתים.</p>
-<hr />
 <h3 id="4-">פתרון תרגיל 4 - הזרמת הקלט והרצה<a class="headerlink" href="#4-" title="Permanent link">&para;</a></h3>
 <p>עכשיו מריצים את <code>col</code> עם הקלט. הבתים שלנו לא מודפסים, אז נשתמש ב-command substitution כדי להעביר אותם כארגומנט.</p>
 <p>אם על המכונה <code>python</code> הוא פייתון 2 (כפי שנפוץ בגרסה הישנה של pwnable.kr), הדרך הקצרה:</p>
@@ -2874,7 +2871,6 @@
 <a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="nb">print</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">recvall</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">))</span>
 </code></pre></div>
 <p>הפונקציה <code>u32</code> כאן פורשת חזרה כל ארבעה בתים למספר, בדיוק כמו ש-<code>check_password</code> עושה, וה-<code>assert</code> מוודא שהסכום מתלכד עם היעד לפני שבכלל מריצים. זו הרגל טוב: לאמת את הפלט מול המודל של הקורבן לפני ההרצה.</p>
-<hr />
 <h3 id="5-gdb">פתרון תרגיל 5 - אימות עם GDB<a class="headerlink" href="#5-gdb" title="Permanent link">&para;</a></h3>
 <p>נריץ תחת GDB כדי לראות בעיניים שהמספרים נקראים כמו שתכננו. נשתמש ב-pwndbg (או pwntools gdb), אבל גם GDB רגיל עובד.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>gdb<span class="w"> </span>./col
@@ -2895,7 +2891,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>finish
 </code></pre></div>
 <p>וה-<code>finish</code> יראה את ערך ההחזרה של הפונקציה - שאמור להיות <code>0x21dd09ec</code>, בדיוק כמו <code>hashcode</code>.</p>
-<hr />
 <h3 id="_1">למה זה עבד ואיך להכליל<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h3>
 <p>הפתרון עבד כי פונקציית הגיבוב הייתה <strong>חיבור פשוט</strong>, ולחיבור אין שום עמידות בפני התנגשות: בהינתן יעד, מציאת חמישה מחוברים שמסתכמים אליו היא חלוקה פשוטה. אין ערבוב ביטים, אין חד-כיווניות - רק אריתמטיקה שאפשר להפוך.</p>
 <p>שלוש נקודות שכדאי לקחת הלאה לאתגרים ולמערכות אמיתיות:</p>
@@ -2925,7 +2920,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

@@ -3265,7 +3265,6 @@
 <h2 id="_1">מבוא<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>הברחת בקשות HTTP היא טכניקת תקיפה שמנצלת חוסר התאמה באופן שבו שרת חזיתי (front-end) ושרת אחורי (back-end) מפרשים את גבולות הבקשה. כאשר שני שרתים בשרשרת לא מסכימים היכן בקשה אחת מסתיימת והבאה מתחילה, תוקף יכול "להבריח" בקשה זדונית שתעובד כאילו היא הגיעה ממשתמש אחר.</p>
 <p>תקיפה זו קריטית במיוחד בסביבות מודרניות שבהן reverse proxy, CDN או load balancer יושבים לפני שרת האפליקציה.</p>
-<hr />
 <h2 id="-">ארכיטקטורה - למה הבעיה קיימת<a class="headerlink" href="#-" title="Permanent link">&para;</a></h2>
 <p>בסביבה מודרנית, בקשות HTTP עוברות דרך מספר שכבות:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>[User] --&gt; [Front-End / CDN / Reverse Proxy] --&gt; [Back-End / Application Server]
@@ -3277,7 +3276,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Transfer-Encoding: chunked
 </code></pre></div>
 <p>כאשר שתי הheaders מופיעות באותה בקשה, והשרתים מתעדפים header שונה - נוצרת ההברחה.</p>
-<hr />
 <h2 id="encoding-chunked-">הEncoding Chunked - איך זה עובד<a class="headerlink" href="#encoding-chunked-" title="Permanent link">&para;</a></h2>
 <p>בencoding chunked, הגוף מחולק לחלקים. כל חלק מתחיל בגודלו בהקסדצימלי, ואחריו <code>\r\n</code>, הנתונים, ושוב <code>\r\n</code>. הסיום מסומן בחלק בגודל 0:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nf">POST</span> <span class="nn">/</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
@@ -3290,7 +3288,6 @@
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>\r\n
 </code></pre></div>
 <p>פירוט: <code>b</code> הוא 11 בהקסדצימלי (אורך "hello world"), ואחרי <code>0\r\n\r\n</code> הבקשה מסתיימת.</p>
-<hr />
 <h2 id="clte">תקיפת CL.TE<a class="headerlink" href="#clte" title="Permanent link">&para;</a></h2>
 <p>בתרחיש CL.TE, השרת החזיתי משתמש ב-Content-Length והשרת האחורי משתמש ב-Transfer-Encoding.</p>
 <h3 id="_2">הדגמה בסיסית<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
@@ -3335,7 +3332,6 @@
 <a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>X
 </code></pre></div>
 <p>אם השרת האחורי משתמש ב-Transfer-Encoding, הוא יחכה לחלק בגודל 0 שלא מגיע - ויווצר timeout. זה מאשר שהאחורי מעבד chunked.</p>
-<hr />
 <h2 id="tecl">תקיפת TE.CL<a class="headerlink" href="#tecl" title="Permanent link">&para;</a></h2>
 <p>בתרחיש TE.CL, השרת החזיתי משתמש ב-Transfer-Encoding והשרת האחורי משתמש ב-Content-Length.</p>
 <h3 id="_3">דוגמה מלאה<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
@@ -3370,7 +3366,6 @@
 <a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>X
 </code></pre></div>
 <p>השרת החזיתי מעבד את ה-chunked (רואה חלק בגודל 0 - סיום) ומעביר. השרת האחורי קורא Content-Length: 6, מקבל <code>0\r\n\r\nX</code> (5 בתים) ומחכה לבית נוסף - timeout.</p>
-<hr />
 <h2 id="tete-transfer-encoding">תקיפת TE.TE - ערפול Transfer-Encoding<a class="headerlink" href="#tete-transfer-encoding" title="Permanent link">&para;</a></h2>
 <p>כששני השרתים תומכים ב-Transfer-Encoding, אפשר לערפל את הheader כך שאחד מהם לא יזהה אותה ויחזור ל-Content-Length.</p>
 <h3 id="_4">טכניקות ערפול<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
@@ -3391,7 +3386,6 @@
 <a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="err">: chunked</span>
 </code></pre></div>
 <p>כל אחת מהוריאציות האלה עלולה לגרום לאחד השרתים לא לזהות את הheader כ-Transfer-Encoding תקין, ובכך ליפול לשימוש ב-Content-Length. הבדיקה היא שיטתית - מנסים כל ערפול ובודקים את ההתנהגות.</p>
-<hr />
 <h2 id="exploit-bypass">הExploit - bypass בקרות גישה<a class="headerlink" href="#exploit-bypass" title="Permanent link">&para;</a></h2>
 <p>תרחיש נפוץ: השרת החזיתי חוסם גישה ל-<code>/admin</code>, אבל השרת האחורי לא. נשתמש בהברחה כדי לגשת ישירות:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nf">POST</span> <span class="nn">/</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
@@ -3410,7 +3404,6 @@
 <a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="nt">x</span><span class="o">=</span><span class="s">1</span>
 </code></pre></div>
 <p>השרת החזיתי מעביר את הבקשה ל-<code>/</code> (מותר). השרת האחורי מפרש את הבקשה המוברחת כבקשה נפרדת ל-<code>/admin</code> - ומגיש את התוכן.</p>
-<hr />
 <h2 id="exploit-">הExploit - לכידת בקשות של משתמשים אחרים<a class="headerlink" href="#exploit-" title="Permanent link">&para;</a></h2>
 <p>ניתן להשתמש בהברחה כדי ללכוד בקשות של משתמשים אחרים, כולל הheaders והעוגיות שלהם:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nf">POST</span> <span class="nn">/</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
@@ -3430,7 +3423,6 @@
 <a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="s">comment</span><span class="o">=</span>
 </code></pre></div>
 <p>הבקשה המוברחת היא POST שכותב תגובה. ה-Content-Length שלה (800) גדול מהגוף שסופק, ולכן השרת ימשיך לקרוא מהחיבור - והנתונים הבאים הם הבקשה של המשתמש הבא. הבקשה של הקורבן תצורף לפרמטר <code>comment</code>, והתוקף יוכל לקרוא אותה.</p>
-<hr />
 <h2 id="exploit-xss">הExploit - XSS דרך הברחת בקשות<a class="headerlink" href="#exploit-xss" title="Permanent link">&para;</a></h2>
 <p>אם יש נקודת XSS מוחזר באפליקציה, הברחת בקשות מאפשרת לנצל אותה ללא אינטראקציה של הקורבן:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nf">POST</span> <span class="nn">/</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
@@ -3446,7 +3438,6 @@
 <a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>\r\n
 </code></pre></div>
 <p>אם ה-User-Agent מוחזר בתגובה ללא סינון, הבקשה הבאה שתגיע מכל משתמש תקבל תגובה עם XSS.</p>
-<hr />
 <h2 id="exploit-_1">הExploit - הפניה פתוחה דרך הברחת בקשות<a class="headerlink" href="#exploit-_1" title="Permanent link">&para;</a></h2>
 <p>אם האפליקציה מבצעת redirect מבוסס-Host, אפשר להשתמש בהברחה:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nf">POST</span> <span class="nn">/</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
@@ -3461,7 +3452,6 @@
 <a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>\r\n
 </code></pre></div>
 <p>אם <code>/home</code> מבצע redirect ל-<code>https://Host/home/</code>, הקורבן יופנה ל-<code>https://attacker-website.com/home/</code>.</p>
-<hr />
 <h2 id="exploit-cache-poisoning">הExploit - cache poisoning דרך הברחת בקשות<a class="headerlink" href="#exploit-cache-poisoning" title="Permanent link">&para;</a></h2>
 <p>שילוב של הברחת בקשות עם cache יכול להיות הרסני. התוקף מבריח בקשה שגורמת לשרת להחזיר תוכן זדוני, והתגובה נשמרת בcache:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nf">POST</span> <span class="nn">/</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
@@ -3476,7 +3466,6 @@
 <a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>\r\n
 </code></pre></div>
 <p>אם התגובה לבקשה המוברחת (שמכילה JavaScript זדוני מהשרת של התוקף) נשמרת בcache עבור <code>/static/main.js</code>, כל מבקר באתר יטען את הסקריפט הזדוני.</p>
-<hr />
 <h2 id="exploit-_2">הExploit - לכידת אישורי התחברות<a class="headerlink" href="#exploit-_2" title="Permanent link">&para;</a></h2>
 <p>אם יש פונקציונליות התחברות, ניתן להבריח בקשה שתלכוד את האישורים של המשתמש הבא:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="nf">POST</span> <span class="nn">/</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
@@ -3494,7 +3483,6 @@
 <a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>username=attacker&amp;password=x&amp;next=
 </code></pre></div>
 <p>הבקשה של הקורבן הבא תצורף לשדה <code>next</code>, והתוקף יוכל לראות אותה דרך ההפניה.</p>
-<hr />
 <h2 id="-burp-suite">כלים - שימוש ב-Burp Suite<a class="headerlink" href="#-burp-suite" title="Permanent link">&para;</a></h2>
 <h3 id="_5">הגדרות בסיסיות<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
 <p>ב-Burp Suite, יש לוודא שההגדרות הבאות פעילות:</p>
@@ -3514,7 +3502,6 @@
 <a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>3. Send the same normal request again and check if the response changed
 <a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>4. If the response changed - there is smuggling
 </code></pre></div>
-<hr />
 <h2 id="_6">סיכום טכניקות זיהוי<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -3542,7 +3529,6 @@
 </tr>
 </tbody>
 </table>
-<hr />
 <h2 id="_7">הגנה<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
 <h3 id="1">1. נרמול עיבוד בקשות<a class="headerlink" href="#1" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>- Make sure the front-end and back-end servers use the same method to determine body length
@@ -3572,7 +3558,6 @@
 <a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>- Check every change in the infrastructure (new reverse proxy, new CDN)
 <a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>- Update servers to versions that handle ambiguous requests better
 </code></pre></div>
-<hr />
 <h2 id="_8">סיכום<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <p>הברחת בקשות HTTP היא אחת התקיפות הקשות ביותר לזיהוי ולהגנה. היא מנצלת את העובדה שבמערכות מודרניות יש שרשרת של שרתים שמעבדים את אותה בקשה, ולא תמיד הם מסכימים על הפרשנות. נקודות מפתח:</p>
 <ul>
@@ -3601,7 +3586,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 08:51:00 UTC">2026-07-20 08:51:00</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

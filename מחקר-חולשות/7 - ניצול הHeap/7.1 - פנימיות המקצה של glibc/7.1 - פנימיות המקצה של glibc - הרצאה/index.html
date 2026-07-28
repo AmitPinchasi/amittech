@@ -2985,12 +2985,10 @@
 
 <p>עד עכשיו בקורס עסקנו כמעט תמיד במחסנית - buffer overflows, דריסת return address, ROP. אבל חלק אדיר מהחולשות בתוכנות אמיתיות (דפדפנים, מנועי JavaScript, שרתים, kernels) חי דווקא בערמה - the heap. כדי לנצל חולשות heap אי אפשר להסתפק ב"malloc מחזיר לי זיכרון ו-free משחרר אותו". צריך להבין לעומק מה בדיוק קורה מאחורי הקלעים: איך זיכרון מסודר, איזה metadata שומרים לידו, ולאן נתחים משוחררים נודדים. מנהל הזיכרון של glibc נקרא <strong>ptmalloc2</strong>, וההרצאה הזו מפרקת אותו לגורמים. זה הבסיס לכל טכניקה שנלמד בהמשך הפרק - use-after-free, double free, tcache poisoning, וכל משפחת ה-House of.</p>
 <p>כל מה שנכתוב כאן מתייחס למקצה של glibc על x86-64. אם אתם רוצים לעקוב, בדקו את הגרסה שלכם עם <code>ldd --version</code>. ההסברים מדויקים לגרסאות 2.31 עד 2.35, ונציין במפורש איפה גרסאות שונות משנות את ההתנהגות.</p>
-<hr />
 <h2 id="-the-allocator">למה בכלל מקצה - the allocator<a class="headerlink" href="#-the-allocator" title="Permanent link">&para;</a></h2>
 <p>כשאתם קוראים ל-<code>malloc(100)</code>, אתם לא מדברים ישירות עם הkernel. בקשה של 100 בתים לkernel בכל פעם הייתה איטית להחריד. במקום זה, glibc מבקשת מהkernel בלוק גדול של זיכרון בבת אחת (דרך <code>brk</code> או <code>mmap</code>), וקוראת לו <strong>arena</strong>. אחר כך המקצה מחלק את הבלוק הזה לחתיכות קטנות לפי הבקשות שלכם, וממחזר חתיכות ששוחררו.</p>
 <p>התהליך המרכזי מקבל <strong>arena</strong> ראשי שנקרא <code>main_arena</code>. כל thread נוסף מקבל arena משלו (עד גבול מסוים), כדי שלא יצטרכו לנעול מנעול משותף על כל הקצאה. בהרצאה הזו נתמקד ב-<code>main_arena</code> של thread יחיד, אבל זכרו שהמבנה <code>malloc_state</code> (ה-arena) מחזיק בתוכו את כל רשימות הפחים שנדבר עליהן.</p>
 <p>היחידה הבסיסית שהמקצה מחלק נקראת <strong>נתח - chunk</strong>. כל דבר בערמה הוא chunk: מה ש-<code>malloc</code> נתן לכם, מה ששחררתם, ואפילו השטח הפנוי בקצה הערמה. בואו נראה איך chunk בנוי.</p>
-<hr />
 <h2 id="-malloc_chunk">מבנה הנתח - malloc_chunk<a class="headerlink" href="#-malloc_chunk" title="Permanent link">&para;</a></h2>
 <p>הנה ההגדרה, בצורה מפושטת, מתוך הקוד של glibc:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">malloc_chunk</span><span class="w"> </span><span class="p">{</span>
@@ -3032,7 +3030,6 @@
 </code></pre></div>
 <p><img alt="תרשים המראה שאותו אזור זיכרון בנתח משמש לשני דברים שונים: נתוני משתמש כשהנתח מוקצה, ומצביעי fd ו-bk לרשימת הפח כשהוא משוחרר" src="../../../../images/illustrations/vuln-7-1-chunk-layout-allocated-free.svg" /></p>
 <p>זו נקודת המפתח לכל exploit heap: <strong>ברגע שנתח משתחרר, ה-16 בתים הראשונים של הזיכרון שלכם הופכים למצביעים <code>fd</code>/<code>bk</code>.</strong> אם נצליח לכתוב לנתח משוחרר (זו בדיוק החולשה use-after-free), אנחנו כותבים ישירות על מצביעים שהמקצה יבטח בהם. זה מה שהופך את ה-heap לשדה משחקים לתוקף.</p>
-<hr />
 <h2 id="-size-flags">שדה הגודל והדגלים - size flags<a class="headerlink" href="#-size-flags" title="Permanent link">&para;</a></h2>
 <p>ה-<code>size</code> תמיד מיושר ל-16 בתים, ולכן 3 הביטים התחתונים שלו תמיד יהיו אפס. glibc "גונבת" את שלושת הביטים האלה לשלושה דגלים:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>size = [ ..... real size ..... ][ A ][ M ][ P ]
@@ -3046,7 +3043,6 @@
 <li><strong>הדגל NON_MAIN_ARENA (0x4)</strong> - מסמן שהנתח שייך ל-arena של thread ולא ל-<code>main_arena</code>.</li>
 </ul>
 <p>כדי לקרוא את הגודל האמיתי פשוט מסננים את שלושת הביטים: <code>real_size = size &amp; ~0x7</code>. בפועל, כשאתם רואים ב-pwndbg נתח בגודל <code>0x91</code>, הגודל האמיתי הוא <code>0x90</code> וה-<code>0x1</code> הוא PREV_INUSE דלוק.</p>
-<hr />
 <h2 id="-request2size">חישוב גודל הנתח - request2size<a class="headerlink" href="#-request2size" title="Permanent link">&para;</a></h2>
 <p>הבקשה שלכם כמעט אף פעם לא הופכת לנתח באותו גודל. המקצה מוסיף 8 בתים לשדה ה-<code>size</code>, מיישר ל-16 בתים, וכופה מינימום של <code>0x20</code>. הנוסחה (על 64 ביט):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>chunk_size = max( 0x20 , (request + 8 + 15) rounded down to 16 )
@@ -3059,7 +3055,6 @@
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>malloc(0x88) -&gt; chunk 0x90
 </code></pre></div>
 <p>כשתבנו exploit תעשו את החישוב הזה בראש כל הזמן, כי הגודל הוא מה שקובע לאיזה <strong>פח</strong> הנתח ילך כשישוחרר.</p>
-<hr />
 <h2 id="-bins">הפחים - bins<a class="headerlink" href="#-bins" title="Permanent link">&para;</a></h2>
 <p>זה הלב של העניין. כשאתם קוראים ל-<code>free</code>, glibc לא מחזירה את הזיכרון לkernel. היא שומרת את הנתח ברשימה מקושרת פנימית כדי למחזר אותו מהר בהקצאה הבאה. הרשימות האלה נקראות <strong>פחים - bins</strong>, ויש כמה סוגים, כל אחד עם התנהגות משלו. הבנה של ההבדלים ביניהם היא בדיוק ההבדל בין מי שexploits heap למי שלא.</p>
 <h3 id="thread-tcache">מטמון לכל thread - tcache<a class="headerlink" href="#thread-tcache" title="Permanent link">&para;</a></h3>
@@ -3097,7 +3092,6 @@
 </ul>
 <h3 id="-top-chunk">נתח הפסגה - top chunk<a class="headerlink" href="#-top-chunk" title="Permanent link">&para;</a></h3>
 <p>בקצה הערמה, ה-chunk האחרון גובל בזיכרון שעדיין לא חולק - הוא נקרא <strong>top chunk</strong> (או wilderness). כשאף פח לא יכול לשרת בקשה, המקצה פשוט <strong>חותך</strong> את מה שצריך מתוך ה-top chunk ומקטין אותו. אם גם ה-top chunk לא מספיק גדול, המקצה מרחיב את הערמה מהkernel (עוד <code>brk</code>/<code>mmap</code>). כשמשחררים נתח שגובל ב-top chunk, הוא <strong>נבלע</strong> בחזרה לתוכו.</p>
-<hr />
 <h2 id="-malloc">מה קורה ב-malloc<a class="headerlink" href="#-malloc" title="Permanent link">&para;</a></h2>
 <p>עכשיו נחבר הכל. כשקוראים ל-<code>malloc(n)</code>, הנה בגדול סדר החיפוש:</p>
 <ol>
@@ -3111,7 +3105,6 @@
 </ol>
 <p><img alt="תרשים זרימה של סדר החיפוש ב-malloc: תחילה tcache, אחר כך fastbin או small bin בגודל מדויק, אחר כך unsorted ו-large bin, ולבסוף חיתוך מה-top chunk או בקשת זיכרון נוסף מהkernel" src="../../../../images/illustrations/vuln-7-1-malloc-search-flow.svg" /></p>
 <p>הנקודה החשובה: ב-glibc מודרנית ה-<strong>tcache תמיד ראשון</strong>. לכן ברוב תרגילי ה-heap הצעד הראשון הוא "למלא את ה-tcache" (7 נתחים) כדי לדחוף נתחים לתוך ה-fastbin או ה-unsorted bin ולראות אותם שם.</p>
-<hr />
 <h2 id="-free">מה קורה ב-free<a class="headerlink" href="#-free" title="Permanent link">&para;</a></h2>
 <p>הזרימה של <code>free(p)</code> היא המראה של הקודם:</p>
 <ol>
@@ -3120,13 +3113,11 @@
 <li>אחרת - זה המסלול ה"איטי": בודקים אם השכנים פנויים ומאחדים איתם (consolidation), ואז שמים את התוצאה ב-<strong>unsorted bin</strong>. אם הנתח גובל ב-top chunk, הוא פשוט נבלע לתוכו.</li>
 <li>נתח שהוקצה ב-<code>mmap</code> (הדגל IS_MMAPPED) משוחרר ישירות עם <code>munmap</code>.</li>
 </ol>
-<hr />
 <h2 id="-splitting-consolidation">פיצול ואיחוד - splitting ו-consolidation<a class="headerlink" href="#-splitting-consolidation" title="Permanent link">&para;</a></h2>
 <p>שני התהליכים האלה הם מה שהופך את ה-heap לדינמי, ושניהם ניתנים לexploit.</p>
 <p><strong>פיצול - splitting</strong>: אם המקצה מוצא נתח פנוי גדול יותר מהנדרש (למשל ב-top chunk או ב-unsorted bin), הוא חותך ממנו את מה שצריך ומחזיר את השארית כנתח פנוי חדש (remainder). ככה בקשה קטנה יכולה "לנגוס" בנתח גדול.</p>
 <p><strong>איחוד - consolidation</strong>: כשמשחררים נתח לא-מהיר וה<strong>שכן הפיזי</strong> שלו (לפני או אחרי, בזיכרון) פנוי גם הוא, glibc מוציאה את השכן מהרשימה שלו (<code>unlink</code>) ומאחדת את השניים לנתח אחד גדול. זה מונע פיצול-יתר של הערמה. הבדיקה מתבצעת דרך הדגל PREV_INUSE של השכנים ודרך שדה ה-<code>prev_size</code>. בדיוק בגלל שה-<code>unlink</code> מסתמך על <code>fd</code>/<code>bk</code>, יש בו <strong>בדיקות קשיחות</strong> (unlink hardening) שמוודאות ש-<code>P-&gt;fd-&gt;bk == P</code> וש-<code>P-&gt;bk-&gt;fd == P</code>. את הבדיקות האלה נלמד לעקוף בשיעור על תקיפת unlink.</p>
 <p>הפחים המהירים (fastbins) במיוחד לא מאוחדים בזמן free רגיל. הם מאוחדים רק כשקוראים ל-<code>malloc_consolidate</code> - בדרך כלל כשמבקשים נתח גדול והמקצה צריך לפנות מקום. עד אז הם נשארים מפוצלים כשרשרת קטנה ומהירה.</p>
-<hr />
 <h2 id="-pwndbg">הכל ביחד - דוגמה עם pwndbg<a class="headerlink" href="#-pwndbg" title="Permanent link">&para;</a></h2>
 <p>בואו נראה את זה על תוכנית קטנה. נהדיר בינארי, נריץ תחת pwndbg, ונצפה בנתחים נודדים בין הפחים.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="cm">/* heap_demo.c  -  gcc heap_demo.c -o heap_demo -no-pie */</span>
@@ -3176,7 +3167,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>pwndbg&gt; malloc_chunk 0x5555555592a0   # shows prev_size, size, fd, bk and the flags
 </code></pre></div>
 <p>וזה מאשר בעיניים את כל מה שדיברנו עליו: שדה size עם דגל PREV_INUSE, מצביע <code>fd</code> שמשרשר לנתח הבא, וכן הלאה.</p>
-<hr />
 <h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <ul>
 <li>הערמה מנוהלת על ידי <strong>ptmalloc2</strong>, שמחלק זיכרון ל-<strong>נתחים - chunks</strong> ומחזיר אותם דרך <strong>פחים - bins</strong>.</li>
@@ -3208,7 +3198,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:14:39 UTC">2026-07-20 09:14:39</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

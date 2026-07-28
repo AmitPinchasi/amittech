@@ -2904,7 +2904,6 @@
 <a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 <a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a><span class="p">}</span>
 </code></pre></div>
-<hr />
 <h3 id="1-">פתרון תרגיל 1 - לשחזר את הקריסה התמימה<a class="headerlink" href="#1-" title="Permanent link">&para;</a></h3>
 <p>נזין את <code>alloc_size</code> עצמו בכל סיבוב. הסיבובים הראשונים עוברים כי הגדלים קטנים מ-64:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Order 2! : 4      order=2 -&gt; alloc_size=4,  len=4  &lt; 64  -&gt; slow_memcpy, OK
@@ -2925,7 +2924,6 @@
 </code></pre></div>
 <p>ההוראה שגרמה לחריגה היא <code>movntdq</code> (הכתיבה), והכתובת ב-<code>edi</code> (שהוא <code>dest</code>) היא 8 מודולו 16. <code>movntdq</code> דורשת alignment ל-16, <code>dest</code> מיושר רק ל-8, ולכן <code>SIGSEGV</code>.</p>
 <p>למה זה עבד: זיהינו את ההוראה המדויקת ואת הסיבה. זו לא overflow ולא מצביע פגום - זו הוראת SSE שדורשת alignment שקיבלה כתובת לא מיושרת. תמיד כשנופלים על <code>movdqa</code>/<code>movaps</code>/<code>movntdq</code>, הדבר הראשון לבדוק הוא <code>reg &amp; 0xf</code>.</p>
-<hr />
 <h3 id="2-alignment-dest">פתרון תרגיל 2 - למדוד את הalignment של dest<a class="headerlink" href="#2-alignment-dest" title="Permanent link">&para;</a></h3>
 <p>נוסיף את הדפסת הבדיקה ונריץ:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>order=2 dest=0x...a8 dest%16=8
@@ -2938,7 +2936,6 @@
 <p>השארית היא תמיד 8. ההסבר: במערכת 32 ביט <code>MALLOC_ALIGNMENT</code> שווה <code>2 * SIZE_SZ = 2 * 4 = 8</code>. המצביע שאנחנו מקבלים מ-<code>malloc</code> יושב 8 בתים אחרי בסיס הנתח (אחרי <code>prev_size</code> ו-<code>size</code>), והנתחים עצמם מיושרים ל-16 - לכן המצביע יוצא 8 מודולו 16, שוב ושוב. לעולם לא נקבל מ-<code>malloc</code> הרגילה כתובת מיושרת ל-16 כאן, ולכן <code>movdqa</code>/<code>movntdq</code> על הbuffer הזה תמיד יקרסו.</p>
 <p>לעומת זאת <code>src</code> מגיע מ-<code>mmap</code>, שמחזיר כתובת מיושרת לדף שלם (4096 בתים). דף שלם מיושר גם ל-16, ולכן <code>src</code> תמיד תקין. כלומר הצד הקורא בסדר, והצד הכותב (<code>dest</code>) הוא הבעיה.</p>
 <p>למה זה עבד: הוכחנו שהalignment הבעייתי הוא מבני ולא מקרי - הוא נובע ישירות מ-<code>MALLOC_ALIGNMENT</code> של 8 בתים ב-32 ביט. מכאן ברור שאין דרך לגרום ל-<code>movdqa</code> לעבוד על buffer <code>malloc</code> רגיל, ולכן נצטרך פשוט להימנע ממנו.</p>
-<hr />
 <h3 id="3-">פתרון תרגיל 3 - למצוא גדלים בטוחים<a class="headerlink" href="#3-" title="Permanent link">&para;</a></h3>
 <p>התנאי שמפעיל את הלולאה המסוכנת הוא <code>len &gt;= 64</code>. אם נשלח בכל סיבוב גודל קטן מ-64, נדלג על כל בלוק ה-SSE ונרד ישר ל-<code>slow_memcpy</code> שמעתיקה בית-בית בלי שום דרישת alignment. אין בקוד שום <code>free</code>, ואין בדיקה שהגודל תואם ל-<code>alloc_size</code>, ולכן גם אם נעתיק כמה בתים מעבר לbuffer קטן - אין קריסה, כי אין מבנה heap שמשתחרר או נבדק אחר כך.</p>
 <p>הנוסחה הבטוחה: בכל סיבוב שולחים את המינימום בין <code>alloc_size</code> לבין ערך קבוע שקטן מ-64. נבחר את המינימום עם <code>63</code>:</p>
@@ -2949,7 +2946,6 @@
 </code></pre></div>
 <p>לגדלים הקטנים (order 2 עד 5) הגודל תמיד קטן מ-64 בלאו הכי, ולגדלים הגדולים אנחנו חוסמים ב-63. בשום סיבוב לא נכנסים ללולאת ה-SSE, אף <code>movdqa</code>/<code>movntdq</code> לא מורצת, ולכן הalignment של <code>dest</code> כבר לא מעניין אף אחד. כל 20 הסיבובים עוברים, <code>order</code> מגיע ל-22, והדגל מודפס.</p>
 <p>למה זה עבד: לא ניסינו "לתקן" את הalignment - הבנו שלא נוכל. במקום זה זיהינו שהגודל הוא ידית שליטה שמכריעה אם נוגעים בכלל בקוד המסוכן, ובחרנו גדלים שמשאירים את כל ההעתקות במסלול הבטוח.</p>
-<hr />
 <h3 id="4-">פתרון תרגיל 4 - כתיבת פותרן אוטומטי<a class="headerlink" href="#4-" title="Permanent link">&para;</a></h3>
 <p>הנה פותרן מלא ב-pwntools. הוא רץ על שני המסלולים - דמו מקומי או חיבור מרוחק - ומדפיס את הדגל בסוף.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="ch">#!/usr/bin/env python3</span>
@@ -2988,7 +2984,6 @@
 </code></pre></div>
 <p>בשרת האמיתי, במקום השורה המדומה, <code>system("/bin/cat flag")</code> ידפיס את הדגל האמיתי. שימו לב שהפותרן לא תלוי בכתובות, ב-ASLR או בהגנות אחרות - זו לא חולשת זיכרון קלאסית אלא אתגר הבנה של alignment ו-SSE, ולכן אין כאן leaks או ROP. כל מה שצריך הוא לבחור נכון את הגדלים.</p>
 <p>למה זה עבד: אוטומציה של אותה תובנה מתרגיל 3. הפותרן מנתח כל הנחיית <code>Order</code> ושולח גודל בטוח, וכך עובר את כל הסיבובים בלי אף פעם להריץ הוראת SSE על כתובת לא מיושרת.</p>
-<hr />
 <h3 id="5-movdqa">פתרון תרגיל 5 (העשרה) - הדרך ה"נכונה" להריץ movdqa<a class="headerlink" href="#5-movdqa" title="Permanent link">&para;</a></h3>
 <p>בתרגילים הקודמים ברחנו מ-SSE. עכשיו נגרום לו לעבוד. יש שתי דרכים, וכל אחת מלמדת משהו.</p>
 <p>הדרך הראשונה, לתקן את הalignment של <code>dest</code>. מחליפים במקור את <code>malloc</code> בהקצאה מיושרת:</p>
@@ -3023,7 +3018,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

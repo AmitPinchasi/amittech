@@ -2791,7 +2791,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ssh<span class="w"> </span>uaf@pwnable.kr<span class="w"> </span>-p2222<span class="w">        </span><span class="c1"># password: guest</span>
 </code></pre></div>
 <p>בתוך החשבון תמצאו את הבינארי <code>uaf</code>, את קוד המקור <code>uaf.cpp</code>, ואת קובץ הדגל <code>flag</code> שאין לכם הרשאה לקרוא ישירות. המטרה: להשיג shell בהרשאות הבינארי ולקרוא את הדגל.</p>
-<hr />
 <h3 id="1-vtable">תרגיל 1 - חימום מקומי על vtable<a class="headerlink" href="#1-vtable" title="Permanent link">&para;</a></h3>
 <p>לפני pwnable.kr, בנו והריצו את הדמו מההרצאה (<code>vuln.cpp</code>) אצלכם. הדרו עם <code>-no-pie</code>, הריצו <code>checksec</code>, ותקפו אותו עם השלד מההרצאה.</p>
 <p>המטרה: להבין בעיניים איך <code>free</code> -&gt; <code>alloc</code> -&gt; <code>use</code> מחליף את ה-vptr ומקפיץ ל-<code>give_shell</code>.</p>
@@ -2800,7 +2799,6 @@
 <li>רמז 2: אחרי <code>delete m</code>, הסתכלו שוב על <code>x/gx m</code>. שימו לב שה-vptr כבר לא מצביע ל-vtable - הוא מכיל מצביע fd של ה-bin. זו הסיבה שאסור לקרוא ל-use מיד אחרי free בלי למחזר.</li>
 <li>רמז 3: מצאו את כתובת ה-vtable עם <code>nm vuln | grep _ZTV</code>. הבינו למה ה-vptr המזויף שאתם כותבים הוא <code>vtable + 8</code> (כלומר slot0 פחות 8).</li>
 </ul>
-<hr />
 <h3 id="2-">תרגיל 2 - קריאת המקור והבנת המבנה<a class="headerlink" href="#2-" title="Permanent link">&para;</a></h3>
 <p>התחברו לאתגר, קראו את <code>uaf.cpp</code> והבינו את התוכנית לפני שתתקפו. ענו לעצמכם בכתב על השאלות הבאות - בלי לנחש, מתוך המקור:</p>
 <ol>
@@ -2816,7 +2814,6 @@
 </li>
 <li>רמז 2: זכרו שה-string כאן הוא מהסוג הישן, מצביע יחיד של 8 בתים. זה מה שמביא את האובייקט ל-24 בתים בדיוק.</li>
 </ol>
-<hr />
 <h3 id="3-">תרגיל 3 - מציאת הכתובת לכתיבה<a class="headerlink" href="#3-" title="Permanent link">&para;</a></h3>
 <p>זהו הלב הטכני. אתם צריכים למצוא את הערך המדויק שתכתבו לתוך ה-vptr כדי ש-<code>introduce</code> יקפוץ ל-<code>give_shell</code>.</p>
 <p>המטרה: למצוא את כתובת slot 0 (איפה יושב <code>give_shell</code> בטבלה), ולהבין למה כותבים אותה פחות 8.</p>
@@ -2825,7 +2822,6 @@
 <li>רמז 2: פתחו ב-gdb, עצרו אחרי שהאובייקטים נוצרים, והריצו <code>x/gx m</code> כדי לראות את ה-vptr האמיתי. זו כתובת slot 0. עכשיו <code>x/2gx &lt;vptr&gt;</code> ותראו את <code>give_shell</code> ב-slot 0 ואת <code>introduce</code> ב-slot 1.</li>
 <li>רמז 3: הקריאה של introduce מבצעת <code>call [vptr+8]</code>. אתם רוצים ש-<code>[vptr+8]</code> יהיה <code>give_shell</code>. אם slot0 מכיל את <code>give_shell</code>, איזה ערך צריך vptr המזויף להיות כדי ש-<code>vptr+8</code> יצביע ל-slot0? (רמז בתוך רמז: הזיזו את הטבלה 8 בתים אחורה.)</li>
 </ul>
-<hr />
 <h3 id="4-">תרגיל 4 - בניית הקובץ וההרצה<a class="headerlink" href="#4-" title="Permanent link">&para;</a></h3>
 <p>עכשיו מרכיבים הכל. אתם צריכים: קובץ שמכיל את ה-vptr המזויף, ורצף לחיצות תפריט בסדר הנכון.</p>
 <p>המטרה: להריץ <code>./uaf 24 &lt;קובץ&gt;</code>, למחזר את הבלוקים המשוחררים, ולהשיג shell.</p>
@@ -2836,7 +2832,6 @@
 <li>רמז 4: אחרי שה-shell נפתח, ה-stdin שלכם צריך להישאר פתוח כדי להקליד <code>cat flag</code>. אם אתם מזינים את הפקודות דרך pipe, סיימו ב-<code>cat</code> כדי לחבר את ה-stdin שלכם ל-shell.</li>
 <li>רמז 5 (למה זה לפעמים לא עובד בניסיון ראשון): אם קיבלתם קריסה במקום shell, בדקו האם מחזרתם את שני האובייקטים. הקצאה אחת בלבד משאירה את m עם vptr זבל, ו-<code>m-&gt;introduce()</code> קורס לפני שהגיע ל-give_shell.</li>
 </ul>
-<hr />
 <h3 id="5-pwntools">תרגיל 5 - אוטומציה עם pwntools (בונוס)<a class="headerlink" href="#5-pwntools" title="Permanent link">&para;</a></h3>
 <p>אחרי שהצלחתם ידנית, כתבו סקריפט <code>pwntools</code> שעושה את הכל: מכין את הקובץ, מריץ את הבינארי עם הארגומנטים הנכונים, שולח את רצף התפריט, ופותח shell אינטראקטיבי. שאפו לחלץ את כתובת ה-slot מהבינארי במקום להקשיח אותה - כך הסקריפט ישרוד גם אם תהדרו מחדש.</p>
 <ul>
@@ -2865,7 +2860,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

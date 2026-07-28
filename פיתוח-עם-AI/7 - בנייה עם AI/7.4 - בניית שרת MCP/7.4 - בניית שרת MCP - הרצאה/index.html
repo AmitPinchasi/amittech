@@ -2723,7 +2723,6 @@
 
 <p>בהרצאות הקודמות ראינו איך לתת למודל tools - הגדרנו אותם בתוך בקשת ה-API, או השתמשנו בtools המובנים של ה-Agent SDK. אבל יש בעיה: הtools שהגדרנו קשורים לתוכנית ספציפית. אם כתבנו tool מזג אוויר בתוך סקריפט פייתון, הוא זמין רק שם. מה אם נרצה שאותו tool יהיה זמין ל-Claude Code, ל-Claude Desktop, ל-Agent SDK, ולכל tool AI אחר - בלי לכתוב אותו מחדש בכל מקום? זו בדיוק הבעיה ש-<strong>MCP</strong> פותר. MCP, ראשי תיבות של Model Context Protocol, הוא פרוטוקול פתוח וסטנדרטי שמגדיר איך אפליקציית AI (מארח) מדברת עם שרת שחושף tools, נתונים וprompts. כשאנחנו כותבים שרת MCP פעם אחת, כל מארח שתומך בפרוטוקול יכול להשתמש בו.</p>
 <p>בהרצאה הזו נבנה שרת MCP מינימלי שחושף tool אחד, ונחבר אותו ל-Claude Code. נראה כמה זה פשוט - כמה עשרות שורות קוד, וקיבלנו tool שעובד בכל מקום.</p>
-<hr />
 <h2 id="mcp-the-model-context-protocol">מהו MCP - the Model Context Protocol<a class="headerlink" href="#mcp-the-model-context-protocol" title="Permanent link">&para;</a></h2>
 <p>MCP הוא כמו "USB לtool AI". במקום שכל אפליקציה תמציא דרך משלה לחבר tools, כולן מדברות את אותו פרוטוקול. שרת MCP יכול לחשוף שלושה סוגי יכולות:</p>
 <ul>
@@ -2733,7 +2732,6 @@
 </ul>
 <p>הצד היפה: המארח (Claude Code, Claude Desktop, Agent SDK) הוא ה<strong>לקוח</strong>, והשרת שלנו מספק את הtools. הם מדברים ביניהם דרך הפרוטוקול, בפורמט JSON-RPC. אנחנו לא צריכים לדעת את הפרטים - ה-SDK של MCP עוטף הכל.</p>
 <p><img alt="איור המתאר את ארכיטקטורת MCP: המארחים Claude Code, Claude Desktop וה-Agent SDK מדברים דרך הפרוטוקול עם שרת ה-MCP שלנו, ששרת אחד שלו חושף כלים, משאבים ותבניות" src="../../../../images/illustrations/ai-7-4-mcp-architecture.svg" /></p>
-<hr />
 <h2 id="-environment-setup">הכנת הסביבה - environment setup<a class="headerlink" href="#-environment-setup" title="Permanent link">&para;</a></h2>
 <p>נשתמש ב-SDK של MCP לפייתון. החבילה נקראת <code>mcp</code>, ומתקינים אותה עם התוספת <code>cli</code>. הדרך המומלצת היא עם הtool <code>uv</code>, אבל גם <code>pip</code> רגיל עובד:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># with uv (recommended)</span>
@@ -2751,7 +2749,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Processing request&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>   <span class="c1"># safe - written to stderr</span>
 </code></pre></div>
-<hr />
 <h2 id="-creating-the-server">יצירת השרת - creating the server<a class="headerlink" href="#-creating-the-server" title="Permanent link">&para;</a></h2>
 <p>נשתמש במחלקה <code>FastMCP</code>, שמפשטת מאוד את הכתיבה. היא משתמשת ברמזי טיפוסים (type hints) וב-docstrings של פייתון כדי לייצר את הגדרות הtools אוטומטית. ניצור קובץ בשם <code>weather.py</code> ונתחיל:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
@@ -2766,7 +2763,6 @@
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="n">USER_AGENT</span> <span class="o">=</span> <span class="s2">&quot;weather-app/1.0&quot;</span>
 </code></pre></div>
 <p>זהו - יצרנו שרת. עכשיו צריך להוסיף לו tool.</p>
-<hr />
 <h2 id="tool-defining-a-tool">הגדרת tool - defining a tool<a class="headerlink" href="#tool-defining-a-tool" title="Permanent link">&para;</a></h2>
 <p>מגדירים tool עם הדקורטור <code>@mcp.tool()</code>. ה-docstring הופך לתיאור הtool, ורמזי הטיפוסים הופכים לסכמת הקלט. הנה tool שמחזיר התראות מזג אוויר עבור מדינה בארה"ב:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">make_nws_request</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
@@ -2804,7 +2800,6 @@
 <a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a>    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">---</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">alerts</span><span class="p">)</span>
 </code></pre></div>
 <p>שימו לב כמה זה נקי: לא כתבנו JSON Schema ידנית. הדקורטור לוקח את החתימה <code>get_alerts(state: str)</code> וגוזר ממנה שהtool מקבל פרמטר <code>state</code> מסוג מחרוזת. ה-docstring מסביר למודל מתי להשתמש בtool.</p>
-<hr />
 <h2 id="-running-the-server">הרצת השרת - running the server<a class="headerlink" href="#-running-the-server" title="Permanent link">&para;</a></h2>
 <p>בסוף הקובץ מוסיפים את נקודת הכניסה שמריצה את השרת. נשתמש בתעבורת stdio - השרת מקבל בקשות דרך הקלט הסטנדרטי ומחזיר תשובות דרך הפלט:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
@@ -2819,7 +2814,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>uv<span class="w"> </span>run<span class="w"> </span>weather.py
 </code></pre></div>
 <p>השרת יתחיל להאזין להודעות ממארחי MCP. הוא לא ידפיס כלום ולא יסתיים - הוא מחכה בשקט לבקשות. זה הצפוי.</p>
-<hr />
 <h2 id="-claude-code-wiring-it-in">חיבור ל-Claude Code - wiring it in<a class="headerlink" href="#-claude-code-wiring-it-in" title="Permanent link">&para;</a></h2>
 <p>עכשיו החלק המעניין: לחבר את השרת ל-Claude Code כדי שיוכל להשתמש בtool שלנו. הדרך הפשוטה היא הפקודה <code>claude mcp add</code>, שמקבלת שם לשרת ואת הפקודה שמפעילה אותו:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>claude<span class="w"> </span>mcp<span class="w"> </span>add<span class="w"> </span>weather<span class="w"> </span>--<span class="w"> </span>uv<span class="w"> </span>--directory<span class="w"> </span>/absolute/path/to/weather<span class="w"> </span>run<span class="w"> </span>weather.py
@@ -2841,14 +2835,12 @@
 <a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="p">}</span>
 </code></pre></div>
 <p>שתי נקודות חשובות: הנתיב חייב להיות <strong>מוחלט</strong> (אפשר לקבל אותו עם <code>pwd</code>), ולפעמים צריך לתת את הנתיב המלא לפקודה <code>uv</code> עצמה (מקבלים עם <code>which uv</code>). אחרי שמירת ההגדרה, מפעילים מחדש את המארח.</p>
-<hr />
 <h2 id="-testing">בדיקה ואימות - testing<a class="headerlink" href="#-testing" title="Permanent link">&para;</a></h2>
 <p>אחרי החיבור, אפשר לבדוק שהשרת רשום. ב-Claude Code:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>claude<span class="w"> </span>mcp<span class="w"> </span>list
 </code></pre></div>
 <p>הפקודה תציג את השרתים המחוברים ואת הסטטוס שלהם. אם <code>weather</code> מופיע עם סטטוס תקין, הכל עובד. עכשיו אפשר לשאול את Claude Code שאלה כמו "האם יש התראות מזג אוויר בקליפורניה?", והמודל יזהה שהtool <code>get_alerts</code> רלוונטי, יקרא לו עם <code>state="CA"</code>, ויקבל את התוצאה חזרה - בדיוק כמו בלולאת הtools שבנינו ידנית, אבל דרך הפרוטוקול הסטנדרטי.</p>
 <p>זה הכוח של MCP: אותו שרת <code>weather.py</code>, בלי שינוי, יעבוד גם ב-Claude Desktop, גם עם ה-Agent SDK (דרך <code>mcp_servers</code> שראינו בהרצאה הקודמת), וגם עם כל מארח MCP אחר בעתיד.</p>
-<hr />
 <h2 id="mcp-when-to-build-one">מתי לבנות שרת MCP - when to build one<a class="headerlink" href="#mcp-when-to-build-one" title="Permanent link">&para;</a></h2>
 <p>לא כל tool צריך להיות שרת MCP. אם הtool רלוונטי רק לתוכנית אחת, פשוט להגדיר אותו בתוך בקשת ה-API (כפי שראינו בהרצאה 7.2). בונים שרת MCP כאשר:</p>
 <ul>
@@ -2857,7 +2849,6 @@
 <li>רוצים סטנדרטיזציה - להפריד את הגדרת הtool מהאפליקציה שמשתמשת בו.</li>
 </ul>
 <p>הכלל: שרת MCP הוא ה"מוצר" - יכולת ארוזה שאפשר להתקין; הגדרת tool בקוד היא פתרון מקומי לתוכנית אחת.</p>
-<hr />
 <h2 id="tool-a-second-tool">עוד tool אחד - a second tool<a class="headerlink" href="#tool-a-second-tool" title="Permanent link">&para;</a></h2>
 <p>כדי לראות עד כמה קל להרחיב, נוסיף tool שני לאותו שרת - תחזית מזג אוויר לפי קואורדינטות. פשוט מוסיפים פונקציה נוספת עם דקורטור:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">()</span>
@@ -2885,11 +2876,9 @@
 <a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a>    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">---</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
 </code></pre></div>
 <p>זהו - עכשיו לשרת שני tools, <code>get_alerts</code> ו-<code>get_forecast</code>, והמודל יבחר את המתאים לפי השאלה. אין צורך ברישום ידני; הדקורטור מספיק. שרת MCP יכול לחשוף עשרות tools באותו אופן.</p>
-<hr />
 <h2 id="stdio-http-transports">תעבורה: stdio מול HTTP - transports<a class="headerlink" href="#stdio-http-transports" title="Permanent link">&para;</a></h2>
 <p>בדוגמה השתמשנו בתעבורת <code>stdio</code> - השרת רץ כתת-תהליך של המארח, ומדבר איתו דרך הקלט/פלט הסטנדרטי. זו הבחירה הנכונה לשרת מקומי שרץ על אותה מכונה כמו המארח.</p>
 <p>אבל MCP תומך גם בתעבורת <strong>HTTP</strong> - השרת רץ כשירות רשת עצמאי, והמארח מתחבר אליו דרך כתובת URL. זה מתאים כשרוצים שרת מרכזי שמשרת כמה משתמשים או צוותים מרחוק. ההבדל המעשי: בשרת stdio אסור לכתוב ל-stdout (כי הוא שמור להודעות הפרוטוקול), בעוד שבשרת HTTP רישום ל-stdout בטוח כי הוא לא מפריע לתשובות ה-HTTP. את הtools עצמם - <code>@mcp.tool()</code> - לא צריך לשנות; רק את שורת ה-<code>mcp.run</code> בסוף.</p>
-<hr />
 <h2 id="prompts-resources-and-prompts">משאבים וPrompts - resources and prompts<a class="headerlink" href="#prompts-resources-and-prompts" title="Permanent link">&para;</a></h2>
 <p>התמקדנו בtools, אבל שרת MCP יכול לחשוף עוד שני סוגי יכולות שהזכרנו בהתחלה:</p>
 <ul>
@@ -2897,7 +2886,6 @@
 <li><strong>Prompts</strong>: תבניות מוכנות שהמשתמש יכול להפעיל, למשל תבנית ל"סקירת קוד" או "סיכום פגישה". הן חוסכות מהמשתמש לכתוב את אותו prompt שוב ושוב.</li>
 </ul>
 <p>שלושת הסוגים - tools, משאבים וprompts - הם מה שהופך את MCP לפרוטוקול עשיר, לא רק מנגנון קריאת פונקציות. בשרת מלא נשלב את שלושתם כדי לספק למארח יכולת מלאה.</p>
-<hr />
 <h2 id="-debugging">ניפוי שגיאות - debugging<a class="headerlink" href="#-debugging" title="Permanent link">&para;</a></h2>
 <p>שרת MCP רץ כתת-תהליך שקט, ולכן כשמשהו לא עובד קשה לדעת למה. כמה טכניקות שיעזרו:</p>
 <ul>
@@ -2907,7 +2895,6 @@
 <li><strong>נתיבים מוחלטים</strong>: הטעות הנפוצה ביותר היא נתיב יחסי בהגדרה. תמיד משתמשים בנתיב מלא, ולפעמים גם לפקודה <code>uv</code> עצמה (מוצאים עם <code>which uv</code>).</li>
 </ul>
 <p>אם המארח לא רואה את הtools בכלל, מפעילים אותו מחדש - שינויים בהגדרת ה-MCP נטענים רק בהפעלה מחדש.</p>
-<hr />
 <h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>בהרצאה הזו בנינו שרת MCP משלנו וחיברנו אותו ל-Claude Code:</p>
 <ul>
@@ -2940,7 +2927,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:37:02 UTC">2026-07-20 09:37:02</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

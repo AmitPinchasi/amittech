@@ -2613,7 +2613,6 @@
 </code></pre></div>
 <p>כלומר, בשונה מאתגרים שדרשו התחברות ב-ssh, כאן פשוט מתחברים לפורט 9000 ושולחים את ה-payload. הבינארי הוא 32 ביט, אז השתמשו ב-<code>p32</code> ולא ב-<code>p64</code>.</p>
 <p>קוד המקור, בקצרה: <code>main</code> קורא ל-<code>func(0xdeadbeef)</code>, הפונקציה <code>func</code> קוראת קלט עם <code>gets</code> לתוך buffer מקומי, ואז בודקת אם הארגומנט <code>key</code> שווה ל-<code>0xcafebabe</code>. אם כן, היא מריצה <code>system("/bin/sh")</code>.</p>
-<hr />
 <h3 id="1-gdb">תרגיל 1 - לקרוא את המסגרת ב-GDB<a class="headerlink" href="#1-gdb" title="Permanent link">&para;</a></h3>
 <p>לפני שתוקפים משהו, צריך לראות אותו. הידרו את הדמו מהשיעור והציצו לתוך המסגרת.</p>
 <p>צרו קובץ <code>demo.c</code>:</p>
@@ -2651,7 +2650,6 @@
 </ol>
 <p>רמז: בדיסאסמבלי חפשו את ההוראה <code>lea rax, [rbp-0x??]</code> שממש לפני הקריאה ל-<code>read</code>. המרחק לreturn address הוא הערך הזה ועוד 8 בתים (בשביל ה-rbp השמור).</p>
 <p>רמז: אם אתם רוצים לאמת את החישוב במקום לנחש, שוברים אחרי ה-<code>read</code>, מדפיסים את כתובת הbuffer ואת <code>$rbp+8</code>, ומחסרים. את השיטה האוטומטית עם <code>cyclic</code> נראה בשיעור הבא.</p>
-<hr />
 <h3 id="2-bof">תרגיל 2 - לפתור את bof<a class="headerlink" href="#2-bof" title="Permanent link">&para;</a></h3>
 <p>זה התרגיל המרכזי. המטרה: לפתוח shell על השרת של pwnable.kr ולקרוא את קובץ ה-flag.</p>
 <p>המשימות:</p>
@@ -2664,7 +2662,6 @@
 <p>רמז: זו מערכת 32 ביט עם cdecl. הארגומנט <code>key</code> עבר על המחסנית, מעל הreturn address. הbuffer נמצא מתחת. כלומר גם כאן הbuffer שאתם שולטים בו נמצא מתחת ליעד.</p>
 <p>רמז: בדיסאסמבלי חפשו <code>lea eax, [ebp-0x??]</code> (הbuffer) ו-<code>cmp dword [ebp+0x?], 0xcafebabe</code> (הבדיקה על key). ה-offset הוא ההפרש בין שתי הכתובות האלה.</p>
 <p>רמז: לחיבור השתמשו ב-<code>remote('pwnable.kr', 9000)</code>, לערך הקסום ב-<code>p32(0xcafebabe)</code>, ולסיום ב-<code>p.interactive()</code>. שימו לב: כאן אתם דורסים את <code>key</code> בלבד, לא את הreturn address.</p>
-<hr />
 <h3 id="3-rip">תרגיל 3 - שליטה מלאה ב-RIP<a class="headerlink" href="#3-rip" title="Permanent link">&para;</a></h3>
 <p>עכשיו נשתלט על מצביע ההוראות. נחזור לדמו מתרגיל 1, ונגרום ל-<code>vuln</code> לחזור אל <code>win</code> במקום אל <code>main</code>.</p>
 <p>המשימות:</p>
@@ -2677,7 +2674,6 @@
 <p>רמז: השתמשו ב-<code>ELF('./demo').symbols['win']</code> כדי לא לרשום כתובת קשיחה בקוד.</p>
 <p>רמז: מלכודת ה-<code>movaps</code>. אם ה-shell מת בתוך <code>system</code>, הכניסו כתובת של גאדג'ט <code>ret</code> בודד לפני הכתובת של <code>win</code>. ב-pwntools אפשר להשיג אותו עם <code>ROP(elf).find_gadget(['ret'])[0]</code>. הוא מזיז את המחסנית ב-8 בתים ומיישר אותה ל-16.</p>
 <p>רמז: אם אתם רוצים לוודא שאתם באמת דורסים את הreturn address בכתובת הנכונה, הריצו את הסקריפט עם <code>gdb.attach(p)</code> או פשוט הריצו <code>dmesg</code> אחרי קריסה כדי לראות לאיזו כתובת ניסיתם לקפוץ.</p>
-<hr />
 <h3 id="-offset">בונוס - כשה-offset לא עגול<a class="headerlink" href="#-offset" title="Permanent link">&para;</a></h3>
 <p>הידרו את הדמו שוב, הפעם עם buffer בגודל אחר, למשל <code>char buf[72]</code>, או בלי <code>-g</code>. חשבו מחדש את ה-offset. האם הוא בדיוק <code>72 + 8</code>? הקומפיילר לפעמים מוסיף alignment padding שמשנה את התמונה. נסו למצוא את ה-offset האמיתי ידנית ב-GDB. אם זה מתחיל להיות מעצבן, זה בדיוק הרגע להעריך את <code>cyclic</code>, שנפגוש בשיעור 2.2.</p>
 
@@ -2700,7 +2696,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

@@ -2691,12 +2691,10 @@
 
 <p>דיבוג הוא המקום שבו agent AI יכול להיות הכי מועיל, והכי מסוכן, באותה נשימה. מועיל כי הוא קורא stack trace ולוגים מהר יותר מכם, מריץ ניסויים בלי עייפות, וזוכר את כל הcontext שנאסף לאורך הדיבוג. מסוכן כי הוא נוטה - ממש כמו מפתח אנושי בלחץ - להציע "תיקון" בביטחון גבוה לפני שהבין באמת מה קורה, והביטחון הזה יכול לשכנע אתכם לקבל תיקון שרק מסתיר את התסמין. בהרצאה הזו נבנה תהליך דיבוג שיטתי מול agent: איך מזינים לו את השגיאה בצורה שימושית, איך מכריחים שחזור לפני תיקון, איך עובדים בהשערות ובדיקתן, ואיך דורשים שורש הבעיה ולא רק פאץ' שמשתיק את השגיאה.</p>
 <p><img alt="תרשים לולאת דיבוג שיטתי: מזינים context מלא, משחזרים בבדיקה נכשלת, בונים השערה ובודקים אותה, ואם היא לא אומתה חוזרים להשערה חדשה, ורק אחרי אימות מטפלים בשורש הבעיה" src="../../../../images/illustrations/ai-3-3-debug-loop.svg" /></p>
-<hr />
 <h2 id="agents-confident-wrong-fixes">למה הagents נוטים ל"תיקון בטוח ושגוי" - confident wrong fixes<a class="headerlink" href="#agents-confident-wrong-fixes" title="Permanent link">&para;</a></h2>
 <p>מודל שפה מאומן לענות בביטחון. כשהוא רואה stack trace, יש לו נטייה חזקה להכיר תבנית מוכרת ("אה, זו שגיאת null reference קלאסית") ולהציע תיקון שמתאים לתבנית - גם אם התבנית הזו לא בהכרח מה שקורה בקוד שלכם. הבעיה מחריפה כי התיקון בדרך כלל <strong>אכן פותר את התסמין המיידי</strong>: אם השגיאה היא "Cannot read property 'id' of undefined", הוספת בדיקת <code>if (obj)</code> לפני הגישה תעצור את הקריסה. אבל אם <code>obj</code> לא אמור להיות undefined במקום הזה מלכתחילה, הוספת הבדיקה רק מסתירה את הבאג האמיתי - איפשהו קודם, מישהו לא אתחל את <code>obj</code>, וזה ימשיך לקרות, רק בלי קריסה שמתריעה עליו.</p>
 <p>זו הסיבה שדיבוג עם agent דורש משמעת: לא לקבל את התיקון הראשון שמוצע, אלא לוודא שהוא נובע מהבנה אמיתית של מה קרה.</p>
 <p>חשוב לומר: זו לא תופעה ייחודית לagents AI. מפתחים אנושיים נופלים לאותה מלכודת כל הזמן, בעיקר תחת לחץ של "צריך לתקן את זה עכשיו". ההבדל הוא שagent יכול להציע תיקון תוך שניות, בביטחון גבוה, בלי ה"היסוס הטבעי" שמפתח אנושי מרגיש כשהוא לא בטוח - וקצב כזה מפתה לדלג על שלבי האימות. המשמעת שנבנה בהרצאה הזו היא בדיוק הפיצוי על המהירות הזו: מקבלים את מהירות הagent, אבל שומרים על הקצב האנושי של בדיקה לפני שמאמינים.</p>
-<hr />
 <h2 id="1-context-feeding-the-full-context">שלב 1: הזנת הcontext המלא - feeding the full context<a class="headerlink" href="#1-context-feeding-the-full-context" title="Permanent link">&para;</a></h2>
 <p>הטעות הנפוצה ביותר היא לתאר את השגיאה במילים ("יש לי שגיאה כשמשתמש מנסה לבטל מנוי") במקום לתת לagent את הראיות עצמן. תמיד עדיף להדביק את הדבר האמיתי:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>&gt; I got the following error when I tried to cancel a subscription via the
@@ -2743,7 +2741,6 @@
 </tr>
 </tbody>
 </table>
-<hr />
 <h2 id="2-reproduce-before-fixing">שלב 2: שחזור לפני תיקון - reproduce before fixing<a class="headerlink" href="#2-reproduce-before-fixing" title="Permanent link">&para;</a></h2>
 <p>לפני שמבקשים תיקון, מבקשים שחזור. זו ההרגל הכי חשוב בכל ההרצאה: <strong>אל תבקשו תיקון לבאג שאף אחד לא שחזר</strong>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>&gt; Before you suggest a fix, reproduce the bug: write a small script
@@ -2760,7 +2757,6 @@
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">      </span>at<span class="w"> </span>cancelSubscription<span class="w"> </span><span class="o">(</span>src/services/billingService.ts:88<span class="o">)</span>
 </code></pre></div>
 <p>עכשיו יש לכם שחזור דטרמיניסטי - הרצה חוזרת ונשנית שמוכיחה את הבאג. זה גם נכס לטווח ארוך: הבדיקה הזו תישאר בקוד כ-regression test אחרי שהבאג יתוקן.</p>
-<hr />
 <h2 id="3-hypothesis-testing">שלב 3: בניית והפרכת השערות - hypothesis testing<a class="headerlink" href="#3-hypothesis-testing" title="Permanent link">&para;</a></h2>
 <p>עכשיו, ורק עכשיו, עוברים לחקירה. במקום לבקש "תקן את זה", מבקשים הסבר של הסיבה, מלווה בהשערה שאפשר לבדוק:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>&gt; Why is subscription.plan null at this point? Check the code
@@ -2783,7 +2779,6 @@
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  8231 is really in trial state and has no assigned plan.
 </code></pre></div>
 <p>אם ההשערה מתאמתת - מצוין, ממשיכים לתיקון עם ביטחון אמיתי. אם היא לא מתאמתת (למשל מתברר ש-8231 כן היה לו plan, אבל הוא נמחק בטעות בפעולה אחרת), חוזרים אחורה ובונים השערה חדשה. זה בדיוק ההבדל בין דיבוג שיטתי לניחוש: כל השערה נבדקת לפני שפועלים לפיה.</p>
-<hr />
 <h2 id="4-root-cause-not-a-patch">שלב 4: דרישת שורש הבעיה, לא רק פאץ' - root cause, not a patch<a class="headerlink" href="#4-root-cause-not-a-patch" title="Permanent link">&para;</a></h2>
 <p>אחרי שההשערה אומתה, עדיין יש בחירה בין שני סוגי תיקון: תיקון נקודתי שמונע את הקריסה, או תיקון ששם שורש הבעיה - למה בכלל state לא תקין הגיע לנקודה הזו. תמיד שווה לשאול את שתי השאלות במפורש:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>&gt; There are two options here: (1) add a null check before accessing
@@ -2810,7 +2805,6 @@
 <a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>net, and explicit handling of trial cancellation as the root-cause fix.
 </code></pre></div>
 <p>זה בדיוק סוג הניתוח ששווה לדרוש. תיקון נקודתי בלבד הוא תמרור אזהרה - הוא לגיטימי כפתרון זמני (hotfix) כשצריך לעצור דימום מיידי, אבל תמיד צריך להיות מלווה בהודאה מפורשת שזה לא שורש הבעיה, ובמעקב לתקן את השורש.</p>
-<hr />
 <h2 id="-intermittent-and-flaky-bugs">כשקשה לשחזר - intermittent and flaky bugs<a class="headerlink" href="#-intermittent-and-flaky-bugs" title="Permanent link">&para;</a></h2>
 <p>לא כל באג משחזר בקלות. חלק מהבאגים הכי מתסכלים הם כאלה שקורים "לפעמים" - תלויים בתזמון, ב-race condition, בעומס, או בנתון ספציפי שקיים רק בפרודקשן. כשהדרישה "תשחזר לפני תיקון" נתקלת בבאג כזה, צריך להתאים את התהליך במקום לוותר עליו.</p>
 <p>הצעד הראשון הוא לאסוף כל דפוס שיכול לרמז מתי הבאג קורה ומתי לא:</p>
@@ -2835,7 +2829,6 @@
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>  without an actual reproduction, just from logical analysis.
 </code></pre></div>
 <p>חשוב להיות כנים איתכם ועם הagent על ההבדל: תיקון שמבוסס על שחזור מוכח הוא ברמת ביטחון גבוהה. תיקון שמבוסס על ניתוח לוגי בלבד, בלי שחזור, הוא השערה סבירה - ראוי לפרוס אותו, אבל גם למעקב צמוד אחרי הפריסה כדי לוודא שהוא באמת פתר את הבעיה ולא רק הוסיף נעילה במקום הלא נכון.</p>
-<hr />
 <h2 id="_1">דוגמה מלאה: מהשגיאה לתיקון<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>1. &gt; [full context] I got a TypeError... [stack trace + request]
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
@@ -2857,7 +2850,6 @@
 <a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>   &lt; [fix implemented, reproduction test passes, no regression]
 </code></pre></div>
 <p>שימו לב שהבדיקה שנכתבה בשלב 2 לא נזרקת אחרי התיקון - היא נשארת בחבילת הבדיקות כ-regression test, ומבטיחה שהבאג הזה לא יחזור בשקט בעתיד.</p>
-<hr />
 <h2 id="_2">מלכודות נפוצות<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>קבלת התיקון הראשון בלי שחזור</strong>: אם הagent מציע תיקון לפני שמישהו שחזר את הבאג, יש סיכוי גבוה שהתיקון פותר תבנית מוכרת ולא את הבעיה האמיתית שלכם. תמיד לדרוש שחזור קודם.</li>
@@ -2866,7 +2858,6 @@
 <li><strong>תיקון שמכסה יותר מדי</strong>: לפעמים הagent "מתקן" על ידי עטיפת קוד רחב ב-try/catch, שמשתיק לא רק את השגיאה הספציפית אלא כל שגיאה עתידית באזור הזה. לבדוק את היקף התיקון בדיוק.</li>
 <li><strong>שכחת regression test</strong>: אחרי שהבאג תוקן, לוודא שהבדיקה ששחזרה אותו נשארת בקוד, לא נמחקת "כי היא כבר לא נכשלת".</li>
 </ul>
-<hr />
 <h2 id="_3">סיכום<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <ul>
 <li>הagents AI נוטים להציע "תיקון בטוח ושגוי" - פתרון שמתאים לתבנית מוכרת ומשתיק את התסמין, בלי לפתור את שורש הבעיה.</li>
@@ -2897,7 +2888,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:31:27 UTC">2026-07-20 09:31:27</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

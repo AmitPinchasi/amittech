@@ -2904,7 +2904,6 @@
 </code></pre></div>
 <p>הפלט הוא תוכן הקובץ <code>flag</code>. אצל האתגר <code>crypto1</code> האמיתי יש בדרך כלל עוד שכבת קידוד hex לפני הטרנספורמציה, אז שם תוסיפו <code>bytes.fromhex</code> בכניסה ו-<code>.hex()</code> ביציאה - אבל שלד ההיפוך זהה.</p>
 <p><strong>למה זה עבד ואיך להכליל:</strong> כל שלב בצינור היה הפיך, ו-xor הוא ההופכי של עצמו. הכלל הכללי: מפרקים את הצינור לשלבים, מזהים לכל שלב את הפעולה ההופכית, ומפעילים אותן בסדר הפוך. אם היה ערבוב בין בתים (כל בית תלוי בקודם), היינו מפענחים לפי אותו סדר תלות בדיוק.</p>
-<hr />
 <h3 id="2-rsa">פתרון תרגיל 2 - שורש שלישי על RSA<a class="headerlink" href="#2-rsa" title="Permanent link">&para;</a></h3>
 <p>נריץ את השירות ונאסוף את הפרמטרים:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>python3<span class="w"> </span>rsa_service.py
@@ -2951,7 +2950,6 @@
 <a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">long_to_bytes</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="p">))</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">))</span>
 </code></pre></div>
 <p><strong>למה זה עבד ואיך להכליל:</strong> המעריך הקטן פוגש מסר קטן, ולכן <code>m^e</code> לא חורג מ-<code>n</code> ואין צמצום. תמיד בדקו את <code>exact</code>: אם הוא <code>False</code>, המסר גדול מ-<code>n^(1/3)</code> והתקפת השורש לא ישימה. אז עוברים ל-Hastad (אם יש כמה מודולוסים) או להתקפה אחרת.</p>
-<hr />
 <h3 id="3-">פתרון תרגיל 3 - מודולוס משותף<a class="headerlink" href="#3-" title="Permanent link">&para;</a></h3>
 <p>יש לנו <code>c1 = m^e1 mod n</code> ו-<code>c2 = m^e2 mod n</code> עם אותו <code>n</code> ו-<code>gcd(e1, e2) = 1</code>. מכיוון שהמעריכים זרים, אוקלידס המורחב נותן <code>a, b</code> שלמים כך ש-<code>a*e1 + b*e2 = 1</code>. ואז:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>c1^a * c2^b = m^(a*e1) * m^(b*e2) = m^(a*e1 + b*e2) = m^1 = m   (mod n)
@@ -2981,7 +2979,6 @@
 <a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="nb">pow</span><span class="p">(</span><span class="n">c1</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="nb">pow</span><span class="p">(</span><span class="n">c2</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span> <span class="o">%</span> <span class="n">n</span>
 </code></pre></div>
 <p><strong>למה זה עבד ואיך להכליל:</strong> התכונה ההומומורפית של RSA לכפל היא זו שאפשרה לשלב את שני הטקסטים המוצפנים למעריך <code>1</code>. התנאי היחיד הוא <code>gcd(e1, e2) = 1</code>. אם היו יותר משני מעריכים, אפשר לחלץ באותה שיטה מכל זוג שהוא זר.</p>
-<hr />
 <h3 id="4-d">פתרון תרגיל 4 - שחזור d על ידי פירוק<a class="headerlink" href="#4-d" title="Permanent link">&para;</a></h3>
 <p>בתרגיל הזה <code>q = nextprime(p + 12345)</code>, כלומר <code>p</code> ו-<code>q</code> קרובים מאוד. זה בדיוק המקרה של פירוק Fermat. הרעיון: כותבים <code>n = a^2 - b^2 = (a - b)(a + b)</code>. כשהראשוניים קרובים, ה-<code>a</code> המתאים קרוב מאוד ל-<code>sqrt(n)</code>, ולכן מוצאים אותו במעט צעדים. מתחילים מ-<code>a = isqrt(n) + 1</code> ומעלים עד ש-<code>a^2 - n</code> הוא ריבוע מושלם:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">gmpy2</span><span class="w"> </span><span class="kn">import</span> <span class="n">isqrt</span>
@@ -3026,7 +3023,6 @@
 <a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a><span class="nb">print</span><span class="p">(</span><span class="n">solve</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">))</span>
 </code></pre></div>
 <p><strong>למה זה עבד ואיך להכליל:</strong> להשיג את <code>phi</code> שקול לפרק את <code>n</code>, ו-Fermat מפרק במהירות דווקא כשהראשוניים קרובים - טעות נפוצה מאוד במחוללי מפתחות חובבניים. מקרים אחרים לפירוק: <code>n</code> קטן (מריצים <code>sympy.factorint</code> או שולחים ל-<code>factordb.com</code>), או <code>d</code> קטן (Wiener, ראו למטה). תמיד נסו קודם את <code>factordb</code> - זה חינמי ומיידי אם <code>n</code> כבר ידוע.</p>
-<hr />
 <h3 id="5-">פתרון תרגיל 5 - אורקל פענוח והסתרה<a class="headerlink" href="#5-" title="Permanent link">&para;</a></h3>
 <p>יש לנו טקסט מוצפן מטרה <code>c</code> שהאורקל מסרב לפענח, אבל הוא מפענח כל דבר אחר. התכונה ההומומורפית של RSA לכפל היא זו ששוברת את ההגנה הזו: <code>(x * y)^e = x^e * y^e</code>. אנחנו "מלבישים" את <code>c</code> בגורם אקראי <code>r</code>, שולחים לפענוח את הגרסה המולבשת (שהיא שונה מ-<code>c</code>, אז השירות מסכים), ומורידים את הגורם בסוף.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>choose a random r
@@ -3064,7 +3060,6 @@
 <a id="__codelineno-17-25" name="__codelineno-17-25" href="#__codelineno-17-25"></a><span class="nb">print</span><span class="p">(</span><span class="n">long_to_bytes</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>                <span class="c1"># b&#39;blind me&#39;</span>
 </code></pre></div>
 <p><strong>למה זה עבד ואיך להכליל:</strong> האורקל חשב שהוא מפענח טקסט "לא מזיק" (<code>c_blind</code>), אבל הכפל האקראי היה הפיך לגמרי, אז חילצנו ממנו את המסר של <code>c</code> האסור. אותו טריק בדיוק מזייף <strong>חתימות</strong>: אם השירות חותם (מעלה בחזקת <code>d</code>) על כל מסר חוץ ממה שרוצים, מלבישים את המסר, מבקשים חתימה, ומורידים את ההסתרה. זו הסיבה ש-RSA גולמי בלי padding תקין (OAEP להצפנה, PSS לחתימה) לעולם לא בטוח מול שירות שמתפקד כאורקל.</p>
-<hr />
 <h3 id="-wiener">נספח - התקפת Wiener למעריך פרטי קטן<a class="headerlink" href="#-wiener" title="Permanent link">&para;</a></h3>
 <p>לשלמות, הנה המימוש המלא של Wiener מההרצאה, למקרה ש-<code>d</code> נבחר קטן (<code>d &lt; n^(1/4)</code>). הרעיון: <code>e/n</code> קרוב מאוד ל-<code>k/d</code> עבור איזה <code>k</code>, ואחד מהמקורבים - convergents - של פיתוח השבר המשולב של <code>e/n</code> הוא בדיוק <code>k/d</code>. עבור כל מקורב בודקים אם הוא מוליד <code>phi</code> תקין שמפרק את <code>n</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">gmpy2</span><span class="w"> </span><span class="kn">import</span> <span class="n">isqrt</span>
@@ -3122,7 +3117,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="12 ביולי 2026 06:44:04 UTC">2026-07-12 06:44:04</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

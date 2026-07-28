@@ -3644,7 +3644,6 @@
 <h2 id="_1">הקדמה<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>בפרק 5.1 למדנו על syscall-ים מצד היוזר מוד - איך קוראים להם, מה הם עושים, ואיך משתמשים בstrace כדי לעקוב אחריהם.<br />
 עכשיו נראה את הצד השני - מה בדיוק קורה <strong>בתוך הקרנל</strong> מהרגע שהתוכנה קוראת ל-syscall ועד שהתוצאה חוזרת. נעקוב אחרי כל שלב במסע, מהפקודה <code>syscall</code> באסמבלי ועד לפונקציה שמטפלת בבקשה בתוך הקרנל.</p>
-<hr />
 <h2 id="syscall">המסע המלא של syscall<a class="headerlink" href="#syscall" title="Permanent link">&para;</a></h2>
 <p>בואו נעקוב אחרי מה שקורה כשתוכנית יוזר מודית קוראת ל-<code>write()</code> כדי לכתוב טקסט למסך. כל שלב כאן הוא אמיתי - כך זה באמת עובד בלינוקס על x86-64.</p>
 <h3 id="1-libc">שלב 1: קריאה לlibc<a class="headerlink" href="#1-libc" title="Permanent link">&para;</a></h3>
@@ -3756,7 +3755,6 @@
 4. <code>sysret</code> משחזרת את RIP מ-<code>rcx</code> ואת FLAGS מ-<code>r11</code><br />
 5. התוכנית ממשיכה לרוץ ביוזר מוד מהשורה שאחרי הsyscall</p>
 <p><img alt="תרשים המסע של קריאת מערכת מהכנת האוגרים ביוזר מוד, דרך הפקודה syscall ונקודת הכניסה entry_SYSCALL_64, ועד החזרה עם sysret" src="../../../../images/illustrations/core-6-2-syscall-entry-path.svg" /></p>
-<hr />
 <h2 id="syscall_define-syscall">המאקרו SYSCALL_DEFINE - הגדרת syscall<a class="headerlink" href="#syscall_define-syscall" title="Permanent link">&para;</a></h2>
 <p>כשמסתכלים על קוד המקור של הקרנל, הsyscall-ים מוגדרים באמצעות מאקרו מיוחד שנקרא <code>SYSCALL_DEFINE</code>. המספר אחרי DEFINE מציין כמה פרמטרים הsyscall מקבל:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">// definition of sys_write in the kernel</span>
@@ -3788,7 +3786,6 @@
 <a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">    </span><span class="c1">// ... memory mapping</span>
 <a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="p">}</span>
 </code></pre></div></p>
-<hr />
 <h2 id="user__-">הסימון user__ - מצביעים מיוזר מוד<a class="headerlink" href="#user__-" title="Permanent link">&para;</a></h2>
 <p>שמתם לב לסימון <code>__user</code> ליד הפרמטר <code>buf</code> בהגדרה של write?</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">__user</span><span class="w"> </span><span class="o">*</span><span class="n">buf</span>
@@ -3833,7 +3830,6 @@
 - <strong>מוודאות שהכתובת היא ביוזר מוד</strong> (לא בחצי הקרנלי של המרחב)<br />
 - <strong>מטפלות ב-page fault</strong> אם הpage לא ממופה כרגע (הקרנל עצמו לא יכול פשוט לקרוס מpage fault)<br />
 - <strong>מחזירות שגיאה</strong> אם הכתובת לא חוקית (במקום לגרום ל-kernel panic)</p>
-<hr />
 <h2 id="pt_regs-">המבנה pt_regs - מצב המעבד השמור<a class="headerlink" href="#pt_regs-" title="Permanent link">&para;</a></h2>
 <p>כשsyscall מתחיל, הקרנל שומר את כל אוגרי המעבד במבנה שנקרא <code>pt_regs</code> (process trace registers). המבנה הזה נמצא על המחסנית הקרנלית של הprocess:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1">// arch/x86/include/asm/ptrace.h (simplified)</span>
@@ -3864,7 +3860,6 @@
 <a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a><span class="p">};</span>
 </code></pre></div>
 <p>שימו לב לשדה <code>orig_rax</code> - הוא שומר את מספר הsyscall המקורי. למה צריך את זה בנפרד? כי <code>rax</code> ישתנה להכיל את ערך ההחזרה של הsyscall, אבל לפעמים צריך לדעת מה היה הsyscall המקורי (למשל, אם הsyscall הופסק על ידי סיגנל וצריך להפעיל אותו מחדש).</p>
-<hr />
 <h2 id="syscall-syscall-overhead">עלות הsyscall - syscall overhead<a class="headerlink" href="#syscall-syscall-overhead" title="Permanent link">&para;</a></h2>
 <p>מעבר מיוזר מוד לקרנל מוד הוא לא חינמי. כל syscall כולל:</p>
 <ol>
@@ -3876,7 +3871,6 @@
 </ol>
 <p>כל syscall עולה בערך כמה מאות ננו-שניות עד כמה מיקרו-שניות. זה נשמע מעט, אבל כשתוכנית עושה מיליוני syscall-ים בשניה, זה מסתכם.</p>
 <p>זו אחת הסיבות שmmap (שלמדנו בפרק 5.7) יכול להיות מהיר יותר מread/write לגישה לקבצים. עם mmap, פעם אחת מבצעים syscall כדי לממפות את הקובץ לזכרון, ואחרי זה כל הגישות הן קריאות זכרון רגילות - בלי syscall בכלל.</p>
-<hr />
 <h2 id="syscall_1">הוספת syscall מותאם אישית (רעיוני)<a class="headerlink" href="#syscall_1" title="Permanent link">&para;</a></h2>
 <p>מה צריך לעשות כדי להוסיף syscall חדש לקרנל? התהליך הוא בערך כזה:</p>
 <ol>
@@ -3911,7 +3905,6 @@
 </li>
 </ol>
 <p>בפועל, כמעט אף פעם לא מוסיפים syscall-ים חדשים. לינוקס מאוד שמרני בנוגע להוספת syscall-ים כי כל syscall שנוסף חייב להישאר לעולם (תאימות לאחור). במקום זה, משתמשים במנגנונים כמו ioctl, netlink, או procfs/sysfs כדי להוסיף interfaces חדשים.</p>
-<hr />
 <h2 id="strace-strace">strace מבפנים - איך strace באמת עובד<a class="headerlink" href="#strace-strace" title="Permanent link">&para;</a></h2>
 <p>בפרק 5.1 השתמשנו בstrace כדי לראות את הsyscall-ים של תוכנה. עכשיו שאנחנו מבינים מה קורה בתוך הקרנל, בואו נבין איך strace עושה את מה שהוא עושה.</p>
 <p>strace משתמש בsyscall שנקרא <code>ptrace</code> (process trace). ptrace מאפשר לprocess אחד (הtracer) לשלוט על process אחר (הtracee):</p>
@@ -3924,7 +3917,6 @@
 <li>strace קורא שוב את האוגרים ורואה את ערך ההחזרה</li>
 </ol>
 <p>זה מסביר למה תוכנית שרצה תחת strace היא הרבה יותר איטית - כל syscall גורם לשני context switch-ים נוספים (לstrace ובחזרה). ptrace הוא גם הsyscall שמאפשר לdebuggers כמו GDB לעבוד - הם משתמשים בו כדי לעצור processes, לקרוא זכרון, להציב breakpoints, ועוד.</p>
-<hr />
 <h2 id="int-0x80-syscall">int 0x80 מול syscall<a class="headerlink" href="#int-0x80-syscall" title="Permanent link">&para;</a></h2>
 <p>בפרק 5.1 הזכרנו ש-<code>int 0x80</code> היא הדרך הישנה לקרוא ל-syscall, ו-<code>syscall</code> היא הדרך החדשה. בואו נבין את ההבדלים:</p>
 <table>
@@ -3964,7 +3956,6 @@
 </tbody>
 </table>
 <p>נקודה חשובה: מספרי הsyscall-ים <strong>שונים</strong> בין int 0x80 לsyscall! למשל, <code>write</code> הוא מספר 4 בint 0x80 (טבלת 32 ביט) אבל מספר 1 בsyscall (טבלת 64 ביט). אם מערבבים בטעות, מקבלים syscall שונה לגמרי.</p>
-<hr />
 <h2 id="-">סיכום - המסע המלא<a class="headerlink" href="#-" title="Permanent link">&para;</a></h2>
 <p>בואו נסכם את כל המסע של syscall, מתחילתו ועד סופו:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>user-mode program
@@ -4017,7 +4008,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 08:33:06 UTC">2026-07-20 08:33:06</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

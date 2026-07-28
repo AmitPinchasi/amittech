@@ -3691,7 +3691,6 @@
 <p>ב-user space יש לנו את malloc ו-free. קוראים ל-malloc, מקבלים פוינטר לזכרון, משתמשים בו, ובסוף קוראים ל-free. פשוט. אבל מה הקרנל עצמו עושה כשהוא צריך זכרון?</p>
 <p>הקרנל לא יכול להשתמש ב-malloc. למה? כי malloc מסתמך על syscalls כמו mmap ו-brk - שירותים שהקרנל עצמו מספק. הקרנל לא יכול לקרוא לעצמו. הוא צריך מנגנונים ברמה נמוכה יותר.</p>
 <p>בפרק הזה נלמד על המקצים של הקרנל: kmalloc, vmalloc, ה-slab allocator, ומקצה הpages. ראינו בפרק 6.4 את ה-buddy allocator שמנהל pages פיזיים - עכשיו נראה את כל מה שיושב מעליו.</p>
-<hr />
 <h2 id="allocation">ההיררכיה של allocation זכרון<a class="headerlink" href="#allocation" title="Permanent link">&para;</a></h2>
 <p>לפני שנצלול לפרטים, בואו נראה את התמונה הגדולה. הallocation זכרון בלינוקס היא שכבתית:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>----------------------------------------------------------
@@ -3709,7 +3708,6 @@
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>----------------------------------------------------------
 </code></pre></div>
 <p>בuser space, הascall malloc קורא ל-mmap או brk, שהם syscalls. בkernel space, הכל מתחיל מ-kmalloc או vmalloc, שמשתמשים ב-slab allocator, שמשתמש ב-buddy allocator, שמנהל את הזכרון הפיזי ישירות.</p>
-<hr />
 <h2 id="kmalloc-kfree">kmalloc ו-kfree<a class="headerlink" href="#kmalloc-kfree" title="Permanent link">&para;</a></h2>
 <p>הפונקציה kmalloc היא המקבילה הקרנלית של malloc. היא מקצה בלוק רציף של זכרון - רציף גם וירטואלית וגם פיזית.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;linux/slab.h&gt;</span>
@@ -3755,7 +3753,6 @@
 <p>למה ההבדל בין GFP_KERNEL ל-GFP_ATOMIC כל כך חשוב? תחשבו על זה: interrupt handler קוטע את הCPU באמצע משהו. אם הinterrupt handler ינסה לישון (כי ממתין לIO של דיסק כדי לפנות זכרון) - הCPU ייתקע. אף אחד לא יעיר אותו כי הinterrupt עדיין לא טופל. לכן בinterrupt handler חובה להשתמש ב-GFP_ATOMIC.</p>
 <h3 id="kmalloc">מגבלות של kmalloc<a class="headerlink" href="#kmalloc" title="Permanent link">&para;</a></h3>
 <p>ל-kmalloc יש מגבלה על גודל הallocation - בדרך כלל עד 4MB (תלוי בconfiguration). זה בגלל שהזכרון חייב להיות רציף פיזית, וככל שמבקשים בלוק גדול יותר, קשה יותר למצוא בלוק רציף. אם צריכים allocation גדולה יותר - משתמשים ב-vmalloc.</p>
-<hr />
 <h2 id="vmalloc-vfree">vmalloc ו-vfree<a class="headerlink" href="#vmalloc-vfree" title="Permanent link">&para;</a></h2>
 <p>הפונקציה vmalloc מקצה זכרון שרציף וירטואלית אבל לא בהכרח פיזית.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;linux/vmalloc.h&gt;</span>
@@ -3818,7 +3815,6 @@
 <li>טעינת מודולים של הקרנל (kernel modules) - הקוד של מודול נטען לזכרון שהוקצה עם vmalloc.</li>
 <li>יצירת buffers גדולים עבור מערכות קבצים או רשת.</li>
 </ul>
-<hr />
 <h2 id="-slab-slub">מקצה ה-slab - SLUB<a class="headerlink" href="#-slab-slub" title="Permanent link">&para;</a></h2>
 <h3 id="_2">הבעיה<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
 <p>הקרנל יוצר ומשמיד מיליוני אובייקטים קטנים בכל שנייה. task_struct כשנוצר process חדש. inode כשפותחים קובץ. dentry כשפותרים נתיב. sk_buff כשמגיע פקט רשת.</p>
@@ -3876,7 +3872,6 @@
 <a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a> 45678  44567   97%    2.06K   2854       16     91328K  task_struct
 </code></pre></div>
 <p>אפשר לראות שdentry ו-inode_cache (שלמדנו עליהם ב-6.5) הם מה-caches הכי פעילים - הקרנל כל הזמן יוצר ומשמיד dentries ו-inodes כחלק מפתרון נתיבים ופתיחת קבצים.</p>
-<hr />
 <h2 id="-page-allocator">מקצה הדפים - page allocator<a class="headerlink" href="#-page-allocator" title="Permanent link">&para;</a></h2>
 <p>בתחתית ההיררכיה יושב מקצה הpages, שמבוסס על ה-buddy allocator שלמדנו עליו ב-6.4. הפונקציות העיקריות:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1">// allocating pages</span>
@@ -3896,7 +3891,6 @@
 - הפונקציה alloc_pages מחזירה מצביע ל-struct page (שלמדנו עליו ב-6.4).<br />
 - הפונקציה __get_free_pages מחזירה את הכתובת הוירטואלית של הpage.</p>
 <p>בפועל, kmalloc ו-slab allocator קוראים לפונקציות האלה מאחורי הקלעים. מתכנתי קרנל משתמשים בהן ישירות רק כשצריכים pages שלמים.</p>
-<hr />
 <h2 id="_5">דיבוג זכרון בקרנל<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <p>באגים של זכרון (use-after-free, buffer overflow, memory leak) הם מהבאגים הכי מסוכנים. בkernel space הם עוד יותר מסוכנים - באג זכרון בקרנל יכול לגרום לkernel panic (מה שנקרא "מסך כחול" בWindows, אבל בלינוקס זה kernel panic).</p>
 <h3 id="kasan-kernel-address-sanitizer">KASAN - Kernel Address Sanitizer<a class="headerlink" href="#kasan-kernel-address-sanitizer" title="Permanent link">&para;</a></h3>
@@ -3926,7 +3920,6 @@
 <li><strong>SReclaimable</strong> - חלק מה-slab שאפשר לשחרר (בעיקר dcache ו-inode cache)</li>
 <li><strong>SUnreclaim</strong> - חלק מה-slab שלא ניתן לשחרור</li>
 </ul>
-<hr />
 <h2 id="_6">סיכום<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <p>למדנו על מנגנוני allocation הזכרון בתוך הקרנל:</p>
 <ul>
@@ -3956,7 +3949,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 08:33:06 UTC">2026-07-20 08:33:06</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     

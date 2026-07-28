@@ -2623,7 +2623,6 @@
 
 <p>עד עכשיו כל מה שתקפנו רץ במרחב המשתמש - תוכניות רגילות, עם המחסנית שלהן, ה-heap שלהן וה-libc שלהן. הרווח הכי גדול שהשגנו היה shell עם ההרשאות של אותה תוכנית. עכשיו אנחנו עולים קומה ומגיעים לשחקן הכי חזק במערכת: הkernel עצמו. הexploit של חולשה בkernel לא נותן לנו עוד shell רגיל - הוא נותן לנו את המכונה כולה. אנחנו הופכים ל-root, אנחנו קוראים וכותבים לכל בית בזיכרון, ואין מעלינו אף שכבת הגנה נוספת. זו הזירה שבה נלחמים על escape ממכונות וירטואליות, על root במכשירי אנדרואיד ועל jailbreak.</p>
 <p>הפרק הזה הוא הקדמה מושגית. לא נכתוב כאן exploit מלא מההתחלה ועד ה-root - את זה נעשה בשיעורים הבאים - אלא נבנה את התמונה: מה זה בכלל kernel מול userland, מאיפה מגיעות חולשות, מה בדיוק אנחנו מנסים להשיג, אילו הגנות עומדות בדרך, ואיך בונים סביבת מעבדה שבה אפשר לחקור את כל זה בבטחה. בסוף השיעור תהיה לכם מפה ברורה של השטח לפני שנצא לקרב.</p>
-<hr />
 <h2 id="kernel-kernel-vs-userland">הkernel מול מרחב המשתמש - kernel vs userland<a class="headerlink" href="#kernel-kernel-vs-userland" title="Permanent link">&para;</a></h2>
 <p>המעבד עצמו יודע להפריד בין שתי רמות הרצה, מה שנקרא protection rings. הקוד הרגיל שלנו רץ ב-ring 3, הרמה הכי פחות מיוחסת. הkernel רץ ב-ring 0, הרמה המלאה, שבה מותר להריץ הוראות פריבילגיות, לגשת לחומרה, ולשנות את טבלאות הדפים. כשאנחנו מדברים על "kernel exploit" הכוונה היא בדיוק לזה: לגרום לקוד שרץ ב-ring 0 לעשות משהו שלא התכוונו לו, ובכך לפרוץ את הגבול בין ring 3 ל-ring 0.</p>
 <p>ההבדל המהותי מהזירה הקודמת הוא הבידוד. במרחב המשתמש לכל תהליך יש מרחב כתובות משלו, והkernel שומר עלינו: תהליך אחד לא יכול לקרוא את הזיכרון של תהליך אחר. בkernel אין את הבידוד הזה בכלל. כל הkernel, כל הדרייברים וכל מבני הנתונים חיים במרחב כתובות אחד ויחיד. באג קטן בדרייבר של כרטיס קול יכול לדרוס את מבני ההרשאות של כל המערכת. אין "קריסה מקומית" - כשקורסים בkernel, קורסת המכונה כולה (kernel panic).</p>
@@ -2638,7 +2637,6 @@
 </code></pre></div>
 <p><img alt="תרשים של גבול ההרשאות בין ring 3 ל-ring 0: תהליך המשתמש חוצה את הגבול באמצעות syscall אל קוד הקרנל המיוחס וחוזר בשלום בסיום, כאשר בתוך הקרנל עצמו אין בידוד נוסף בין המודולים" src="../../../../images/illustrations/vuln-9-1-ring-boundary.svg" /></p>
 <p>בארכיטקטורת x86-64 מרחב הכתובות מחולק לשניים: החצי התחתון (כתובות שמתחילות ב-<code>0x0000...</code>) שייך למרחב המשתמש, והחצי העליון (כתובות קנוניות שמתחילות ב-<code>0xffff8...</code>) שייך לkernel. כשאתם רואים כתובת שמתחילה ב-<code>0xffffffff81...</code> אתם יודעים מיד: זו כתובת בתוך קוד הkernel.</p>
-<hr />
 <h2 id="-the-syscall-boundary">גבול הקריאה למערכת - the syscall boundary<a class="headerlink" href="#-the-syscall-boundary" title="Permanent link">&para;</a></h2>
 <p>איך תהליך רגיל בכלל מבקש מהkernel לעשות משהו? דרך system call. כשאתם קוראים <code>read</code>, <code>write</code> או <code>open</code>, ה-libc מתרגמת את זה בסופו של דבר להוראת המעבד <code>syscall</code>, שקופצת בצורה מבוקרת לתוך הkernel, מריצה את הפונקציה המתאימה ב-ring 0, ואז חוזרת אלינו.</p>
 <p>הקונבנציה של syscall בלינוקס 64 ביט חשובה, ונשתמש בה הרבה:</p>
@@ -2648,7 +2646,6 @@
 </code></pre></div>
 <p>שימו לב לפרט קטן וקריטי: הארגומנט הרביעי עובר ב-<code>r10</code> ולא ב-<code>rcx</code> כמו בקריאה רגילה לפונקציה. הסיבה היא שהוראת <code>syscall</code> עצמה דורסת את <code>rcx</code> (היא שומרת בו את הreturn address) ואת <code>r11</code> (שומרת בו את דגלי הסטטוס). זה הגבול: משני צדיו אותו מעבד, אבל צד אחד מהימן והשני לא. כל בית שעובר את הגבול הזה מ-userland פנימה הוא קלט לא מהימן שהkernel חייב לבדוק, וכל מקום שבו הkernel שוכח לבדוק אותו הוא חולשה פוטנציאלית.</p>
 <p>מהצד שלנו כתוקפים, גבול ה-syscall הוא נקודת הכניסה. אנחנו יושבים ב-ring 3, ואנחנו יכולים לזמן את הkernel שוב ושוב עם קלט שאנחנו שולטים בו במלואו. אם נמצא syscall אחד או handler אחד שמתייחס לקלט שלנו בלי זהירות, יש לנו יד בתוך ring 0.</p>
-<hr />
 <h2 id="kernel-loadable-kernel-modules">זיכרון הkernel ומודולים נטענים - loadable kernel modules<a class="headerlink" href="#kernel-loadable-kernel-modules" title="Permanent link">&para;</a></h2>
 <p>הkernel של לינוקס הוא מונוליטי, אבל מודולרי. הליבה נטענת בזמן האתחול, אבל אפשר לטעון ולפרוק קוד kernel נוסף בזמן ריצה בצורת מודולים - loadable kernel modules, או בקיצור LKM. אלה קבצי <code>.ko</code> (kernel object), ורוב הדרייברים במערכת הם מודולים כאלה.</p>
 <p>הפקודות הבסיסיות לניהול מודולים:</p>
@@ -2658,7 +2655,6 @@
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>sudo<span class="w"> </span>rmmod<span class="w"> </span>vuln<span class="w">       </span><span class="c1"># unload a module</span>
 </code></pre></div>
 <p>וזו הנקודה החשובה: ברגע שמודול נטען, הקוד שלו הופך לחלק בלתי נפרד מהkernel. הוא רץ ב-ring 0, במרחב הכתובות של הkernel, עם הרשאות מלאות. אין ארגז חול, אין בידוד. באג בדרייבר שכתב מישהו בחופזה שווה בדיוק לבאג בליבת הkernel. בגלל זה רוב מחקר החולשות בkernel מכוון דווקא לדרייברים ולמודולים - הם גדולים, רבים, נכתבו על ידי הרבה אנשים באיכות משתנה, והם מקבלים קלט ישירות מהמשתמש.</p>
-<hr />
 <h2 id="-char-driver">מנהל התקן תווים - char driver<a class="headerlink" href="#-char-driver" title="Permanent link">&para;</a></h2>
 <p>הדרך הכי נפוצה שבה מודול חושף את עצמו למרחב המשתמש היא דרך device file תחת <code>/dev</code>. מנהל התקן תווים - character device driver - רושם קובץ כזה, ומעכשיו כל תהליך יכול לפתוח אותו עם <code>open("/dev/vuln", ...)</code> ולתקשר איתו כאילו היה קובץ רגיל, דרך <code>read</code>, <code>write</code> ובעיקר <code>ioctl</code>.</p>
 <p>הקישור בין קריאות המשתמש לפונקציות בkernel נעשה דרך מבנה בשם <code>file_operations</code>:</p>
@@ -2671,7 +2667,6 @@
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="p">};</span>
 </code></pre></div>
 <p>כשתהליך במרחב המשתמש קורא <code>ioctl(fd, cmd, arg)</code>, הkernel קורא ל-<code>vuln_ioctl</code> עם ה-<code>cmd</code> וה-<code>arg</code> שהמשתמש בחר. ה-<code>arg</code> הוא בדרך כלל מצביע למבנה במרחב המשתמש, והדרייבר מעתיק ממנו נתונים פנימה עם <code>copy_from_user</code> ומחזיר החוצה עם <code>copy_to_user</code>. שתי הפונקציות האלה הן קו הגבול: הן אמורות לוודא שהכתובת שהמשתמש נתן באמת שייכת למרחב המשתמש. כשדרייבר עוקף אותן, או משתמש בהן עם אורך או כתובת שהמשתמש שולט בהם בלי בדיקה, נולדת חולשה.</p>
-<hr />
 <h2 id="-attack-surface">משטח התקיפה - attack surface<a class="headerlink" href="#-attack-surface" title="Permanent link">&para;</a></h2>
 <p>בואו נסדר את התמונה. אלה הכניסות העיקריות שדרכן קלט של המשתמש מגיע לקוד ה-ring 0:</p>
 <ul>
@@ -2680,7 +2675,6 @@
 <li>מנהלי התקן - device drivers: כל קובץ תחת <code>/dev</code>, וגם interfaces דרך <code>/proc</code> ו-<code>/sys</code>, netlink ו-eBPF. ככל שיש יותר קוד שמקבל קלט, יש יותר מקומות להיכשל.</li>
 </ul>
 <p>ההיגיון שמנחה חוקר kernel הוא: לחפש את הקוד שהכי הרבה קלט לא מהימן עובר דרכו, ושהכי פחות עיניים בדקו. דרייבר של יצרן חומרה מסוים, מודול ניסיוני, handler של ioctl עם עשרות פקודות - שם מתחבאים הבאגים.</p>
-<hr />
 <h2 id="kernel-exploit-">מה משיג kernel exploit - הסלמת הרשאות<a class="headerlink" href="#kernel-exploit-" title="Permanent link">&para;</a></h2>
 <p>אז מצאנו באג ואנחנו מריצים קוד או כותבים לזיכרון ב-ring 0. מה עושים עם זה? המטרה כמעט תמיד זהה: הסלמת הרשאות ל-root, כלומר privilege escalation. אנחנו מתחילים כמשתמש רגיל, וברצוננו להפוך לכל-יכולים.</p>
 <p>בלינוקס, ההרשאות של כל תהליך שמורות במבנה בשם <code>struct cred</code>, ובתוכו השדות <code>uid</code>, <code>gid</code>, <code>euid</code> וחבריהם. כל <code>task_struct</code> (המבנה שמתאר תהליך) מצביע ל-<code>cred</code> שלו. אם נצליח להפוך את ה-<code>uid</code> של התהליך שלנו ל-0, אנחנו root - כך פשוט.</p>
@@ -2696,7 +2690,6 @@
 <p>הערה חשובה לגרסאות מודרניות: החל מkernel 6.2, קריאה ל-<code>prepare_kernel_cred(0)</code> כבר לא מחזירה הרשאות root אלא הרשאות של משתמש חסר-פריבילגיה. במקום זאת צריך להעביר מצביע ל-<code>&amp;init_task</code>. בסביבות המעבדה שלנו נעבוד עם גרסאות kernel מעט ישנות יותר שבהן <code>prepare_kernel_cred(0)</code> עדיין עובד, אבל שווה לזכור את השינוי הזה כשתתקלו בkernel אמיתי.</p>
 <p>הדרך השנייה, שנוחה יותר כשיש לנו כתיבה שרירותית אבל לא שליטה על זרימת הבקרה, היא לדרוס את המשתנה הגלובלי <code>modprobe_path</code>. נחזור לזה בסוף השיעור כשנדבר על פרימיטיבים - זו טכניקת נתונים בלבד, שעוקפת חלק גדול מההגנות.</p>
 <p>יש עוד עדינות אחת שכדאי להזכיר: אחרי ששינינו את ההרשאות, אנחנו צריכים לחזור בשלום מ-ring 0 ל-ring 3 ולפתוח shell. חזרה נקייה לא טריוויאלית - צריך לשחזר רגיסטרים, לבצע <code>swapgs</code> ו-<code>iretq</code>, ולפעמים לעבור דרך trampoline מיוחד של הkernel. נצלול לזה בשיעור על ret2usr.</p>
-<hr />
 <h2 id="kernel-kernel-mitigations">מנגנוני הגנה בkernel - kernel mitigations<a class="headerlink" href="#kernel-kernel-mitigations" title="Permanent link">&para;</a></h2>
 <p>בדיוק כמו במרחב המשתמש, גם הkernel עטוף בשכבות הגנה. חלקן מקבילות למה שכבר מכירים וחלקן ייחודיות ל-ring 0. הנה המפה:</p>
 <table>
@@ -2749,7 +2742,6 @@
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c1"># in QEMU&#39;s boot file: adding nokaslr disables KASLR</span>
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1"># and removing +smep,+smap from the cpu flag disables them</span>
 </code></pre></div>
-<hr />
 <h2 id="-qemu-vulnerable">סביבת המעבדה - QEMU ומודול vulnerable<a class="headerlink" href="#-qemu-vulnerable" title="Permanent link">&para;</a></h2>
 <p>בניגוד לexploit userland, פה אנחנו לא רוצים להתאמן על הkernel האמיתי של המכונה שלנו - טעות קטנה מפילה את כל המערכת, ואולי גם משחיתה את דיסק. לכן כל מחקר kernel נעשה בתוך מכונה וירטואלית, ובמעבדה שלנו נשתמש ב-QEMU. היתרון הגדול: אפשר לקרוס כמה שרוצים, ואפשר לחבר GDB ישירות למכונה הוירטואלית ולראות את הkernel מבפנים.</p>
 <p>הרכיבים של סביבת המעבדה:</p>
@@ -2827,7 +2819,6 @@
 <a id="__codelineno-11-30" name="__codelineno-11-30" href="#__codelineno-11-30"></a><span class="p">}</span>
 </code></pre></div>
 <p>הבאג עדין אבל קטלני: הדרייבר מאמין ל-<code>req.kptr</code>. הוא אמור לגעת רק בכתובות של הkernel שהוא עצמו הקצה, אבל הוא נותן למשתמש להצביע לכל כתובת kernel שירצה. <code>copy_to_user</code> מוודאת שה-<code>uptr</code> תקין, אבל אף אחד לא בודק את ה-<code>kptr</code>. וזה כל מה שאנחנו צריכים.</p>
-<hr />
 <h2 id="-arbitrary-readwrite">הפרימיטיבים שאנחנו רודפים אחריהם - arbitrary read/write<a class="headerlink" href="#-arbitrary-readwrite" title="Permanent link">&para;</a></h2>
 <p>כל kernel exploit, בסופו של דבר, בנוי משני אבני בניין שאנחנו שואפים אליהן: קריאה שרירותית - arbitrary read - היכולת לקרוא כל כתובת בזיכרון הkernel, וכתיבה שרירותית - arbitrary write - היכולת לכתוב לכל כתובת. אם יש לנו את שתיהן, השאר זו כבר עבודת נמלים.</p>
 <p>מהמודול שלמעלה אנחנו מקבלים את שני הפרימיטיבים כמעט חינם. הנה עטיפה נוחה במרחב המשתמש:</p>
@@ -2880,7 +2871,6 @@
 <a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>/bin/sh<span class="w"> </span>-p<span class="w">    </span><span class="c1"># and now we&#39;re root</span>
 </code></pre></div>
 <p>היופי בטכניקה הזו הוא שהיא נתונים בלבד. היא לא קופצת לשום קוד שלנו, לא מריצה shellcode ולא בונה ROP chain, ולכן SMEP ו-SMAP לא רלוונטיים בכלל. כתיבה שרירותית אחת של כמה בתים, וזהו. בשיעורים הבאים נראה גם את הדרך השנייה - קריאה מבוקרת ל-<code>commit_creds(prepare_kernel_cred(0))</code> דרך ROP chain בתוך הkernel - וגם איך מפילים את KASLR כשהיא דלוקה באמת.</p>
-<hr />
 <h2 id="_1">סיכום<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <ul>
 <li>הkernel רץ ב-ring 0 עם הרשאות מלאות ובלי בידוד פנימי - באג בכל דרייבר שווה שליטה על כל המערכת.</li>
@@ -2913,7 +2903,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="20 ביולי 2026 09:14:39 UTC">2026-07-20 09:14:39</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="28 ביולי 2026 13:40:56 UTC">2026-07-28 13:40:56</span>
   </span>
 
     
