@@ -393,11 +393,14 @@ hide:
 
 </div>
 
+<!--
 <div class="section-header">
 <h2>פוסטים אחרונים מהבלוג</h2>
 </div>
 
 <div class="blog-cards" id="recent-blog-posts"></div>
+-->
+
 
 <div class="homepage-gradient"></div>
 
