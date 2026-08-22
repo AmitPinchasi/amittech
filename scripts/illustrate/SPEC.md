@@ -7,9 +7,9 @@ How to author illustration specs for lecture materials and insert them into lect
 - Spec: `docs/images/illustrations/specs/<slug>.json`
 - Rendered SVG: `docs/images/illustrations/<slug>.svg` (generated, do not hand-edit)
 - Slug: ASCII kebab-case, `<course>-<section>-<topic>-<name>`, e.g. `net-2-1-tcp-handshake`
-- Course prefixes: client (צד-לקוח), core (ליבת-המחשב), webadv (פריצת-אתרים-מתקדם),
+- Course prefixes: client (צד-לקוח), core (ליבת-המחשב), webadv (מחקר-אתרים-מתקדם),
   vuln (מחקר-חולשות), net (רשתות), ai (פיתוח-עם-AI), gpu (תכנות-GPU),
-  pentest (בודק-חדירות), web (פריצת-אתרים), srv (צד-שרת), win (ווינדוס-בסיסי),
+  pentest (בודק-חדירות), web (מחקר-אתרים), srv (צד-שרת), win (ווינדוס-בסיסי),
   linux (לינוקס-בסיסי), arch (ארכיטקטורת-תוכנה). Exception: תכנות-בסיסי slugs
   have no course prefix (grandfathered, e.g. `2-1-if-else-flow`).
 

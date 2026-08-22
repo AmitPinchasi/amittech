@@ -15,7 +15,7 @@ This is an Obsidian vault containing **Hebrew-language educational course materi
   - `צד-שרת` - Server-side development (API, DevOps, Node.js)
   - `מחקר-אנדרואיד` - Android security research
   - `בודק-חדירות` - Penetration testing
-  - `פריצת-אתרים` - Web hacking
+  - `מחקר-אתרים` - Web hacking
   - `לינוקס בסיסי` - Basic Linux
   - `ווינדוס בסיסי` - Basic Windows
 - **`archive/`** - Older/English versions of courses with a similar structure
