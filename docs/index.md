@@ -138,12 +138,12 @@ hide:
 </div>
 
 <div class="course-cards">
-<a class="course-card" href="פריצת-אתרים/">
+<a class="course-card" href="מחקר-אתרים/">
 <div class="course-card-img" style="background: linear-gradient(135deg, #FF1B6B, #8B5CF6)">
 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
 </div>
 <div class="course-card-body">
-<strong>פריצת אתרים</strong>
+<strong>מחקר אתרים</strong>
 <p>פיתוח אתרים, חולשות צד לקוח וצד שרת, הגנות והתמודדות</p>
 </div>
 </a>
@@ -156,12 +156,12 @@ hide:
 <p>תקיפה חיצונית ופנימית, הסלמת הרשאות, תקיפת דומיין מתקדמת</p>
 </div>
 </a>
-<a class="course-card" href="פריצת-אתרים-מתקדם/">
+<a class="course-card" href="מחקר-אתרים-מתקדם/">
 <div class="course-card-img" style="background: linear-gradient(135deg, #E11D48, #A855F7)">
 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="13 8 10 13 14 13 11 18"></polyline></svg>
 </div>
 <div class="course-card-body">
-<strong>פריצת אתרים מתקדם</strong>
+<strong>מחקר אתרים מתקדם</strong>
 <p>חולשות מתקדמות, התמודדות מול הגנות</p>
 </div>
 </a>
@@ -298,7 +298,7 @@ hide:
       <a class="roadmap-step" href="רשתות/">רשתות</a>
     </div>
     <span class="roadmap-arrow">&#8592;</span>
-    <a class="roadmap-step" href="פריצת-אתרים/">פריצת אתרים</a>
+    <a class="roadmap-step" href="מחקר-אתרים/">מחקר אתרים</a>
     <span class="roadmap-arrow">&#8592;</span>
     <a class="roadmap-step" href="בודק-חדירות/">בדיקת חדירות</a>
   </div>
@@ -320,9 +320,9 @@ hide:
       <a class="roadmap-step" href="צד-לקוח/">צד לקוח</a>
     </div>
     <span class="roadmap-arrow">&#8592;</span>
-    <a class="roadmap-step" href="פריצת-אתרים/">פריצת אתרים</a>
+    <a class="roadmap-step" href="מחקר-אתרים/">מחקר אתרים</a>
     <span class="roadmap-arrow">&#8592;</span>
-    <a class="roadmap-step" href="פריצת-אתרים-מתקדם/">פריצת אתרים מתקדם</a>
+    <a class="roadmap-step" href="מחקר-אתרים-מתקדם/">מחקר אתרים מתקדם</a>
   </div>
 </div>
 
