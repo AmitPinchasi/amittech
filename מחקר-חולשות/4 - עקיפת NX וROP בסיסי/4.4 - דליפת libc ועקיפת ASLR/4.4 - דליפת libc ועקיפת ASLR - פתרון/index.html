@@ -147,6 +147,46 @@
     })();
   </script>
 
+  <!-- Recover from a stale HTML page.
+
+       Assets are cache-busted, so they can never be stale on their own. The
+       HTML can: GitHub Pages serves everything with max-age=600 and gives us
+       no control over it, so a page kept by a browser or an intermediate
+       proxy keeps referring to the asset versions from when it was stored.
+       Ask the site what the current build is (never from cache) and, if this
+       page was built against an older one, fetch it again with a URL the
+       cache cannot answer.
+
+       Reloading a page from the page itself has to be done carefully:
+       - sessionStorage records that we already tried, so a browser that
+         insists on replaying the same stale copy costs one reload, not a
+         loop. The flag is per tab and disappears with it.
+       - location.replace keeps the attempt out of the back button.
+       - Any failure leaves the page exactly as it was; a version check is
+         never a reason to interfere with someone reading a lesson. -->
+  <script>
+    (function () {
+      var BUILT = "410e336a1780";
+      var TRIED = "am-refreshed-for";
+      if (!BUILT || !window.fetch) return;
+
+      var tried;
+      try { tried = sessionStorage.getItem(TRIED); } catch (e) { return; }
+
+      fetch("../../../../version.json", { cache: "no-store" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (!data || !data.build || data.build === BUILT) return;
+          if (tried === data.build) return;   // already tried for this build
+          try { sessionStorage.setItem(TRIED, data.build); } catch (e) { return; }
+          var u = new URL(window.location.href);
+          u.searchParams.set("_v", data.build);
+          window.location.replace(u.toString());
+        })
+        .catch(function () { /* offline or blocked: leave the page alone */ });
+    })();
+  </script>
+
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="4.4 - דליפת libc ועקיפת ASLR - פתרון - עמית טק" />
