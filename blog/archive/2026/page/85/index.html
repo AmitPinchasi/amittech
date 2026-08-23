@@ -133,6 +133,30 @@
   <!-- Apply saved theme before first paint (prevents flash of default theme) -->
   <script>
     (function () {
+      /* Drop leftovers from Material's own palette switcher.
+
+         This site used that switcher before the named themes existed, and
+         anyone who touched it still has a "__palette" entry in localStorage.
+         The theme no longer configures a palette, but Material's bootstrap in
+         the header partial still reads that entry and stamps data-md-color-*
+         onto <body>. Our scheme goes on <html>, so the two disagree: custom
+         properties inherit, and the value set on <body> wins for everything
+         below it. --md-default-bg-color then resolves light for anything
+         Material styles - the sidebar and table-of-contents titles most
+         visibly - while our own --am-* rules keep the page dark.
+
+         The entry survives every reload, which is why this looked like a
+         corrupted cache: it cleared by wiping site data and never appeared in
+         a private window. Removing it here, before the header partial runs,
+         repairs the browser on the next page load. The key is scoped by
+         path, so match on the suffix rather than assuming one name. */
+      try {
+        for (var i = localStorage.length - 1; i >= 0; i--) {
+          var k = localStorage.key(i);
+          if (k && k.slice(-9) === "__palette") localStorage.removeItem(k);
+        }
+      } catch (e) {}
+
       /* Dark-based theme ids; everything else is treated as a light (default) scheme. */
       var DARK = {
         "true-black": 1, midnight: 1, dracula: 1, nord: 1, gruvbox: 1, "solarized-dark": 1,
