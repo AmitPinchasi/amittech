@@ -62,7 +62,10 @@
     var prevBtn = document.createElement('a');
     prevBtn.className = 'nav-btn' + (prevPage ? '' : ' nav-btn-disabled');
     prevBtn.dir = 'rtl';
-    prevBtn.innerHTML = '\u05d4\u05e7\u05d5\u05d3\u05dd \u203a';
+    // Arrow first so the RTL flex row puts it on the outer right edge, pointing
+    // right - the direction you travel to go back when the page reads RTL.
+    prevBtn.innerHTML = '<span class="nav-btn-arrow">\u2192</span>' +
+      '<span class="nav-btn-label">\u05d4\u05e7\u05d5\u05d3\u05dd</span>';
     if (prevPage) prevBtn.href = prevPage;
 
     var btn = document.createElement('button');
@@ -85,7 +88,9 @@
     var nextBtn = document.createElement('a');
     nextBtn.className = 'nav-btn' + (nextPage ? '' : ' nav-btn-disabled');
     nextBtn.dir = 'rtl';
-    nextBtn.innerHTML = '\u2039 \u05d4\u05d1\u05d0';
+    // Arrow last so it lands on the outer left edge, pointing left - forward.
+    nextBtn.innerHTML = '<span class="nav-btn-label">\u05d4\u05d1\u05d0</span>' +
+      '<span class="nav-btn-arrow">\u2190</span>';
     if (nextPage) nextBtn.href = nextPage;
 
     wrap.appendChild(prevBtn);
