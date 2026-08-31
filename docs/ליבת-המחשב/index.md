@@ -21,7 +21,7 @@ course: true
 הבסיס, פוינטרים, בקרת זרימה, מודולריות, סטראקטים, ה-Preprocessor, סקופ ודיבוג עם GDB.
 
 ### פרק 4 - ספריית libc
-מחרוזות, קבצים, זיכרון דינמי, מספרים, פעולות מערכת, אלגוריתמים (qsort, bsearch), טיפול בשגיאות. כולל פרויקט מסכם.
+מחרוזות, קבצים, זיכרון דינמי, מספרים, פעולות מערכת, אלגוריתמים (qsort, bsearch), טיפול בשגיאות, משתני ארגומנטים ומימוש printf מאפס. כולל פרויקט מסכם.
 
 ### פרק 5 - לינוקס
 קריאות מערכת (syscalls), תהליכים (fork, exec, wait), ה-Loader ופורמט ELF, סיגנלים, מתארי קבצים (file descriptors), צינורות (pipes) ו-IPC, מיפוי זכרון (mmap), תהליכונים (threads ו-pthreads), מערכת הקבצים /proc, ספריות משותפות ו-dynamic linking, פורמט ELF לעומק. כולל פרויקט מסכם - כתיבת shell פשוט.
@@ -39,7 +39,7 @@ course: true
 שלבי הקומפילציה (preprocessing, compilation, assembly, linking), הלינקר (symbol resolution, relocations, static libraries), סקריפטים של הלינקר, אופטימיזציות של הקומפיילר (inlining, loop unrolling, LTO, PGO). כולל פרויקט מסכם - בניית תוכנית freestanding.
 
 ### פרק 10 - C מתקדם
-אסמבלי בתוך C (inline assembly), התנהגות לא מוגדרת (undefined behavior), טריקים ביטיים, מודל הזכרון (volatile, C11 atomics, memory barriers), מצביעי פונקציות ו-callbacks, פולימורפיזם ב-C. כולל פרויקט מסכם - מערכת פלאגינים.
+אסמבלי בתוך C (inline assembly), התנהגות לא מוגדרת (undefined behavior), טריקים ביטיים, מודל הזכרון (volatile, C11 atomics, memory barriers), מצביעי פונקציות ו-callbacks, פולימורפיזם ב-C, varargs מתחת למכסה המנוע (System V AMD64 ABI). כולל פרויקט מסכם - מערכת פלאגינים.
 
 ### פרק 11 - תכנות רשת
 סוקטים (TCP client/server), שרת TCP מתקדם (fork, threads, select, poll, epoll), UDP ו-raw sockets (ping, packet sniffing), פרוטוקול HTTP מאפס. כולל פרויקט מסכם - שרת צ'אט.
