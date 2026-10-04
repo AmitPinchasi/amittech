@@ -24,6 +24,10 @@
   }
 
   function isMaterial(p) { return pathParts(p).length >= 2; }
+  // Blog posts and archives sit two or more levels deep like lessons do, but
+  // they are not part of any course: there is nothing to mark complete and no
+  // lesson before or after them, so both nav buttons would always be dead.
+  function isBlog(p) { return getCourse(p) === 'blog'; }
   function isInCourse() { return pathParts(curPath()).length >= 1 && curPath() !== norm('/amittech') && curPath() !== '/'; }
   function isCourseIndex() { return pathParts(curPath()).length === 1; }
   function getCourse(p) { return pathParts(p)[0] || ''; }
@@ -46,7 +50,7 @@
 
   // --- Complete Button ---
   function addButton() {
-    if (!isMaterial(curPath()) || document.querySelector('.complete-btn-container')) return;
+    if (!isMaterial(curPath()) || isBlog(curPath()) || document.querySelector('.complete-btn-container')) return;
 
     var path = curPath();
     var done = !!getCompleted()[path];
