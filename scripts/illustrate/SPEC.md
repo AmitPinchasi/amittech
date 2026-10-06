@@ -90,6 +90,14 @@ The renderer fails loudly on invalid specs - fix and re-run.
   label and target component, to start under another cell - use for "current
   item" pointers walking a list.
 - The final step's state is what static/reduced-motion viewers see.
+- On the site, `docs/javascripts/illustration-player.js` shows each animated
+  illustration paused on its first step, with play/pause/restart controls -
+  so step 1 is what a reader sees until they press play. The player inlines
+  the SVG and relies on the renderer's output as it is: one shared
+  `animation-duration`, and the dark palette in a single
+  `@media (prefers-color-scheme: dark){svg{...}}` block. If either changes,
+  update the player too (it falls back to the plain looping `<img>` when it
+  can't parse the palette block).
 - Bidi is handled by the renderer: pure-ASCII text is automatically LTR, so
   never insert LRM/LRE control characters in labels or values.
 - Use animation for stateful concepts (loops, branch walks, iteration, state
