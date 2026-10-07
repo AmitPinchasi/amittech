@@ -1,5 +1,6 @@
 ---
 course: true
+book: amittech-linux-basics.pdf
 ---
 
 # קורס לינוקס בסיסי

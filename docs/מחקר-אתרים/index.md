@@ -1,5 +1,6 @@
 ---
 course: true
+book: amittech-web-research.pdf
 ---
 
 # קורס מחקר אתרים
