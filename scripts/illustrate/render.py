@@ -6,6 +6,8 @@ Usage:
 Output SVG embeds its palette (light + dark via prefers-color-scheme) and,
 when the spec has an "animation" block, CSS keyframes that loop like a GIF.
 prefers-reduced-motion shows the final animation state statically.
+On the site, docs/javascripts/illustration-player.js starts these paused and
+adds play/pause/restart controls (see SPEC.md).
 """
 
 import argparse
