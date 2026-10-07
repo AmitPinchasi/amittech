@@ -1,5 +1,6 @@
 ---
 course: true
+book: amittech-advanced-web-research.pdf
 ---
 
 # מחקר אתרים מתקדם

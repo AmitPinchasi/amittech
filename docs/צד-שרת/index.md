@@ -1,5 +1,6 @@
 ---
 course: true
+book: amittech-server-side.pdf
 ---
 
 # קורס צד שרת

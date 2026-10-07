@@ -1,5 +1,6 @@
 ---
 course: true
+book: amittech-gpu-programming.pdf
 ---
 
 # קורס תכנות GPU ו-CUDA

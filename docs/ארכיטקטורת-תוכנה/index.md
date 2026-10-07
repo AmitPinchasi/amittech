@@ -1,5 +1,6 @@
 ---
 course: true
+book: amittech-software-architecture.pdf
 ---
 
 # קורס ארכיטקטורת תוכנה
