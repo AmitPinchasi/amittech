@@ -1,5 +1,6 @@
 ---
 course: true
+book: amittech-client-side.pdf
 ---
 
 # צד לקוח - פיתוח פרונטאנד

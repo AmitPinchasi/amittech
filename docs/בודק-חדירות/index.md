@@ -1,5 +1,6 @@
 ---
 course: true
+book: amittech-penetration-testing.pdf
 ---
 
 # קורס בודק חדירות

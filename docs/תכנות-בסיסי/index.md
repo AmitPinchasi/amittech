@@ -1,5 +1,6 @@
 ---
 course: true
+book: amittech-basic-programming.pdf
 ---
 
 # קורס תכנות בסיסי

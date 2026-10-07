@@ -1,5 +1,6 @@
 ---
 course: true
+book: amittech-ai-development.pdf
 ---
 
 # קורס פיתוח עם AI
