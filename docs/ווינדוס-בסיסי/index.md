@@ -1,5 +1,6 @@
 ---
 course: true
+book: amittech-windows-basics.pdf
 ---
 
 # קורס ווינדוס בסיסי

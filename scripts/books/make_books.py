@@ -16,7 +16,8 @@ It prints twice: the first PDF tells it which page every chapter, lesson and
 solution landed on, and the second fills those numbers into the table of
 contents and the exercise <-> solution references.
 
-Output: books/<course>.pdf (gitignored).
+Output: books/<course>.pdf (gitignored). publish_books.py then uploads them
+to the GitHub release the site's download buttons point at.
 """
 import argparse
 import datetime
@@ -55,6 +56,8 @@ PLACEHOLDER = "000"
 logging.getLogger("pypdf").setLevel(logging.ERROR)
 
 HEADERLINK_RE = re.compile(r'<a class="headerlink"[^>]*>.*?</a>', re.S)
+# the site's "download this course as a PDF" button (hooks/book_download.py) has no place inside the PDF
+BOOK_BUTTON_RE = re.compile(r'<p class="book-download">.*?</p>', re.S)
 ID_RE = re.compile(r'\bid="([^"]+)"')
 HREF_RE = re.compile(r'\bhref="([^"]*)"')
 URL_REF_RE = re.compile(r'url\(#([^)]+)\)')
@@ -160,6 +163,7 @@ class Book:
         if "arithmatex" in html:
             self.has_math = True
         html = HEADERLINK_RE.sub("", html)
+        html = BOOK_BUTTON_RE.sub("", html)
         if drop_h1:
             html = LEADING_H1_RE.sub("", html, count=1)
         html = VIDEO_WRAP_RE.sub(r"\1", html)
@@ -356,9 +360,11 @@ def free_port():
 def start_server():
     port = free_port()
     env = dict(os.environ, AMITTECH_BOOKS="1")
-    mkdocs = os.path.join(REPO, ".venv", "bin", "mkdocs")
-    if not os.path.exists(mkdocs):
-        mkdocs = "mkdocs"
+    # the mkdocs next to this interpreter (run it with .venv/bin/python), which
+    # also works from a git worktree, where the repo's own .venv doesn't exist
+    candidates = [os.path.join(os.path.dirname(sys.executable), "mkdocs"),
+                  os.path.join(REPO, ".venv", "bin", "mkdocs")]
+    mkdocs = next((c for c in candidates if os.path.exists(c)), "mkdocs")
     proc = subprocess.Popen([mkdocs, "serve", "-a", "127.0.0.1:%d" % port, "--no-livereload"],
                             cwd=REPO, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                             text=True, bufsize=1)

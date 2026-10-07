@@ -1,5 +1,6 @@
 ---
 course: true
+book: amittech-computer-core.pdf
 ---
 
 # קורס ליבת המחשב
