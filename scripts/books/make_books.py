@@ -483,8 +483,9 @@ def main():
                         f.write(book_html)
                 total, missing = print_book(browser, base, book, book_html, out_path)
                 note = (" (%d references without a page number)" % len(missing)) if missing else ""
+                shown = os.path.relpath(out_path, REPO) if out_path.startswith(REPO + os.sep) else out_path
                 print("%s: %d pages, %.0fs -> %s%s" % (c["title"], total, time.time() - started,
-                                                        os.path.relpath(out_path, REPO), note), flush=True)
+                                                        shown, note), flush=True)
             browser.close()
     finally:
         if proc is not None:
