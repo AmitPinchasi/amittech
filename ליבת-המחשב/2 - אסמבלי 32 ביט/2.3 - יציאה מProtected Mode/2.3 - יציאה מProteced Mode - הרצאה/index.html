@@ -55,7 +55,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../stylesheets/extra.css?v=1790989b">
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css?v=d23dbbf8">
     
       <link rel="stylesheet" href="../../../../stylesheets/themes.css?v=01d97eaa">
     
@@ -190,7 +190,7 @@
          never a reason to interfere with someone reading a lesson. -->
   <script>
     (function () {
-      var BUILT = "1c36223de4a1";
+      var BUILT = "fa7c4ebba6b4";
       var TRIED = "am-refreshed-for";
       if (!BUILT || !window.fetch) return;
 
@@ -3116,21 +3116,25 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">lidt</span><span class="w"> </span><span class="p">[</span><span class="no">idt_ptr</span><span class="p">]</span><span class="w"> </span><span class="c1">; loads the interrupt table</span>
 </code></pre></div></p>
 <h3 id="interrupt-gate-">הInterrupt Gate - מה הוא עושה בפועל?<a class="headerlink" href="#interrupt-gate-" title="Permanent link">&para;</a></h3>
-<p>כאשר מתרחשת interrupt (למשל <code>int 0x80</code>) המעבד:</p>
+<p>כאשר מתרחשת interrupt (למשל <code>int 0x80</code>) המעבד עובר על השלבים הבאים:</p>
 <ol>
-<li>בודק את הרשומה ה-80 ב-IDT</li>
-<li>טוען את ה-Selector ומוודא שהוא חוקי</li>
-<li>
-<p>בודק את הCPL מול הDPL, אם המעבד צריך לעבור מ-Ring 3 ל-Ring 0- כלומר, מProtected Mode ל-Real Mode, זה יכול לקרות כאשר אנחנו בProtected Mode ואנחנו קוראים לinterrupt שמוגדר בקרנל (זה מה שקורה בדרך כלל)</p>
-</li>
-<li>
-<p>המעבד <strong>שומר אוטומטית</strong> את הרגיסטרים החשובים (EIP, אוגרי סגמנט, EFLAGS, ESP)</p>
-</li>
+<li>ניגש לרשומת ה-Gate המתאימה ב-IDT (למשל רשומה מספר <code>0x80</code>).</li>
+<li><strong>בודק הרשאה מול ה-Gate</strong>: המעבד משווה את ה-CPL - רמת ההרשאה שבה הקוד הקורא רץ כרגע - מול ה-DPL שרשום ב-Gate עצמו. כדי שהקריאה תתקבל צריך ש-<code>CPL &lt;= DPL של ה-Gate</code> (זכרו: מספר גבוה = הרשאה נמוכה, כך ש-Ring 3 הוא הנמוך ביותר). אם ההרשאה לא מספיקה, המעבד <strong>לא מתעלם מהקריאה בשקט</strong> - הוא זורק חריגה (<code>#GP</code> - General Protection Fault). זו בדיוק הסיבה שאת ה-Gate של <code>int 0x80</code> מגדירים עם <code>DPL=3</code>: כך גם קוד שרץ ב-Ring 3 (יוזר מוד) מורשה להפעיל אותו.</li>
+<li>אם ההרשאה תקינה, המעבד טוען את ה-Selector מה-Gate - הוא מצביע לסגמנט של קוד הקרנל (ב-Ring 0) - ומוודא שהוא חוקי מול ה-GDT, ואז קופץ ל-Offset שרשום ב-Gate בתוך אותו סגמנט.</li>
+</ol>
+<p>מכיוון שעברנו מהרשאה נמוכה (Ring 3) לגבוהה (Ring 0), המעבד גם:</p>
+<ul>
+<li><strong>שומר אוטומטית</strong> את הרגיסטרים החשובים (EIP, אוגרי סגמנט, EFLAGS, ESP)</li>
 <li>מחליף את ה-SS ו-ESP למחסנית של הקרנל (יש לה מחסנית משלה, שונה מהיוזר מוד) </li>
 <li>קופץ לפונקציית הinterrupt (שבקרנל)</li>
-</ol>
+</ul>
+<blockquote>
+<p><strong>ההבדל בין CPL ל-DPL:</strong><br />
+ה-<strong>CPL</strong> (Current Privilege Level) הוא רמת ההרשאה שבה הקוד <strong>רץ כרגע</strong> (0 לקרנל, 3 ליוזר מוד) - זהו הערך ה"חי". ה-<strong>DPL</strong> (Descriptor Privilege Level) הוא רמת ההרשאה ש<strong>כתובה מראש בתיאור</strong> - ב-Gate שב-IDT, או בסגמנט שב-GDT.<br />
+הבדיקה בשלב 2 היא בעצם "האם לקוד שרץ עכשיו (CPL) מותר להשתמש ב-Gate הזה (DPL)". לכן קודם בודקים הרשאה, ורק אם היא תקינה טוענים את ה-Selector וקופצים - טעינת ה-Selector בשלב 3 היא מה שקורה <strong>אחרי</strong> שההרשאה אושרה, לא דילוג עליה.</p>
+</blockquote>
 <p>והכי חשוב - <em>המעבר הזה מאובטח!</em><br />
-הדרך היחידה להריץ קוד קרנלי (קוד Real Mode) בProtected Mode היא רק באמצעות קריאה לinterrupts מוגדרות מראש!<br />
+הדרך היחידה להריץ קוד קרנל (קוד שרץ ב-Ring 0) כשאנחנו ביוזר מוד היא רק באמצעות קריאה לinterrupts מוגדרות מראש!<br />
 כלומר, כשאנחנו פותחים את המחשב- הקרנל מגדיר את כל הinterrupts שהיוזר מוד יוכל לעשות בIDT, ואז הקרנל קופץ ליוזר מוד.<br />
 כך, שהיוזר מוד- יוכל לקרוא רק לinterrupts מוגדרות שהקרנל הגדיר לו שהוא יכול לעשות, ובכך אנחנו יכולים לוודא שביוזר מוד תוכנות ירצו בהרשאות נמוכות, אבל יוכלו לבצע פעולות שדורשות הרשאות גבוהות, כמו כתיבת לקובץ בדיסק.</p>
 <h3 id="protected-mode">כך אנחנו מאפשרים לקוד Protected Mode להריץ קוד קרנלי<a class="headerlink" href="#protected-mode" title="Permanent link">&para;</a></h3>
@@ -3195,7 +3199,7 @@
     <span class="md-icon" title="עדכון אחרון">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="31 באוגוסט 2026 08:45:10 UTC">2026-08-31 08:45:10</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime" title="11 באוקטובר 2026 15:52:26 UTC">2026-10-11 15:52:26</span>
   </span>
 
     
