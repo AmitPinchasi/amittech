@@ -1,8 +1,9 @@
 /* "Brainrot mode" - a desktop-only toggle that splits the screen: a muted,
    looping Subway Surfers gameplay clip plays in a fixed panel down the left
-   half (portrait gameplay suits a tall column), and the amittech site moves
-   into the right half. A playful attention gimmick for the students, off by
-   default and remembered per browser.
+   side (portrait gameplay suits a tall column), and the amittech site sits in
+   the right side. A draggable divider between them sets the proportion. A
+   playful attention gimmick for the students, off by default; the on/off state
+   and the chosen proportion are remembered per browser.
 
    Desktop only: the button and the whole split are gated behind a wide-screen +
    fine-pointer media query, so phones and tablets are never affected. The
@@ -14,6 +15,9 @@
   // Subway Surfers gameplay, "No Copyright 4K (1 HOUR)". Swap for any YouTube id.
   var VIDEO_ID = "iKggOfcKM28";
   var STORAGE_KEY = "am-brainrot";
+  var SPLIT_KEY = "am-brainrot-split"; // game width, as a percentage of the viewport
+  var DEFAULT_SPLIT = 50;
+  var MIN_SPLIT = 20, MAX_SPLIT = 80; // keep both sides usable
   var DESKTOP = "(min-width: 76.25em) and (pointer: fine)";
 
   var GAME_ICON =
@@ -27,7 +31,10 @@
 
   function injectStyle() {
     if (document.getElementById("brainrot-style")) return;
+    // --brainrot-split drives the game width, the site's left padding, and the
+    // positions of the divider and the button, so dragging updates them together.
     var css =
+      ":root{--brainrot-split:" + DEFAULT_SPLIT + "vw}" +
       ".brainrot-toggle{display:none}" +
       "@media " + DESKTOP + "{" +
       ".brainrot-toggle{position:fixed;bottom:16px;left:16px;z-index:60;display:inline-flex;" +
@@ -40,25 +47,57 @@
       ".brainrot-toggle:focus-visible{outline:2px solid var(--am-accent,#4361ee);outline-offset:2px}" +
       ".brainrot-toggle svg{width:19px;height:19px;fill:currentColor;flex:none}" +
       ".brainrot-toggle .brainrot-off{display:none}" +
-      // game fills the LEFT half, so the site (and its button) move to the RIGHT half
-      "html.brainrot-on .brainrot-toggle{left:calc(50vw + 16px);color:#fff;" +
+      // game fills the LEFT side, so the site (and its button) move to the RIGHT side
+      "html.brainrot-on .brainrot-toggle{left:calc(var(--brainrot-split) + 16px);color:#fff;" +
         "background:var(--am-accent,#4361ee);border-color:var(--am-accent,#4361ee)}" +
       "html.brainrot-on .brainrot-toggle .brainrot-on-label{display:none}" +
       "html.brainrot-on .brainrot-toggle .brainrot-off{display:inline}" +
-      "html.brainrot-on body{padding-left:50vw!important}" +
-      ".brainrot-panel{position:fixed;left:0;top:0;width:50vw;height:100vh;z-index:55;" +
-        "background:#000;border-right:3px solid var(--am-accent,#4361ee);display:none}" +
+      "html.brainrot-on body{padding-left:var(--brainrot-split)!important}" +
+      ".brainrot-panel{position:fixed;left:0;top:0;width:var(--brainrot-split);height:100vh;" +
+        "z-index:55;background:#000;display:none}" +
       "html.brainrot-on .brainrot-panel{display:block}" +
       ".brainrot-panel iframe{width:100%;height:100%;border:0;display:block}" +
+      // draggable divider, centred on the seam between the two sides
+      ".brainrot-divider{position:fixed;top:0;height:100vh;width:16px;left:var(--brainrot-split);" +
+        "transform:translateX(-50%);z-index:58;cursor:ew-resize;display:none;" +
+        "align-items:center;justify-content:center;touch-action:none}" +
+      "html.brainrot-on .brainrot-divider{display:flex}" +
+      ".brainrot-divider::before{content:'';position:absolute;top:0;bottom:0;left:50%;" +
+        "transform:translateX(-50%);width:3px;background:var(--am-accent,#4361ee)}" +
+      ".brainrot-grip{position:relative;width:14px;height:46px;border-radius:7px;" +
+        "background:var(--am-accent,#4361ee);box-shadow:0 2px 8px rgba(0,0,0,.35)}" +
+      ".brainrot-grip::after{content:'';position:absolute;inset:0;margin:auto;width:4px;height:20px;" +
+        "border-left:2px solid rgba(255,255,255,.85);border-right:2px solid rgba(255,255,255,.85)}" +
+      ".brainrot-divider:hover .brainrot-grip,html.brainrot-dragging .brainrot-grip{" +
+        "background:var(--am-accent-hover,#ff1b6b)}" +
+      // while dragging: no transitions, no text selection, let pointer events pass the iframe
+      "html.brainrot-dragging{cursor:ew-resize;-webkit-user-select:none;user-select:none}" +
+      "html.brainrot-dragging .brainrot-toggle{transition:none}" +
+      "html.brainrot-dragging .brainrot-panel iframe{pointer-events:none}" +
       "}" +
-      "@media print{.brainrot-toggle,.brainrot-panel{display:none!important}}";
+      "@media print{.brainrot-toggle,.brainrot-panel,.brainrot-divider{display:none!important}}";
     var el = document.createElement("style");
     el.id = "brainrot-style";
     el.textContent = css;
     document.head.appendChild(el);
   }
 
-  var panel = null;
+  // --- split proportion ---
+  function clampSplit(v) { return Math.max(MIN_SPLIT, Math.min(MAX_SPLIT, v)); }
+  function savedSplit() {
+    try {
+      var v = parseFloat(localStorage.getItem(SPLIT_KEY));
+      return isNaN(v) ? DEFAULT_SPLIT : clampSplit(v);
+    } catch (e) { return DEFAULT_SPLIT; }
+  }
+  function applySplit(pct) {
+    document.documentElement.style.setProperty("--brainrot-split", pct + "vw");
+  }
+  function saveSplit(pct) {
+    try { localStorage.setItem(SPLIT_KEY, String(Math.round(pct))); } catch (e) {}
+  }
+
+  var panel = null, divider = null;
 
   function ensurePanel() {
     if (panel) return panel;
@@ -76,6 +115,52 @@
     return panel;
   }
 
+  function ensureDivider() {
+    if (divider) return divider;
+    divider = document.createElement("div");
+    divider.className = "brainrot-divider";
+    divider.setAttribute("role", "separator");
+    divider.setAttribute("aria-orientation", "vertical");
+    divider.setAttribute("aria-label", "גרירה לשינוי היחס בין המשחק לאתר");
+    divider.setAttribute("tabindex", "0");
+    divider.innerHTML = '<span class="brainrot-grip"></span>';
+    wireDrag(divider);
+    document.body.appendChild(divider);
+    return divider;
+  }
+
+  function wireDrag(el) {
+    function move(e) {
+      var pct = clampSplit(e.clientX / window.innerWidth * 100);
+      applySplit(pct);
+    }
+    function up(e) {
+      document.documentElement.classList.remove("brainrot-dragging");
+      try { el.releasePointerCapture(e.pointerId); } catch (ex) {}
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("pointerup", up);
+      el.removeEventListener("pointercancel", up);
+      saveSplit(clampSplit(e.clientX / window.innerWidth * 100));
+    }
+    el.addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      document.documentElement.classList.add("brainrot-dragging");
+      try { el.setPointerCapture(e.pointerId); } catch (ex) {}
+      el.addEventListener("pointermove", move);
+      el.addEventListener("pointerup", up);
+      el.addEventListener("pointercancel", up);
+    });
+    // keyboard: arrows nudge the divider by 2%
+    el.addEventListener("keydown", function (e) {
+      var cur = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--brainrot-split")) || DEFAULT_SPLIT;
+      var step = e.key === "ArrowLeft" ? -2 : e.key === "ArrowRight" ? 2 : 0;
+      if (!step) return;
+      e.preventDefault();
+      var pct = clampSplit(cur + step);
+      applySplit(pct); saveSplit(pct);
+    });
+  }
+
   function save(on) {
     try { localStorage.setItem(STORAGE_KEY, on ? "1" : "0"); } catch (e) {}
   }
@@ -84,8 +169,16 @@
   }
 
   function setOn(on, persist) {
-    if (on) { ensurePanel(); document.documentElement.classList.add("brainrot-on"); }
-    else { document.documentElement.classList.remove("brainrot-on"); if (panel) panel.remove(); panel = null; }
+    if (on) {
+      applySplit(savedSplit());
+      ensurePanel();
+      ensureDivider();
+      document.documentElement.classList.add("brainrot-on");
+    } else {
+      document.documentElement.classList.remove("brainrot-on");
+      if (panel) { panel.remove(); panel = null; }
+      if (divider) { divider.remove(); divider = null; }
+    }
     var btn = document.querySelector(".brainrot-toggle");
     if (btn) btn.setAttribute("aria-pressed", on ? "true" : "false");
     if (persist) save(on);
