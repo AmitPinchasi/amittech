@@ -6,7 +6,7 @@
   "use strict";
 
   var STORAGE_KEY = "am-theme";
-  var DEFAULT_THEME = "light";
+  var DEFAULT_THEME = "neon";
 
   // id, label (Hebrew), base Material scheme, and swatch gradient colours.
   var THEMES = [
@@ -15,6 +15,7 @@
     { id: "light-rose",     label: "בהיר ורוד",   scheme: "default", sw: ["#e11d48", "#db2777", "#fb7185"] },
     { id: "light-ocean",    label: "בהיר טורקיז", scheme: "default", sw: ["#0891b2", "#22d3ee", "#7dd3fc"] },
 
+    { id: "neon",           label: "ניאון",       scheme: "slate", sw: ["#ff1b6b", "#8b5cf6", "#45caff"] },
     { id: "true-black",     label: "שחור טהור",   scheme: "slate", sw: ["#000000", "#4d4d4d", "#ffffff"] },
     { id: "midnight",       label: "חצות",        scheme: "slate", sw: ["#db2777", "#7c3aed", "#3b82f6"] },
     { id: "dracula",        label: "Dracula",     scheme: "slate", sw: ["#ff79c6", "#bd93f9", "#8be9fd"] },
