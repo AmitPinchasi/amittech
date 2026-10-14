@@ -45,8 +45,15 @@
   // every link rewritten to an absolute URL (the fetched hrefs are relative to
   // that page, not to the one we are on).
   function loadSub(href, title) {
-    if (cache[href]) return cache[href];
-    cache[href] = fetch(href, { credentials: "same-origin" })
+    // Resolve to an ABSOLUTE base first. The fetched page's nav links are
+    // relative to *that* page, not to the page we're on, so they must be
+    // resolved against this absolute base - otherwise they end up relative to
+    // the current page and 404. (This was the bug: a relative base made
+    // `new URL(..)` throw, leaving the links pointing at the current chapter.)
+    var base;
+    try { base = new URL(href, location.href).href; } catch (e) { base = href; }
+    if (cache[base]) return cache[base];
+    cache[base] = fetch(base, { credentials: "same-origin" })
       .then(function (r) { return r.ok ? r.text() : ""; })
       .then(function (html) {
         if (!html) return null;
@@ -62,8 +69,24 @@
         if (!match) return null;
         var sub = match.querySelector(":scope > nav.md-nav");
         if (!sub) return null;
+        // show just the chapter's topic list: drop deeper levels (the fetched
+        // page has its first lesson pre-expanded, down to heading anchors) and
+        // the toggle checkboxes/labels those levels used.
+        sub.querySelectorAll("nav.md-nav").forEach(function (n) { n.remove(); });
+        sub.querySelectorAll("input.md-nav__toggle").forEach(function (n) { n.remove(); });
+        sub.querySelectorAll(".md-nav__icon").forEach(function (n) { n.remove(); });
+        // the chapter's own first lesson is the active topic on the fetched page,
+        // so it's a non-link <label>; turn it into a link (to this chapter, = base)
+        // so the topic list is complete and clickable.
+        sub.querySelectorAll("label.md-nav__link").forEach(function (lbl) {
+          var a = doc.createElement("a");
+          a.className = lbl.className;
+          a.setAttribute("href", base);
+          a.innerHTML = lbl.innerHTML;
+          lbl.parentNode.replaceChild(a, lbl);
+        });
         sub.querySelectorAll("a[href]").forEach(function (a) {
-          try { a.href = new URL(a.getAttribute("href"), href).href; } catch (e) {}
+          try { a.setAttribute("href", new URL(a.getAttribute("href"), base).href); } catch (e) {}
         });
         // strip the in-list title label the nested nav repeats at its top
         var t = sub.querySelector(":scope > .md-nav__title");
@@ -71,7 +94,7 @@
         return sub.innerHTML;
       })
       .catch(function () { return null; });
-    return cache[href];
+    return cache[base];
   }
 
   function expandLazy(li, main, arrow) {
