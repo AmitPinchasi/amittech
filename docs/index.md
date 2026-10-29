@@ -187,6 +187,24 @@ hide:
 <p>ארגון המחשב, אסמבלי 16 ו-32 ביט, שפת C, ספריית libc, הקרנל של לינוקס, ארכיטקטורת מעבדים, ופיתוח מערכת הפעלה</p>
 </div>
 </a>
+<a class="course-card" href="פיתוח-מערכות-ווינדוס/">
+<div class="course-card-img" style="background: linear-gradient(135deg, #0EA5E9, #6366F1)">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>
+</div>
+<div class="course-card-body">
+<strong>פיתוח מערכות ווינדוס - C++ ו-.NET</strong>
+<p>קורס המשך לליבת המחשב: פיתוח ב-C++, מנגנוני Windows ו-WinAPI, זיכרון, threads, שירותים, דיבוג, דרייברים ושילוב C# ו-.NET</p>
+</div>
+</a>
+<a class="course-card" href="פיתוח-מערכות-לינוקס/">
+<div class="course-card-img" style="background: linear-gradient(135deg, #F97316, #A855F7)">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><rect x="2" y="3" width="20" height="18" rx="2"></rect><polyline points="6 8 10 12 6 16"></polyline><line x1="13" y1="16" x2="18" y2="16"></line></svg>
+</div>
+<div class="course-card-body">
+<strong>פיתוח מערכות לינוקס - Rust</strong>
+<p>קורס המשך לליבת המחשב: פיתוח ב-Rust, תהליכים, זיכרון, קבצים, רשתות, async, חקירת הקרנל ובניית שירותי מערכת</p>
+</div>
+</a>
 <!-- Windows research course - hidden for now
 <a class="course-card" href="מחקר-ווינדוס/">
 <div class="course-card-img" style="background: linear-gradient(135deg, #8B5CF6, #FF1B6B)">
@@ -344,6 +362,40 @@ hide:
     </div>
     <span class="roadmap-arrow">&#8592;</span>
     <a class="roadmap-step" href="ליבת-המחשב/">ליבת המחשב</a>
+  </div>
+</div>
+
+<div class="roadmap-card">
+  <div class="roadmap-title">מפתח ווינדוס עם CPP</div>
+  <div class="roadmap-steps">
+    <a class="roadmap-step" href="תכנות-בסיסי/">תכנות בסיסי</a>
+    <span class="roadmap-arrow">&#8592;</span>
+    <div class="roadmap-parallel">
+      <a class="roadmap-step" href="ווינדוס-בסיסי/">ווינדוס בסיסי</a>
+      <a class="roadmap-step" href="לינוקס-בסיסי/">לינוקס בסיסי</a>
+      <a class="roadmap-step" href="רשתות/">רשתות</a>
+    </div>
+    <span class="roadmap-arrow">&#8592;</span>
+    <a class="roadmap-step" href="ליבת-המחשב/">ליבת המחשב</a>
+    <span class="roadmap-arrow">&#8592;</span>
+    <a class="roadmap-step" href="פיתוח-מערכות-ווינדוס/">פיתוח מערכות ווינדוס</a>
+  </div>
+</div>
+
+<div class="roadmap-card">
+  <div class="roadmap-title">מפתח לינוקס עם Rust</div>
+  <div class="roadmap-steps">
+    <a class="roadmap-step" href="תכנות-בסיסי/">תכנות בסיסי</a>
+    <span class="roadmap-arrow">&#8592;</span>
+    <div class="roadmap-parallel">
+      <a class="roadmap-step" href="ווינדוס-בסיסי/">ווינדוס בסיסי</a>
+      <a class="roadmap-step" href="לינוקס-בסיסי/">לינוקס בסיסי</a>
+      <a class="roadmap-step" href="רשתות/">רשתות</a>
+    </div>
+    <span class="roadmap-arrow">&#8592;</span>
+    <a class="roadmap-step" href="ליבת-המחשב/">ליבת המחשב</a>
+    <span class="roadmap-arrow">&#8592;</span>
+    <a class="roadmap-step" href="פיתוח-מערכות-לינוקס/">פיתוח מערכות לינוקס</a>
   </div>
 </div>
 
