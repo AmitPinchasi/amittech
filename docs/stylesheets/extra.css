@@ -733,6 +733,108 @@ a.about-banner:hover {
   }
 }
 
+/* --- Sidebar: wider course navigation on desktop -----------------------
+   Material's fixed 12.1rem sidebar leaves a lesson link, four levels and
+   four indents deep, about 150px of text, so most lesson names wrap onto
+   three or four lines. Meanwhile the 61rem grid sits centered with unused
+   gutters on both sides. Grow the sidebar and the grid by the same amount
+   so the extra width comes out of those gutters and the content column
+   keeps its exact width. clamp() takes only what the gutter can spare
+   (63rem leaves room for the scrollbar and half a rem at each screen
+   edge), so on a narrow desktop nothing moves at all. Every .md-grid
+   widens, not just the main one, so the logo and tabs stay lined up with
+   the sidebar edge.
+
+   Widening the box alone does nothing for the text: wherever the browser
+   supports ::-webkit-scrollbar, Material pads .md-sidebar__inner by
+   calc(100% - 11.5rem) on the content side, which pins the nav at 11.5rem
+   and turns any extra sidebar width into an empty gap next to the content.
+   Take the same extra off that padding, inside the same @supports so
+   browsers that never had the padding (Firefox) do not gain any.
+
+   Scoped to pages that show the course nav: hide: navigation renders the
+   sidebar [hidden] (home, about, books), and blog posts use
+   .md-sidebar--post instead. The drawer below 76.25em has its own width. */
+@media screen and (min-width: 76.25em) {
+  body:has(.md-sidebar--primary:not([hidden])) {
+    --am-nav-extra: clamp(0px, 100vw - 63rem, 3.9rem);
+  }
+
+  body:has(.md-sidebar--primary:not([hidden])) .md-grid {
+    max-width: calc(61rem + var(--am-nav-extra));
+  }
+
+  .md-sidebar--primary {
+    width: calc(12.1rem + var(--am-nav-extra, 0px));
+  }
+
+  @supports selector(::-webkit-scrollbar) {
+    [dir=rtl] .md-sidebar--primary .md-sidebar__inner {
+      padding-left: calc(100% - 11.5rem - var(--am-nav-extra, 0px));
+    }
+
+    [dir=ltr] .md-sidebar--primary .md-sidebar__inner {
+      padding-right: calc(100% - 11.5rem - var(--am-nav-extra, 0px));
+    }
+  }
+}
+
+/* --- Course pages: scale the 1280px layout up with the screen ----------
+   The layout above at exactly 1280px is the design. Wider screens get the
+   same page, bigger, instead of the same page with margins around it.
+
+   The boxes scale exactly: --am-u is 1rem at 1280px and grows with the
+   screen, and the grid, both sidebars and their text columns are set in
+   it at their 1280px sizes (62, 13.1 and 12.1 rem; the inner padding
+   leaves 12.5 and 11.5 rem). The content column fills what is left, so it
+   stays 57.5% of the screen and the edges keep a small margin.
+
+   The text cannot scale exactly. Ctrl+ makes CSS pixels bigger, which
+   makes the window fewer CSS pixels wide, so a size that is purely a share
+   of 100vw comes out the same physical size at every zoom level. The root
+   size is therefore half fixed, half proportional: 62.5% (10px, which
+   follows zoom and the browser's font setting) plus 100vw / 128 (10px at
+   1280px). Everything Material sizes in rem - content text, headings,
+   code, tables, nav links, header - follows it. It replaces Material's own
+   root steps at 100em and 125em (this selector is more specific), so the
+   two never add up and nothing jumps. */
+@media screen and (min-width: 80em) {
+  html:has(.md-sidebar--primary:not([hidden])) {
+    --am-u: calc(100vw / 64);
+    font-size: calc(62.5% + 100vw / 128);
+  }
+
+  html:has(.md-sidebar--primary:not([hidden])) .md-grid {
+    max-width: calc(62 * var(--am-u));
+  }
+
+  html:has(.md-sidebar--primary:not([hidden])) .md-sidebar--primary {
+    width: calc(13.1 * var(--am-u));
+  }
+
+  html:has(.md-sidebar--primary:not([hidden])) .md-sidebar--secondary {
+    width: calc(12.1 * var(--am-u));
+  }
+
+  @supports selector(::-webkit-scrollbar) {
+    html:has(.md-sidebar--primary:not([hidden])) [dir=rtl] .md-sidebar--primary .md-sidebar__inner {
+      padding-left: calc(100% - 12.5 * var(--am-u));
+    }
+
+    html:has(.md-sidebar--primary:not([hidden])) [dir=rtl] .md-sidebar--secondary .md-sidebar__inner {
+      padding-left: calc(100% - 11.5 * var(--am-u));
+    }
+
+    html:has(.md-sidebar--primary:not([hidden])) [dir=ltr] .md-sidebar--primary .md-sidebar__inner {
+      padding-right: calc(100% - 12.5 * var(--am-u));
+    }
+
+    html:has(.md-sidebar--primary:not([hidden])) [dir=ltr] .md-sidebar--secondary .md-sidebar__inner {
+      padding-right: calc(100% - 11.5 * var(--am-u));
+    }
+  }
+}
+
 /* --- Content Area --- */
 .md-content {
   max-width: 100%;
