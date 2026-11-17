@@ -6,9 +6,8 @@ The theme's CSS (height:auto; max-width:100%) already renders images
 responsively; explicit width/height attributes don't override that, they
 only give the browser the aspect ratio to reserve while the image downloads.
 
-All content images live flat under docs/images/ (site convention - verified
-across the whole course tree), so the lookup is a plain filename match
-rather than relative-path resolution against each page's own directory.
+Image paths are resolved below docs/images/, including generated illustration
+subdirectories, independently of the lesson's directory depth.
 """
 import os
 import re
@@ -17,7 +16,7 @@ from xml.etree import ElementTree
 
 from PIL import Image
 
-_IMG_TAG = re.compile(r'<img ([^>]*?)src="([^"]*\bimages/([^"/]+))"([^>]*?)/?>')
+_IMG_TAG = re.compile(r'<img ([^>]*?)src="([^"]*\bimages/([^"?#]+))"([^>]*?)/?>')
 _IMAGES_DIR = os.path.join("docs", "images")
 _dimension_cache = {}
 
