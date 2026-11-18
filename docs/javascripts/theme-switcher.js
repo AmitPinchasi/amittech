@@ -14,6 +14,7 @@
     { id: "light-violet",   label: "בהיר סגול",   scheme: "default", sw: ["#7c3aed", "#a855f7", "#c4b5fd"] },
     { id: "light-rose",     label: "בהיר ורוד",   scheme: "default", sw: ["#e11d48", "#db2777", "#fb7185"] },
     { id: "light-ocean",    label: "בהיר טורקיז", scheme: "default", sw: ["#0891b2", "#22d3ee", "#7dd3fc"] },
+    { id: "vs-light",       label: "VS Light",    scheme: "default", sw: ["#af00db", "#0000ff", "#007acc"] },
 
     { id: "neon",           label: "ניאון",       scheme: "slate", sw: ["#ff1b6b", "#8b5cf6", "#45caff"] },
     { id: "true-black",     label: "שחור טהור",   scheme: "slate", sw: ["#000000", "#4d4d4d", "#ffffff"] },
@@ -28,7 +29,10 @@
     { id: "ocean",          label: "אוקיינוס",    scheme: "slate", sw: ["#06b6d4", "#3b82f6", "#22d3ee"] },
     { id: "emerald",        label: "ברקת",        scheme: "slate", sw: ["#10b981", "#059669", "#34d399"] },
     { id: "rose",           label: "ורד",         scheme: "slate", sw: ["#f43f5e", "#db2777", "#fb7185"] },
-    { id: "violet",         label: "סגול",        scheme: "slate", sw: ["#8b5cf6", "#6d28d9", "#a78bfa"] }
+    { id: "violet",         label: "סגול",        scheme: "slate", sw: ["#8b5cf6", "#6d28d9", "#a78bfa"] },
+    { id: "one-dark-pro",   label: "One Dark Pro", scheme: "slate", sw: ["#e06c75", "#c678dd", "#61afef"] },
+    { id: "vs-dark",        label: "VS Dark",     scheme: "slate", sw: ["#c586c0", "#007acc", "#4ec9b0"] },
+    { id: "catppuccin-macchiato", label: "Catppuccin Macchiato", scheme: "slate", sw: ["#f5bde6", "#c6a0f6", "#8aadf4"] }
   ];
 
   var GROUPS = [
